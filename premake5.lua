@@ -49,6 +49,10 @@ workspace "Hotshot"
 		optimize "Full"
 		defines "NDEBUG"
 
+	--Don't name non-bundles ".app", Mac isn't smart enough to realize it's just a file
+	filter { "system:macosx" }
+		targetextension ""
+
 	filter {}
 
 	files {
@@ -166,7 +170,7 @@ workspace "Hotshot"
 		"texmap/tmapflat_d2.cpp"
 	}
 
-project "H1"
+project "Hotshot-1"
 
 	defines {
 		"BUILD_DESCENT1"
@@ -196,7 +200,7 @@ project "H1"
 		files {texmapList2}
 		
 
-project "H2"
+project "Hotshot-2"
 
 	defines {
 		"BUILD_DESCENT2"
