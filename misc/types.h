@@ -13,6 +13,6 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 
 typedef uint8_t dbool;
