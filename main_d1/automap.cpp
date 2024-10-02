@@ -310,7 +310,7 @@ void create_name_canv()
 	char	name_level[128];
 
 	if (Current_level_num > 0)
-		sprintf(name_level, "%s %i: ", TXT_LEVEL, Current_level_num);
+		snprintf(name_level, 128, "%s %i: ", TXT_LEVEL, Current_level_num);
 	else
 		name_level[0] = 0;
 

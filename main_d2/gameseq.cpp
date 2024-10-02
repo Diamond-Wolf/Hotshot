@@ -707,7 +707,7 @@ try_again:
 	if (text[0] == 0)	//null string
 		goto try_again;
 
-	sprintf(filename, "%s.plr", text);
+	snprintf(filename, 14, "%s.plr", text);
 
 	fp = fopen(filename, "rb");
 
@@ -716,7 +716,7 @@ try_again:
 	/*if (fp && isatty(fileno(fp))) //[ISB] I really need to figure out something here tbh
 	{
 		fclose(fp);
-		sprintf(filename,"$%.7s.plr",text);
+		snprintf(filename,14,"$%.7s.plr",text);
 		fp = fopen(filename,"rb");
 	}*/
 #endif
@@ -1143,7 +1143,7 @@ void DoEndLevelScoreGlitz(int network)
 	if (!Cheats_enabled && (Players[Player_num].hostages_on_board == Players[Player_num].hostages_level))
 	{
 		all_hostage_points = Players[Player_num].hostages_on_board * 1000 * (Difficulty_level + 1);
-		sprintf(all_hostage_text, "%s%i\n", TXT_FULL_RESCUE_BONUS, all_hostage_points);
+		snprintf(all_hostage_text, 64, "%s%i\n", TXT_FULL_RESCUE_BONUS, all_hostage_points);
 	}
 	else
 		all_hostage_points = 0;
@@ -1151,7 +1151,7 @@ void DoEndLevelScoreGlitz(int network)
 	if (!Cheats_enabled && !(Game_mode & GM_MULTI) && (Players[Player_num].lives) && (Current_level_num == Last_level)) //player has finished the game!
 	{
 		endgame_points = Players[Player_num].lives * 10000;
-		sprintf(endgame_text, "%s%i\n", TXT_SHIP_BONUS, endgame_points);
+		snprintf(endgame_text, 64, "%s%i\n", TXT_SHIP_BONUS, endgame_points);
 		is_last_level = 1;
 	}
 	else
@@ -1161,21 +1161,22 @@ void DoEndLevelScoreGlitz(int network)
 	add_bonus_points_to_score(skill_points + energy_points + shield_points + hostage_points + all_hostage_points + endgame_points);
 
 	c = 0;
-	sprintf(m_str[c++], "%s%i", TXT_SHIELD_BONUS, shield_points);		// Return at start to lower menu...
-	sprintf(m_str[c++], "%s%i", TXT_ENERGY_BONUS, energy_points);
-	sprintf(m_str[c++], "%s%i", TXT_HOSTAGE_BONUS, hostage_points);
-	sprintf(m_str[c++], "%s%i", TXT_SKILL_BONUS, skill_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_SHIELD_BONUS, shield_points);		// Return at start to lower menu...
+	snprintf(m_str[c++], 30, "%s%i", TXT_ENERGY_BONUS, energy_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_HOSTAGE_BONUS, hostage_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_SKILL_BONUS, skill_points);
 
-	sprintf(m_str[c++], "%s", all_hostage_text);
+	snprintf(m_str[c++], 30, "%s", all_hostage_text);
 	if (!(Game_mode & GM_MULTI) && (Players[Player_num].lives) && (Current_level_num == Last_level))
-		sprintf(m_str[c++], "%s", endgame_text);
+		snprintf(m_str[c++], 30, "%s", endgame_text);
 
-	sprintf(m_str[c++], "%s%i\n", TXT_TOTAL_BONUS, shield_points + energy_points + hostage_points + skill_points + all_hostage_points + endgame_points);
-	sprintf(m_str[c++], "%s%i", TXT_TOTAL_SCORE, Players[Player_num].score);
+	snprintf(m_str[c++], 30, "%s%i\n", TXT_TOTAL_BONUS, shield_points + energy_points + hostage_points + skill_points + all_hostage_points + endgame_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_TOTAL_SCORE, Players[Player_num].score);
 
 #ifdef WINDOWS
-	sprintf(m_str[c++], "");
-	sprintf(m_str[c++], "         Done");
+	//snprintf(m_str[c++], "");
+	m_str[c++] = '\0';
+	snprintf(m_str[c++], 14, "         Done");
 #endif
 
 	for (i = 0; i < c; i++) {
@@ -1190,9 +1191,9 @@ void DoEndLevelScoreGlitz(int network)
 	// m[c].type = NM_TYPE_MENU;	m[c++].text = "Ok";
 
 	if (Current_level_num < 0)
-		sprintf(title, "%s%s %d %s\n %s %s", is_last_level ? "\n\n\n" : "\n", TXT_SECRET_LEVEL, -Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
+		snprintf(title, 128, "%s%s %d %s\n %s %s", is_last_level ? "\n\n\n" : "\n", TXT_SECRET_LEVEL, -Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
 	else
-		sprintf(title, "%s%s %d %s\n%s %s", is_last_level ? "\n\n\n" : "\n", TXT_LEVEL, Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
+		snprintf(title, 128, "%s%s %d %s\n%s %s", is_last_level ? "\n\n\n" : "\n", TXT_LEVEL, Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
 
 	Assert(c <= N_GLITZITEMS);
 
@@ -1347,7 +1348,7 @@ void StartNewLevelSecret(int level_num, int page_in_textures)
 			{
 				char	text_str[128];
 
-				sprintf(text_str, "Secret level already destroyed.\nAdvancing to level %i.", Current_level_num + 1);
+				snprintf(text_str, 64, "Secret level already destroyed.\nAdvancing to level %i.", Current_level_num + 1);
 				do_secret_message(text_str);
 			}
 		}
@@ -1411,7 +1412,7 @@ void StartNewLevelSecret(int level_num, int page_in_textures)
 		{
 			char	text_str[128];
 
-			sprintf(text_str, "Secret level already destroyed.\nAdvancing to level %i.", Current_level_num + 1);
+			snprintf(text_str, 64, "Secret level already destroyed.\nAdvancing to level %i.", Current_level_num + 1);
 			do_secret_message(text_str);
 			return;
 
@@ -1622,11 +1623,11 @@ void DoEndGame(void)
 	else if (!(Game_mode & GM_MULTI)) //not multi
 	{
 		char tname[FILENAME_LEN];
-		sprintf(tname, "%s.tex", Current_mission_filename);
+		snprintf(tname, FILENAME_LEN, "%s.tex", Current_mission_filename);
 		do_briefing_screens(tname, Last_level + 1);		//level past last is endgame breifing
 
 		//try doing special credits
-		sprintf(tname, "%s.ctb", Current_mission_filename);
+		snprintf(tname, FILENAME_LEN, "%s.ctb", Current_mission_filename);
 		credits_show(tname);
 	}
 
@@ -1824,7 +1825,7 @@ void returning_to_level_message(void)
 
 	old_fmode = Function_mode;
 	Function_mode = FMODE_MENU;
-	sprintf(msg, "Returning to level %i", Entered_from_level);
+	snprintf(msg, 32, "Returning to level %i", Entered_from_level);
 	nm_messagebox(NULL, 1, TXT_OK, msg);
 	Function_mode = old_fmode;
 
@@ -1863,7 +1864,7 @@ void advancing_to_level_message(void)
 
 	old_fmode = Function_mode;
 	Function_mode = FMODE_MENU;
-	sprintf(msg, "Base level destroyed.\nAdvancing to level %i", Entered_from_level + 1);
+	snprintf(msg, 64, "Base level destroyed.\nAdvancing to level %i", Entered_from_level + 1);
 	nm_messagebox(NULL, 1, TXT_OK, msg);
 	Function_mode = old_fmode;
 
@@ -2210,7 +2211,7 @@ void ShowLevelIntro(int level_num)
 		else //not the built-in mission.  check for add-on briefing
 		{
 			char tname[FILENAME_LEN];
-			sprintf(tname, "%s.tex", Current_mission_filename);
+			snprintf(tname, FILENAME_LEN, "%s.tex", Current_mission_filename);
 			do_briefing_screens(tname, level_num);
 		}
 

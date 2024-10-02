@@ -246,13 +246,13 @@ int read_player_file()
 	Assert(Player_num >= 0 && Player_num < MAX_PLAYERS);
 
 #ifdef MACINTOSH
-	sprintf(filename, ":Players:%.8s.plr", Players[Player_num].callsign);
+	snprintf(filename, FILENAME_LEN + 15, ":Players:%.8s.plr", Players[Player_num].callsign);
 #elif defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	snprintf(filename, FILENAME_LEN, "%s.plr", Players[Player_num].callsign);
 	get_full_file_path(filename_full_path, filename, CHOCOLATE_PILOT_DIR);
 	file = fopen(filename_full_path, "rb");
 #else
-	sprintf(filename, "%.8s.plr", Players[Player_num].callsign);
+	snprintf(filename, FILENAME_LEN, "%.8s.plr", Players[Player_num].callsign);
 	file = fopen(filename, "rb");
 #endif
 
@@ -540,13 +540,13 @@ int write_player_file()
 	errno_ret = WriteConfigFile();
 
 #ifdef MACINTOSH
-	sprintf(filename, ":Players:%.8s.plr", Players[Player_num].callsign);
+	snprintf(filename, FILENAME_LEN + 15, ":Players:%.8s.plr", Players[Player_num].callsign);
 #elif defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	snprintf(filename, FILENAME_LEN, "%s.plr", Players[Player_num].callsign);
 	get_full_file_path(filename_full_path, filename, CHOCOLATE_PILOT_DIR);
 	file = fopen(filename_full_path, "wb");
 #else
-	sprintf(filename, "%s.plr", Players[Player_num].callsign);
+	snprintf(filename, FILENAME_LEN, "%s.plr", Players[Player_num].callsign);
 	file = fopen(filename, "wb");
 #endif
 

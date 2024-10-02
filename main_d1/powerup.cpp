@@ -144,7 +144,7 @@ void powerup_basic(int redadd, int greenadd, int blueadd, int score, const char*
 	va_list	args;
 
 	va_start(args, format);
-	vsprintf(text, format, args);
+	vsnprintf(text, 120, format, args);
 	va_end(args);
 
 	PALETTE_FLASH_ADD(redadd, greenadd, blueadd);

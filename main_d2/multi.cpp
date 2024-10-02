@@ -703,9 +703,9 @@ void multi_compute_kill(int killer, int killed)
 	Assert((killed_pnum >= 0) && (killed_pnum < N_players));
 
 	if (Game_mode & GM_TEAM)
-		sprintf(killed_name, "%s (%s)", Players[killed_pnum].callsign, Netgame.team_name[get_team(killed_pnum)]);
+		snprintf(killed_name, (CALLSIGN_LEN * 2) + 4, "%s (%s)", Players[killed_pnum].callsign, Netgame.team_name[get_team(killed_pnum)]);
 	else
-		sprintf(killed_name, "%s", Players[killed_pnum].callsign);
+		snprintf(killed_name, (CALLSIGN_LEN * 2) + 4, "%s", Players[killed_pnum].callsign);
 
 	if (Newdemo_state == ND_STATE_RECORDING)
 		newdemo_record_multi_death(killed_pnum);
@@ -778,9 +778,9 @@ void multi_compute_kill(int killer, int killed)
 	killer_pnum = Objects[killer].id;
 
 	if (Game_mode & GM_TEAM)
-		sprintf(killer_name, "%s (%s)", Players[killer_pnum].callsign, Netgame.team_name[get_team(killer_pnum)]);
+		snprintf(killer_name, (CALLSIGN_LEN * 2) + 4, "%s (%s)", Players[killer_pnum].callsign, Netgame.team_name[get_team(killer_pnum)]);
 	else
-		sprintf(killer_name, "%s", Players[killer_pnum].callsign);
+		snprintf(killer_name, (CALLSIGN_LEN * 2) + 4, "%s", Players[killer_pnum].callsign);
 
 	// Beyond this point, it was definitely a player-player kill situation
 
@@ -1102,12 +1102,15 @@ multi_message_feedback(void)
 	int found = 0;
 	int i;
 
+	size_t len;
+
 	if (!(((colon = strrchr(Network_message, ':')) == NULL) || (colon - Network_message < 1) || (colon - Network_message > CALLSIGN_LEN)))
 	{
-		sprintf(feedback_result, "%s ", TXT_MESSAGE_SENT_TO);
+		snprintf(feedback_result, 200, "%s ", TXT_MESSAGE_SENT_TO);
 		if ((Game_mode & GM_TEAM) && (atoi(Network_message) > 0) && (atoi(Network_message) < 3))
 		{
-			sprintf(feedback_result + strlen(feedback_result), "%s '%s'", TXT_TEAM, Netgame.team_name[atoi(Network_message) - 1]);
+			len = strlen(feedback_result);
+			snprintf(feedback_result + len, 200 - len, "%s '%s'", TXT_TEAM, Netgame.team_name[atoi(Network_message) - 1]);
 			found = 1;
 		}
 		if (Game_mode & GM_TEAM)
@@ -1121,7 +1124,8 @@ multi_message_feedback(void)
 					found++;
 					if (!(found % 4))
 						strcat(feedback_result, "\n");
-					sprintf(feedback_result + strlen(feedback_result), "%s '%s'", TXT_TEAM, Netgame.team_name[i]);
+					len = strlen(feedback_result);
+					snprintf(feedback_result + len, 200 - len, "%s '%s'", TXT_TEAM, Netgame.team_name[i]);
 				}
 			}
 		}
@@ -1134,7 +1138,8 @@ multi_message_feedback(void)
 				found++;
 				if (!(found % 4))
 					strcat(feedback_result, "\n");
-				sprintf(feedback_result + strlen(feedback_result), "%s", Players[i].callsign);
+				len = strlen(feedback_result);
+				snprintf(feedback_result + len, 200 - len, "%s", Players[i].callsign);
 			}
 		}
 		if (!found)
@@ -1229,11 +1234,11 @@ void multi_send_message_end()
 			StartingShields = 10;
 		if (StartingShields > 100)
 		{
-			sprintf(Network_message, "%s has tried to cheat!", Players[Player_num].callsign);
+			snprintf(Network_message, MAX_MESSAGE_LEN, "%s has tried to cheat!", Players[Player_num].callsign);
 			StartingShields = 100;
 		}
 		else
-			sprintf(Network_message, "%s handicap is now %d", Players[Player_num].callsign, StartingShields);
+			snprintf(Network_message, MAX_MESSAGE_LEN, "%s handicap is now %d", Players[Player_num].callsign, StartingShields);
 
 		HUD_init_message("Telling others of your handicap of %d!", StartingShields);
 		StartingShields = i2f(StartingShields);
@@ -1318,7 +1323,7 @@ void multi_send_message_end()
 							multi_reset_object_texture(&Objects[Players[t].objnum]);
 
 					network_send_netgame_update();
-					sprintf(Network_message, "%s has changed teams!", Players[i].callsign);
+					snprintf(Network_message, MAX_MESSAGE_LEN, "%s has changed teams!", Players[i].callsign);
 					if (i == Player_num)
 					{
 						HUD_init_message("You have changed teams!");
@@ -3835,9 +3840,9 @@ void multi_save_game(uint8_t slot, unsigned int id, char* desc)
 		return;
 
 #ifndef MACINTOSH
-	sprintf(filename, "%s.mg%d", Players[Player_num].callsign, slot);
+	snprintf(filename, 128, "%s.mg%d", Players[Player_num].callsign, slot);
 #else
-	sprintf(filename, ":Players:%s.mg%d", Players[Player_num].callsign, slot);
+	snprintf(filename, 128, ":Players:%s.mg%d", Players[Player_num].callsign, slot);
 #endif
 	mprintf((0, "Save game %x on slot %d\n", id, slot));
 	HUD_init_message("Saving game #%d, '%s'", slot, desc);
@@ -3859,9 +3864,9 @@ void multi_restore_game(uint8_t slot, unsigned int id)
 	mprintf((0, "Restore game %x from slot %d\n", id, slot));
 	saved_player = Players[Player_num];
 #ifndef MACINTOSH
-	sprintf(filename, "%s.mg%d", Players[Player_num].callsign, slot);
+	snprintf(filename, 128, "%s.mg%d", Players[Player_num].callsign, slot);
 #else
-	sprintf(filename, ":Players:%s.mg%d", Players[Player_num].callsign, slot);
+	snprintf(filename, 128, ":Players:%s.mg%d", Players[Player_num].callsign, slot);
 #endif
 
 	for (i = 0; i < N_players; i++)

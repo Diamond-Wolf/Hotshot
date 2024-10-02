@@ -116,9 +116,9 @@ void kmatrix_draw_item(int  i, int* sorted)
 	}
 
 	if (Players[sorted[i]].net_killed_total + Players[sorted[i]].net_kills_total == 0)
-		sprintf(temp, "NA");
+		snprintf(temp, 3, "NA");
 	else
-		sprintf(temp, "%d%%", (int)((float)((float)Players[sorted[i]].net_kills_total / ((float)Players[sorted[i]].net_killed_total + (float)Players[sorted[i]].net_kills_total)) * 100.0));
+		snprintf(temp, 10, "%d%%", (int)((float)((float)Players[sorted[i]].net_kills_total / ((float)Players[sorted[i]].net_killed_total + (float)Players[sorted[i]].net_kills_total)) * 100.0));
 
 	x = LHX(60 + CENTERING_OFFSET(N_players) + N_players * 25);
 	gr_set_fontcolor(BM_XRGB(25, 25, 25), -1);
@@ -233,7 +233,7 @@ void kmatrix_phallic()
 	if (PhallicMan == -1)
 		strcpy(message, "There was no record set for this level.");
 	else
-		sprintf(message, "%s had the best record at %d points.", Players[PhallicMan].callsign, PhallicLimit);
+		snprintf(message, 80, "%s had the best record at %d points.", Players[PhallicMan].callsign, PhallicLimit);
 
 	grd_curcanv->cv_font = SMALL_FONT;
 	gr_set_fontcolor(gr_find_closest_color(63, 63, 63), -1);
@@ -288,7 +288,7 @@ void kmatrix_draw_deaths(int* sorted)
 		kmatrix_reactor(TXT_REACTOR_EXPLODED);
 	else
 	{
-		sprintf(reactor_message, "%s: %d %s  ", TXT_TIME_REMAINING, Countdown_seconds_left, TXT_SECONDS);
+		snprintf(reactor_message, 50, "%s: %d %s  ", TXT_TIME_REMAINING, Countdown_seconds_left, TXT_SECONDS);
 		kmatrix_reactor(reactor_message);
 	}
 
@@ -355,7 +355,7 @@ void kmatrix_draw_coop_deaths(int* sorted)
 		kmatrix_reactor(TXT_REACTOR_EXPLODED);
 	else
 	{
-		sprintf(&reactor_message[0], "%s: %d %s  ", TXT_TIME_REMAINING, Countdown_seconds_left, TXT_SECONDS);
+		snprintf(&reactor_message[0], 50, "%s: %d %s  ", TXT_TIME_REMAINING, Countdown_seconds_left, TXT_SECONDS);
 		kmatrix_reactor(&reactor_message[0]);
 	}
 

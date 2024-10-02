@@ -135,7 +135,7 @@ void powerup_basic(int redadd, int greenadd, int blueadd, int score, const char*
 	va_list	args;
 
 	va_start(args, format);
-	vsprintf(text, format, args);
+	vsnprintf(text, 120, format, args);
 	va_end(args);
 
 	PALETTE_FLASH_ADD(redadd, greenadd, blueadd);
@@ -538,7 +538,7 @@ int do_powerup(object* obj)
 			Players[Player_num].flags |= PLAYER_FLAGS_CONVERTER;
 			if ((GetKeyValue(54)) < 255)
 			{
-				sprintf(temp_string, "Energy->Shield converter! (Press %c to use)", key_to_ascii(GetKeyValue(54)));
+				snprintf(temp_string, 50, "Energy->Shield converter! (Press %c to use)", key_to_ascii(GetKeyValue(54)));
 				powerup_basic(15, 0, 15, 0, temp_string);
 			}
 			else
@@ -628,7 +628,7 @@ int do_powerup(object* obj)
 			multi_send_play_sound(Powerup_info[obj->id].hit_sound, F1_0);
 #endif
 			digi_play_sample(Powerup_info[obj->id].hit_sound, F1_0);
-			sprintf(msg, "HEADLIGHT BOOST! (Headlight is %s)", Headlight_active_default ? "ON" : "OFF");
+			snprintf(msg, 36, "HEADLIGHT BOOST! (Headlight is %s)", Headlight_active_default ? "ON" : "OFF");
 			powerup_basic(15, 0, 15, 0, msg);
 			if (Headlight_active_default)
 				Players[Player_num].flags |= PLAYER_FLAGS_HEADLIGHT_ON;

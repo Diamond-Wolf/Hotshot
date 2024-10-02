@@ -1435,7 +1435,7 @@ int newdemo_read_demo_start(int rnd_demo)
 	{
 		newmenu_item m[1];
 
-		sprintf(text, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_CORRUPT);
+		snprintf(text, 50, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_CORRUPT);
 		m[0].type = NM_TYPE_TEXT; m[0].text = text;
 		newmenu_do(NULL, NULL, sizeof(m) / sizeof(*m), m, NULL);
 		return 1;
@@ -1446,7 +1446,7 @@ int newdemo_read_demo_start(int rnd_demo)
 	{
 		newmenu_item m[2];
 
-		sprintf(text, "%s %s", TXT_CANT_PLAYBACK, TXT_RECORDED);
+		snprintf(text, 50, "%s %s", TXT_CANT_PLAYBACK, TXT_RECORDED);
 		m[0].type = NM_TYPE_TEXT; m[0].text = text;
 		m[1].type = NM_TYPE_TEXT; m[1].text = const_cast<char*>("    In Descent: First Strike");
 
@@ -1457,7 +1457,7 @@ int newdemo_read_demo_start(int rnd_demo)
 	{
 		newmenu_item m[2];
 
-		sprintf(text, "%s %s", TXT_CANT_PLAYBACK, TXT_RECORDED);
+		snprintf(text, 50, "%s %s", TXT_CANT_PLAYBACK, TXT_RECORDED);
 		m[0].type = NM_TYPE_TEXT; m[0].text = text;
 		m[1].type = NM_TYPE_TEXT; m[1].text = const_cast<char*>("   In Unknown Descent version");
 
@@ -1469,7 +1469,7 @@ int newdemo_read_demo_start(int rnd_demo)
 		if (!rnd_demo) 
 		{
 			newmenu_item m[1];
-			sprintf(text, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_OLD);
+			snprintf(text, 50, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_OLD);
 			m[0].type = NM_TYPE_TEXT; m[0].text = text;
 			newmenu_do(NULL, NULL, sizeof(m) / sizeof(*m), m, NULL);
 		}
@@ -1549,7 +1549,7 @@ int newdemo_read_demo_start(int rnd_demo)
 		{
 			newmenu_item m[1];
 
-			sprintf(text, TXT_NOMISSION4DEMO, current_mission);
+			snprintf(text, 50, TXT_NOMISSION4DEMO, current_mission);
 			m[0].type = NM_TYPE_TEXT; m[0].text = text;
 			newmenu_do(NULL, NULL, sizeof(m) / sizeof(*m), m, NULL);
 		}
@@ -3170,7 +3170,7 @@ void newdemo_stop_recording()
 		num = atoi(&(filename[i]));
 		num++;
 		filename[i] = '\0';
-		sprintf(newfile, "%s%d", filename, num);
+		snprintf(newfile, 15, "%s%d", filename, num);
 		strncpy(filename, newfile, 8);
 		filename[8] = '\0';
 	}
@@ -3225,7 +3225,7 @@ try_again:
 			strcat(save_file, ".dem");
 		}
 		else
-			sprintf(save_file, "%stmp%d.dem", DEMO_DIR, tmpcnt++);
+			snprintf(save_file, 7+FILENAME_LEN, "%stmp%d.dem", DEMO_DIR, tmpcnt++);
 		remove(save_file);
 		rename(DEMO_FILENAME, save_file);
 #endif

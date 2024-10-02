@@ -45,7 +45,7 @@ int	FileFindFirst(const char* search_str, FILEFINDSTRUCT* ffstruct)
 	memset(full_search_str, 0, CHOCOLATE_MAX_FILE_PATH_SIZE);
 	snprintf(full_search_str, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s%s", dir, temp_search_path);
 #else
-	sprintf(full_search_str, "%s", search_str);
+	snprintf(full_search_str, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s", search_str);
 #endif
 
 	//Open the directory for searching

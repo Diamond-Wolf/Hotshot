@@ -538,7 +538,7 @@ void draw_item(bkg* b, newmenu_item* item, int is_current, int tiny)
 		int j;
 		if (item->value < item->min_value) item->value = item->min_value;
 		if (item->value > item->max_value) item->value = item->max_value;
-		sprintf(item->saved_text, "%s\t%s", item->text, SLIDER_LEFT);
+		snprintf(item->saved_text, NM_MAX_TEXT_LEN+1, "%s\t%s", item->text, SLIDER_LEFT);
 		for (j = 0; j < (item->max_value - item->min_value + 1); j++)
 		{
 			strcat(item->saved_text, SLIDER_MIDDLE);
@@ -583,7 +583,7 @@ void draw_item(bkg* b, newmenu_item* item, int is_current, int tiny)
 		if (item->value < item->min_value) item->value = item->min_value;
 		if (item->value > item->max_value) item->value = item->max_value;
 		nm_string(b, item->w, item->x, item->y, item->text);
-		sprintf(text, "%d", item->value);
+		snprintf(text, 10, "%d", item->value);
 		nm_rstring(b, item->right_offset, item->x, item->y, text);
 	}
 	break;
@@ -839,12 +839,12 @@ RePaintNewmenu4:
 		{
 			int w1, h1, aw1;
 			nothers++;
-			sprintf(item[i].saved_text, "%s", SLIDER_LEFT);
+			snprintf(item[i].saved_text, NM_MAX_TEXT_LEN+1, "%s", SLIDER_LEFT);
 			for (j = 0; j < (item[i].max_value - item[i].min_value + 1); j++)
 			{
-				sprintf(item[i].saved_text, "%s%s", item[i].saved_text, SLIDER_MIDDLE);
+				snprintf(item[i].saved_text, NM_MAX_TEXT_LEN+1, "%s%s", item[i].saved_text, SLIDER_MIDDLE);
 			}
-			sprintf(item[i].saved_text, "%s%s", item[i].saved_text, SLIDER_RIGHT);
+			snprintf(item[i].saved_text, NM_MAX_TEXT_LEN+1, "%s%s", item[i].saved_text, SLIDER_RIGHT);
 			gr_get_string_size(item[i].saved_text, &w1, &h1, &aw1);
 			string_width += w1 + aw;
 		}
@@ -881,10 +881,10 @@ RePaintNewmenu4:
 			int w1, h1, aw1;
 			char test_text[20];
 			nothers++;
-			sprintf(test_text, "%d", item[i].max_value);
+			snprintf(test_text, 20, "%d", item[i].max_value);
 			gr_get_string_size(test_text, &w1, &h1, &aw1);
 			item[i].right_offset = w1;
-			sprintf(test_text, "%d", item[i].min_value);
+			snprintf(test_text, 20, "%d", item[i].min_value);
 			gr_get_string_size(test_text, &w1, &h1, &aw1);
 			if (w1 > item[i].right_offset)
 				item[i].right_offset = w1;
@@ -1965,8 +1965,9 @@ int nm_messagebox1(const char* title, void (*subfunction)(int nitems, newmenu_it
 		nm_message_items[i].type = NM_TYPE_MENU; nm_message_items[i].text = s;
 	}
 	format = va_arg(args, char*);
-	sprintf(nm_text, "");
-	vsprintf(nm_text, format, args);
+	//snprintf(nm_text, 1, "");
+	nm_text[0] = '\0';
+	vsnprintf(nm_text, MESSAGEBOX_TEXT_SIZE, format, args);
 	va_end(args);
 
 	Assert(strlen(nm_text) < MESSAGEBOX_TEXT_SIZE);
@@ -1992,8 +1993,9 @@ int nm_messagebox(const char* title, int nchoices, ...)
 		nm_message_items[i].type = NM_TYPE_MENU; nm_message_items[i].text = s;
 	}
 	format = va_arg(args, char*);
-	sprintf(nm_text, "");
-	vsprintf(nm_text, format, args);
+	//snprintf(nm_text, 1, "");
+	nm_text[0] = '\0';
+	vsnprintf(nm_text, MESSAGEBOX_TEXT_SIZE, format, args);
 	va_end(args);
 
 	Assert(strlen(nm_text) < MESSAGEBOX_TEXT_SIZE);
@@ -2044,7 +2046,7 @@ void delete_player_saved_games(char* name)
 		get_full_file_path(filename_full_path, filename, CHOCOLATE_SAVE_DIR);
 		_unlink(filename_full_path);
 #else
-		sprintf(filename, "%s.sg%d", name, i);
+		snprintf(filename, 16, "%s.sg%d", name, i);
 		_unlink(filename);
 #endif
 	}
@@ -3372,10 +3374,10 @@ void show_extra_netgame_info(int choice)
 		m[i].type = NM_TYPE_TEXT;
 	}
 
-	sprintf(mtext[num], "Game: %s", Active_games[choice].game_name); num++;
-	sprintf(mtext[num], "Mission: %s", Active_games[choice].mission_title); num++;
-	sprintf(mtext[num], "Current Level: %d", Active_games[choice].levelnum); num++;
-	sprintf(mtext[num], "Difficulty: %s", MENU_DIFFICULTY_TEXT(Active_games[choice].difficulty)); num++;
+	snprintf(mtext[num], 50, "Game: %s", Active_games[choice].game_name); num++;
+	snprintf(mtext[num], 50, "Mission: %s", Active_games[choice].mission_title); num++;
+	snprintf(mtext[num], 50, "Current Level: %d", Active_games[choice].levelnum); num++;
+	snprintf(mtext[num], 50, "Difficulty: %s", MENU_DIFFICULTY_TEXT(Active_games[choice].difficulty)); num++;
 
 	already_showing_info = 1;
 	newmenu_dotiny2(NULL, "Netgame Information", num, m, NULL);

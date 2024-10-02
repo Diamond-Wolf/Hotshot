@@ -445,7 +445,7 @@ int write_player_file()
 	get_full_file_path(filename_full_path, filename, CHOCOLATE_PILOT_DIR);
 	file = fopen(filename_full_path, "wb");
 #else
-	sprintf(filename, "%s.plr", Players[Player_num].callsign);
+	snprintf(filename, 13, "%s.plr", Players[Player_num].callsign);
 	file = fopen(filename, "wb");
 #endif
 

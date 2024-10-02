@@ -638,7 +638,7 @@ void do_new_game_menu()
 		int choice;
 
 	try_again:
-		sprintf(info_text, "%s %d", TXT_START_ANY_LEVEL, player_highest_level);
+		snprintf(info_text, 80, "%s %d", TXT_START_ANY_LEVEL, player_highest_level);
 
 		m[0].type = NM_TYPE_TEXT; m[0].text = info_text;
 		m[1].type = NM_TYPE_INPUT; m[1].text_len = 10; m[1].text = num_text;

@@ -814,7 +814,8 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 			return WHP_NO_KEY;
 		}
 
-	if (w->type == WALL_DOOR)
+	if (w->type == WALL_DOOR) 
+	{
 		if ((w->flags & WALL_DOOR_LOCKED) && !(special_boss_opening_allowed(seg - Segments, side))) 
 		{
 			if (playernum == Player_num)
@@ -835,6 +836,7 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 			return WHP_DOOR;
 
 		}
+	}
 
 	return WHP_NOT_SPECIAL;		//default is treat like normal wall
 }

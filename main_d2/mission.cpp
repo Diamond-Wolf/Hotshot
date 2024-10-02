@@ -659,7 +659,7 @@ int load_mission(int mission_num)
 	{
 		char t[50];
 		extern void bm_read_extra_robots(char* fname, int type);
-		sprintf(t,"%s.ham",Current_mission_filename);
+		snprintf(t, 50, "%s.ham", Current_mission_filename);
 		bm_read_extra_robots(t,enhanced_mission);
 		strncpy(t,Current_mission_filename,6);
 		strcat(t,"-l.mvl");

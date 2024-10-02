@@ -73,7 +73,7 @@ extern char SoundFontFilename[];
 //Preferred device for the MME MIDI device. Default to -1, which uses the MIDI mapper
 extern int PreferredMMEDevice;
 
-typedef struct
+typedef struct midievent_t
 {
 	uint32_t delta;
 

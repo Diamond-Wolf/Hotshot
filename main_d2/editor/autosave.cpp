@@ -137,7 +137,7 @@ void clock_message( int seconds, char *format, ... ) {
 	va_list ap;
 
 	va_start(ap, format);
-  	vsprintf(the_time, format, ap);
+  	vsnprintf(the_time, 14, format, ap);
 	va_end(ap);
 
   	print_clock(seconds, the_time);

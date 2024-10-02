@@ -1036,7 +1036,7 @@ void game_draw_multi_message()
 	{
 		gr_set_curfont(GAME_FONT);    //GAME_FONT );
 		gr_set_fontcolor(gr_getcolor(0, 63, 0), -1);
-		sprintf(temp_string, "%s: %s_", TXT_MESSAGE, Network_message);
+		snprintf(temp_string, MAX_MULTI_MESSAGE_LEN + 25, "%s: %s_", TXT_MESSAGE, Network_message);
 		draw_centered_text(grd_curcanv->cv_bitmap.bm_h / 2 - 16, temp_string);
 
 	}
@@ -1045,7 +1045,7 @@ void game_draw_multi_message()
 	{
 		gr_set_curfont(GAME_FONT);    //GAME_FONT );
 		gr_set_fontcolor(gr_getcolor(0, 63, 0), -1);
-		sprintf(temp_string, "%s #%d: %s_", TXT_MACRO, multi_defining_message, Network_message);
+		snprintf(temp_string, MAX_MULTI_MESSAGE_LEN + 25, "%s #%d: %s_", TXT_MACRO, multi_defining_message, Network_message);
 		draw_centered_text(grd_curcanv->cv_bitmap.bm_h / 2 - 16, temp_string);
 	}
 }
@@ -1133,14 +1133,14 @@ void game_draw_hud_stuff()
 
 		if (Newdemo_state == ND_STATE_PLAYBACK) {
 			if (Newdemo_vcr_state != ND_STATE_PRINTSCREEN) {
-				sprintf(message, "%s (%d%%%% %s)", TXT_DEMO_PLAYBACK, newdemo_get_percent_done(), TXT_DONE);
+				snprintf(message, 128, "%s (%d%%%% %s)", TXT_DEMO_PLAYBACK, newdemo_get_percent_done(), TXT_DONE);
 			}
 			else {
-				sprintf(message, "");
+				snprintf(message, 128, "");
 			}
 		}
 		else
-			sprintf(message, TXT_DEMO_RECORDING);
+			snprintf(message, 128, TXT_DEMO_RECORDING);
 
 		gr_set_curfont(GAME_FONT);    //GAME_FONT );
 		gr_set_fontcolor(gr_getcolor(27, 0, 0), -1);
@@ -1315,8 +1315,8 @@ void save_screen_shot(int automap_flag)
 	gr_ubitmap(0, 0, &screen_canv->cv_bitmap);
 
 	if (savenum > 99) savenum = 0;
-	sprintf(savename, "screen%02d.pcx", savenum++);
-	sprintf(message, "%s '%s'", TXT_DUMPING_SCREEN, savename);
+	snprintf(savename, 13, "screen%02d.pcx", savenum++);
+	snprintf(message, 100, "%s '%s'", TXT_DUMPING_SCREEN, savename);
 
 	gr_set_current_canvas(&VR_screen_buffer);
 	save_font = grd_curcanv->cv_font;
@@ -1576,7 +1576,7 @@ void do_cheat_menu()
 	newmenu_item mm[16];
 	char score_text[21];
 
-	sprintf(score_text, "%d", Players[Player_num].score);
+	snprintf(score_text, 21, "%d", Players[Player_num].score);
 
 	mm[0].type = NM_TYPE_CHECK; mm[0].value = Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE; mm[0].text = (char*)"Invulnerability";
 	mm[1].type = NM_TYPE_CHECK; mm[1].value = Players[Player_num].flags & PLAYER_FLAGS_IMMATERIAL; mm[1].text = (char*)"Immaterial";
@@ -2615,12 +2615,12 @@ void ReadControls()
 #endif
 
 		john_cheat_func_3(key);
-
+		
 #ifndef RELEASE
 #ifdef NETWORK
 		if ((key & KEY_DEBUGGED) && (Game_mode & GM_MULTI)) {
 			Network_message_reciever = 100;		// Send to everyone...
-			sprintf(Network_message, "%s %s", TXT_I_AM_A, TXT_CHEATER);
+			snprintf(Network_message, MAX_MESSAGE_LEN, "%s %s", TXT_I_AM_A, TXT_CHEATER);
 		}
 #endif
 #endif

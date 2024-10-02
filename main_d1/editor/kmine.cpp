@@ -93,7 +93,7 @@ int SaveMine()
 {
 	char  ErrorMessage[200];
 
-	sprintf( ErrorMessage, "Save Mine not available in demo version.\n");
+	snprintf( ErrorMessage, 200, "Save Mine not available in demo version.\n");
 	MessageBox( -2, -2, 1, ErrorMessage, "Ok" );
 	return 1;
 }
@@ -243,7 +243,7 @@ int med_save_situation(char * filename)
 	if (!SaveFile)	{
 		char  ErrorMessage[200];
 
-		sprintf( ErrorMessage, "ERROR: Unable to open %s\n", filename );
+		snprintf( ErrorMessage, 200, "ERROR: Unable to open %s\n", filename );
 		MessageBox( -2, -2, 1, ErrorMessage, "Ok" );
 		return 1;
 	}

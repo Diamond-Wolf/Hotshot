@@ -85,7 +85,7 @@ void err_printf(FILE* my_file, char* format, ...)
 	char		message[256];
 
 	va_start(args, format);
-	vsprintf(message, format, args);
+	vsnprintf(message, 256, format, args);
 	va_end(args);
 
 	mprintf((1, "%s", message));
@@ -99,7 +99,7 @@ void warning_printf(FILE* my_file, char* format, ...)
 	char		message[256];
 
 	va_start(args, format);
-	vsprintf(message, format, args);
+	vsnprintf(message, 256, format, args);
 	va_end(args);
 
 	mprintf((0, "%s", message));
@@ -557,7 +557,7 @@ void write_game_text_file(char* filename)
 	if (!my_file) {
 		char  ErrorMessage[200];
 
-		sprintf(ErrorMessage, "ERROR: Unable to open %s\nErrno = %i", my_file, errno);
+		snprintf(ErrorMessage, 200, "ERROR: Unable to open %s\nErrno = %i", my_file, errno);
 		stop_time();
 		gr_palette_load(gr_palette);
 		nm_messagebox(NULL, 1, "Ok", ErrorMessage);
@@ -1019,7 +1019,7 @@ void say_totals_all(void)
 	if (!my_file) {
 		char  ErrorMessage[200];
 
-		sprintf(ErrorMessage, "ERROR: Unable to open levels.all\nErrno=%i", errno);
+		snprintf(ErrorMessage, 200, "ERROR: Unable to open levels.all\nErrno=%i", errno);
 		stop_time();
 		gr_palette_load(gr_palette);
 		nm_messagebox(NULL, 1, "Ok", ErrorMessage);
@@ -1094,7 +1094,7 @@ void dump_used_textures_all(void)
 	if (!my_file) {
 		char  ErrorMessage[200];
 
-		sprintf(ErrorMessage, "ERROR: Can't open textures.dmp\nErrno=%i", errno);
+		snprintf(ErrorMessage, 200, "ERROR: Can't open textures.dmp\nErrno=%i", errno);
 		stop_time();
 		gr_palette_load(gr_palette);
 		nm_messagebox(NULL, 1, "Ok", ErrorMessage);

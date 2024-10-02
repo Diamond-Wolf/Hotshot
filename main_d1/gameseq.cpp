@@ -569,7 +569,7 @@ try_again:
 	if (text[0] == 0)	//null string
 		goto try_again;
 
-	sprintf(filename, "%s.plr", text);
+	snprintf(filename, 14, "%s.plr", text);
 
 	fp = fopen(filename, "rb");
 
@@ -577,7 +577,7 @@ try_again:
 	/*if (fp && isatty(fileno(fp))) //[ISB] fixme pls
 	{
 		fclose(fp);
-		sprintf(filename, "$%.7s.plr", text);
+		snprintf(filename, 14, "$%.7s.plr", text);
 		fp = fopen(filename, "rb");
 	}*/
 
@@ -702,7 +702,7 @@ void LoadLevel(int level_num)
 #ifdef SHAREWARE
 	{
 		static char t[13];
-		sprintf(t, "LEVEL%02d.SDL", level_num);
+		snprintf(t, 13, "LEVEL%02d.SDL", level_num);
 		level_name = t;
 	}
 #else
@@ -848,7 +848,7 @@ void DoEndLevelScoreGlitz(int network)
 	if (!Cheats_enabled && (Players[Player_num].hostages_on_board == Players[Player_num].hostages_level)) 
 	{
 		all_hostage_points = Players[Player_num].hostages_on_board * 1000 * (Difficulty_level + 1);
-		sprintf(all_hostage_text, "%s%i\n", TXT_FULL_RESCUE_BONUS, all_hostage_points);
+		snprintf(all_hostage_text, 64, "%s%i\n", TXT_FULL_RESCUE_BONUS, all_hostage_points);
 	}
 	else
 		all_hostage_points = 0;
@@ -856,7 +856,7 @@ void DoEndLevelScoreGlitz(int network)
 	if (!Cheats_enabled && !(Game_mode & GM_MULTI) && (Players[Player_num].lives) && (Current_level_num == Last_level)) //player has finished the game!
 	{
 		endgame_points = Players[Player_num].lives * 10000;
-		sprintf(endgame_text, "%s%i\n", TXT_SHIP_BONUS, endgame_points);
+		snprintf(endgame_text, 64, "%s%i\n", TXT_SHIP_BONUS, endgame_points);
 		is_last_level = 1;
 	}
 	else
@@ -865,17 +865,17 @@ void DoEndLevelScoreGlitz(int network)
 	add_bonus_points_to_score(skill_points + energy_points + shield_points + hostage_points + all_hostage_points + endgame_points);
 
 	c = 0;
-	sprintf(m_str[c++], "%s%i", TXT_SHIELD_BONUS, shield_points);		// Return at start to lower menu...
-	sprintf(m_str[c++], "%s%i", TXT_ENERGY_BONUS, energy_points);
-	sprintf(m_str[c++], "%s%i", TXT_HOSTAGE_BONUS, hostage_points);
-	sprintf(m_str[c++], "%s%i", TXT_SKILL_BONUS, skill_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_SHIELD_BONUS, shield_points);		// Return at start to lower menu...
+	snprintf(m_str[c++], 30, "%s%i", TXT_ENERGY_BONUS, energy_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_HOSTAGE_BONUS, hostage_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_SKILL_BONUS, skill_points);
 
-	sprintf(m_str[c++], "%s", all_hostage_text);
+	snprintf(m_str[c++], 30, "%s", all_hostage_text);
 	if (!(Game_mode & GM_MULTI) && (Players[Player_num].lives) && (Current_level_num == Last_level))
-		sprintf(m_str[c++], "%s", endgame_text);
+		snprintf(m_str[c++], 30, "%s", endgame_text);
 
-	sprintf(m_str[c++], "%s%i\n", TXT_TOTAL_BONUS, shield_points + energy_points + hostage_points + skill_points + all_hostage_points + endgame_points);
-	sprintf(m_str[c++], "%s%i", TXT_TOTAL_SCORE, Players[Player_num].score);
+	snprintf(m_str[c++], 30, "%s%i\n", TXT_TOTAL_BONUS, shield_points + energy_points + hostage_points + skill_points + all_hostage_points + endgame_points);
+	snprintf(m_str[c++], 30, "%s%i", TXT_TOTAL_SCORE, Players[Player_num].score);
 
 	for (i = 0; i < c; i++) 
 	{
@@ -884,9 +884,9 @@ void DoEndLevelScoreGlitz(int network)
 	}
 
 	if (Current_level_num < 0)
-		sprintf(title, "%s%s %d %s\n %s %s", is_last_level ? "\n\n\n" : "\n", TXT_SECRET_LEVEL, -Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
+		snprintf(title, 128, "%s%s %d %s\n %s %s", is_last_level ? "\n\n\n" : "\n", TXT_SECRET_LEVEL, -Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
 	else
-		sprintf(title, "%s%s %d %s\n%s %s", is_last_level ? "\n\n\n" : "\n", TXT_LEVEL, Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
+		snprintf(title, 128, "%s%s %d %s\n%s %s", is_last_level ? "\n\n\n" : "\n", TXT_LEVEL, Current_level_num, TXT_COMPLETE, Current_level_name, TXT_DESTROYED);
 
 	Assert(c <= N_GLITZITEMS);
 

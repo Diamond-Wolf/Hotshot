@@ -1939,7 +1939,7 @@ int load_level(char* filename_passed)
 		{
 			char  ErrorMessage[200];
 
-			sprintf(ErrorMessage, "Warning: %i errors in %s!\n", Errors_in_mine, Level_being_loaded);
+			snprintf(ErrorMessage, 200, "Warning: %i errors in %s!\n", Errors_in_mine, Level_being_loaded);
 			stop_time();
 			gr_palette_load(gr_palette);
 			nm_messagebox(NULL, 1, "Continue", ErrorMessage);
@@ -1956,7 +1956,7 @@ int load_level(char* filename_passed)
 	{
 		char  ErrorMessage[200];
 
-		sprintf(ErrorMessage,
+		snprintf(ErrorMessage, 200,
 			"You just loaded a old version\n"
 			"level.  Would you like to save\n"
 			"it as a current version level?");
@@ -2260,7 +2260,7 @@ int save_level_sub(char* filename, int compiled_version)
 			{
 				char  ErrorMessage[200];
 
-				sprintf(ErrorMessage, "Warning: %i errors in this mine!\n", Errors_in_mine);
+				snprintf(ErrorMessage, 200, "Warning: %i errors in this mine!\n", Errors_in_mine);
 				stop_time();
 				gr_palette_load(gr_palette);
 
@@ -2294,7 +2294,7 @@ int save_level_sub(char* filename, int compiled_version)
 		char fname[20];
 		_splitpath(temp_filename, NULL, NULL, fname, NULL);
 
-		sprintf(ErrorMessage, \
+		snprintf(ErrorMessage, 256, \
 			"ERROR: Cannot write to '%s'.\nYou probably need to check out a locked\nversion of the file. You should save\nthis under a different filename, and then\ncheck out a locked copy by typing\n\'co -l %s.lvl'\nat the DOS prompt.\n"
 			, temp_filename, fname);
 		stop_time();

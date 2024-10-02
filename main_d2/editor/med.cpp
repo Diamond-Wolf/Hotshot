@@ -174,7 +174,7 @@ void editor_status( const char *format, ... )
 	va_list ap;
 
 	va_start(ap, format);
-	vsprintf(status_line, format, ap);
+	vsnprintf(status_line, DIAGNOSTIC_MESSAGE_MAX, format, ap);
 	va_end(ap);
 
 	print_status_bar(status_line);
@@ -217,7 +217,7 @@ void diagnostic_message(const char *format, ... )
 	va_list ap;
 
 	va_start(ap, format);
-	vsprintf(diag_line, format, ap);
+	vsnprintf(diag_line, DIAGNOSTIC_MESSAGE_MAX, format, ap);
 	va_end(ap);
 
 	editor_status(diag_line);
@@ -231,7 +231,7 @@ void editor_sub_status( const char *format, ... )
 	va_list ap;
 
 	va_start(ap, format);
-	vsprintf(sub_status_line, format, ap);
+	vsnprintf(sub_status_line, DIAGNOSTIC_MESSAGE_MAX, format, ap);
 	va_end(ap);
 
 	gr_set_current_canvas( NULL );
@@ -940,7 +940,7 @@ void gamestate_restore_check()
 
 	if (gamestate_not_restored)
 	{
-		sprintf( Message, "Do you wish to restore game state?\n");
+		snprintf( Message, 36, "Do you wish to restore game state?\n");
 	
 		if (MessageBox( -2, -2, 2, Message, "Yes", "No" )==1)
 		{
@@ -1475,7 +1475,7 @@ void dump_stuff(void)
 int MarkStart(void)
 {
 	char mystr[30];
-	sprintf(mystr,"mark %i start",Mark_count);
+	snprintf(mystr,30,"mark %i start",Mark_count);
 
 	return 1;
 }
@@ -1483,7 +1483,7 @@ int MarkStart(void)
 int MarkEnd(void)
 {
 	char mystr[30];
-	sprintf(mystr,"mark %i end",Mark_count);
+	snprintf(mystr,30,"mark %i end",Mark_count);
 	Mark_count++;
 
 	return 1;

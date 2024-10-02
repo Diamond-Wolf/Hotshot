@@ -153,9 +153,9 @@ int state_get_save_file(char* fname, char* dsc, int multi)
 		get_full_file_path(filename[i], temp_filename, CHOCOLATE_SAVE_DIR);
 #else
 		if (!multi)
-			sprintf(filename[i], "%s.sg%d", Players[Player_num].callsign, i);
+			snprintf(filename[i], 20, "%s.sg%d", Players[Player_num].callsign, i);
 		else
-			sprintf(filename[i], "%s.mg%d", Players[Player_num].callsign, i);
+			snprintf(filename[i], 20, "%s.mg%d", Players[Player_num].callsign, i);
 #endif
 		valid = 0;
 		fp = fopen(filename[i], "rb");
@@ -234,9 +234,9 @@ int state_get_restore_file(char* fname, int multi)
 		get_full_file_path(filename[i], temp_filename, CHOCOLATE_SAVE_DIR);
 #else
 		if (!multi)
-			sprintf(filename[i], "%s.sg%d", Players[Player_num].callsign, i);
+			snprintf(filename[i], 20, "%s.sg%d", Players[Player_num].callsign, i);
 		else
-			sprintf(filename[i], "%s.mg%d", Players[Player_num].callsign, i);
+			snprintf(filename[i], 20, "%s.mg%d", Players[Player_num].callsign, i);
 #endif
 		valid = 0;
 		fp = fopen(filename[i], "rb");
@@ -316,7 +316,7 @@ int state_save_old_game(int slotnum, char* sg_name, player* sg_player,
 	snprintf(temp_buffer, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s.sg%d", sg_player->callsign, slotnum);
 	get_full_file_path(filename, temp_buffer, CHOCOLATE_SAVE_DIR);
 #else
-	sprintf(filename, "%s.sg%d", sg_player->callsign, slotnum);
+	snprintf(filename, 128, "%s.sg%d", sg_player->callsign, slotnum);
 #endif
 	fp = fopen(filename, "wb");
 	if (!fp) return 0;

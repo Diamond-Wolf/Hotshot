@@ -132,7 +132,7 @@ void load_text(int total_strings)
 			decode_text_line(Text_string[i]);
 
 		//scan for special chars (like \n)
-		for (p=Text_string[i];p=strchr(p,'\\');)
+		for (p=Text_string[i]; (p=strchr(p,'\\')); )
 		{
 			char newchar;
 

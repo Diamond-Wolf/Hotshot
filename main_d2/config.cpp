@@ -351,58 +351,58 @@ int WriteConfigFile()
 	if (infile == NULL) {
 		return 1;
 	}
-	sprintf (str, "%s=0x%x\n", digi_dev8_str, Config_digi_type);
+	snprintf(str, 256, "%s=0x%x\n", digi_dev8_str, Config_digi_type);
 	fputs(str, infile);
-	sprintf (str, "%s=0x%x\n", digi_dev16_str, digi_driver_board_16);
+	snprintf(str, 256, "%s=0x%x\n", digi_dev16_str, digi_driver_board_16);
 	fputs(str, infile);
-	sprintf (str, "%s=0x%x\n", digi_port_str, digi_driver_port);
+	snprintf(str, 256, "%s=0x%x\n", digi_port_str, digi_driver_port);
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", digi_irq_str, digi_driver_irq);
+	snprintf(str, 256, "%s=%d\n", digi_irq_str, digi_driver_irq);
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", digi_dma8_str, Config_digi_dma);
+	snprintf(str, 256, "%s=%d\n", digi_dma8_str, Config_digi_dma);
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", digi_dma16_str, digi_driver_dma_16);
+	snprintf(str, 256, "%s=%d\n", digi_dma16_str, digi_driver_dma_16);
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", digi_volume_str, Config_digi_volume);
+	snprintf(str, 256, "%s=%d\n", digi_volume_str, Config_digi_volume);
 	fputs(str, infile);
-	sprintf (str, "%s=0x%x\n", midi_dev_str, Config_midi_type);
+	snprintf(str, 256, "%s=0x%x\n", midi_dev_str, Config_midi_type);
 	fputs(str, infile);
-	sprintf (str, "%s=0x%x\n", midi_port_str, digi_midi_port);
+	snprintf(str, 256, "%s=0x%x\n", midi_port_str, digi_midi_port);
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", midi_volume_str, Config_midi_volume);
+	snprintf(str, 256, "%s=%d\n", midi_volume_str, Config_midi_volume);
 	fputs(str, infile);
 	if (CurrentDataVersion != DataVer::DEMO)
 	{
-		sprintf(str, "%s=%d\n", redbook_enabled_str, FindArg("-noredbook") ? save_redbook_enabled : Redbook_enabled);
+		snprintf(str, 256, "%s=%d\n", redbook_enabled_str, FindArg("-noredbook") ? save_redbook_enabled : Redbook_enabled);
 		fputs(str, infile);
-		sprintf(str, "%s=%d\n", redbook_volume_str, Config_redbook_volume);
+		snprintf(str, 256, "%s=%d\n", redbook_volume_str, Config_redbook_volume);
 		fputs(str, infile);
 	}
-	sprintf (str, "%s=%d\n", stereo_rev_str, Config_channels_reversed);
+	snprintf(str, 256, "%s=%d\n", stereo_rev_str, Config_channels_reversed);
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", gamma_level_str, gamma);
+	snprintf(str, 256, "%s=%d\n", gamma_level_str, gamma);
 	fputs(str, infile);
 	if (Detail_level == NUM_DETAIL_LEVELS-1)
-		sprintf (str, "%s=%d,%d,%d,%d,%d,%d,%d\n", detail_level_str, Detail_level,
+		snprintf(str, 256, "%s=%d,%d,%d,%d,%d,%d,%d\n", detail_level_str, Detail_level,
 				Object_complexity,Object_detail,Wall_detail,Wall_render_depth,Debris_amount,SoundChannels);
 	else
-		sprintf (str, "%s=%d\n", detail_level_str, Detail_level);
+		snprintf(str, 256, "%s=%d\n", detail_level_str, Detail_level);
 	fputs(str, infile);
 
-	sprintf (str, "%s=%s\n", last_player_str, Players[Player_num].callsign );
+	snprintf(str, 256, "%s=%s\n", last_player_str, Players[Player_num].callsign );
 	fputs(str, infile);
-	sprintf (str, "%s=%s\n", last_mission_str, config_last_mission );
+	snprintf(str, 256, "%s=%s\n", last_mission_str, config_last_mission );
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", config_vr_type_str, Config_vr_type );
+	snprintf(str, 256, "%s=%d\n", config_vr_type_str, Config_vr_type );
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", config_vr_resolution_str, Config_vr_resolution );
+	snprintf(str, 256, "%s=%d\n", config_vr_resolution_str, Config_vr_resolution );
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", config_vr_tracking_str, Config_vr_tracking );
+	snprintf(str, 256, "%s=%d\n", config_vr_tracking_str, Config_vr_tracking );
 	fputs(str, infile);
-	sprintf (str, "%s=%d\n", movie_hires_str, SaveMovieHires );
+	snprintf(str, 256, "%s=%d\n", movie_hires_str, SaveMovieHires );
 	fputs(str, infile);
 #ifdef NETWORK
-	sprintf(str, "%s=%d\n", port_number_str, Current_Port);
+	snprintf(str, 256, "%s=%d\n", port_number_str, Current_Port);
 	fputs(str, infile);
 #endif
 

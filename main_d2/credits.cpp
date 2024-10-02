@@ -145,11 +145,11 @@ void credits_show(char *credits_filename)
 		dirty_box[i].left = dirty_box[i].top = dirty_box[i].width = dirty_box[i].height = 0;
 	}
 
-	sprintf(filename, "%s", CREDITS_FILE);
+	snprintf(filename, 32, "%s", CREDITS_FILE);
 	have_bin_file = 0;
 	if (credits_filename) 
 	{
-		strcpy(filename,credits_filename);
+		strncpy(filename,credits_filename,32);
 		have_bin_file = 1;
 	}
 	file = cfopen( filename, "rb" );
@@ -162,7 +162,7 @@ void credits_show(char *credits_filename)
 
 		tempp = strchr(filename, '.');
 		*tempp = '\0';
-		sprintf(nfile, "%s.txb", filename);
+		snprintf(nfile, 32, "%s.txb", filename);
 		file = cfopen(nfile, "rb");
 		if (file == NULL)
 			Error("Missing CREDITS.TEX and CREDITS.TXB file\n");

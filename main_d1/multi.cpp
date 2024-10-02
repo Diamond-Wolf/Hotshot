@@ -619,9 +619,9 @@ void multi_compute_kill(int killer, int killed)
 	Assert((killed_pnum >= 0) && (killed_pnum < N_players));
 
 	if (Game_mode & GM_TEAM)
-		sprintf(killed_name, "%s (%s)", Players[killed_pnum].callsign, Netgame.team_name[get_team(killed_pnum)]);
+		snprintf(killed_name, (CALLSIGN_LEN * 2) + 4, "%s (%s)", Players[killed_pnum].callsign, Netgame.team_name[get_team(killed_pnum)]);
 	else
-		sprintf(killed_name, "%s", Players[killed_pnum].callsign);
+		snprintf(killed_name, (CALLSIGN_LEN * 2) + 4, "%s", Players[killed_pnum].callsign);
 
 #ifndef SHAREWARE
 	if (Newdemo_state == ND_STATE_RECORDING)
@@ -668,9 +668,9 @@ void multi_compute_kill(int killer, int killed)
 	killer_pnum = Objects[killer].id;
 
 	if (Game_mode & GM_TEAM)
-		sprintf(killer_name, "%s (%s)", Players[killer_pnum].callsign, Netgame.team_name[get_team(killer_pnum)]);
+		snprintf(killer_name, (CALLSIGN_LEN * 2) + 4, "%s (%s)", Players[killer_pnum].callsign, Netgame.team_name[get_team(killer_pnum)]);
 	else
-		sprintf(killer_name, "%s", Players[killer_pnum].callsign);
+		snprintf(killer_name, (CALLSIGN_LEN * 2) + 4, "%s", Players[killer_pnum].callsign);
 
 	// Beyond this point, it was definitely a player-player kill situation
 
@@ -925,10 +925,12 @@ multi_message_feedback(void)
 
 	if (!(((colon = strrchr(Network_message, ':')) == NULL) || (colon - Network_message < 1) || (colon - Network_message > CALLSIGN_LEN)))
 	{
-		sprintf(feedback_result, "%s ", TXT_MESSAGE_SENT_TO);
+		size_t len;
+		snprintf(feedback_result, 200, "%s ", TXT_MESSAGE_SENT_TO);
 		if ((Game_mode & GM_TEAM) && (atoi(Network_message) > 0) && (atoi(Network_message) < 3))
 		{
-			sprintf(feedback_result + strlen(feedback_result), "%s '%s'", TXT_TEAM, Netgame.team_name[atoi(Network_message) - 1]);
+			len = strlen(feedback_result)
+			snprintf(feedback_result + len, 200 - len, "%s '%s'", TXT_TEAM, Netgame.team_name[atoi(Network_message) - 1]);
 			found = 1;
 		}
 		if (Game_mode & GM_TEAM)
@@ -942,7 +944,8 @@ multi_message_feedback(void)
 					found++;
 					if (!(found % 4))
 						strcat(feedback_result, "\n");
-					sprintf(feedback_result + strlen(feedback_result), "%s '%s'", TXT_TEAM, Netgame.team_name[i]);
+					len = strlen(feedback_result)
+					snprintf(feedback_result + len, 200 - len, "%s '%s'", TXT_TEAM, Netgame.team_name[i]);
 				}
 			}
 		}
@@ -955,7 +958,8 @@ multi_message_feedback(void)
 				found++;
 				if (!(found % 4))
 					strcat(feedback_result, "\n");
-				sprintf(feedback_result + strlen(feedback_result), "%s", Players[i].callsign);
+				len = strlen(feedback_result)
+				snprintf(feedback_result + len, 200 - len, "%s", Players[i].callsign);
 			}
 		}
 		if (!found)
@@ -2771,18 +2775,21 @@ void multi_initiate_restore_game()
 	multi_restore_game(slot, state_game_id);
 }
 
+const size_t MULTISAVE_FILE_LENGTH = 
+#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+CHOCOLATE_MAX_FILE_PATH_SIZE;
+#else
+128;
+#endif
+
 void multi_save_game(uint8_t slot, uint32_t id, char* desc)
 {
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	char filename[CHOCOLATE_MAX_FILE_PATH_SIZE];
-#else
-	char filename[128];
-#endif
+	char filename[MULTISAVE_FILE_LENGTH];
 
 	if ((Endlevel_sequence) || (Fuelcen_control_center_destroyed))
 		return;
 
-	sprintf(filename, "%s.mg%d", Players[Player_num].callsign, slot);
+	snprintf(filename, MULTISAVE_FILE_LENGTH, "%s.mg%d", Players[Player_num].callsign, slot);
 	mprintf((0, "Save game %x on slot %d\n", id, slot));
 	HUD_init_message("Saving game #%d, '%s'", slot, desc);
 	stop_time();
@@ -2792,11 +2799,8 @@ void multi_save_game(uint8_t slot, uint32_t id, char* desc)
 
 void multi_restore_game(uint8_t slot, uint32_t id)
 {
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	char filename[CHOCOLATE_MAX_FILE_PATH_SIZE];
-#else
-	char filename[128];
-#endif
+	char filename[MULTISAVE_FILE_LENGTH];
+
 	player saved_player;
 
 	if ((Endlevel_sequence) || (Fuelcen_control_center_destroyed))
@@ -2804,7 +2808,7 @@ void multi_restore_game(uint8_t slot, uint32_t id)
 
 	mprintf((0, "Restore game %x from slot %d\n", id, slot));
 	saved_player = Players[Player_num];
-	sprintf(filename, "%s.mg%d", Players[Player_num].callsign, slot);
+	snprintf(filename, MULTISAVE_FILE_LENGTH, "%s.mg%d", Players[Player_num].callsign, slot);
 	state_game_id = 0;
 	state_restore_all_sub(filename, 1);
 

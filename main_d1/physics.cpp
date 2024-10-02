@@ -364,7 +364,7 @@ void do_physics_sim(object* obj)
 	}
 
 	//check for correct object segment 
-	if (!get_seg_masks(&obj->pos, obj->segnum, 0).centermask == 0) 
+	if (get_seg_masks(&obj->pos, obj->segnum, 0).centermask != 0) 
 	{
 #ifndef NDEBUG
 		mprintf((0, "Warning: object %d not in given seg!\n", objnum));

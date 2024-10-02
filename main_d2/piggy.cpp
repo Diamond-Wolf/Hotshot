@@ -389,7 +389,7 @@ void piggy_init_pigfile(const char* filename)
 		memcpy(temp_name_read, bmh.name, 8);
 		temp_name_read[8] = 0;
 		if (bmh.dflags & DBM_FLAG_ABM)
-			sprintf(temp_name, "%s#%d", temp_name_read, bmh.dflags & 63);
+			snprintf(temp_name, 16, "%s#%d", temp_name_read, bmh.dflags & 63);
 		else
 			strcpy(temp_name, temp_name_read);
 		memset(&temp_bitmap, 0, sizeof(grs_bitmap));
@@ -525,7 +525,7 @@ void piggy_new_pigfile(const char* pigname)
 			temp_name_read[8] = 0;
 
 			if (bmh.dflags & DBM_FLAG_ABM)
-				sprintf(temp_name, "%s#%d", temp_name_read, bmh.dflags & 63);
+				snprintf(temp_name, 16, "%s#%d", temp_name_read, bmh.dflags & 63);
 			else
 				strcpy(temp_name, temp_name_read);
 
@@ -590,7 +590,7 @@ void piggy_new_pigfile(const char* pigname)
 				strcpy(basename, AllBitmaps[i].name);
 				basename[p - AllBitmaps[i].name] = 0;             //cut off "#nn" part
 
-				sprintf(abmname, "%s.abm", basename);
+				snprintf(abmname, FILENAME_LEN, "%s.abm", basename);
 
 				iff_error = iff_read_animbrush(abmname, bm, MAX_BITMAPS_PER_BRUSH, &nframes, newpal);
 
@@ -603,7 +603,7 @@ void piggy_new_pigfile(const char* pigname)
 					char tempname[20];
 					int SuperX;
 
-					sprintf(tempname, "%s#%d", basename, fnum);
+					snprintf(tempname, 20, "%s#%d", basename, fnum);
 
 					//SuperX = (GameBitmaps[i+fnum].bm_flags&BM_FLAG_SUPER_TRANSPARENT)?254:-1;
 					SuperX = (GameBitmapFlags[i + fnum] & BM_FLAG_SUPER_TRANSPARENT) ? 254 : -1;
@@ -650,7 +650,7 @@ void piggy_new_pigfile(const char* pigname)
 
 				MALLOC(newbm, grs_bitmap, 1);
 
-				sprintf(bbmname, "%s.bbm", AllBitmaps[i].name);
+				snprintf(bbmname, FILENAME_LEN, "%s.bbm", AllBitmaps[i].name);
 				iff_error = iff_read_bitmap(bbmname, newbm, BM_LINEAR, newpal);
 
 				//newbm->bm_handle = 0;

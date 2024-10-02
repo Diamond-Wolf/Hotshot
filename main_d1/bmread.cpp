@@ -255,7 +255,7 @@ void ab_load(char* filename, bitmap_index bmp[], int* nframes)
 
 	for (i = 0; i < MAX_BITMAPS_PER_BRUSH; i++)
 	{
-		sprintf(tempname, "%s#%d", fname, i);
+		snprintf(tempname, 20, "%s#%d", fname, i);
 		bi = piggy_find_bitmap(tempname);
 		if (!bi.index)
 			break;
@@ -279,7 +279,7 @@ void ab_load(char* filename, bitmap_index bmp[], int* nframes)
 	for (i = 0; i < *nframes; i++)
 	{
 		bitmap_index new_bmp;
-		sprintf(tempname, "%s#%d", fname, i);
+		snprintf(tempname, 20, "%s#%d", fname, i);
 		if (iff_has_transparency)
 			gr_remap_bitmap_good(bm[i], newpal, iff_transparent_color, SuperX);
 		else
@@ -884,7 +884,7 @@ void bm_read_wclip()
 			set_lighting_flag(&GameBitmaps[bm[clip_count].index].bm_flags);
 			WallAnims[clip_num].frames[clip_count] = texture_count;
 			REMOVE_DOTS(arg);
-			sprintf(TmapInfo[texture_count].filename, "%s#%d", arg, clip_count);
+			snprintf(TmapInfo[texture_count].filename, 13, "%s#%d", arg, clip_count);
 			Assert(texture_count < MAX_TEXTURES);
 			texture_count++;
 			NumTextures = texture_count;

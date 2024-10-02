@@ -593,7 +593,7 @@ void robotmaker_proc(FuelCenter* robotcen)
 }
 
 
-#define M_PI 3.14159
+//#define M_PI 3.14159
 
 //-------------------------------------------------------------
 // Called once per frame, replenishes fuel supply.

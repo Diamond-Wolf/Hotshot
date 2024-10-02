@@ -69,10 +69,10 @@ static void texpage_display_name( char *format, ... )
 	va_list ap;
 
 	va_start(ap, format);
-   vsprintf(tmap_filename, format, ap);
+    vsnprintf(tmap_filename, 13, format, ap);
 	va_end(ap);
 
-   texpage_print_name(tmap_filename);
+    texpage_print_name(tmap_filename);
 }
 
 //Redraw the list of textures, based on TexturePage

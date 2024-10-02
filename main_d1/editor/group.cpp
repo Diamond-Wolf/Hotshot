@@ -1087,7 +1087,7 @@ int med_save_group( char *filename, short *vertex_ids, short *segment_ids, int n
 	SaveFile = fopen( filename, "wb" );
 	if (!SaveFile)
 	{
-		sprintf( ErrorMessage, "ERROR: Unable to open %s\n", filename );
+		snprintf( ErrorMessage, 100, "ERROR: Unable to open %s\n", filename );
 		MessageBox( -2, -2, 1, ErrorMessage, "Ok" );
 		return 1;
 	}
@@ -1227,7 +1227,7 @@ int med_load_group( char *filename, short *vertex_ids, short *segment_ids, int *
 	LoadFile = cfopen( filename, "rb" );
 	if (!LoadFile)
 	{
-		sprintf( ErrorMessage, "ERROR: Unable to open %s\n", filename );
+		snprintf( ErrorMessage, 200, "ERROR: Unable to open %s\n", filename );
 		MessageBox( -2, -2, 1, ErrorMessage, "Ok" );
 		return 1;
 	}
@@ -1261,7 +1261,7 @@ int med_load_group( char *filename, short *vertex_ids, short *segment_ids, int *
 	// Check version number
 	if (group_top_fileinfo.fileinfo_version < COMPATIBLE_VERSION )
 	{
-		sprintf( ErrorMessage, "ErrorMessage: You are trying to load %s\n" \
+		snprintf( ErrorMessage, 200, "ErrorMessage: You are trying to load %s\n" \
 						  "a version %d group, which is known to be incompatible\n" \
 						  "with the current expected version %d groups.", \
 						  filename, group_top_fileinfo.fileinfo_version, MINE_VERSION );
@@ -1494,7 +1494,7 @@ int SaveGroup()
 
 	if (Current_group == -1)
 		{
-		sprintf( ErrorMessage, "ERROR: No current group." );
+		snprintf( ErrorMessage, 200, "ERROR: No current group." );
 		MessageBox( -2, -2, 1, ErrorMessage, "Ok" );
  		return 0;
 		}

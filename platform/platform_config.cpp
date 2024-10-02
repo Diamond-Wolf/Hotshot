@@ -52,7 +52,7 @@ int plat_read_chocolate_cfg()
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(cfgpath, "chocolatedescent.cfg", CHOCOLATE_CONFIG_DIR);
 #else
-	sprintf(cfgpath, "chocolatedescent.cfg");
+	snprintf(cfgpath, 21, "chocolatedescent.cfg");
 #endif
 
 	infile = fopen(cfgpath, "rt");
@@ -127,7 +127,7 @@ void plat_save_chocolate_cfg()
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(cfgpath, "chocolatedescent.cfg", CHOCOLATE_CONFIG_DIR);
 #else
-	sprintf(cfgpath, "chocolatedescent.cfg");
+	snprintf(cfgpath, 21, "chocolatedescent.cfg");
 #endif
 
 	FILE* infile = fopen(cfgpath, "w");

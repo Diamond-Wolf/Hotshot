@@ -423,11 +423,11 @@ void hud_show_score()
 
 	if (((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_COOP))) 
 	{
-		sprintf(score_str, "%s: %5d", TXT_KILLS, Players[Player_num].net_kills_total);
+		snprintf(score_str, 20, "%s: %5d", TXT_KILLS, Players[Player_num].net_kills_total);
 	}
 	else 
 	{
-		sprintf(score_str, "%s: %5d", TXT_SCORE, Players[Player_num].score);
+		snprintf(score_str, 20, "%s: %5d", TXT_SCORE, Players[Player_num].score);
 	}
 	gr_get_string_size(score_str, &w, &h, &aw);
 
@@ -461,9 +461,9 @@ void hud_show_score_added()
 		if (color > 31) color = 31;
 
 		if (Cheats_enabled)
-			sprintf(score_str, "%s", TXT_CHEATER);
+			snprintf(score_str, 20, "%s", TXT_CHEATER);
 		else
-			sprintf(score_str, "%5d", score_display);
+			snprintf(score_str, 20, "%5d", score_display);
 
 		gr_get_string_size(score_str, &w, &h, &aw);
 		gr_set_fontcolor(gr_getcolor(0, color, 0), -1);
@@ -503,9 +503,9 @@ void sb_show_score()
 
 	gr_set_curfont(GAME_FONT);
 	if ((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_COOP))
-		sprintf(score_str, "%5d", Players[Player_num].net_kills_total);
+		snprintf(score_str, 20, "%5d", Players[Player_num].net_kills_total);
 	else
-		sprintf(score_str, "%5d", Players[Player_num].score);
+		snprintf(score_str, 20, "%5d", Players[Player_num].score);
 	gr_get_string_size(score_str, &w, &h, &aw);
 
 	x = SB_SCORE_RIGHT - w - 2;
@@ -558,9 +558,9 @@ void sb_show_score_added()
 		if (color > 31) color = 31;
 
 		if (Cheats_enabled)
-			sprintf(score_str, "%s", TXT_CHEATER);
+			snprintf(score_str, 20, "%s", TXT_CHEATER);
 		else
-			sprintf(score_str, "%5d", score_display);
+			snprintf(score_str, 20, "%5d", score_display);
 
 		gr_get_string_size(score_str, &w, &h, &aw);
 
@@ -743,22 +743,22 @@ void hud_show_weapons(void)
 	{
 	case 0:
 		if (Players[Player_num].flags & PLAYER_FLAGS_QUAD_LASERS)
-			sprintf(weapon_str, "%s %s %i", TXT_QUAD, TXT_LASER, Players[Player_num].laser_level + 1);
+			snprintf(weapon_str, 32, "%s %s %i", TXT_QUAD, TXT_LASER, Players[Player_num].laser_level + 1);
 		else
-			sprintf(weapon_str, "%s %i", TXT_LASER, Players[Player_num].laser_level + 1);
+			snprintf(weapon_str, 32, "%s %i", TXT_LASER, Players[Player_num].laser_level + 1);
 		break;
 	case 1:
-		sprintf(weapon_str, "%s: %i", TXT_W_VULCAN_S, f2i(Players[Player_num].primary_ammo[Primary_weapon] * VULCAN_AMMO_SCALE));
+		snprintf(weapon_str, 32, "%s: %i", TXT_W_VULCAN_S, f2i(Players[Player_num].primary_ammo[Primary_weapon] * VULCAN_AMMO_SCALE));
 		break;
 	case 2:
-		strcpy(weapon_str, TXT_W_SPREADFIRE_S);
+		strncpy(weapon_str, TXT_W_SPREADFIRE_S, 32);
 		break;
 #ifndef SHAREWARE
 	case 3:
-		strcpy(weapon_str, TXT_W_PLASMA_S);
+		strncpy(weapon_str, TXT_W_PLASMA_S, 32);
 		break;
 	case 4:
-		strcpy(weapon_str, TXT_W_FUSION_S);
+		strncpy(weapon_str, TXT_W_FUSION_S, 32);
 		break;
 #endif
 	}
@@ -916,7 +916,7 @@ void sb_show_lives()
 		static int last_x = SB_SCORE_RIGHT;
 		int x;
 
-		sprintf(killed_str, "%5d", Players[Player_num].net_killed_total);
+		snprintf(killed_str, 20, "%5d", Players[Player_num].net_killed_total);
 		gr_get_string_size(killed_str, &w, &h, &aw);
 		gr_setcolor(BM_XRGB(0, 0, 0));
 		gr_rect(last_x, y + 1, SB_SCORE_RIGHT, y + GAME_FONT->ft_h);
@@ -968,7 +968,7 @@ void show_time()
 	{
 		char text[25];
 		int w, h, aw;
-		sprintf(text, "%d KB", Piggy_bitmap_cache_next / 1024);
+		snprintf(text, 25, "%d KB", Piggy_bitmap_cache_next / 1024);
 		gr_get_string_size(text, &w, &h, &aw);
 		gr_printf(grd_curcanv->cv_w - 10 - w, grd_curcanv->cv_h / 2, text);
 	}
@@ -1321,7 +1321,7 @@ void draw_weapon_info_sub(int info_index, gauge_box* box, int pic_x, int pic_y, 
 	{
 		char	temp_str[7];
 
-		sprintf(temp_str, "%s: 0", TXT_LVL);
+		snprintf(temp_str, 7, "%s: 0", TXT_LVL);
 
 		temp_str[5] = Players[Player_num].laser_level + 1 + '0';
 
@@ -1748,7 +1748,7 @@ void show_reticle(int force_big_one)
 				color_num = get_team(pnum);
 			else
 				color_num = pnum;
-			sprintf(s, "%s", Players[pnum].callsign);
+			snprintf(s, CALLSIGN+LEN + 1, "%s", Players[pnum].callsign);
 			gr_get_string_size(s, &w, &h, &aw);
 			gr_set_fontcolor(gr_getcolor(player_rgb[color_num].r, player_rgb[color_num].g, player_rgb[color_num].b), -1);
 			x1 = x - (w / 2);
@@ -1764,7 +1764,7 @@ void show_reticle(int force_big_one)
 			int x1, y1;
 			int color_num = 0;
 
-			sprintf(s, "%d", Hit_data.hit_object);
+			snprintf(s, CALLSIGN_LEN + 1, "%d", Hit_data.hit_object);
 			gr_get_string_size(s, &w, &h, &aw);
 			gr_set_fontcolor(gr_getcolor(player_rgb[color_num].r, player_rgb[color_num].g, player_rgb[color_num].b), -1);
 			x1 = x - (w / 2);

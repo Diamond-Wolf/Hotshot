@@ -293,9 +293,9 @@ int load_mission(int mission_num)
 
 		//build level names
 		for (i = 0; i < Last_level; i++)
-			sprintf(Level_names[i], "LEVEL%02d.RDL", i + 1);
+			snprintf(Level_names[i], 13, "LEVEL%02d.RDL", i + 1);
 		for (i = 0; i < -Last_secret_level; i++)
-			sprintf(Secret_level_names[i], "LEVELS%1d.RDL", i + 1);
+			snprintf(Secret_level_names[i], 13, "LEVELS%1d.RDL", i + 1);
 
 		Secret_level_table[0] = 10;
 		Secret_level_table[1] = 21;

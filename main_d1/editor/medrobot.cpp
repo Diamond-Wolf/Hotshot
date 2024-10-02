@@ -796,9 +796,9 @@ int do_object_dialog()
 
 	InitialMode[obj->movement_type == MT_SPINNING?1:0]->flag = 1;
 
-	sprintf(Xmessage,"%.2f",f2fl(obj->mtype.spin_rate.x));
-	sprintf(Ymessage,"%.2f",f2fl(obj->mtype.spin_rate.y));
-	sprintf(Zmessage,"%.2f",f2fl(obj->mtype.spin_rate.z));
+	snprintf(Xmessage,MATT_LEN,"%.2f",f2fl(obj->mtype.spin_rate.x));
+	snprintf(Ymessage,MATT_LEN,"%.2f",f2fl(obj->mtype.spin_rate.y));
+	snprintf(Zmessage,MATT_LEN,"%.2f",f2fl(obj->mtype.spin_rate.z));
 
 	ui_wprintf_at( MattWindow, 10, 132,"&X:" );
 	Xtext = ui_add_gadget_inputbox( MattWindow, 30, 132, MATT_LEN, MATT_LEN, Xmessage );

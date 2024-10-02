@@ -1505,7 +1505,7 @@ void force_dump_ai_objects_all(const char* msg)
 
 	Ai_dump_enable = 1;
 
-	sprintf(Ai_error_message, "%s\n", msg);
+	snprintf(Ai_error_message, 128, "%s\n", msg);
 	//dump_ai_objects_all();
 	Ai_error_message[0] = 0;
 

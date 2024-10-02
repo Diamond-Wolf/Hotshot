@@ -855,11 +855,11 @@ void hud_show_score()
 
 	if (((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_COOP)))
 	{
-		sprintf(score_str, "%s: %5d", TXT_KILLS, Players[Player_num].net_kills_total);
+		snprintf(score_str, 20, "%s: %5d", TXT_KILLS, Players[Player_num].net_kills_total);
 	}
 	else
 	{
-		sprintf(score_str, "%s: %5d", TXT_SCORE, Players[Player_num].score);
+		snprintf(score_str, 20, "%s: %5d", TXT_SCORE, Players[Player_num].score);
 	}
 
 	gr_get_string_size(score_str, &w, &h, &aw);
@@ -887,7 +887,7 @@ void hud_show_timer_count()
 		i = f2i(timevar - ThisLevelTime);
 		i++;
 
-		sprintf(score_str, "T - %5d", i);
+		snprintf(score_str, 20, "T - %5d", i);
 
 		gr_get_string_size(score_str, &w, &h, &aw);
 
@@ -930,9 +930,9 @@ void hud_show_score_added()
 		color = color - (color % 4);	//	Only allowing colors 12,16,20,24,28 speeds up gr_getcolor, improves caching
 
 		if (Cheats_enabled)
-			sprintf(score_str, "%s", TXT_CHEATER);
+			snprintf(score_str, 20, "%s", TXT_CHEATER);
 		else
-			sprintf(score_str, "%5d", score_display);
+			snprintf(score_str, 20, "%5d", score_display);
 
 		gr_get_string_size(score_str, &w, &h, &aw);
 		gr_set_fontcolor(gr_getcolor(0, color, 0), -1);
@@ -981,9 +981,9 @@ void sb_show_score()
 
 	gr_set_curfont(GAME_FONT);
 	if ((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_COOP))
-		sprintf(score_str, "%5d", Players[Player_num].net_kills_total);
+		snprintf(score_str, 20, "%5d", Players[Player_num].net_kills_total);
 	else
-		sprintf(score_str, "%5d", Players[Player_num].score);
+		snprintf(score_str, 20, "%5d", Players[Player_num].score);
 	gr_get_string_size(score_str, &w, &h, &aw);
 
 	x = SB_SCORE_RIGHT - w - LHX(2);
@@ -1048,9 +1048,9 @@ void sb_show_score_added()
 		if (color > 31) color = 31;
 
 		if (Cheats_enabled)
-			sprintf(score_str, "%s", TXT_CHEATER);
+			snprintf(score_str, 20, "%s", TXT_CHEATER);
 		else
-			sprintf(score_str, "%5d", score_display);
+			snprintf(score_str, 20, "%5d", score_display);
 
 		gr_get_string_size(score_str, &w, &h, &aw);
 
@@ -1394,7 +1394,7 @@ void show_bomb_count(int x, int y, int bg_color, int always_show)
 	else
 		gr_set_fontcolor(bg_color, bg_color);	//erase by drawing in background color
 
-	sprintf(txt, "B:%02d", count);
+	snprintf(txt, 5, "B:%02d", count);
 
 	while ((t = strchr(txt, '1')) != NULL)
 		* t = '\x84';	//convert to wide '1'
@@ -1442,16 +1442,16 @@ void hud_show_weapons(void)
 	{
 	case LASER_INDEX:
 		if (Players[Player_num].flags & PLAYER_FLAGS_QUAD_LASERS)
-			sprintf(weapon_str, "%s %s %i", TXT_QUAD, weapon_name, Players[Player_num].laser_level + 1);
+			snprintf(weapon_str, 32, "%s %s %i", TXT_QUAD, weapon_name, Players[Player_num].laser_level + 1);
 		else
-			sprintf(weapon_str, "%s %i", weapon_name, Players[Player_num].laser_level + 1);
+			snprintf(weapon_str, 32, "%s %i", weapon_name, Players[Player_num].laser_level + 1);
 		break;
 
 	case SUPER_LASER_INDEX:	Int3(); break;	//no such thing as super laser
 
 	case VULCAN_INDEX:
 	case GAUSS_INDEX:
-		sprintf(weapon_str, "%s: %i", weapon_name, f2i((unsigned)Players[Player_num].primary_ammo[VULCAN_INDEX] * (unsigned)VULCAN_AMMO_SCALE));
+		snprintf(weapon_str, 32, "%s: %i", weapon_name, f2i((unsigned)Players[Player_num].primary_ammo[VULCAN_INDEX] * (unsigned)VULCAN_AMMO_SCALE));
 		convert_1s(weapon_str);
 		break;
 
@@ -1465,7 +1465,7 @@ void hud_show_weapons(void)
 	case OMEGA_INDEX:
 		if (CurrentLogicVersion >= LogicVer::FULL_1_0)
 		{
-			sprintf(weapon_str, "%s: %03i", weapon_name, Omega_charge * 100 / MAX_OMEGA_CHARGE);
+			snprintf(weapon_str, 32, "%s: %03i", weapon_name, Omega_charge * 100 / MAX_OMEGA_CHARGE);
 			convert_1s(weapon_str);
 		}
 		else
@@ -1502,7 +1502,7 @@ void hud_show_weapons(void)
 
 	weapon_name = SECONDARY_WEAPON_NAMES_VERY_SHORT(Secondary_weapon);
 
-	sprintf(weapon_str, "%s %d", weapon_name, Players[Player_num].secondary_ammo[Secondary_weapon]);
+	snprintf(weapon_str, 32, "%s %d", weapon_name, Players[Player_num].secondary_ammo[Secondary_weapon]);
 	gr_get_string_size(weapon_str, &w, &h, &aw);
 	gr_printf(grd_curcanv->cv_bitmap.bm_w - 5 - w, y - Line_spacing, weapon_str);
 
@@ -1645,7 +1645,7 @@ void sb_show_lives()
 		int x;
 
 		WIN(DDGRLOCK(dd_grd_curcanv));
-		sprintf(killed_str, "%5d", Players[Player_num].net_killed_total);
+		snprintf(killed_str, 20, "%5d", Players[Player_num].net_killed_total);
 		gr_get_string_size(killed_str, &w, &h, &aw);
 		gr_setcolor(BM_XRGB(0, 0, 0));
 		gr_rect(last_x[(Current_display_mode ? 2 : 0)], y + 1, SB_SCORE_RIGHT, y + GAME_FONT->ft_h);
@@ -2271,7 +2271,7 @@ void draw_weapon_info_sub(int info_index, gauge_box* box, int pic_x, int pic_y, 
 	{
 		char	temp_str[7];
 
-		sprintf(temp_str, "%s: 0", TXT_LVL);
+		snprintf(temp_str, 7, "%s: 0", TXT_LVL);
 
 		temp_str[5] = Players[Player_num].laser_level + 1 + '0';
 
@@ -2354,7 +2354,7 @@ void draw_ammo_info(int x, int y, int ammo_count, int primary)
 	gr_setcolor(BM_XRGB(0, 0, 0));
 	gr_rect(x, y, x + w, y + grd_curcanv->cv_font->ft_h);
 	gr_set_fontcolor(gr_getcolor(20, 0, 0), -1);
-	sprintf(str, "%03d", ammo_count);
+	snprintf(str, 16, "%03d", ammo_count);
 	convert_1s(str);
 	gr_printf(x, y, str);
 
@@ -2587,7 +2587,7 @@ void sb_draw_energy_bar(int energy)
 	gr_ubitmapm(SB_ENERGY_GAUGE_X, SB_ENERGY_GAUGE_Y, &Canv_SBEnergyGauge->cv_bitmap);
 
 	//draw numbers
-	sprintf(energy_str, "%d", energy);
+	snprintf(energy_str, 20, "%d", energy);
 	gr_get_string_size(energy_str, &w, &h, &aw);
 	gr_set_fontcolor(gr_getcolor(25, 18, 6), -1);
 	//PA_DFX(pa_set_frontbuffer_current());
@@ -3059,7 +3059,7 @@ void show_HUD_names()
 
 						color_num = (Game_mode & GM_TEAM) ? get_team(p) : p;
 
-						sprintf(s, "%s", Players[p].callsign);
+						snprintf(s, CALLSIGN_LEN + 1, "%s", Players[p].callsign);
 						gr_get_string_size(s, &w, &h, &aw);
 						gr_set_fontcolor(gr_getcolor(player_rgb[color_num].r, player_rgb[color_num].g, player_rgb[color_num].b), -1);
 						x1 = f2i(x) - w / 2;

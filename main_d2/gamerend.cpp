@@ -129,7 +129,7 @@ void game_draw_marker_message()
 	{
 		gr_set_curfont(GAME_FONT);    //GAME_FONT 
 		gr_set_fontcolor(gr_getcolor(0, 63, 0), -1);
-		sprintf(temp_string, "Marker: %s_", Marker_input);
+		snprintf(temp_string, MAX_MULTI_MESSAGE_LEN + 25, "Marker: %s_", Marker_input);
 		draw_centered_text(grd_curcanv->cv_bitmap.bm_h / 2 - 16, temp_string);
 	}
 
@@ -143,7 +143,7 @@ void game_draw_multi_message()
 	if ((Game_mode & GM_MULTI) && (multi_sending_message)) {
 		gr_set_curfont(GAME_FONT);    //GAME_FONT );
 		gr_set_fontcolor(gr_getcolor(0, 63, 0), -1);
-		sprintf(temp_string, "%s: %s_", TXT_MESSAGE, Network_message);
+		snprintf(temp_string, MAX_MULTI_MESSAGE_LEN + 25, "%s: %s_", TXT_MESSAGE, Network_message);
 		draw_centered_text(grd_curcanv->cv_bitmap.bm_h / 2 - 16, temp_string);
 
 	}
@@ -151,7 +151,7 @@ void game_draw_multi_message()
 	if ((Game_mode & GM_MULTI) && (multi_defining_message)) {
 		gr_set_curfont(GAME_FONT);    //GAME_FONT );
 		gr_set_fontcolor(gr_getcolor(0, 63, 0), -1);
-		sprintf(temp_string, "%s #%d: %s_", TXT_MACRO, multi_defining_message, Network_message);
+		snprintf(temp_string, MAX_MULTI_MESSAGE_LEN + 25, "%s #%d: %s_", TXT_MACRO, multi_defining_message, Network_message);
 		draw_centered_text(grd_curcanv->cv_bitmap.bm_h / 2 - 16, temp_string);
 	}
 #endif
@@ -331,15 +331,15 @@ void game_draw_hud_stuff()
 		{
 			if (Newdemo_vcr_state != ND_STATE_PRINTSCREEN) 
 			{
-				sprintf(message, "%s (%d%%%% %s)", TXT_DEMO_PLAYBACK, newdemo_get_percent_done(), TXT_DONE);
+				snprintf(message, 128, "%s (%d%%%% %s)", TXT_DEMO_PLAYBACK, newdemo_get_percent_done(), TXT_DONE);
 			}
 			else 
 			{
-				sprintf(message, "");
+				snprintf(message, 1, "");
 			}
 		}
 		else
-			sprintf(message, TXT_DEMO_RECORDING);
+			snprintf(message, 128, TXT_DEMO_RECORDING);
 
 		gr_set_curfont(GAME_FONT);    //GAME_FONT );
 		gr_set_fontcolor(gr_getcolor(27, 0, 0), -1);
@@ -643,7 +643,7 @@ void show_extra_views()
 				Cockpit_3d_view[w] = CV_NONE;
 				break;
 			}
-			sprintf(label, "Marker %d", Marker_viewer_num[w] + 1);
+			snprintf(label, 10, "Marker %d", Marker_viewer_num[w] + 1);
 			do_cockpit_window_view(w, &Objects[MarkerObject[Marker_viewer_num[w]]], 0, WBU_MARKER, label);
 			break;
 		}

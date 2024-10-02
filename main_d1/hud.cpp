@@ -71,7 +71,7 @@ void HUD_clear_messages()
 	HUD_message_timer = 0;
 	clear_background_messages();
 	for (i = 0; i < HUD_MAX_NUM; i++)
-		sprintf(HUD_messages[i], "SlagelSlagel!!");
+		snprintf(HUD_messages[i], HUD_MESSAGE_LENGTH + 5, "SlagelSlagel!!");
 }
 
 //	-----------------------------------------------------------------------------
@@ -174,7 +174,7 @@ void HUD_init_message(const char* format, ...)
 
 	va_start(args, format);
 	message = &HUD_messages[hud_last][0];
-	vsprintf(message, format, args);
+	vsnprintf(message, HUD_MESSAGE_LENGTH + 5, format, args);
 	va_end(args);
 	//		mprintf((0, "Hud_message: [%s]\n", message));
 

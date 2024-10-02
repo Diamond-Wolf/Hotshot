@@ -492,7 +492,8 @@ int get_item_height(kc_item* item)
 	char btext[10];
 
 	if (item->value == 255) {
-		sprintf(btext, "");
+		//snprintf(btext, 1, "");
+		btext[0] = '\0';
 	}
 	else {
 		switch (item->type) {
@@ -510,7 +511,7 @@ int get_item_height(kc_item* item)
 			if (joybutton_text[item->value] != -1)
 				strncpy(btext, Text_string[joybutton_text[item->value]], 10);
 			else
-				sprintf(btext, "BTN%d", item->value);
+				snprintf(btext, 10, "BTN%d", item->value);
 			break;
 		case BT_JOY_AXIS:
 			strncpy(btext, Text_string[joyaxis_text[item->value]], 10); break;
@@ -879,7 +880,8 @@ void kc_drawitem(kc_item* item, int is_current)
 
 	if (item->value == 255)
 	{
-		sprintf(btext, "");
+		//snprintf(btext, 1, "");
+		btext[0] = '\0';
 	}
 	else
 	{

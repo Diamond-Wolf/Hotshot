@@ -183,7 +183,7 @@ int file_getdirlist(int MaxNum, char list[][13])
 
 	if (strlen(cwd) >= 4)
 	{
-		sprintf(list[NumDirs++], "..");
+		snprintf(list[NumDirs++], 3, "..");
 	}
 
 	CurDrive = cwd[0] - 'A' + 1;
@@ -225,7 +225,7 @@ int file_getdirlist(int MaxNum, char list[][13])
 	{
 		if (IsDrivePresent(i) && (i != CurDrive))
 		{
-			sprintf(list[NumDirs++], "%c:", i + 'A' - 1);
+			snprintf(list[NumDirs++], 3, "%c:", i + 'A' - 1);
 		}
 	}
 

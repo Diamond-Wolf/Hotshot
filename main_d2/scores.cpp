@@ -113,18 +113,18 @@ char* get_scores_filename()
 		}	
 		get_full_file_path(scores_filename, SCORES_FILENAME, miner_path);
 #else
-		sprintf(scores_filename, "%s\\game\\%s", p, SCORES_FILENAME);
+		snprintf(scores_filename, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s\\game\\%s", p, SCORES_FILENAME);
 #endif
 		Assert(strlen(scores_filename) < 256);
 		return scores_filename;
 	}
 #endif
 #ifdef MACINTOSH		// put the high scores into the data folder
-	sprintf(scores_filename, ":Data:%s", SCORES_FILENAME);
+	snprintf(scores_filename, CHOCOLATE_MAX_FILE_PATH_SIZE, ":Data:%s", SCORES_FILENAME);
 #elif defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(scores_filename, SCORES_FILENAME, CHOCOLATE_HISCORE_DIR);
 #else
-	sprintf(scores_filename, "%s", SCORES_FILENAME);
+	snprintf(scores_filename, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s", SCORES_FILENAME);
 #endif
 	return scores_filename;
 }
@@ -149,17 +149,17 @@ void scores_read()
 		int i;
 
 		// No error message needed, code will work without a scores file
-		sprintf(Scores.cool_saying, COOL_SAYING);
-		sprintf(Scores.stats[0].name, "Parallax");
-		sprintf(Scores.stats[1].name, "Matt");
-		sprintf(Scores.stats[2].name, "Mike");
-		sprintf(Scores.stats[3].name, "Adam");
-		sprintf(Scores.stats[4].name, "Mark");
-		sprintf(Scores.stats[5].name, "Jasen");
-		sprintf(Scores.stats[6].name, "Samir");
-		sprintf(Scores.stats[7].name, "Doug");
-		sprintf(Scores.stats[8].name, "Dan");
-		sprintf(Scores.stats[9].name, "Jason");
+		snprintf(Scores.cool_saying, COOL_MESSAGE_LEN, COOL_SAYING);
+		snprintf(Scores.stats[0].name, CALLSIGN_LEN + 1, "Parallax");
+		snprintf(Scores.stats[1].name, CALLSIGN_LEN + 1, "Matt");
+		snprintf(Scores.stats[2].name, CALLSIGN_LEN + 1, "Mike");
+		snprintf(Scores.stats[3].name, CALLSIGN_LEN + 1, "Adam");
+		snprintf(Scores.stats[4].name, CALLSIGN_LEN + 1, "Mark");
+		snprintf(Scores.stats[5].name, CALLSIGN_LEN + 1, "Jasen");
+		snprintf(Scores.stats[6].name, CALLSIGN_LEN + 1, "Samir");
+		snprintf(Scores.stats[7].name, CALLSIGN_LEN + 1, "Doug");
+		snprintf(Scores.stats[8].name, CALLSIGN_LEN + 1, "Dan");
+		snprintf(Scores.stats[9].name, CALLSIGN_LEN + 1, "Jason");
 
 		for (i = 0; i < 10; i++)
 			Scores.stats[i].score = (10 - i) * 1000;
@@ -208,12 +208,12 @@ void int_to_string(int number, char* dest)
 	int i, l, c;
 	char buffer[20], * p;
 
-	sprintf(buffer, "%d", number);
+	snprintf(buffer, 20, "%d", number);
 
 	l = strlen(buffer);
 	if (l <= 3) {
 		// Don't bother with less than 3 digits
-		sprintf(dest, "%d", number);
+		snprintf(dest, l, "%d", number);
 		return;
 	}
 
@@ -234,7 +234,7 @@ void int_to_string(int number, char* dest)
 
 void scores_fill_struct(stats_info* stats)
 {
-	strcpy(stats->name, Players[Player_num].callsign);
+	strncpy(stats->name, Players[Player_num].callsign, CALLSIGN_LEN + 1);
 	stats->score = Players[Player_num].score;
 	stats->ending_level = Players[Player_num].level;
 	if (Players[Player_num].num_robots_total > 0)
@@ -300,7 +300,7 @@ void scores_maybe_add_player(int abort_flag)
 			newmenu_do(TXT_HIGH_SCORE, TXT_YOU_PLACED_1ST, 2, m, NULL);
 			strncpy(Scores.cool_saying, text1, COOL_MESSAGE_LEN);
 			if (strlen(Scores.cool_saying) < 1)
-				sprintf(Scores.cool_saying, "No Comment");
+				snprintf(Scores.cool_saying, 11, "No Comment");
 		}
 		else {
 			nm_messagebox(TXT_HIGH_SCORE, 1, TXT_OK, "%s %s!", TXT_YOU_PLACED, *(&TXT_1ST + position));
@@ -325,7 +325,7 @@ void scores_rprintf(int x, int y, const char* format, ...)
 	char* p;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, 128, format, args);
 	va_end(args);
 
 	//replace the digit '1' with special wider 1

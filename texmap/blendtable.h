@@ -7,7 +7,7 @@ in copying.txt.
 
 /*  GIMP header image file format (INDEXED): C:\Games\Descent\blendtable.h  */
 //[ISB] I'm sorry that this file exists. I'm so, so sorry. 
-static unsigned char header_data[] = {
+inline const char header_data[] = {
 	164,32,229,229,229,229,77,77,77,39,39,39,6,6,5,5,
 	6,6,5,228,73,1,12,71,71,71,6,6,229,229,229,229,
 	78,229,229,229,229,78,108,78,164,44,164,164,164,164,164,39,

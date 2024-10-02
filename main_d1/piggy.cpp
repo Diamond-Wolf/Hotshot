@@ -360,9 +360,9 @@ int piggy_init()
 		memcpy(temp_name_read, bmh.name, 8);
 		temp_name_read[8] = 0;
 		if (bmh.dflags & DBM_FLAG_ABM)
-			sprintf(temp_name, "%s#%d", temp_name_read, bmh.dflags & 63);
+			snprintf(temp_name, 16, "%s#%d", temp_name_read, bmh.dflags & 63);
 		else
-			strcpy(temp_name, temp_name_read);
+			strncpy(temp_name, temp_name_read, 16);
 		memset(&temp_bitmap, 0, sizeof(grs_bitmap));
 		if (bmh.dflags & DBM_FLAG_LARGE)
 			temp_bitmap.bm_w = temp_bitmap.bm_rowsize = bmh.width + 256;
@@ -981,7 +981,7 @@ int piggy_is_substitutable_bitmap(char* name, char* subst_name)
 	{
 		frame = atoi(&p[1]);
 		*p = 0;
-		strcpy(base_name, subst_name);
+		strncpy(base_name, subst_name, 16);
 		if (!piggy_is_gauge_bitmap(base_name)) 
 		{
 			sprintf(subst_name, "%s#%d", base_name, frame + 1);

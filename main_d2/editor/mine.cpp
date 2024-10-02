@@ -158,10 +158,10 @@ int med_save_mine(char * filename)
 		char fname[256];
 		_splitpath( filename, NULL, NULL, fname, NULL );
 
-		sprintf( ErrorMessage, \
+		snprintf( ErrorMessage, 256, \
 			"ERROR: Cannot write to '%s'.\nYou probably need to check out a locked\nversion of the file. You should save\nthis under a different filename, and then\ncheck out a locked copy by typing\n\'co -l %s.lvl'\nat the DOS prompt.\n" 
 			, filename, fname, fname );
-		sprintf( ErrorMessage, "ERROR: Unable to open %s\n", filename );
+		snprintf( ErrorMessage, 256, "ERROR: Unable to open %s\n", filename );
 		MessageBox( -2, -2, 1, ErrorMessage, "Ok" );
 		return 1;
 	}
@@ -469,14 +469,14 @@ int save_mine_data_compiled(FILE * SaveFile)
 	if (Highest_segment_index >= MAX_SEGMENTS)
 	{
 		char	message[128];
-		sprintf(message, "Error: Too many segments (%i > %i) for game (not editor)", Highest_segment_index+1, MAX_SEGMENTS);
+		snprintf(message, 128, "Error: Too many segments (%i > %i) for game (not editor)", Highest_segment_index+1, MAX_SEGMENTS);
 		MessageBox( -2, -2, 1, message, "Ok" );
 	}
 
 	if (Highest_vertex_index >= MAX_SEGMENT_VERTICES)
 	{
 		char	message[128];
-		sprintf(message, "Error: Too many vertices (%i > %i) for game (not editor)", Highest_vertex_index+1, MAX_SEGMENT_VERTICES);
+		snprintf(message, 128, "Error: Too many vertices (%i > %i) for game (not editor)", Highest_vertex_index+1, MAX_SEGMENT_VERTICES);
 		MessageBox( -2, -2, 1, message, "Ok" );
 	}
 
@@ -556,14 +556,14 @@ int save_mine_data_compiled_new(FILE * SaveFile)
 	if (Highest_segment_index >= MAX_SEGMENTS) 
 	{
 		char	message[128];
-		sprintf(message, "Error: Too many segments (%i > %i) for game (not editor)", Highest_segment_index+1, MAX_SEGMENTS);
+		snprintf(message, 128, "Error: Too many segments (%i > %i) for game (not editor)", Highest_segment_index+1, MAX_SEGMENTS);
 		MessageBox( -2, -2, 1, message, "Ok" );
 	}
 
 	if (Highest_vertex_index >= MAX_SEGMENT_VERTICES)
 	{
 		char	message[128];
-		sprintf(message, "Error: Too many vertices (%i > %i) for game (not editor)", Highest_vertex_index+1, MAX_SEGMENT_VERTICES);
+		snprintf(message, 128, "Error: Too many vertices (%i > %i) for game (not editor)", Highest_vertex_index+1, MAX_SEGMENT_VERTICES);
 		MessageBox( -2, -2, 1, message, "Ok" );
 	}
 

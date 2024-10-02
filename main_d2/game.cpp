@@ -922,7 +922,7 @@ void game_draw_time_left()
         i++;
 #endif
 
-        sprintf( temp_string, "Time left: %d secs", i );
+        snprintf( temp_string, 30, "Time left: %d secs", i );
 
         if (i>=0)
          gr_string(0, 32, temp_string );
@@ -978,7 +978,7 @@ void SavePictScreen(int multiplayer)
 		Int3();
 // create the fsspec
 
-	sprintf(filename, "screen%d", multi_count++);
+	snprintf(filename, 50, "screen%d", multi_count++);
 	pfilename = c2pstr(filename);
 	if (!multiplayer) {
 		show_cursor();
@@ -1063,8 +1063,8 @@ void save_screen_shot(int automap_flag)
 	if ( savenum > 99 ) savenum = 0;
 	if ( stereo_savenum > 99 ) stereo_savenum = 0;
 
-	sprintf(savename,"screen%02d.pcx",savenum++);
-	sprintf( message, "%s '%s'", TXT_DUMPING_SCREEN, savename );
+	snprintf(savename, FILENAME_LEN, "screen%02d.pcx", savenum++);
+	snprintf(message, 100, "%s '%s'", TXT_DUMPING_SCREEN, savename );
 
 	if (!automap_flag)		//if from automap, curcanv is already visible canv
 		gr_set_current_canvas(NULL);
@@ -2012,7 +2012,7 @@ void flush_movie_buffer()
 
 	for (f=0;f<Movie_frame_counter;f++) 
 	{
-		sprintf(savename, "%sfrm%04d.pcx",movie_path,__Movie_frame_num);
+		snprintf(savename, 128, "%sfrm%04d.pcx",movie_path,__Movie_frame_num);
 		__Movie_frame_num++;
 		pcx_write_bitmap(savename,&Movie_bm,Movie_pal);
 		Movie_bm.bm_data += MOVIE_FRAME_SIZE;

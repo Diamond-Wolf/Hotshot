@@ -1069,7 +1069,7 @@ void do_registered_end_game(void)
 
 		//MALLOC(Briefing_text, char, len);//Unable to compile -KRB
 		Briefing_text = (char*)mem_malloc(len * sizeof(char));//my hack -KRB
-		sprintf(Briefing_text, "Test");
+		snprintf(Briefing_text, len * sizeof(char), "Test");
 	}
 
 	load_screen_text(Ending_text_filename, &Briefing_text);

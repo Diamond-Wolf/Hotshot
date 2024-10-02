@@ -234,12 +234,12 @@ void mem_int_to_string(int number, char* dest)
 	int i, l, c;
 	char buffer[20], * p;
 
-	sprintf(buffer, "%d", number);
+	snprintf(buffer, 20, "%d", number);
 
 	l = strlen(buffer);
 	if (l <= 3) {
 		// Don't bother with less than 3 digits
-		sprintf(dest, "%d", number);
+		snprintf(dest, l, "%d", number);
 		return;
 	}
 

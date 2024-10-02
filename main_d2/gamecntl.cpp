@@ -360,7 +360,7 @@ void ReadControls()
 #ifdef NETWORK
 		if ((key & KEY_DEBUGGED) && (Game_mode & GM_MULTI)) {
 			Network_message_reciever = 100;		// Send to everyone...
-			sprintf(Network_message, "%s %s", TXT_I_AM_A, TXT_CHEATER);
+			snprintf(Network_message, MAX_MESSAGE_LEN, "%s %s", TXT_I_AM_A, TXT_CHEATER);
 		}
 #endif
 #endif
@@ -585,9 +585,9 @@ int do_game_pause()
 	format_time(level_time, f2i(Players[Player_num].time_level) + Players[Player_num].hours_level * 3600);
 
 	if (Newdemo_state != ND_STATE_PLAYBACK)
-		sprintf(msg, "PAUSE\n\nSkill level:  %s\nHostages on board:  %d\nTime on level: %s\nTotal time in game: %s", (*(&TXT_DIFFICULTY_1 + (Difficulty_level))), Players[Player_num].hostages_on_board, level_time, total_time);
+		snprintf(msg, 1000, "PAUSE\n\nSkill level:  %s\nHostages on board:  %d\nTime on level: %s\nTotal time in game: %s", (*(&TXT_DIFFICULTY_1 + (Difficulty_level))), Players[Player_num].hostages_on_board, level_time, total_time);
 	else
-		sprintf(msg, "PAUSE\n\nSkill level:  %s\nHostages on board:  %d\n", (*(&TXT_DIFFICULTY_1 + (Difficulty_level))), Players[Player_num].hostages_on_board);
+		snprintf(msg, 1000, "PAUSE\n\nSkill level:  %s\nHostages on board:  %d\n", (*(&TXT_DIFFICULTY_1 + (Difficulty_level))), Players[Player_num].hostages_on_board);
 
 	show_boxed_message(Pause_msg = msg);		  //TXT_PAUSE);
 	plat_present_canvas(0);
@@ -699,30 +699,30 @@ void do_show_netgame_help()
 		m[i].type = NM_TYPE_TEXT;
 	}
 
-	sprintf(mtext[num], "Game: %s", Netgame.game_name); num++;
-	sprintf(mtext[num], "Mission: %s", Netgame.mission_title); num++;
-	sprintf(mtext[num], "Current Level: %d", Netgame.levelnum); num++;
-	sprintf(mtext[num], "Difficulty: %s", MENU_DIFFICULTY_TEXT(Netgame.difficulty)); num++;
-	sprintf(mtext[num], "Game Mode: %s", NetworkModeNames[Netgame.gamemode]); num++;
-	sprintf(mtext[num], "Game Master: %s", Players[network_who_is_master()].callsign); num++;
-	sprintf(mtext[num], "Number of players: %d/%d", network_how_many_connected(), Netgame.max_numplayers); num++;
-	sprintf(mtext[num], "Packets per second: %d", Netgame.PacketsPerSec); num++;
-	sprintf(mtext[num], "Short Packets: %s", Netgame.ShortPackets ? "Yes" : "No"); num++;
+	snprintf(mtext[num], 50, "Game: %s", Netgame.game_name); num++;
+	snprintf(mtext[num], 50, "Mission: %s", Netgame.mission_title); num++;
+	snprintf(mtext[num], 50, "Current Level: %d", Netgame.levelnum); num++;
+	snprintf(mtext[num], 50, "Difficulty: %s", MENU_DIFFICULTY_TEXT(Netgame.difficulty)); num++;
+	snprintf(mtext[num], 50, "Game Mode: %s", NetworkModeNames[Netgame.gamemode]); num++;
+	snprintf(mtext[num], 50, "Game Master: %s", Players[network_who_is_master()].callsign); num++;
+	snprintf(mtext[num], 50, "Number of players: %d/%d", network_how_many_connected(), Netgame.max_numplayers); num++;
+	snprintf(mtext[num], 50, "Packets per second: %d", Netgame.PacketsPerSec); num++;
+	snprintf(mtext[num], 19, "Short Packets: %s", Netgame.ShortPackets ? "Yes" : "No"); num++;
 
 #ifndef RELEASE
 	pl = (int)(((float)TotalMissedPackets / (float)TotalPacketsGot) * 100.0);
 	if (pl < 0)
 		pl = 0;
-	sprintf(mtext[num], "Packets lost: %d (%d%%)", TotalMissedPackets, pl); num++;
+	snprintf(mtext[num], 50, "Packets lost: %d (%d%%)", TotalMissedPackets, pl); num++;
 #endif
 
 	if (Netgame.KillGoal)
 	{
-		sprintf(mtext[num], "Kill goal: %d", Netgame.KillGoal * 5); num++;
+		snprintf(mtext[num], 50, "Kill goal: %d", Netgame.KillGoal * 5); num++;
 	}
 
-	sprintf(mtext[num], " "); num++;
-	sprintf(mtext[num], "Connected players:"); num++;
+	snprintf(mtext[num], 2, " "); num++;
+	snprintf(mtext[num], 19, "Connected players:"); num++;
 
 	NetPlayers.players[Player_num].rank = GetMyNetRanking();
 
@@ -732,18 +732,18 @@ void do_show_netgame_help()
 			if (!FindArg("-norankings"))
 			{
 				if (i == Player_num)
-					sprintf(mtext[num], "%s%s (%d/%d)", RankStrings[NetPlayers.players[i].rank], Players[i].callsign, Netlife_kills, Netlife_killed);
+					snprintf(mtext[num], 50, "%s%s (%d/%d)", RankStrings[NetPlayers.players[i].rank], Players[i].callsign, Netlife_kills, Netlife_killed);
 				else
-					sprintf(mtext[num], "%s%s %d/%d", RankStrings[NetPlayers.players[i].rank], Players[i].callsign, kill_matrix[Player_num][i],
+					snprintf(mtext[num], 50, "%s%s %d/%d", RankStrings[NetPlayers.players[i].rank], Players[i].callsign, kill_matrix[Player_num][i],
 						kill_matrix[i][Player_num]);
 				num++;
 			}
 			else
-				sprintf(mtext[num++], "%s", Players[i].callsign);
+				snprintf(mtext[num++], 50, "%s", Players[i].callsign);
 		}
 
 
-	sprintf(mtext[num], " "); num++;
+	snprintf(mtext[num], 2, " "); num++;
 
 	eff = (int)((float)((float)Netlife_kills / ((float)Netlife_killed + (float)Netlife_kills)) * 100.0);
 
@@ -753,22 +753,22 @@ void do_show_netgame_help()
 	if (Game_mode & GM_HOARD)
 	{
 		if (PhallicMan == -1)
-			sprintf(mtext[num], "There is no record yet for this level.");
+			snprintf(mtext[num], 39, "There is no record yet for this level.");
 		else
-			sprintf(mtext[num], "%s has the record at %d points.", Players[PhallicMan].callsign, PhallicLimit);
+			snprintf(mtext[num], 50, "%s has the record at %d points.", Players[PhallicMan].callsign, PhallicLimit);
 		num++;
 	}
 	else if (!FindArg("-norankings"))
 	{
 		if (eff < 60)
 		{
-			sprintf(mtext[num], "Your lifetime efficiency of %d%%", eff); num++;
-			sprintf(mtext[num], "is %s your ranking.", eff_strings[eff / 10]); num++;
+			snprintf(mtext[num], 50, "Your lifetime efficiency of %d%%", eff); num++;
+			snprintf(mtext[num], 50, "is %s your ranking.", eff_strings[eff / 10]); num++;
 		}
 		else
 		{
-			sprintf(mtext[num], "Your lifetime efficiency of %d%%", eff); num++;
-			sprintf(mtext[num], "is serving you well."); num++;
+			snprintf(mtext[num], 50, "Your lifetime efficiency of %d%%", eff); num++;
+			snprintf(mtext[num], 21, "is serving you well."); num++;
 		}
 	}
 
@@ -1925,7 +1925,7 @@ void HandleTestKey(int key)
 
 	//[ISB] new debugging key to kill game and invoke a signal or SEH thing.
 	case KEY_DEBUGGED + KEY_SHIFTED + KEY_F4:
-		*((int*)0) = 0;
+		*((volatile int*)0) = 0;
 		break;
 	}
 }
@@ -2039,7 +2039,7 @@ void FinalCheats(int key)
 			if (Game_mode & GM_MULTI)
 			{
 				Network_message_reciever = 100;		// Send to everyone...
-				sprintf(Network_message, "%s is crippled...get him!", Players[Player_num].callsign);
+				snprintf(Network_message, MAX_MESSAGE_LEN, "%s is crippled...get him!", Players[Player_num].callsign);
 			}
 #endif
 			HUD_init_message("Take that...cheater!");
@@ -2299,7 +2299,7 @@ void do_cheat_menu()
 	newmenu_item mm[16];
 	char score_text[21];
 
-	sprintf(score_text, "%d", Players[Player_num].score);
+	snprintf(score_text, 21, "%d", Players[Player_num].score);
 
 	mm[0].type = NM_TYPE_CHECK; mm[0].value = Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE; mm[0].text = const_cast<char*>("Invulnerability");
 	mm[1].type = NM_TYPE_CHECK; mm[1].value = Players[Player_num].flags & PLAYER_FLAGS_CLOAKED; mm[1].text = const_cast<char*>("Cloaked");
@@ -2381,7 +2381,7 @@ void speedtest_frame(void)
 	if (Speedtest_segnum > Highest_segment_index) {
 		char    msg[128];
 
-		sprintf(msg, "\nSpeedtest done:  %i frames, %7.3f seconds, %7.3f frames/second.\n",
+		snprintf(msg, 128, "\nSpeedtest done:  %i frames, %7.3f seconds, %7.3f frames/second.\n",
 			FrameCount - Speedtest_frame_start,
 			f2fl(timer_get_fixed_seconds() - Speedtest_start_time),
 			(float)(FrameCount - Speedtest_frame_start) / f2fl(timer_get_fixed_seconds() - Speedtest_start_time));

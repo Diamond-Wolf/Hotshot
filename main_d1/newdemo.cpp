@@ -1291,7 +1291,7 @@ int newdemo_read_demo_start(int rnd_demo)
 	if ((c != ND_EVENT_START_DEMO) || nd_bad_read) {
 		newmenu_item m[1];
 
-		sprintf(text, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_CORRUPT);
+		snprintf(text, 50, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_CORRUPT);
 		m[0].type = NM_TYPE_TEXT; m[0].text = text;
 		newmenu_do(NULL, NULL, sizeof(m) / sizeof(*m), m, NULL);
 		return 1;
@@ -1300,7 +1300,7 @@ int newdemo_read_demo_start(int rnd_demo)
 	if (version < DEMO_VERSION) {
 		if (!rnd_demo) {
 			newmenu_item m[1];
-			sprintf(text, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_OLD);
+			snprintf(text, 50, "%s %s", TXT_CANT_PLAYBACK, TXT_DEMO_OLD);
 			m[0].type = NM_TYPE_TEXT; m[0].text = text;
 			newmenu_do(NULL, NULL, sizeof(m) / sizeof(*m), m, NULL);
 		}
@@ -1310,7 +1310,7 @@ int newdemo_read_demo_start(int rnd_demo)
 	if (game_type != DEMO_GAME_TYPE) {
 		newmenu_item m[3];
 
-		sprintf(text, "%s %s", TXT_CANT_PLAYBACK, TXT_RECORDED);
+		snprintf(text, 50, "%s %s", TXT_CANT_PLAYBACK, TXT_RECORDED);
 		m[0].type = NM_TYPE_TEXT; m[0].text = text;
 #ifdef SHAREWARE
 		m[1].type = NM_TYPE_TEXT; m[1].text = TXT_WITH_REGISTERED;
@@ -1407,7 +1407,7 @@ int newdemo_read_demo_start(int rnd_demo)
 	{
 		newmenu_item m[1];
 
-		sprintf(text, TXT_NOMISSION4DEMO, current_mission);
+		snprintf(text, 50, TXT_NOMISSION4DEMO, current_mission);
 		m[0].type = NM_TYPE_TEXT; m[0].text = text;
 		newmenu_do(NULL, NULL, sizeof(m) / sizeof(*m), m, NULL);
 		return 1;
@@ -2888,7 +2888,7 @@ void newdemo_stop_recording()
 		num = atoi(&(filename[i]));
 		num++;
 		filename[i] = '\0';
-		sprintf(newfile, "%s%d", filename, num);
+		snprintf(newfile, 15, "%s%d", filename, num);
 		strncpy(filename, newfile, 8);
 		filename[8] = '\0';
 	}
@@ -2921,7 +2921,7 @@ try_again:
 			strcat(save_file, ".dem");
 		}
 		else
-			sprintf(save_file, "tmp%d.dem", tmpcnt++);
+			snprintf(save_file, 15, "tmp%d.dem", tmpcnt++);
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 		get_full_file_path(demo_filename_full_path, save_file, CHOCOLATE_DEMOS_DIR);
 		remove(demo_filename_full_path);

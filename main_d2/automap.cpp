@@ -316,7 +316,7 @@ void DropBuddyMarker(object* objp)
 	if (marker_num > NUM_MARKERS - 1)
 		marker_num = NUM_MARKERS - 1;
 
-	sprintf(MarkerMessage[marker_num], "RIP: %s", guidebot_name);
+	snprintf(MarkerMessage[marker_num], MARKER_MESSAGE_LEN, "RIP: %s", guidebot_name);
 
 	MarkerPoint[marker_num] = objp->pos;
 
@@ -481,7 +481,7 @@ void draw_automap()
 		{
 			char msg[10 + MARKER_MESSAGE_LEN + 1];
 
-			sprintf(msg, "Marker %d: %s", HighlightMarker + 1, MarkerMessage[(Player_num * 2) + HighlightMarker]);
+			snprintf(msg, 11 + MARKER_MESSAGE_LEN, "Marker %d: %s", HighlightMarker + 1, MarkerMessage[(Player_num * 2) + HighlightMarker]);
 
 			gr_setcolor(Red_48);
 
@@ -637,14 +637,14 @@ void create_name_canv()
 	char	name_level_left[128], name_level_right[128];
 
 	if (Current_level_num > 0)
-		sprintf(name_level_left, "%s %i", TXT_LEVEL, Current_level_num);
+		snprintf(name_level_left, 128, "%s %i", TXT_LEVEL, Current_level_num);
 	else
-		sprintf(name_level_left, "Secret Level %i", -Current_level_num);
+		snprintf(name_level_left, 128, "Secret Level %i", -Current_level_num);
 
 	if (Current_mission_num == 0 && Current_level_num > 0)		//built-in mission
-		sprintf(name_level_right, "%s %d: ", system_name[(Current_level_num - 1) / 4], ((Current_level_num - 1) % 4) + 1);
+		snprintf(name_level_right, 128, "%s %d: ", system_name[(Current_level_num - 1) / 4], ((Current_level_num - 1) % 4) + 1);
 	else
-		strcpy(name_level_right, " ");
+		strncpy(name_level_right, " ", 128);
 
 	strcat(name_level_right, Current_level_name);
 

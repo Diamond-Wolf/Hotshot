@@ -411,12 +411,12 @@ void buddy_message(const char * format, ... )
 			int t;
 
 			va_start(args, format );
-			vsprintf(new_format, format, args);
+			vsnprintf(new_format, 128, format, args);
 			va_end(args);
 
 			gb_str[0] = 1;
 			gb_str[1] = BM_XRGB(28, 0, 0);
-			strcpy(&gb_str[2], guidebot_name);
+			strncpy(&gb_str[2], guidebot_name, 14);
 			t = strlen(gb_str);
 			gb_str[t] = ':';
 			gb_str[t+1] = 1;
@@ -439,12 +439,12 @@ void thief_message(const char * format, ... )
 	va_list	args;
 
 	va_start(args, format );
-	vsprintf(new_format, format, args);
+	vsnprintf(new_format, 128, format, args);
 	va_end(args);
 
 	gb_str[0] = 1;
 	gb_str[1] = BM_XRGB(28, 0, 0);
-	strcpy(&gb_str[2], "THIEF:");
+	strncpy(&gb_str[2], "THIEF:", 6);
 	gb_str[8] = 1;
 	gb_str[9] = BM_XRGB(0, 31, 0);
 	gb_str[10] = 0;
@@ -1809,27 +1809,27 @@ void do_escort_menu(void)
 	#ifndef NDEBUG
 		case ESCORT_GOAL_UNSPECIFIED:
 			Int3();
-			sprintf(goal_str, "ERROR");
+			snprintf(goal_str, 6, "ERROR");
 			break;
 	#endif
 			
 		case ESCORT_GOAL_BLUE_KEY:
-			sprintf(goal_str, "blue key");
+			snprintf(goal_str, 9, "blue key");
 			break;
 		case ESCORT_GOAL_GOLD_KEY:
-			sprintf(goal_str, "yellow key");
+			snprintf(goal_str, 11, "yellow key");
 			break;
 		case ESCORT_GOAL_RED_KEY:
-			sprintf(goal_str, "red key");
+			snprintf(goal_str, 8, "red key");
 			break;
 		case ESCORT_GOAL_CONTROLCEN:
-			sprintf(goal_str, "reactor");
+			snprintf(goal_str, 8, "reactor");
 			break;
 		case ESCORT_GOAL_BOSS:
-			sprintf(goal_str, "boss");
+			snprintf(goal_str, 5, "boss");
 			break;
 		case ESCORT_GOAL_EXIT:
-			sprintf(goal_str, "exit");
+			snprintf(goal_str, 5, "exit");
 			break;
 		case ESCORT_GOAL_MARKER1:
 		case ESCORT_GOAL_MARKER2:
@@ -1840,17 +1840,17 @@ void do_escort_menu(void)
 		case ESCORT_GOAL_MARKER7:
 		case ESCORT_GOAL_MARKER8:
 		case ESCORT_GOAL_MARKER9:
-			sprintf(goal_str, "marker %i", next_goal-ESCORT_GOAL_MARKER1+1);
+			snprintf(goal_str, 12, "marker %i", next_goal-ESCORT_GOAL_MARKER1+1);
 			break;
 
 	}
 			
 	if (!Buddy_messages_suppressed)
-		sprintf(tstr, "Suppress");
+		snprintf(tstr, 9, "Suppress");
 	else
-		sprintf(tstr, "Enable");
+		snprintf(tstr, 7, "Enable");
 
-	sprintf(msg,	"Select Guide-Bot Command:\n\n"
+	snprintf(msg, 300, "Select Guide-Bot Command:\n\n"
 						"0.  Next Goal: %s" CC_LSPACING_S "3\n"
 						"\x84.  Find Energy Powerup" CC_LSPACING_S "3\n"
 						"2.  Find Energy Center" CC_LSPACING_S "3\n"

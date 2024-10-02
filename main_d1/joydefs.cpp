@@ -133,7 +133,7 @@ void joydefs_config()
 
 		if (kc_use_external_control) 
 		{
-			sprintf(xtext, "Enable %s", kc_external_name);
+			snprintf(xtext, 128, "Enable %s", kc_external_name);
 			m[10].type = NM_TYPE_CHECK; m[10].text = xtext; m[10].value = kc_enable_external_control;
 			nitems = nitems + 1;
 		}

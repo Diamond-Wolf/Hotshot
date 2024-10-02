@@ -41,6 +41,8 @@ workspace "Hotshot"
 	location "./build"
 	includedirs "."
 
+	buildoptions { "-funsigned-char", "-Wno-dangling-else", "-Wno-invalid-source-encoding", "-Wno-writable-strings", "-Wno-parentheses", "-Wno-parentheses-equality" }
+
 	filter { "configurations:Debug" }
 		symbols "On"
 		defines "DEBUG"

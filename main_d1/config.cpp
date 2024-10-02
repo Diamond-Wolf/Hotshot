@@ -250,44 +250,44 @@ int WriteConfigFile()
 	{
 		return 1;
 	}
-	sprintf(str, "%s=0x%x\n", digi_dev_str, Config_digi_type);
+	snprintf(str, 256, "%s=0x%x\n", digi_dev_str, Config_digi_type);
 	fputs(str, infile);
-	sprintf(str, "%s=0x%x\n", digi_port_str, digi_driver_port);
+	snprintf(str, 256, "%s=0x%x\n", digi_port_str, digi_driver_port);
 	fputs(str, infile);
-	sprintf(str, "%s=%d\n", digi_irq_str, digi_driver_irq);
+	snprintf(str, 256, "%s=%d\n", digi_irq_str, digi_driver_irq);
 	fputs(str, infile);
-	sprintf(str, "%s=%d\n", digi_dma_str, digi_driver_dma);
+	snprintf(str, 256, "%s=%d\n", digi_dma_str, digi_driver_dma);
 	fputs(str, infile);
-	sprintf(str, "%s=%d\n", digi_volume_str, Config_digi_volume);
+	snprintf(str, 256, "%s=%d\n", digi_volume_str, Config_digi_volume);
 	fputs(str, infile);
-	sprintf(str, "%s=0x%x\n", midi_dev_str, Config_midi_type);
+	snprintf(str, 256, "%s=0x%x\n", midi_dev_str, Config_midi_type);
 	fputs(str, infile);
-	sprintf(str, "%s=0x%x\n", midi_port_str, digi_midi_port);
+	snprintf(str, 256, "%s=0x%x\n", midi_port_str, digi_midi_port);
 	fputs(str, infile);
-	sprintf(str, "%s=%d\n", midi_volume_str, Config_midi_volume);
+	snprintf(str, 256, "%s=%d\n", midi_volume_str, Config_midi_volume);
 	fputs(str, infile);
-	sprintf(str, "%s=%d\n", stereo_rev_str, Config_channels_reversed);
+	snprintf(str, 256, "%s=%d\n", stereo_rev_str, Config_channels_reversed);
 	fputs(str, infile);
-	sprintf(str, "%s=%d\n", gamma_level_str, gamma);
+	snprintf(str, 256, "%s=%d\n", gamma_level_str, gamma);
 	fputs(str, infile);
 	if (Detail_level == NUM_DETAIL_LEVELS - 1)
-		sprintf(str, "%s=%d,%d,%d,%d,%d,%d,%d\n", detail_level_str, Detail_level,
+		snprintf(str, 256, "%s=%d,%d,%d,%d,%d,%d,%d\n", detail_level_str, Detail_level,
 			Object_complexity, Object_detail, Wall_detail, Wall_render_depth, Debris_amount, SoundChannels);
 	else
-		sprintf(str, "%s=%d\n", detail_level_str, Detail_level);
+		snprintf(str, 256, "%s=%d\n", detail_level_str, Detail_level);
 	fputs(str, infile);
-	sprintf(str, "%s=%d,%d,%d,%d\n", joystick_min_str, joy_axis_min[0], joy_axis_min[1], joy_axis_min[2], joy_axis_min[3]);
+	snprintf(str, 256, "%s=%d,%d,%d,%d\n", joystick_min_str, joy_axis_min[0], joy_axis_min[1], joy_axis_min[2], joy_axis_min[3]);
 	fputs(str, infile);
-	sprintf(str, "%s=%d,%d,%d,%d\n", joystick_cen_str, joy_axis_center[0], joy_axis_center[1], joy_axis_center[2], joy_axis_center[3]);
+	snprintf(str, 256, "%s=%d,%d,%d,%d\n", joystick_cen_str, joy_axis_center[0], joy_axis_center[1], joy_axis_center[2], joy_axis_center[3]);
 	fputs(str, infile);
-	sprintf(str, "%s=%d,%d,%d,%d\n", joystick_max_str, joy_axis_max[0], joy_axis_max[1], joy_axis_max[2], joy_axis_max[3]);
+	snprintf(str, 256, "%s=%d,%d,%d,%d\n", joystick_max_str, joy_axis_max[0], joy_axis_max[1], joy_axis_max[2], joy_axis_max[3]);
 	fputs(str, infile);
-	sprintf(str, "%s=%s\n", last_player_str, Players[Player_num].callsign);
+	snprintf(str, 256, "%s=%s\n", last_player_str, Players[Player_num].callsign);
 	fputs(str, infile);
-	sprintf(str, "%s=%s\n", last_mission_str, config_last_mission);
+	snprintf(str, 256, "%s=%s\n", last_mission_str, config_last_mission);
 	fputs(str, infile);
 #ifdef NETWORK
-	sprintf(str, "%s=%d\n", port_number_str, Current_Port);
+	snprintf(str, 256, "%s=%d\n", port_number_str, Current_Port);
 	fputs(str, infile);
 #endif
 	fclose(infile);
