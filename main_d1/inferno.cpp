@@ -456,10 +456,10 @@ int D_DescentMain(int argc, const char** argv)
 
 	//[ISB] kill a ridiculous amount of VR stuff. it'd be cool to try to get some sort of crude VR working but...
 	{
-		int screen_mode = SM_320x200C;
-		int screen_width = 320;
-		int screen_height = 200;
-		int screen_compatible = 1;
+		int screen_mode = SM_640x480V;
+		int screen_width = 640;
+		int screen_height = 480;
+		int screen_compatible = 0;
 
 		if (FindArg("-320x240")) 
 		{
@@ -488,7 +488,7 @@ int D_DescentMain(int argc, const char** argv)
 			screen_compatible = 0;
 		}
 
-		if (FindArg("-640x480")) 
+		if (FindArg("-640x480"))
 		{
 			if (Inferno_verbose) printf("Using 640x480 VESA...\n");
 			screen_mode = SM_640x480V;
@@ -496,6 +496,16 @@ int D_DescentMain(int argc, const char** argv)
 			screen_height = 480;
 			screen_compatible = 0;
 		}
+
+		if (FindArg("-320x200")) 
+		{
+			if (Inferno_verbose) printf("Using 320x200 ???...\n");
+			screen_mode = SM_320x200C;
+			screen_width = 320;
+			screen_height = 200;
+			screen_compatible = 1;
+		}
+
 		if (FindArg("-320x100")) 
 		{
 			if (Inferno_verbose) printf("Using 320x100 VGA...\n");
