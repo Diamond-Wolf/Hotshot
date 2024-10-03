@@ -14,7 +14,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifndef _MEDWALL_H
 #define _MEDWALL_H
 
-#include "main_d1/wall.h"
+#include "main_shared/wall.h"
 #include "main_d1/inferno.h"
 #include "main_d1/segment.h"
 

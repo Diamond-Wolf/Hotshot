@@ -27,7 +27,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "vecmat/vecmat.h"
 #include "gameseg.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "fuelcen.h"
 
 // How far a point can be from a plane, and still be "in" the plane

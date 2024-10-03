@@ -13,15 +13,34 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "inferno.h"
-#include "segment.h"
-#include "object.h"
+#include <vector>
+
+#ifdef BUILD_DESCENT1
+
+# include "main_d1/inferno.h"
+# include "main_d1/segment.h"
+# include "main_d1/object.h"
+# include "main_d1/switch.h"
+
+#else
+
+# include "main_d2/inferno.h"
+# include "main_d2/segment.h"
+# include "main_d2/object.h"
+# include "main_d2/switch.h"
+
+#endif
 
 //#include "vclip.h"
-
-#define MAX_WALLS					254	// Maximum number of walls
-#define MAX_WALL_ANIMS			60		// Maximum different types of doors
-#define MAX_DOORS					90		// Maximum number of open doors
+#ifdef BUILD_DESCENT2 
+# define MAX_WALLS					254	// Maximum number of walls
+# define MAX_WALL_ANIMS			60		// Maximum different types of doors
+# define MAX_DOORS					90		// Maximum number of open doors
+#else
+# define MAX_WALLS					175	// Maximum number of walls
+# define MAX_WALL_ANIMS			30		// Maximum different types of doors
+# define MAX_DOORS					50		// Maximum number of open doors
+#endif
 
 // Various wall types.
 #define WALL_NORMAL				0  	// Normal wall
@@ -66,7 +85,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define DOOR_OPEN_TIME			i2f(2)		// How long takes to open
 #define DOOR_WAIT_TIME			i2f(5)		// How long before auto door closes
 
-#define MAX_CLIP_FRAMES			50
+#ifdef BUILD_DESCENT2
+# define MAX_CLIP_FRAMES			50
+#else
+# define MAX_CLIP_FRAMES			20
+#endif
 
 // WALL_IS_DOORWAY flags.
 #define WID_FLY_FLAG					1
@@ -75,13 +98,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define WID_EXTERNAL_FLAG			8
 #define WID_CLOAKED_FLAG			16
 
-//@@//	WALL_IS_DOORWAY return values			F/R/RP
-//@@#define WID_WALL						2	// 0/1/0		wall	
-//@@#define WID_TRANSPARENT_WALL		6	//	0/1/1		transparent wall
-//@@#define WID_ILLUSORY_WALL			3	//	1/1/0		illusory wall
-//@@#define WID_TRANSILLUSORY_WALL	7	//	1/1/1		transparent illusory wall
-//@@#define WID_NO_WALL					5	//	1/0/1		no wall, can fly through
-//@@#define WID_EXTERNAL					8	// 0/0/0/1	don't see it, dont fly through it
+//	WALL_IS_DOORWAY return values			F/R/RP
+#define WID_WALL						2	// 0/1/0		wall	
+#define WID_TRANSPARENT_WALL		6	//	0/1/1		transparent wall
+#define WID_ILLUSORY_WALL			3	//	1/1/0		illusory wall
+#define WID_TRANSILLUSORY_WALL	7	//	1/1/1		transparent illusory wall
+#define WID_NO_WALL					5	//	1/0/1		no wall, can fly through
+#define WID_EXTERNAL					8	// 0/0/0/1	don't see it, dont fly through it
 
 #define	MAX_STUCK_OBJECTS	32
 
@@ -102,9 +125,14 @@ typedef struct wall
 	int8_t	trigger;				// Which trigger is associated with the wall.
 	int8_t	clip_num;			// Which	animation associated with the wall. 
 	uint8_t	keys;					// which keys are required
-	int8_t	controlling_trigger;	// which trigger causes something to happen here.  Not like "trigger" above, which is the trigger on this wall.
-									//	Note: This gets stuffed at load time in gamemine.c.  Don't try to use it in the editor.  You will be sorry!
-	int8_t	cloak_value;		// if this wall is cloaked, the fade value
+	union {						//Union of both D1 and D2 last fields, since D1 doesn't use the space at all
+		struct {
+			int8_t	controlling_trigger;	// which trigger causes something to happen here.  Not like "trigger" above, which is the trigger on this wall.
+										//	Note: This gets stuffed at load time in gamemine.c.  Don't try to use it in the editor.  You will be sorry!
+			int8_t	cloak_value;		// if this wall is cloaked, the fade value
+		};
+		int16_t pad;
+	};
 	} wall;
 
 typedef struct active_door 
@@ -130,7 +158,7 @@ typedef struct cloaking_wall
 #define WCF_TMAP1			4		//this uses primary tmap, not tmap2
 #define WCF_HIDDEN		8		//this uses primary tmap, not tmap2
 
-typedef struct {
+typedef struct wclip {
 	fix				play_time;
 	short				num_frames;
 	short				frames[MAX_CLIP_FRAMES];
@@ -156,10 +184,10 @@ extern int Num_open_doors;				// Number of open doors
 extern cloaking_wall CloakingWalls[];
 extern int Num_cloaking_walls;
 
-extern wclip WallAnims[MAX_WALL_ANIMS];
+extern std::vector<wclip> WallAnims;
 extern int Num_wall_anims;
 
-extern int walls_bm_num[MAX_WALL_ANIMS];
+//extern int walls_bm_num[MAX_WALL_ANIMS];
 
 // Initializes all walls (i.e. no special walls.)
 extern void wall_init();
@@ -221,18 +249,24 @@ extern void wall_set_tmap_num(segment *seg,int side,segment *csegp,int cside,int
 // Remove any flares from a wall
 void kill_stuck_objects(int wallnum);
 
+#ifdef BUILD_DESCENT2
 //start wall open <-> closed transitions
 void start_wall_cloak(segment *seg, int side);
 void start_wall_decloak(segment *seg, int side);
+#endif
 
 #include <stdio.h>
 
 //Reads a wall from the specified file. 
 void read_wall(wall* nwall, FILE* fp);
 void read_active_door(active_door* door, FILE* fp);
+void read_trigger(trigger* trig, FILE* fp);
 
 void write_wall(wall* nwall, FILE* fp);
 void write_active_door(active_door* door, FILE* fp);
+void write_trigger(trigger* trig, FILE* fp);
 
+#ifdef BUILD_DESCENT2
 void P_ReadCloakingWall(cloaking_wall* wall, FILE* fp);
 void P_WriteCloakingWall(cloaking_wall* wall, FILE* fp);
+#endif

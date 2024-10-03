@@ -25,7 +25,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "vclip.h"
 #include "main_shared/effects.h"
 #include "polyobj.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "textures.h"
 #include "game.h"
 #include "multi.h"

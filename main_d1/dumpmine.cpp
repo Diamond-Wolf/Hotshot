@@ -12,7 +12,7 @@
 #endif
 #include "misc/error.h"
 #include "object.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "gamemine.h"
 #include "robot.h"
 #include "player.h"

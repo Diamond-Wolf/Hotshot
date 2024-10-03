@@ -23,7 +23,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "ai.h"
 #include "multi.h"
 #include "fuelcen.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "object.h"
 #include "robot.h"
 

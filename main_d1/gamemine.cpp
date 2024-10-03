@@ -21,7 +21,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "segment.h"
 #include "textures.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "object.h"
 #include "gamemine.h"
 #include "misc/error.h"

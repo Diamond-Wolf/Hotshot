@@ -33,7 +33,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fireball.h"
 #include "newmenu.h"
 #include "platform/mono.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "cntrlcen.h"
 #include "powerup.h"
 #include "polyobj.h"

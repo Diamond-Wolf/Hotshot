@@ -16,29 +16,55 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <math.h>
 #include <string.h>
 
+#include "wall.h"
 #include "platform/mono.h"
 #include "2d/gr.h"
-#include "wall.h"
-#include "switch.h"
-#include "inferno.h"
-#include "segment.h"
 #include "misc/error.h"
-#include "gameseg.h"
-#include "game.h"
-#include "bm.h"
-#include "vclip.h"
-#include "player.h"
-#include "gauges.h"
-#include "stringtable.h"
-#include "fireball.h"
-#include "textures.h"
-#include "sounds.h"
-#include "newdemo.h"
-#include "multi.h"
-#include "gameseq.h"
-#include "laser.h"		//	For seeing if a flare is stuck in a wall.
-#include "collide.h"
 #include "main_shared/effects.h"
+
+#ifdef BUILD_DESCENT1
+
+# include "main_d1/switch.h"
+# include "main_d1/inferno.h"
+# include "main_d1/segment.h"
+# include "main_d1/gameseg.h"
+# include "main_d1/game.h"
+# include "main_d1/bm.h"
+# include "main_d1/vclip.h"
+# include "main_d1/player.h"
+# include "main_d1/gauges.h"
+# include "main_d1/stringtable.h"
+# include "main_d1/fireball.h"
+# include "main_d1/textures.h"
+# include "main_d1/sounds.h"
+# include "main_d1/newdemo.h"
+# include "main_d1/multi.h"
+# include "main_d1/gameseq.h"
+# include "main_d1/laser.h"		//	For seeing if a flare is stuck in a wall.
+# include "main_d1/collide.h"
+
+#else
+
+# include "main_d2/switch.h"
+# include "main_d2/inferno.h"
+# include "main_d2/segment.h"
+# include "main_d2/gameseg.h"
+# include "main_d2/game.h"
+# include "main_d2/bm.h"
+# include "main_d2/vclip.h"
+# include "main_d2/player.h"
+# include "main_d2/gauges.h"
+# include "main_d2/stringtable.h"
+# include "main_d2/fireball.h"
+# include "main_d2/textures.h"
+# include "main_d2/sounds.h"
+# include "main_d2/newdemo.h"
+# include "main_d2/multi.h"
+# include "main_d2/gameseq.h"
+# include "main_d2/laser.h"		//	For seeing if a flare is stuck in a wall.
+# include "main_d2/collide.h"
+
+#endif
 
 #ifdef EDITOR
 #include "editor\editor.h"
@@ -52,7 +78,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 wall Walls[MAX_WALLS];					// Master walls array
 int Num_walls = 0;							// Number of walls
 
-wclip WallAnims[MAX_WALL_ANIMS];		// Wall animations
+std::vector<wclip> WallAnims(MAX_WALL_ANIMS);		// Wall animations
 int Num_wall_anims;
 //--unused-- int walls_bm_num[MAX_WALL_ANIMS];
 
@@ -463,6 +489,7 @@ void wall_open_door(segment* seg, int side)
 	}
 }
 
+#ifdef BUILD_DESCENT2
 //-----------------------------------------------------------------
 // start the transition from closed -> open wall
 void start_wall_cloak(segment* seg, int side)
@@ -626,6 +653,7 @@ void start_wall_decloak(segment* seg, int side)
 		d->back_ls[i] = csegp->sides[Connectside].uvls[i].l;
 	}
 }
+#endif
 
 //-----------------------------------------------------------------
 // This function closes the specified door and restores the closed
@@ -1040,7 +1068,9 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 
 	if (w->type == WALL_BLASTABLE) 
 	{
+#ifdef BUILD_DESCENT2
 		if (CurrentLogicVersion == LogicVer::SHAREWARE || obj->ctype.laser_info.parent_type == OBJ_PLAYER)
+#endif
 			wall_damage(seg, side, damage);
 		return WHP_BLASTABLE;
 	}
@@ -1156,6 +1186,7 @@ void reset_walls()
 	}
 }
 
+#ifdef BUILD_DESCENT2
 void do_cloaking_wall_frame(int cloaking_wall_num)
 {
 	cloaking_wall* d;
@@ -1263,6 +1294,7 @@ void do_decloaking_wall_frame(int cloaking_wall_num)
 		newdemo_record_cloaking_wall(d->front_wallnum, d->back_wallnum, wfront->type, wfront->state, wfront->cloak_value, Segments[wfront->segnum].sides[wfront->sidenum].uvls[0].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[1].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[2].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[3].l);
 
 }
+#endif
 
 void wall_frame_process()
 {
@@ -1305,6 +1337,7 @@ void wall_frame_process()
 		}
 	}
 
+#ifdef BUILD_DESCENT2
 	for (i = 0; i < Num_cloaking_walls; i++) {
 		cloaking_wall* d;
 		wall* w;
@@ -1319,6 +1352,7 @@ void wall_frame_process()
 		else
 			Int3();	//unexpected wall state
 	}
+#endif
 }
 
 int	Num_stuck_objects = 0;
@@ -1378,7 +1412,9 @@ void remove_obsolete_stuck_objects(void)
 
 }
 
+#ifdef BUILD_DESCENT2
 extern void flush_fcd_cache(void);
+#endif
 
 //	----------------------------------------------------------------------------------------------------
 //	Door with wall index wallnum is opening, kill all objects stuck in it.
@@ -1406,7 +1442,9 @@ void kill_stuck_objects(int wallnum)
 			Num_stuck_objects++;
 		}
 	//	Ok, this is awful, but we need to do things whenever a door opens/closes/disappears, etc.
+	#ifdef BUILD_DESCENT2
 	flush_fcd_cache();
+	#endif
 
 }
 
@@ -1469,7 +1507,8 @@ void clear_stuck_objects(void)
 }
 
 // -----------------------------------------------------------------------------------
-#define	MAX_BLAST_GLASS_DEPTH	5
+#ifdef BUILD_DESCENT2
+# define	MAX_BLAST_GLASS_DEPTH	5
 
 void bng_process_segment(object * objp, fix damage, segment * segp, int depth, int8_t * visited)
 {
@@ -1533,6 +1572,8 @@ void blast_nearby_glass(object* objp, fix damage)
 	visited[objp->segnum] = 1;
 	bng_process_segment(objp, damage, cursegp, 0, visited);
 }
+
+#endif
 
 #include "cfile/cfile.h"
 
@@ -1611,3 +1652,35 @@ void P_WriteCloakingWall(cloaking_wall* wall, FILE* fp)
 		file_write_int(fp, wall->back_ls[i]);
 	file_write_int(fp, wall->time);
 }
+
+#ifdef BUILD_DESCENT1
+void read_trigger(trigger* trig, FILE* fp)
+{
+	int j;
+	trig->type = file_read_byte(fp);
+	trig->flags = file_read_short(fp);
+	trig->value = file_read_int(fp);
+	trig->time = file_read_int(fp);
+	trig->link_num = file_read_byte(fp);
+	trig->num_links = file_read_short(fp);
+	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
+		trig->seg[j] = file_read_short(fp);
+	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
+		trig->side[j] = file_read_short(fp);
+}
+
+void write_trigger(trigger* trig, FILE* fp)
+{
+	int j;
+	file_write_byte(fp, trig->type);
+	file_write_short(fp, trig->flags);
+	file_write_int(fp, trig->value);
+	file_write_int(fp, trig->time);
+	file_write_byte(fp, trig->link_num);
+	file_write_short(fp, trig->num_links);
+	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
+		file_write_short(fp, trig->seg[j]);
+	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
+		file_write_short(fp, trig->side[j]);
+}
+#endif

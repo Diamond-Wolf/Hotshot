@@ -29,7 +29,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fvi.h"
 #include "segment.h"
 #include "object.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "laser.h"
 #include "2d/rle.h"
 #include "robot.h"

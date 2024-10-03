@@ -45,7 +45,7 @@ static char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE C
 #include "texmap/texmap.h"
 #include "main_shared/texmerge.h"
 #include "menu.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "switch.h"
 #include "polyobj.h"
 #include "main_shared/effects.h"

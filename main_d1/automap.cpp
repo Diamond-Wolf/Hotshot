@@ -42,7 +42,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "iff/iff.h"
 #include "2d/pcx.h"
 #include "2d/palette.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "hostage.h"
 #include "fuelcen.h"
 #include "gameseq.h"

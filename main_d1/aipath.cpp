@@ -26,7 +26,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "robot.h"
 #include "fvi.h"
 #include "physics.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #ifdef EDITOR
 #include "editor\editor.h"
 #endif

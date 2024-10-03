@@ -34,7 +34,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "object.h"
 #include "game.h"
 #include "gauges.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "terrain.h"
 #include "polyobj.h"
 #include "bm.h"

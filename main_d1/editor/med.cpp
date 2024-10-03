@@ -57,7 +57,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d1/object.h"
 #include "cfile/cfile.h"
 #include "main_d1/effects.h"
-#include "main_d1/wall.h"
+#include "main_shared/wall.h"
 #include "info.h"
 #include "main_d1/ai.h"
 

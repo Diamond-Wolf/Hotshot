@@ -47,7 +47,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "kmatrix.h"
 #include "newdemo.h"
 #include "multibot.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "bm.h"
 #include "main_shared/effects.h"
 #include "physics.h"

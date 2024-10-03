@@ -27,7 +27,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "newdemo.h"
 #include "platform/timer.h"
 #include "ai.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "laser.h"
 
 //Global variables for physics system

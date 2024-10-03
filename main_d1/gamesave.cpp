@@ -31,7 +31,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "object.h"
 #include "game.h"
 #include "screens.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "gamemine.h"
 #include "robot.h"
 #include "cfile/cfile.h"

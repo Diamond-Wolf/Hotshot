@@ -29,7 +29,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 
-#include "main_d1/wall.h"
+#include "main_shared/wall.h"
 #include "kdefs.h"
 #include "main_d1/bm.h"		//	Needed for TmapInfo
 #include	"main_d1/effects.h"	//	Needed for effects_bm_num

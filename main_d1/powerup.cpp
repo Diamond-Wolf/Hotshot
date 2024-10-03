@@ -24,7 +24,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "sounds.h"
 #include "player.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "stringtable.h"
 #include "weapon.h"
 #include "laser.h"

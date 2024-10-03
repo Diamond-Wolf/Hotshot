@@ -27,7 +27,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "textures.h"
 #include "screens.h"
 #include "segpoint.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "main_shared/texmerge.h"
 #include "physics.h"
 #include "3d/3d.h"

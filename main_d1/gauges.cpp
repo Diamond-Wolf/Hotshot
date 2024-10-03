@@ -37,7 +37,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "multi.h"
 #include "network.h"
 #include "endlevel.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "stringtable.h"
 #include "render.h"
 #include "main_shared/piggy.h"

@@ -37,7 +37,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "physics.h"
 #include "scores.h"
 #include "laser.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "multi.h"
 #include "endlevel.h"
 #include "platform/timer.h"
