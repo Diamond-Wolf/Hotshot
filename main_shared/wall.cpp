@@ -304,9 +304,13 @@ void blast_blastable_wall(segment* seg, int side)
 	kill_stuck_objects(csegp->sides[Connectside].wall_num);
 
 	//if this is an exploding wall, explode it
-	if (WallAnims[Walls[seg->sides[side].wall_num].clip_num].flags & WCF_EXPLODES)
+	if (WallAnims[Walls[seg->sides[side].wall_num].clip_num].flags & WCF_EXPLODES) {
 		explode_wall(seg - Segments, side);
-	else {
+#if BUILD_DESCENT1
+		Walls[seg->sides[side].wall_num].flags |= WALL_BLASTED;
+		Walls[csegp->sides[Connectside].wall_num].flags |= WALL_BLASTED;
+#endif
+	} else {
 		//if not exploding, set final frame, and make door passable
 		a = Walls[seg->sides[side].wall_num].clip_num;
 		n = WallAnims[a].num_frames;
