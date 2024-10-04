@@ -38,7 +38,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "player.h"
 #include "screens.h"
 #include "gamefont.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "platform/mouse.h"
 #include "platform/joy.h"
 #include "platform/timer.h"

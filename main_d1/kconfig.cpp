@@ -32,7 +32,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "joydefs.h"
 #include "render.h"
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #include "main_shared/digi.h"
 #include "newmenu.h"
 #include "endlevel.h"

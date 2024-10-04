@@ -16,7 +16,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "inferno.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "game.h"
 #include "laser.h"
 #include "gameseq.h"

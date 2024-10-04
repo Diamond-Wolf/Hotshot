@@ -24,7 +24,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "2d/gr.h"
 #include "inferno.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "game.h"
 #include "laser.h"
 #include "gameseq.h"

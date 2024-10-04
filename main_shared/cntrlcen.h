@@ -14,22 +14,30 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "vecmat/vecmat.h"
-#include "object.h"
 #include "main_shared/wall.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/object.h"
+#else
+# include "main_d1/object.h"
+#endif
 //#include "switch.h"
 
 #define MAX_CONTROLCEN_GUNS 		8
-
 #define CONTROLCEN_WEAPON_NUM		6
 
 #define	MAX_CONTROLCEN_LINKS		10
 
+#ifdef BUILD_DESCENT2 //D1 defines it elsewhere
 typedef struct control_center_triggers
 {
 	short		num_links;
 	short 	seg[MAX_CONTROLCEN_LINKS];
 	short		side[MAX_CONTROLCEN_LINKS];
 } control_center_triggers;
+#else
+struct control_center_triggers;
+#endif
 
 extern control_center_triggers ControlCenterTriggers;
 
@@ -47,16 +55,19 @@ extern int Num_reactors;
 
 extern reactor Reactors[MAX_REACTORS];
 
-//@@extern int	N_controlcen_guns;
+extern int	N_controlcen_guns;
 extern int	Control_center_been_hit;
 extern int	Control_center_player_been_seen;
 extern int	Control_center_next_fire_time;
 extern int	Control_center_present;
 extern int Dead_controlcen_object_num;
 
-//@@extern vms_vector controlcen_gun_points[MAX_CONTROLCEN_GUNS];
-//@@extern vms_vector controlcen_gun_dirs[MAX_CONTROLCEN_GUNS];
+extern vms_vector controlcen_gun_points[MAX_CONTROLCEN_GUNS];
+extern vms_vector controlcen_gun_dirs[MAX_CONTROLCEN_GUNS];
 extern vms_vector Gun_pos[MAX_CONTROLCEN_GUNS];
+
+//D1: return the position & orientation of a gun on the control center object 
+extern void calc_controlcen_gun_point(vms_vector* gun_point, vms_vector* gun_dir, object* obj, int gun_num);
 
 //do whatever this thing does in a frame
 extern void do_controlcen_frame(object *obj);
@@ -75,7 +86,11 @@ extern int Control_center_destroyed,Countdown_seconds_left;
 extern int Base_control_center_explosion_time;		//how long to blow up on insane
 extern int Reactor_strength;
 
+#ifdef BUILD_DESCENT2
+
 #include <stdio.h>
 
 void read_reactor_triggers(control_center_triggers* trigger, FILE* fp);
 void write_reactor_triggers(control_center_triggers* trigger, FILE* fp);
+
+#endif

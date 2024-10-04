@@ -42,7 +42,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "ai.h"
 #include "hostage.h"
 #include "morph.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "powerup.h"
 #include "fuelcen.h"
 #include "sounds.h"
@@ -55,7 +55,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "newmenu.h"
 #include "gauges.h"
 #ifdef ARCADE
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #endif
 #include "multi.h"
 #include "menu.h"

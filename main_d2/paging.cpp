@@ -42,7 +42,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/palette.h"
 #include "platform/timer.h"
 #include "stringtable.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "gauges.h"
 #include "powerup.h"
 #include "fuelcen.h"

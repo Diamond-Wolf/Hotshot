@@ -56,7 +56,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/effects.h"
 #include "textures.h"
 #include "multi.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "newdemo.h"
 #include "endlevel.h"
 #include "multibot.h"

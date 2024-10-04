@@ -42,7 +42,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "player.h"
 #include "endlevel.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "misc/byteswap.h"
 
 uint8_t Sounds[MAX_SOUNDS];

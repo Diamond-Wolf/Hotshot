@@ -23,7 +23,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/pcx.h"
 #include "mem/mem.h"
 #include "platform/joy.h"
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #include "gameseq.h"
 #ifdef ARCADE
 #include "coindev.h"

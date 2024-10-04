@@ -60,7 +60,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "state.h"
 #include "main_shared/mission.h"
 #include "main_shared/songs.h"
-#include "config.h"
+#include "main_shared/config.h"
 
 #include "platform/i_net.h"
 

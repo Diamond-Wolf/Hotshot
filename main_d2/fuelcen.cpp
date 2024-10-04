@@ -1146,7 +1146,7 @@ void fuelcen_check_for_hoard_goal(segment* segp)
 }
 
 #include "cfile/cfile.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 
 void read_matcen(matcen_info* center, FILE* fp)
 {

@@ -66,7 +66,7 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "platform/joy.h"
 #include "newmenu.h"
 #include "desc_id.h"
-#include "config.h"
+#include "main_shared/config.h"
 #include "joydefs.h"
 #include "multi.h"
 #include "main_shared/songs.h"
@@ -86,7 +86,7 @@ extern int Current_display_mode;        //$$ there's got to be a better way than
 #endif
 
 #ifdef ARCADE
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #include "coindev.h"
 #endif
 

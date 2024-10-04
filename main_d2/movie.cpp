@@ -35,7 +35,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gamefont.h"
 #include "2d/gr.h"
 #include "2d/palette.h"
-#include "config.h"
+#include "main_shared/config.h"
 #include "mve/libmve.h"
 //#include "mvegfx.h"
 #include "platform/mono.h"

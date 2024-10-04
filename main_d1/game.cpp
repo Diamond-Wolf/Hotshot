@@ -81,7 +81,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #endif
 #include "multi.h"
 #include "desc_id.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "2d/pcx.h"
 #include "state.h"
 #include "main_shared/piggy.h"
@@ -96,7 +96,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define FINAL_CHEATS 1
 
 #ifdef ARCADE
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #else
 #define Arcade_mode 0
 #endif

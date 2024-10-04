@@ -62,7 +62,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "network.h"
 #include "switch.h"
 #include "automap.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #ifndef WINDOWS
 //#include "vga.h"
 #endif

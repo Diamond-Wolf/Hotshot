@@ -50,7 +50,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "multi.h"
 #include "endlevel.h"
 #include "screens.h"
-#include "config.h"
+#include "main_shared/config.h"
 #include "player.h"
 #include "newdemo.h"
 #include "kconfig.h"

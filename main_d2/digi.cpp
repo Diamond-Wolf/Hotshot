@@ -39,7 +39,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "main_shared/songs.h"
 
-#include "config.h"
+#include "main_shared/config.h"
 
 #define _DIGI_SAMPLE_FLAGS (_VOLUME | _PANNING | _TRANSLATE8TO16)
 

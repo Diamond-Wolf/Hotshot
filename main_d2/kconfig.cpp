@@ -41,7 +41,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "joydefs.h"
 #include "main_shared/songs.h"
 #include "render.h"
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #include "main_shared/digi.h"
 #include "newmenu.h"
 #include "endlevel.h"
@@ -54,7 +54,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/args.h"
 #include "lighting.h"
 #include "ai.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 
 #if defined (TACTILE)
 #include "tactile.h"

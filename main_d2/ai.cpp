@@ -40,7 +40,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/effects.h"
 #include "platform/timer.h"
 #include "sounds.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "multibot.h"
 #include "multi.h"
 #include "network.h"

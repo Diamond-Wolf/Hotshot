@@ -43,7 +43,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "multi.h"
 #include "endlevel.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "powerup.h"
 #include "laser.h"
 #include "playsave.h"

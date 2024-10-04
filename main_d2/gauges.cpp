@@ -43,7 +43,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "multi.h"
 #include "network.h"
 #include "endlevel.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "controls.h"
 
 #include "main_shared/wall.h"

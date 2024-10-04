@@ -37,7 +37,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/palette.h"
 #include "multi.h"
 #include "menu.h"
-#include "config.h"
+#include "main_shared/config.h"
 #include "stringtable.h"
 #include "platform/mono.h"
 #include "state.h"

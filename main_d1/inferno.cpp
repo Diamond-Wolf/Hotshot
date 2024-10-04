@@ -66,14 +66,14 @@ static char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE C
 #include "gamefont.h"
 #include "kconfig.h"
 #ifdef ARCADE
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #include "coindev.h"
 #endif
 #include "platform/mouse.h"
 #include "platform/joy.h"
 #include "newmenu.h"
 #include "desc_id.h"
-#include "config.h"
+#include "main_shared/config.h"
 #include "joydefs.h"
 #include "multi.h"
 #include "main_shared/songs.h"

@@ -22,19 +22,18 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "mem/mem.h"
 #include "misc/error.h"
 #include "main_shared/vclip.h"
+#include "cntrlcen.h"
 
 //TODO: Some of these should be sharable
 #ifdef BUILD_DESCENT2
 #include "main_d2/inferno.h"
 #include "main_d2/bm.h"
 #include "main_d2/textures.h"
-#include "main_d2/cntrlcen.h"
 #include "main_d2/game.h"
 #else
 #include "main_d1/inferno.h"
 #include "main_d1/bm.h"
 #include "main_d1/textures.h"
-#include "main_d1/cntrlcen.h"
 #include "main_d1/game.h"
 #include "main_d1/fuelcen.h"
 

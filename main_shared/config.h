@@ -13,7 +13,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "player.h"
+#ifdef BUILD_DESCENT2
+# include "main_d2/player.h"
+#else
+# include "main_d1/player.h"
+#endif
 
 extern int ReadConfigFile(void);
 extern int WriteConfigFile(void);
@@ -22,8 +26,11 @@ extern char config_last_player[CALLSIGN_LEN+1];
 
 extern char config_last_mission[];
 
+#ifdef BUILD_DESCENT2
+
 extern uint8_t Config_digi_volume;
 extern uint8_t Config_midi_volume;
+
 #ifdef MACINTOSH
 typedef struct ConfigInfoStruct
 {
@@ -58,3 +65,5 @@ extern uint8_t Config_joystick_sensitivity;
 #define CONTROL_WINJOYSTICK 7
 
 #define CONTROL_MAX_TYPES 8
+
+#endif

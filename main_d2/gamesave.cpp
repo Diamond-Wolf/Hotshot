@@ -43,7 +43,7 @@ void do_load_save_levels(int save);
 #include "menu.h"
 #include "switch.h"
 #include "fuelcen.h"
-#include "cntrlcen.h"
+#include "main_shared/cntrlcen.h"
 #include "powerup.h"
 #include "weapon.h"
 #include "newdemo.h"
