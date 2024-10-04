@@ -19,14 +19,21 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cfile/cfile.h"
 #include "platform/platform_filesys.h"
 #include "platform/posixstub.h"
-#include "inferno.h"
-#include "main_shared/mission.h"
-#include "gameseq.h"
-#include "titles.h"
-#include "main_shared/songs.h"
+#include "mission.h"
+#include "songs.h"
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "platform/findfile.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/inferno.h"
+# include "main_d2/gameseq.h"
+# include "main_d2/titles.h"
+#else
+# include "main_d1/inferno.h"
+# include "main_d1/gameseq.h"
+# include "main_d1/titles.h"
+#endif
 
 mle Mission_list[MAX_MISSIONS];
 
@@ -48,6 +55,12 @@ char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
 #else
 #define MISSION_DIR ".\\"
 #endif
+
+
+#define D1_BIM_LAST_LEVEL			27
+#define D1_BIM_LAST_SECRET_LEVEL	-3
+#define D1_BIM_BRIEFING_FILE		"briefing.tex"
+#define D1_BIM_ENDING_FILE			"endreg.tex"
 
 #ifdef SHAREWARE
 
@@ -236,8 +249,10 @@ extern int HoardEquipped();
 //returns 1 if file read ok, else 0
 int read_mission_file(char *filename,int count,int location)
 {
+#ifdef BUILD_DESCENT2
 	if (CurrentDataVersion == DataVer::DEMO)
 		return 1;
+#endif
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char filename2[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -299,7 +314,7 @@ int read_mission_file(char *filename,int count,int location)
 			return 0;	//missing extension
 		*t = 0;			//kill extension
 
-		strncpy( Mission_list[count].filename, temp, 9 );
+		strncpy( Mission_list[count].filename, temp, MISSION_FILENAME_LEN - 1);
 		Mission_list[count].anarchy_only_flag = 0;
 		Mission_list[count].location = location;
 
@@ -365,11 +380,23 @@ int build_mission_list(int anarchy_mode)
 	FILEFINDSTRUCT find;
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char search_name[CHOCOLATE_MAX_FILE_PATH_SIZE], temp_buf[CHOCOLATE_MAX_FILE_PATH_SIZE];
-	get_platform_localized_query_string(search_name, CHOCOLATE_MISSIONS_DIR, "*.mn2");
+	get_platform_localized_query_string(search_name, CHOCOLATE_MISSIONS_DIR, 
+# ifdef BUILD_DESCENT2
+	"*.mn2"
+# else
+	"*.msn"
+# endif
+	);
 #else
-	char search_name[256] = MISSION_DIR "*.MN2";
+	char search_name[256] = MISSION_DIR 
+# ifdef BUILD_DESCENT2
+	"*.MN2";
+# else
+	"*.MSN";
+# endif
 #endif
 
+#ifdef BUILD_DESCENT2
 	if (CurrentDataVersion == DataVer::DEMO)
 	{
 		strcpy(Mission_list[0].filename, SHAREWARE_MISSION_FILENAME);
@@ -378,6 +405,7 @@ int build_mission_list(int anarchy_mode)
 
 		return load_mission(0);
 	}
+#endif
 
 	//now search for levels on disk
 
@@ -393,8 +421,14 @@ int build_mission_list(int anarchy_mode)
 //@@		return num_missions;
 //@@	}
 
+#ifdef BUILD_DESCENT2
 	if (!read_mission_file(const_cast<char*>(BUILTIN_MISSION),0,ML_CURDIR))		//read built-in first
 		Error("Could not find required mission file <%s>",BUILTIN_MISSION);
+#else
+	strcpy(Mission_list[0].filename, "");		//no filename for builtin
+	strcpy(Mission_list[0].mission_name, "Descent: First Strike");
+	count = 1;
+#endif
 
 	special_count = count=1;
 
@@ -402,10 +436,14 @@ int build_mission_list(int anarchy_mode)
 	{
 		do	
 		{
+#ifdef BUILD_DESCENT2
 			if (_strfcmp(find.name,BUILTIN_MISSION)==0)
 				continue;		//skip the built-in
+#endif
 
-			if (read_mission_file(find.name,count,ML_MISSIONDIR)) 
+
+			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
+			if (read_mission_file(find.name, count, ML_MISSIONDIR))
 			{
 				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
 					count++;
@@ -415,6 +453,7 @@ int build_mission_list(int anarchy_mode)
 		FileFindClose();
 	}
 
+#ifdef BUILD_DESCENT2
 	//move vertigo to top of mission list
 	{
 		int i;
@@ -439,7 +478,7 @@ int build_mission_list(int anarchy_mode)
 			}
 		}
 	}
-
+#endif
 
 	if (count>special_count)
 		qsort(&Mission_list[special_count],count-special_count,sizeof(*Mission_list),
@@ -473,6 +512,7 @@ int load_mission(int mission_num)
 
 	mprintf(( 0, "Loading mission %d\n", mission_num ));
 
+#ifdef BUILD_DESCENT2
 	if (CurrentDataVersion == DataVer::DEMO)
 	{
 		Assert(mission_num == 0);
@@ -492,11 +532,19 @@ int load_mission(int mission_num)
 
 		return 1;
 	}
+#endif
 
 	//read mission from file 
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	snprintf(temp_short_filename, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s.mn2", Mission_list[mission_num].filename);
+
+	snprintf(temp_short_filename, CHOCOLATE_MAX_FILE_PATH_SIZE, 
+# ifdef BUILD_DESCENT2
+	"%s.mn2"
+# else
+	"%s.msn"
+# endif
+	, Mission_list[mission_num].filename);
 
 	switch (Mission_list[mission_num].location)
 	{
@@ -524,127 +572,185 @@ int load_mission(int mission_num)
 		case ML_CURDIR:		strcpy(buf,"");				break;
 	}
 	strcat(buf,Mission_list[mission_num].filename);
-	strcat(buf,".MN2");
+	strcat(buf,
+# ifdef BUILD_DESCENT2
+	".MN2"
+# else
+	".MSN"
+# endif
+	);
 #endif
 
-	mfile = cfopen(buf,"rb");
-	if (mfile == NULL) 
-	{
-		Current_mission_num = -1;
-		return 0;		//error!
-	}
 
-	if (mission_num != 0) //for non-builtin missions, load HOG
+#ifdef BUILD_DESCENT1 
+	if (mission_num == 0) 
 	{
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-		strcpy(buf + strlen(buf) - 4, ".hog");
-#else
-		strcpy(buf+strlen(buf)-4,".HOG");		//change extension
+		int i;
+
+		Last_level = D1_BIM_LAST_LEVEL;
+		Last_secret_level = D1_BIM_LAST_SECRET_LEVEL;
+
+		//build level names
+		for (i = 0; i < Last_level; i++)
+			sprintf(Level_names[i], "LEVEL%02d.RDL", i + 1);
+		for (i = 0; i < -Last_secret_level; i++)
+			sprintf(Secret_level_names[i], "LEVELS%1d.RDL", i + 1);
+
+		Secret_level_table[0] = 10;
+		Secret_level_table[1] = 21;
+		Secret_level_table[2] = 24;
+
+		strcpy(Briefing_text_filename, D1_BIM_BRIEFING_FILE);
+		strcpy(Ending_text_filename, D1_BIM_ENDING_FILE);
+		cfile_use_alternate_hogfile(NULL);		//disable alternate
+	} 
+	else
 #endif
-
-		found_hogfile = cfile_use_alternate_hogfile(buf);
-
-		#ifdef RELEASE				//for release, require mission to be in hogfile
-		if (! found_hogfile) {
-			cfclose(mfile);
+	{
+		mfile = cfopen(buf,"rb");
+		if (mfile == NULL) 
+		{
 			Current_mission_num = -1;
-			return 0;
+			return 0;		//error!
 		}
-		#endif
-	}
 
-	//init vars
-	Last_level = 		0;
-	Last_secret_level = 0;
-
-	while (mfgets(buf,80,mfile)) 
-	{
-
-		if (istok(buf,"name"))
-			continue;						//already have name, go to next line
-		if (istok(buf,"xname")) 
+		if (mission_num != 0) //for non-builtin missions, load HOG
 		{
-			enhanced_mission = 1;
-			continue;						//already have name, go to next line
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+			strcpy(buf + strlen(buf) - 4, ".hog");
+#else
+			strcpy(buf+strlen(buf)-4,".HOG");		//change extension
+#endif
+
+			found_hogfile = cfile_use_alternate_hogfile(buf);
+
+			#ifdef RELEASE				//for release, require mission to be in hogfile
+			if (! found_hogfile) {
+				cfclose(mfile);
+				Current_mission_num = -1;
+				return 0;
+			}
+			#endif
 		}
-		if (istok(buf,"zname"))
-		{
-			enhanced_mission = 2;
-			continue;						//already have name, go to next line
-		}
-		else if (istok(buf,"type"))
-			continue;						//already have name, go to next line				
-		else if (istok(buf,"hog")) 
-		{
-			char	*bufp = buf;
 
-			while (*(bufp++) != '=')
-				;
+		//init vars
+		Last_level = 0;
+		Last_secret_level = 0;
+#ifdef BUILD_DESCENT1
+		Briefing_text_filename[0] = 0;
+		Ending_text_filename[0] = 0;
+#endif
 
-			if (*bufp == ' ')
-				while (*(++bufp) == ' ')
+		while (mfgets(buf,80,mfile)) 
+		{
+
+			if (istok(buf,"name"))
+				continue;						//already have name, go to next line
+			if (istok(buf,"xname")) 
+			{
+				enhanced_mission = 1;
+				continue;						//already have name, go to next line
+			}
+			if (istok(buf,"zname"))
+			{
+				enhanced_mission = 2;
+				continue;						//already have name, go to next line
+			}
+			else if (istok(buf,"type"))
+				continue;						//already have name, go to next line				
+			else if (istok(buf,"hog")) 
+			{
+				char	*bufp = buf;
+
+				while (*(bufp++) != '=')
 					;
 
-			cfile_use_alternate_hogfile(bufp);
-			mprintf((0, "Hog file override = [%s]\n", bufp));
-		}
-		else if (istok(buf,"num_levels")) 
-		{
-			if ((v=get_value(buf))!=NULL)
-			{
-				int n_levels,i;
+				if (*bufp == ' ')
+					while (*(++bufp) == ' ')
+						;
 
-				n_levels = atoi(v);
-
-				for (i=0;i<n_levels && mfgets(buf,80,mfile);i++)
-				{
-
-					add_term(buf);
-					if (strlen(buf) <= 12 && i < MAX_LEVELS_PER_MISSION) 
-					{
-						strcpy(Level_names[i],buf);
-						Last_level++;
-					}
-					else
-						break;
-				}
-
+				cfile_use_alternate_hogfile(bufp);
+				mprintf((0, "Hog file override = [%s]\n", bufp));
 			}
-		}
-		else if (istok(buf,"num_secrets")) 
-		{
-			if ((v=get_value(buf))!=NULL) 
+#ifdef BUILD_DESCENT1
+			else if (istok(buf, "briefing")) 
 			{
-				int i;
-
-				N_secret_levels = atoi(v);
-
-				Assert(N_secret_levels <= MAX_SECRET_LEVELS_PER_MISSION);
-
-				for (i=0;i<N_secret_levels && mfgets(buf,80,mfile);i++) 
+				if ((v = get_value(buf)) != NULL) 
 				{
-					char *t;
-					if ((t=strchr(buf,','))!=NULL) *t++=0;
-					else
-						break;
+					add_term(v);
+					if (strlen(v) < 13)
+						strcpy(Briefing_text_filename, v);
+				}
+			}
+			else if (istok(buf, "ending")) 
+			{
+				if ((v = get_value(buf)) != NULL) 
+				{
+					add_term(v);
+					if (strlen(v) < 13)
+						strcpy(Ending_text_filename, v);
+				}
+			}
+#endif
+			else if (istok(buf,"num_levels")) 
+			{
+				if ((v=get_value(buf))!=NULL)
+				{
+					int n_levels,i;
 
-					add_term(buf);
-					if (strlen(buf) <= 12 && i < MAX_SECRET_LEVELS_PER_MISSION)
+					n_levels = atoi(v);
+
+					for (i=0;i<n_levels && mfgets(buf,80,mfile);i++)
 					{
-						strcpy(Secret_level_names[i],buf);
-						Secret_level_table[i] = atoi(t);
-						if (Secret_level_table[i]<1 || Secret_level_table[i]>Last_level)
+
+						add_term(buf);
+						if (strlen(buf) <= 12 && i < MAX_LEVELS_PER_MISSION) 
+						{
+							strcpy(Level_names[i],buf);
+							Last_level++;
+						}
+						else
 							break;
-						Last_secret_level--;
 					}
-					else
-						break;
+
+				}
+			}
+			else if (istok(buf,"num_secrets")) 
+			{
+				if ((v=get_value(buf))!=NULL) 
+				{
+					int i;
+
+					N_secret_levels = atoi(v);
+
+					Assert(N_secret_levels <= MAX_SECRET_LEVELS_PER_MISSION);
+
+					for (i=0;i<N_secret_levels && mfgets(buf,80,mfile);i++) 
+					{
+						char *t;
+						if ((t=strchr(buf,','))!=NULL) *t++=0;
+						else
+							break;
+
+						add_term(buf);
+						if (strlen(buf) <= 12 && i < MAX_SECRET_LEVELS_PER_MISSION)
+						{
+							strcpy(Secret_level_names[i],buf);
+							Secret_level_table[i] = atoi(t);
+							if (Secret_level_table[i]<1 || Secret_level_table[i]>Last_level)
+								break;
+							Last_secret_level--;
+						}
+						else
+							break;
+					}
 				}
 			}
 		}
-	}
 
-	cfclose(mfile);
+		cfclose(mfile);
+
+	}
 
 	if (Last_level <= 0)
 	{
@@ -655,6 +761,7 @@ int load_mission(int mission_num)
 	Current_mission_filename = Mission_list[Current_mission_num].filename;
 	Current_mission_longname = Mission_list[Current_mission_num].mission_name;
 
+#ifdef BUILD_DESCENT2
 	if (enhanced_mission) 
 	{
 		char t[50];
@@ -665,6 +772,7 @@ int load_mission(int mission_num)
 		strcat(t,"-l.mvl");
 		init_extra_robot_movie(t);
 	}
+#endif
 
 	return 1;
 }
@@ -675,6 +783,7 @@ int load_mission_by_name(char *mission_name)
 {
 	int n,i;
 
+#ifdef BUILD_DESCENT2
 	if (CurrentDataVersion == DataVer::DEMO)
 	{
 		if (strcmp(mission_name, SHAREWARE_MISSION_FILENAME))
@@ -682,6 +791,7 @@ int load_mission_by_name(char *mission_name)
 		else
 			return load_mission(0);
 	}
+#endif
 
 	n = build_mission_list(1);
 
