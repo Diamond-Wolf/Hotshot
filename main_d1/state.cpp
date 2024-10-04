@@ -43,7 +43,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "newdemo.h"
 #include "automap.h"
 #include "main_shared/piggy.h"
-#include "paging.h"
+#include "main_shared/paging.h"
 #include "titles.h"
 #include "stringtable.h"
 #include "main_shared/mission.h"

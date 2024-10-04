@@ -92,7 +92,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cfile/cfile.h"
 #include "main_shared/piggy.h"
 #include "main_shared/texmerge.h"
-#include "paging.h"
+#include "main_shared/paging.h"
 #include "main_shared/mission.h"
 #include "state.h"
 #include "main_shared/songs.h"

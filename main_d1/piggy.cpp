@@ -34,7 +34,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "screens.h"
 #include "main_shared/piggy.h"
 #include "main_shared/texmerge.h"
-#include "paging.h"
+#include "main_shared/paging.h"
 #include "game.h"
 #include "stringtable.h"
 #include "cfile/cfile.h"
