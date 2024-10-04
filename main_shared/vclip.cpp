@@ -11,17 +11,24 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+#define	ONE_FRAME_TIME	0x3ffffffe	//Will eventually come from object.h
 
 #include <stdlib.h>
 
 #include "misc/rand.h"
-
 #include "misc/error.h"
 
-#include "inferno.h"
-#include "main_shared/vclip.h"
-#include "weapon.h"
-#include "laser.h"
+#include "vclip.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/inferno.h"
+# include "main_d2/weapon.h"
+# include "main_d2/laser.h"
+#else
+# include "main_d1/inferno.h"
+# include "main_d1/weapon.h"
+# include "main_d1/laser.h"
+#endif
 
 //----------------- Variables for video clips -------------------
 int 					Num_vclips = 0;
