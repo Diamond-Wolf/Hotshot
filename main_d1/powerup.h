@@ -14,7 +14,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "object.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "fix/fix.h"
 
 #define	POW_EXTRA_LIFE 			0

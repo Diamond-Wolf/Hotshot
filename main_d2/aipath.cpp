@@ -26,7 +26,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "robot.h"
 #include "fvi.h"
 #include "physics.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "player.h"
 #include "fireball.h"
 #include "game.h"

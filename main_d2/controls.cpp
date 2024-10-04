@@ -34,7 +34,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "kconfig.h"
 #include "laser.h"
 #include "multi.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "fireball.h"
 
 //look at keyboard, mouse, joystick, CyberMan, whatever, and set 

@@ -46,7 +46,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "paging.h"
 #include "titles.h"
 #include "stringtable.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "2d/pcx.h"
 #include "mem/mem.h"
 #include "network.h"

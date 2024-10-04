@@ -30,7 +30,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "vecmat/vecmat.h"
 #include "gameseg.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "fuelcen.h"
 #include "bm.h"
 #include "fvi.h"

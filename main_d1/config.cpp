@@ -25,7 +25,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/joy.h"
 #include "misc/args.h"
 #include "player.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "misc/error.h"
 #include "network.h"
 

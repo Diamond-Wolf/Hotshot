@@ -28,7 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/piggy.h"
 #include "main_shared/texmerge.h"
 #include "polyobj.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "main_shared/effects.h"
 #include "fireball.h"
 #include "weapon.h"

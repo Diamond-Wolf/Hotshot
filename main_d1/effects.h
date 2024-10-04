@@ -13,7 +13,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "vclip.h"
+#include "main_shared/vclip.h"
 
 #define MAX_EFFECTS 60
 

@@ -23,7 +23,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "gauges.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "fireball.h"
 #include "robot.h"
 #include "main_shared/wall.h"

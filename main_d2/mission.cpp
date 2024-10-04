@@ -20,7 +20,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/platform_filesys.h"
 #include "platform/posixstub.h"
 #include "inferno.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "gameseq.h"
 #include "titles.h"
 #include "main_shared/songs.h"

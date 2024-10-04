@@ -33,7 +33,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "texpage.h"		// Textue selection paging stuff
 #include "objpage.h"		// Object selection paging stuff
 
-#include "main_d2/wall.h"
+#include "main_shared/wall.h"
 #include "main_d2/switch.h"
 
 int init_info;

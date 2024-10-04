@@ -65,7 +65,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "texmap/texmap.h"
 #include "polyobj.h"
 #include "state.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "main_shared/songs.h"
 #include "config.h"
 #include "movie.h"

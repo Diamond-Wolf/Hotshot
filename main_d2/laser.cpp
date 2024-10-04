@@ -31,7 +31,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "texmap/texmap.h"
 #include "textures.h"
 #include "render.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "fireball.h"
 #include "polyobj.h"
 #include "robot.h"

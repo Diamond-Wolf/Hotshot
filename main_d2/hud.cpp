@@ -35,7 +35,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "player.h"
 #include "gamefont.h"
 
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "arcade.h"
 #include "screens.h"
 #include "stringtable.h"

@@ -27,7 +27,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "hostage.h"
 #include "lighting.h"
 #include "sounds.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "newdemo.h"
 #include "stringtable.h"
 #include "main_shared/piggy.h"

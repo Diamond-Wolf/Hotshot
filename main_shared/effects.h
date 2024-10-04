@@ -13,11 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#ifdef BUILD_DESCENT2
-#include "main_d2/vclip.h"
-#else
-#include "main_d1/vclip.h"
-#endif
+#include "vclip.h"
 
 #ifdef BUILD_DESCENT2
 #define MAX_EFFECTS 110

@@ -23,7 +23,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "render.h"
 #include "game.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "lighting.h"
 #include "3d/3d.h"
 #include "laser.h"

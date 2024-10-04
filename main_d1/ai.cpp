@@ -33,7 +33,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fuelcen.h"
 #include "player.h"
 #include "main_shared/wall.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "main_shared/digi.h"
 #include "fireball.h"
 #include "morph.h"

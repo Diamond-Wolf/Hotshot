@@ -21,6 +21,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "misc/error.h"
 #include "main_shared/effects.h"
+#include "vclip.h"
 
 #ifdef BUILD_DESCENT1
 
@@ -30,7 +31,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 # include "main_d1/gameseg.h"
 # include "main_d1/game.h"
 # include "main_d1/bm.h"
-# include "main_d1/vclip.h"
 # include "main_d1/player.h"
 # include "main_d1/gauges.h"
 # include "main_d1/stringtable.h"
@@ -51,7 +51,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 # include "main_d2/gameseg.h"
 # include "main_d2/game.h"
 # include "main_d2/bm.h"
-# include "main_d2/vclip.h"
 # include "main_d2/player.h"
 # include "main_d2/gauges.h"
 # include "main_d2/stringtable.h"

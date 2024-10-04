@@ -14,7 +14,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "player.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 
 #define SUPER_MISSILE		0
 #define SUPER_SEEKER			1

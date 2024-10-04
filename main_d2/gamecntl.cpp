@@ -52,7 +52,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "3d/3d.h"
 #include "main_shared/effects.h"
 #include "gameseg.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "ai.h"
 #include "main_shared/digi.h"
 #include "2d/ibitblt.h"

@@ -53,7 +53,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/effects.h"
 #include "menu.h"
 #include "gameseg.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "ai.h"
 #include "fuelcen.h"
 #include "main_shared/digi.h"

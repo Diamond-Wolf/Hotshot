@@ -25,7 +25,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "gameseg.h"
 #include "platform/mono.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "texmap/texmap.h"
 #include "fuelcen.h"
 #include "cntrlcen.h"

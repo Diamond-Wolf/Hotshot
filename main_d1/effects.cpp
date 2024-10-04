@@ -18,7 +18,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "inferno.h"
 #include "game.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "main_shared/effects.h"
 #include "bm.h"
 #include "platform/mono.h"

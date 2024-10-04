@@ -48,7 +48,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "laser.h"
 #include "playsave.h"
 #include "automap.h"
-#include "mission.h" //for mission number
+#include "main_shared/mission.h" //for mission number
 #include "gameseq.h" //for level number
 
 #if defined(POLY_ACC)

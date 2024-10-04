@@ -88,7 +88,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/piggy.h"
 #include "main_shared/texmerge.h"
 #include "paging.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "state.h"
 #include "main_shared/songs.h"
 #ifdef NETWORK

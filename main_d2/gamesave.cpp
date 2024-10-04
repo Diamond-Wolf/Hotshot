@@ -35,7 +35,7 @@ void do_load_save_levels(int save);
 #include "object.h"
 #include "game.h"
 #include "screens.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "gamemine.h"
 #include "robot.h"
 #include "cfile/cfile.h"

@@ -14,8 +14,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "2d/gr.h"
-#include "object.h"
 #include "main_shared/piggy.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/object.h"
+#else
+# include "main_d1/object.h"
+#endif
 
 #define VCLIP_SMALL_EXPLOSION		2
 #define VCLIP_PLAYER_HIT			1
@@ -23,11 +28,17 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define VCLIP_PLAYER_APPEARANCE	61
 #define VCLIP_POWERUP_DISAPPEARANCE	62
 #define VCLIP_VOLATILE_WALL_HIT	5
-#define VCLIP_WATER_HIT				84
-#define VCLIP_AFTERBURNER_BLOB	95
-#define VCLIP_MONITOR_STATIC		99
 
-#define VCLIP_MAXNUM			110
+#ifdef BUILD_DESCENT2
+# define VCLIP_WATER_HIT				84
+# define VCLIP_AFTERBURNER_BLOB	95
+# define VCLIP_MONITOR_STATIC		99
+
+# define VCLIP_MAXNUM			110
+#else
+# define VCLIP_MAXNUM			70
+#endif
+
 #define VCLIP_MAX_FRAMES	30
 
 //vclip flags

@@ -21,7 +21,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cfile/cfile.h"
 #include "platform/findfile.h" //[ISB] port descent 2 directory iteration code. 
 #include "inferno.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "gameseq.h"
 #include "titles.h"
 #include "platform/mono.h"

@@ -23,7 +23,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "inferno.h"
 #include "object.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "game.h"
 #include "platform/mono.h"
 #include "polyobj.h"
@@ -42,7 +42,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "physics.h"
 #include "scores.h"
 #include "laser.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "multi.h"
 #include "endlevel.h"
 #include "platform/timer.h"

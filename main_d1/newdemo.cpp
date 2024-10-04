@@ -44,7 +44,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "slew.h"		
 #include "render.h"
 #include "main_shared/wall.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "polyobj.h"
 #include "fireball.h"
 #include "laser.h"
@@ -73,7 +73,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "cntrlcen.h"
 #include "aistruct.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "main_shared/piggy.h"
 
 #ifdef EDITOR

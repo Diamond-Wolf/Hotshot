@@ -25,7 +25,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "mem/mem.h"
 #include "render.h"
 #include "object.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "game.h"
 #include "platform/mono.h"
 #include "polyobj.h"

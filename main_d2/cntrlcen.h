@@ -15,7 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "vecmat/vecmat.h"
 #include "object.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 //#include "switch.h"
 
 #define MAX_CONTROLCEN_GUNS 		8

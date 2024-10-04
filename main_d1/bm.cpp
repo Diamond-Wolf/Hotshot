@@ -22,7 +22,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "object.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "main_shared/effects.h"
 #include "polyobj.h"
 #include "main_shared/wall.h"

@@ -41,7 +41,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gameseq.h"
 #include "newdemo.h"
 #include "multi.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "fireball.h"
 #include "network.h"
 #include "stringtable.h"

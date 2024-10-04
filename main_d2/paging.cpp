@@ -26,7 +26,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "segment.h"
 #include "textures.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "object.h"
 #include "gamemine.h"
 #include "misc/error.h"
@@ -35,7 +35,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/piggy.h"
 #include "main_shared/texmerge.h"
 #include "polyobj.h"
-#include "vclip.h"
+#include "main_shared/vclip.h"
 #include "main_shared/effects.h"
 #include "fireball.h"
 #include "weapon.h"
@@ -46,7 +46,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "powerup.h"
 #include "fuelcen.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 
 
 #ifdef WINDOWS

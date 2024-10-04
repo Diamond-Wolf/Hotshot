@@ -31,7 +31,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "sounds.h"
 #include "player.h"
 
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "stringtable.h"
 #include "weapon.h"
 #include "laser.h"
