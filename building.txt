@@ -4,8 +4,9 @@ First, you need to install Premake 5; you can get the from https://premake.githu
 
 Once you have all dependencies located, run Premake:
 
-premake5 --sdl2-path=<SDL2 path> --openal-path=<OpenAL path> --fluidsynth-path=<FluidSynth path>
+premake5 <action> --sdl2-path=<SDL2 path> --openal-path=<OpenAL path> --fluidsynth-path=<FluidSynth path>
 
+Action is one of the actions specified at https://premake.github.io/docs/Using-Premake.
 Additional options are available:
  --build-editor builds the Miner editor (untested)
  --build-network builds network support (untested)
