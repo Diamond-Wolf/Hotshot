@@ -18,7 +18,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <math.h>
 #include <string.h>
 
-#include "main_d2/fuelcen.h"
+#include "main_shared/fuelcen.h"
 #include "main_d2/screens.h"
 #include "main_d2/inferno.h"
 #include "main_d2/segment.h"
@@ -32,9 +32,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "kdefs.h"
 #include	"main_d2/object.h"
 #include "main_d2/polyobj.h"
-#include "main_d2/game.h"
+#include "main_shared/game.h"
 #include "main_d2/powerup.h"
-#include "main_d2/ai.h"
+#include "main_shared/ai.h"
 #include "main_d2/hostage.h"
 #include "eobject.h"
 #include "medwall.h"
@@ -42,7 +42,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "ehostage.h"
 #include "platform/key.h"
 #include "medrobot.h"
-#include "main_d2/bm.h"
+#include "main_shared/bm.h"
 #include "centers.h"
 
 //-------------------------------------------------------------------------

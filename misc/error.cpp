@@ -113,7 +113,11 @@ void Error(const char* fmt, ...)
 
 	plat_display_error(exit_message);
 
+	#ifndef NDEBUG
+	Int3();
+	#else
 	exit(1);
+	#endif
 }
 
 //print out warning message to user

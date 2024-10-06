@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-//@@#include "vclip.h"
+//@@#include "main_shared/vclip.h"
 
 #define HOSTAGE_SIZE i2f(5)	//3d size of a hostage
 

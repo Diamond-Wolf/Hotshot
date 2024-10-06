@@ -16,7 +16,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <math.h>
 #include <string.h>
 #include "gauges.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "switch.h"
 #include "inferno.h"
 #ifdef EDITOR
@@ -26,11 +26,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "gameseg.h"
 #include "platform/mono.h"
-#include "wall.h"
-#include "fuelcen.h"
+#include "main_shared/wall.h"
+#include "main_shared/fuelcen.h"
 #include "newdemo.h"
 #include "player.h"
-#include "endlevel.h"
+#include "main_shared/endlevel.h"
 #include "gameseq.h"
 #include "multi.h"
 #include "network.h"

@@ -1,6 +1,8 @@
 Credits and contributors to the project
 
-SaladBadger: uh i started this mess I guess?
+Diamond Wolf: My turn!
+
+SaladBadger: The person behind Chocolate Descent, on which Hotshot is based.
 
 Parabolicus: Some optimizations and ports from the original ASM code.
 

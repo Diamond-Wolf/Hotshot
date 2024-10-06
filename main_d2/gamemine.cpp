@@ -21,14 +21,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "segment.h"
 #include "textures.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "object.h"
-#include "gamemine.h"
+#include "main_shared/gamemine.h"
 #include "misc/error.h"
 #include "gameseg.h"
 #include "switch.h"
 
-#include "game.h"
+#include "main_shared/game.h"
 #include "newmenu.h"
 
 #ifdef EDITOR
@@ -36,7 +36,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #endif
 
 #include "cfile/cfile.h"		
-#include "fuelcen.h"
+#include "main_shared/fuelcen.h"
 
 #include "misc/hash.h"
 #include "platform/key.h"

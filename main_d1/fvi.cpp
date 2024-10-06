@@ -26,10 +26,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 
 #include "inferno.h"
-#include "fvi.h"
+#include "main_shared/fvi.h"
 #include "segment.h"
 #include "object.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "laser.h"
 #include "2d/rle.h"
 #include "robot.h"

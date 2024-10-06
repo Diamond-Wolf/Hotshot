@@ -405,7 +405,7 @@ int plat_create_window()
 		int screenheight = GetDeviceCaps(screendc, VERTRES);
 		ReleaseDC(0, screendc);
 
-		Window = CreateWindowEx(WS_EX_APPWINDOW, TEXT("DescentWindow"), TEXT("Chocolate Descent"), WS_POPUP | WS_VISIBLE, 0, 0, screenwidth, screenheight, 0, 0, GetModuleHandle(nullptr), 0);
+		Window = CreateWindowEx(WS_EX_APPWINDOW, TEXT("DescentWindow"), TEXT("Hotshot"), WS_POPUP | WS_VISIBLE, 0, 0, screenwidth, screenheight, 0, 0, GetModuleHandle(nullptr), 0);
 		if (Window == 0)
 			return 1;
 

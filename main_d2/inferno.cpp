@@ -34,10 +34,10 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "platform/key.h"
 #include "platform/timer.h"
 #include "3d/3d.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "inferno.h"
 #include "misc/error.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "segment.h"		//for Side_to_verts
 #include "mem/mem.h"
 #include "segpoint.h"
@@ -45,7 +45,7 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "texmap/texmap.h"
 #include "main_shared/texmerge.h"
 #include "menu.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "polyobj.h"
 #include "main_shared/effects.h"
 #include "main_shared/digi.h"
@@ -60,20 +60,20 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "platform/i_net.h"
 #include "newdemo.h"
 #include "network.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 #include "kconfig.h"
 #include "platform/mouse.h"
 #include "platform/joy.h"
 #include "newmenu.h"
-#include "desc_id.h"
-#include "config.h"
+#include "main_shared/desc_id.h"
+#include "main_shared/config.h"
 #include "joydefs.h"
 #include "multi.h"
 #include "main_shared/songs.h"
 #include "cfile/cfile.h"
 #include "gameseq.h"
 #include "gamepal.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "movie.h"
 #include "main_shared/compbit.h"
 #include "misc/types.h"
@@ -86,7 +86,7 @@ extern int Current_display_mode;        //$$ there's got to be a better way than
 #endif
 
 #ifdef ARCADE
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #include "coindev.h"
 #endif
 
@@ -96,7 +96,7 @@ extern int Current_display_mode;        //$$ there's got to be a better way than
 #include "ui\ui.h"
 #endif
 
-#include "vers_id.h"
+#include "main_shared/vers_id.h"
 
 //Current version number
 uint8_t Version_major = 1;		//FULL VERSION
@@ -551,9 +551,9 @@ int D_DescentMain(int argc, const char** argv)
 	load_text(num_text_strings);
 
 	//print out the banner title
-	printf("\nDESCENT 2 %s v%d.%d", VERSION_TYPE, Version_major, Version_minor);
-#ifdef VERSION_NAME
-	printf("  %s", VERSION_NAME);
+	printf("\nDESCENT 2 %s v%d.%d", VERSION_NAME, Version_major, Version_minor);
+#ifdef VERSION_TYPE
+	printf("  %s", VERSION_TYPE);
 #endif
 #ifdef SANTA
 	printf("  Vertigo Enhanced");

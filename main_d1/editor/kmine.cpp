@@ -27,7 +27,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "kdefs.h"
 #include "info.h"
-#include "main_d1/game.h"
+#include "main_shared/game.h"
 #include "main_d1/gameseq.h"
 
 #include "dcflib.h"

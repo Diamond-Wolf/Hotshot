@@ -31,7 +31,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "sounds.h"
 #include "misc/args.h"
 #include "platform/key.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "misc/error.h"
 #include "cfile/cfile.h"
 #include "main_shared/piggy.h"
@@ -39,7 +39,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "main_shared/songs.h"
 
-#include "config.h"
+#include "main_shared/config.h"
 
 #define _DIGI_SAMPLE_FLAGS (_VOLUME | _PANNING | _TRANSLATE8TO16)
 

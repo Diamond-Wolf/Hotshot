@@ -20,11 +20,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "object.h"
 #include "player.h"
 
-#include "controls.h"
+#include "main_shared/controls.h"
 #include "joydefs.h"
 #include "render.h"
 #include "misc/args.h"

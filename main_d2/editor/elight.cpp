@@ -24,9 +24,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "editor.h"
 #include "seguvs.h"
 
-#include "main_d2/wall.h"
+#include "main_shared/wall.h"
 
-#include "main_d2/textures.h"
+#include "main_shared/textures.h"
 
 #include "fix/fix.h"
 #include "platform/mono.h"

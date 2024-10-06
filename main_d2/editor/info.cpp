@@ -28,12 +28,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "main_d2/textures.h"
 #include "main_d2/object.h"
-#include "main_d2/ai.h"
+#include "main_shared/ai.h"
 
 #include "texpage.h"		// Textue selection paging stuff
 #include "objpage.h"		// Object selection paging stuff
 
-#include "main_d2/wall.h"
+#include "main_shared/wall.h"
 #include "main_d2/switch.h"
 
 int init_info;

@@ -21,13 +21,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "object.h"
 #include "physics.h"
 #include "platform/key.h"
-#include "game.h"
-#include "collide.h"
-#include "fvi.h"
+#include "main_shared/game.h"
+#include "main_shared/collide.h"
+#include "main_shared/fvi.h"
 #include "newdemo.h"
 #include "platform/timer.h"
-#include "ai.h"
-#include "wall.h"
+#include "main_shared/ai.h"
+#include "main_shared/wall.h"
 #include "laser.h"
 
 //Global variables for physics system

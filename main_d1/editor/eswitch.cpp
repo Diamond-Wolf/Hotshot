@@ -25,7 +25,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "main_d1/gameseg.h"
 #include "platform/mono.h"
-#include "main_d1/wall.h"
+#include "main_shared/wall.h"
 #include "medwall.h"
 
 #include "main_d1/screens.h"

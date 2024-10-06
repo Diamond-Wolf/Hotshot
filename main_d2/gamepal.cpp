@@ -24,7 +24,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "inferno.h"
 #include "gamepal.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "newmenu.h"
 #include "main_shared/texmerge.h"
 #include "main_shared/piggy.h"

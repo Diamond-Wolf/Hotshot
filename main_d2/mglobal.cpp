@@ -16,9 +16,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "segment.h"
 #include "object.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "3d/3d.h"
-#include "game.h"
+#include "main_shared/game.h"
 
 // Global array of vertices, common to one mine.
 vms_vector Vertices[MAX_VERTICES];

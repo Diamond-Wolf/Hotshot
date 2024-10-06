@@ -24,19 +24,21 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "2d/gr.h"
 #include "inferno.h"
-#include "cntrlcen.h"
-#include "game.h"
+#include "main_shared/cntrlcen.h"
+#include "main_shared/game.h"
 #include "laser.h"
 #include "gameseq.h"
-#include "ai.h"
+#include "main_shared/ai.h"
 #include "multi.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "object.h"
 #include "robot.h"
-#include "vclip.h"
-#include "fireball.h"
-#include "endlevel.h"
+#include "main_shared/vclip.h"
+#include "main_shared/fireball.h"
+#include "main_shared/endlevel.h"
 #include "misc/rand.h"
+
+#include "main_shared/fuelcen.h"
 
 //@@vms_vector controlcen_gun_points[MAX_CONTROLCEN_GUNS];
 //@@vms_vector controlcen_gun_dirs[MAX_CONTROLCEN_GUNS];

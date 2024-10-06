@@ -22,7 +22,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 #include "2d/gr.h"
 
-#include "main_d1/bm.h"			// for MAX_TEXTURES
+#include "main_shared/bm.h"			// for MAX_TEXTURES
 
 #include "main_d1/inferno.h"
 #include "main_d1/segment.h"
@@ -31,7 +31,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d1/textures.h"
 #include "main_d1/object.h"
 
-#include "main_d1/gamemine.h"
+#include "main_shared/gamemine.h"
 #include "main_d1/gameseg.h"
 
 #include "ui/ui.h"			// Because texpage.h need UI_WINDOW type
@@ -42,7 +42,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "dcflib.h"
 #include "nocfile.h"
-#include "main_d1/fuelcen.h"
+#include "main_shared/fuelcen.h"
 
 #define REMOVE_EXT(s)  (*(strchr( (s), '.' ))='\0')
 

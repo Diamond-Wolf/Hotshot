@@ -14,7 +14,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdlib.h>
 
 #include "2d/gr.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 
 const char* Gamefont_filenames[] = { "font1-1.fnt",			// Font 0
 											"font2-1.fnt",			// Font 1

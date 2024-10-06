@@ -22,7 +22,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <algorithm>
 //#include "pa_enabl.h"                   //$$POLY_ACC
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "screens.h"
 #include "gauges.h"
 #include "physics.h"
@@ -32,21 +32,21 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "menu.h"			// For the font.
 #include "platform/mono.h"
-#include "collide.h"
+#include "main_shared/collide.h"
 #include "newdemo.h"
 #include "player.h"
-#include "gamefont.h"
-#include "bm.h"
+#include "main_shared/gamefont.h"
+#include "main_shared/bm.h"
 #include "stringtable.h"
 #include "powerup.h"
 #include "sounds.h"
 #include "multi.h"
 #include "network.h"
-#include "endlevel.h"
-#include "cntrlcen.h"
-#include "controls.h"
+#include "main_shared/endlevel.h"
+#include "main_shared/cntrlcen.h"
+#include "main_shared/controls.h"
 
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "stringtable.h"
 #include "render.h"
 #include "main_shared/piggy.h"

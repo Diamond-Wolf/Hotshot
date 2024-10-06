@@ -1,6 +1,11 @@
 newoption {
 	trigger = "build-editor",
-	description = "Build with internal editor"
+	description = "Build with internal editor (untested)"
+}
+
+newoption {
+	trigger = "build-network",
+	description = "Build with network support (untested)"
 }
 
 newoption {
@@ -102,6 +107,10 @@ workspace "Hotshot"
 			"ui/*.cpp",
 			"ui/*.h"
 		}
+		defines "EDITOR"
+		
+	filter { "options:build-network" }
+		defines "NETWORK"
 
 	filter { "system:windows" }
 		files {
@@ -183,10 +192,6 @@ project "Hotshot-1"
 		"2d/scale.cpp",
 		"main_d1/*.cpp",
 		"main_d1/*.h"
-	}
-	
-	removefiles {
-		"main_d1/effects.cpp"
 	}
 	
 	filter { "options:build-editor" }

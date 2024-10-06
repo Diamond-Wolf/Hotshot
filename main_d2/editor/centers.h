@@ -16,7 +16,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #define	CENTER_STRING_LENGTH	12
 
-#include	"main_d2/fuelcen.h"
+#include	"main_shared/fuelcen.h"
 
 extern	char	Center_names[MAX_CENTER_TYPES][CENTER_STRING_LENGTH];
 

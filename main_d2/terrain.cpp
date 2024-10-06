@@ -26,8 +26,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "textures.h"
 #include "object.h"
-#include "endlevel.h"
-#include "fireball.h"
+#include "main_shared/endlevel.h"
+#include "main_shared/fireball.h"
 
 #define GRID_MAX_SIZE	64
 #define GRID_SCALE	i2f(2*20)

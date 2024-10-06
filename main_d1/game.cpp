@@ -23,7 +23,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <algorithm>
 #include "misc/rand.h"
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "platform/key.h"
 #include "object.h"
 #include "physics.h"
@@ -44,10 +44,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/effects.h"
 #include "menu.h"
 #include "gameseg.h"
-#include "wall.h"
-#include "ai.h"
+#include "main_shared/wall.h"
+#include "main_shared/ai.h"
 #include "hostage.h"
-#include "fuelcen.h"
+#include "main_shared/fuelcen.h"
 #include "switch.h"
 #include "main_shared/digi.h"
 #include "gamesave.h"
@@ -59,20 +59,20 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "lighting.h"
 #include "newdemo.h"
 #include "titles.h"
-#include "collide.h"
+#include "main_shared/collide.h"
 #include "weapon.h"
 #include "sounds.h"
 #include "misc/args.h"
 #include "gameseq.h"
-#include "automap.h"
+#include "main_shared/automap.h"
 #include "stringtable.h"
 #include "powerup.h"
-#include "fireball.h"
-#include "controls.h"
+#include "main_shared/fireball.h"
+#include "main_shared/controls.h"
 #include "newmenu.h"
 #include "network.h"
-#include "gamefont.h"
-#include "endlevel.h"
+#include "main_shared/gamefont.h"
+#include "main_shared/endlevel.h"
 #include "joydefs.h"
 #include "kconfig.h"
 #include "platform/mouse.h"
@@ -80,13 +80,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "coindev.h"
 #endif
 #include "multi.h"
-#include "desc_id.h"
-#include "cntrlcen.h"
+#include "main_shared/desc_id.h"
+#include "main_shared/cntrlcen.h"
 #include "2d/pcx.h"
 #include "state.h"
 #include "main_shared/piggy.h"
 #include "multibot.h"
-#include "ai.h"
 #include "2d/gr.h"
 #include "platform/platform.h"
 
@@ -96,7 +95,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define FINAL_CHEATS 1
 
 #ifdef ARCADE
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #else
 #define Arcade_mode 0
 #endif
@@ -1393,7 +1392,7 @@ void advance_sound()
 void test_anim_states();
 #endif
 
-#include "fvi.h"
+#include "main_shared/fvi.h"
 
 //put up the help message
 void do_show_help()

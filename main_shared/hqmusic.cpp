@@ -136,7 +136,7 @@ bool RBAThreadStartTrack(int num, void** mysourceptr)
 	snprintf(track_name, 15, "track%02d.ogg", num);
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	get_full_file_path(filename_full_path, track_name, CHOCOLATE_SAVE_DIR);
+	get_full_file_path(filename_full_path, track_name, CHOCOLATE_MUSIC_DIR);
 #else
 	snprintf(filename_full_path, CHOCOLATE_MAX_FILE_PATH_SIZE, "cdmusic/%s", track_name);
 	filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
@@ -258,7 +258,7 @@ void RBAInit()
 		snprintf(track_name, 15, "track%02d.ogg", i + 1);
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-		get_full_file_path(filename_full_path, track_name, CHOCOLATE_SAVE_DIR);
+		get_full_file_path(filename_full_path, track_name, CHOCOLATE_MUSIC_DIR);
 #else
 		snprintf(filename_full_path, CHOCOLATE_MAX_FILE_PATH_SIZE, "cdmusic/%s", track_name);
 		filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
@@ -302,8 +302,9 @@ int RBAGetTrackNum()
 
 void RBAStartThread()
 {
+	//Assert(!RBA_thread.joinable()); //joinable thread is an active thread, so it wasn't cleaned up before.
+	RBAStop();
 	RBA_active = true;
-	Assert(!RBA_thread.joinable()); //joinable thread is an active thread, so it wasn't cleaned up before.
 	RBA_thread = std::thread(&RBAThread);
 }
 

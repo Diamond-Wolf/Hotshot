@@ -15,7 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "vecmat/vecmat.h"
 #include "object.h"
-#include "game.h"
+#include "main_shared/game.h"
 
 #define MAX_GUNS 8		//should be multiple of 4 for uint8_t array
 

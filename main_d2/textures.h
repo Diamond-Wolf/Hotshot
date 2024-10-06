@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "main_shared/piggy.h"
 
 //Texture stuff... in mglobal.c

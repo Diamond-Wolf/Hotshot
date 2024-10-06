@@ -25,13 +25,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d2/segment.h"
 #include	"editor.h"
 #include "misc/error.h"
-#include "main_d2/gamemine.h"
+#include "main_shared/gamemine.h"
 #include "main_d2/gameseg.h"
 
-#include "main_d2/bm.h"				// For MAX_TEXTURES.
+#include "main_shared/bm.h"				// For MAX_TEXTURES.
 #include "main_d2/textures.h"
 #include "misc/hash.h"
-#include "main_d2/fuelcen.h"
+#include "main_shared/fuelcen.h"
 
 #include "medwall.h"
 

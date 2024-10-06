@@ -1,126 +1,18 @@
-Everything described in this document is in a very early state, and is subject
-to change. I'll confess I barely know what I'm doing with CMake, so there's
-a number of limitations so far. 
+Building is handled through Premake, and as far as I have tested shouldn't have too many issues.
 
-The project can be built on Windows (only tested with Visual Studio 2019),
-Linux (Tested with clang and gcc), and macOS (tested with clang).
+First, you need to install Premake 5; you can get the from https://premake.github.io. You also need SDL2, FluidSynth, and OpenAL. Find the folder these are located in; specifically, you want the folder for the correct version, which contains the include and lib folders.
 
-There are three external libraries, but most are optional.
+Once you have all dependencies located, run Premake:
 
-SDL 2.0.10 - Required on Linux and macOS, Optional on Windows
-OpenAL (OpenAL Soft implementation preferred) - Optional
-FluidSynth - Optional
+premake5 --sdl2-path=<SDL2 path> --openal-path=<OpenAL path> --fluidsynth-path=<FluidSynth path>
 
-There are two Graphics/Input and Audio backends available on Windows. If these
-libraries are not present, a native Windows backend provided by dpJudas will be
-used. This isn't fully featured at the moment, but I try to keep it compilable.
-Only the SDL and OpenAL backends are available on Linux right now.
+Additional options are available:
+ --build-editor builds the Miner editor (untested)
+ --build-network builds network support (untested)
+ --texmap=<map> changes the texmapper configuration according to the following values of <map>:
+	descent1 - build both games with Descent 1 texmapper
+	descent2 - build both games with Descent 2 texmapper
+	original - build both games with their original texmapper
+	swap     - build both games with the other game's texmapper
 
--------------------------------------------------------------------------------
-Building on Windows with Cmake GUI + Visual Studio
--------------------------------------------------------------------------------
-Here's a step by step outline to building on Windows with CMake-gui. I don't 
-know enough about the CLI version to give instructions there, sorry.
-
-1. Point the "Where is the source code" directory at the root ChocolateDescent 
-directory, and point the "Where to build the binaries" file field at a provided
-build directory. You can do a /build/ subdirectory in the root ChocolateDescent
-directory, and it will be properly .gitignored. 
-
-2. Click Generate, and set the generator to a Visual Studio project. Currently,
-only building with 2019 is tested, I can't comment on earlier versions working.
-
-3. Set the platform as needed. Fluidsynth, if built through vcpkg, will only
-be 32-bit, so you'll have to set the platform to Win32 for it.
-
-4. Click Finish, and wait for the configuration to complete. When it does,
-you'll see a number of red fields. Since the library detection code is 
-currently spotty, you'll probably need to fill out the fields manually.
-Provide the library and include directories for which libraries you wish to 
-build with. 
-
-5. When these libraries are filled out, click Configure again to update these
-values, and then click Generate to make the project files.
-
-6. Open up the generated solution file in Visual Studio, and then build the
-projects as desired. 
-
--------------------------------------------------------------------------------
-Building on Windows with MSYS 2
--------------------------------------------------------------------------------
-A quick tutorial for building with MSYS and MinGW-W64.
-
-Setting up the environment:
-From the msys2 terminal, install the needed dev packages. on an x86 platform,
-these are as follows:
-mingw-w64-x86_64-make (make will also work)
-mingw-w64-x86_64-cmake
-mingw-w64-x86_64-gcc
-mingw-w64-x86_64-SDL2 (optional, but recommended ATM)
-mingw-w64-clang-x86_64-fluidsynth (optional)
-mingw-w64-x86_64-openal (optional, but recommended ATM)
-git (optional, if you want to clone the source from MSYS 2)
-
-Getting and preparing the sources:
-With git installed, run 
- git clone https://github.com/InsanityBringer/ChocolateDescent.git
-
-Once cloned, cd into the newly created ChocolateDescent directory, and create
-a build directory with
-
- mkdir build
- 
-When created, cd into the new directory.
-
-Making the sources: 
-To create the make files, form the build directory, run
- cmake.exe -G "MSYS Makefiles" ..
- 
-This will generate a makefile in the build directory, which can then be built
-with the make command. The executables will be output into the build directory
-
--------------------------------------------------------------------------------
-Building on Linux
--------------------------------------------------------------------------------
-Due to the large amount of variances in Linux installations, I can't give a
-detailed set of instructions, but here's the basic idea:
-
--Install desired libraries. All of them should be available through your
-current package manager
-
--Navigate to the source directory and run cmake with a desired build directory
-  Unlike the Windows code ATM, the library detection code should find
-  the three libraries without any issue, at least they do on my machine
-  
--Navigate to the build directory and run make. Assuming everything goes well,
-this should produce ChocolateDescent and ChocolateDescent2. You can use
-
-  make ChocolateDescent
-  or make ChocolateDescent2
-  
-to build just one of the projects.
-
--------------------------------------------------------------------------------
-Building on macOS
--------------------------------------------------------------------------------
-Installing the libraries depends on which package manager you want to use. For
-the purposes of these instructions, I'll assume that's Homebrew.
-
--Install the libraries and tools for building ChocolateDescent:
-    brew install sdl2 openal-soft readline fluid-synth dylibbundler
-
--Navigate to the source directory and run cmake with a desired build directory.
-  NOTE: Cmake does not successfully find the SDL include directory, OpenAL
-  include directory, or the OpenAL library, so these need to be passed to the
-  cmake call.  For example:
-  cmake . -DOPENAL_INCLUDE_DIRS=/usr/local/Cellar/openal-soft/1.21.1/include/ \
-  -DOPENAL_LIBRARIES=/usr/local/Cellar/openal-soft/1.21.1/lib/libopenal.dylib \
-  -DSDL2_INCLUDE_DIRS=/usr/local/Cellar/sdl2/2.0.14_1/include/SDL2/
-
--Navigate to the build directory and run make. Assuming everything goes well,
-this should produce ChocolateDescent and ChocolateDescent2. You can use
-
-  make ChocolateDescent
-  or make ChocolateDescent2
-  
-to build just one of the projects.
+After running Premake, navigate to the build directory. Run make to build both games in debug configuration. You can also specify config=release for an optimized release build, or independently make Hotshot-1 or Hotshot-2 to build just one game.

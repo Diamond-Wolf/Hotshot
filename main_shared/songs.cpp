@@ -181,6 +181,8 @@ int play_redbook_track(int tracknum,int keep_playing)
 {
 	Redbook_playing = 0;
 
+	
+
 	if (!RBAEnabled() && Redbook_enabled && !FindArg("-noredbook"))
 		reinit_redbook();
 

@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "config.h"
+#include "main_shared/config.h"
 #include "gamestat.h"
 
 typedef struct control_info 

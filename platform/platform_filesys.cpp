@@ -405,7 +405,7 @@ const char* get_platform_localized_file_path_prefix()
 	{
 		char chocolate_descent_directory[CHOCOLATE_MAX_FILE_PATH_SIZE];
 		memset(chocolate_descent_directory, 0, CHOCOLATE_MAX_FILE_PATH_SIZE);
-		snprintf(chocolate_descent_directory, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s/Library/Application Support/Chocolate Descent/%s", getenv("HOME"), CHOCOLATE_DESCENT_VERSION_STRING);
+		snprintf(chocolate_descent_directory, CHOCOLATE_MAX_FILE_PATH_SIZE, "%s/Library/Application Support/Hotshot/%s", getenv("HOME"), CHOCOLATE_DESCENT_VERSION_STRING);
 		strcpy(local_file_path_prefix, chocolate_descent_directory);
 	}
 

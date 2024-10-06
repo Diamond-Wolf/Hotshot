@@ -13,6 +13,8 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+#include "main_shared/fuelcen.h"
+
 #ifdef WINDOWS
 #include "desw.h"
 #endif
@@ -30,7 +32,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "platform/platform.h"
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "player.h"
 #include "platform/key.h"
 #include "object.h"
@@ -52,8 +54,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "3d/3d.h"
 #include "main_shared/effects.h"
 #include "gameseg.h"
-#include "wall.h"
-#include "ai.h"
+#include "main_shared/wall.h"
+#include "main_shared/ai.h"
 #include "main_shared/digi.h"
 #include "2d/ibitblt.h"
 #include "mem/mem.h"
@@ -65,13 +67,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "sounds.h"
 #include "misc/args.h"
 #include "gameseq.h"
-#include "automap.h"
+#include "main_shared/automap.h"
 #include "stringtable.h"
 #include "powerup.h"
 #include "newmenu.h"
 #include "network.h"
-#include "gamefont.h"
-#include "endlevel.h"
+#include "main_shared/gamefont.h"
+#include "main_shared/endlevel.h"
 #include "joydefs.h"
 #include "kconfig.h"
 #include "platform/mouse.h"
@@ -94,12 +96,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 //#include "pa_enabl.h" //[THAT HACK AGAIN]
 #include "multi.h"
-#include "desc_id.h"
-#include "cntrlcen.h"
+#include "main_shared/desc_id.h"
+#include "main_shared/cntrlcen.h"
 #include "state.h"
 #include "main_shared/piggy.h"
 #include "multibot.h"
-#include "ai.h"
 //#include "rbaudio.h"
 #include "switch.h"
 
@@ -112,7 +113,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define SHOW_EXIT_PATH  1
 
 #ifdef ARCADE
-#include "arcade.h"
+#include "main_shared/arcade.h"
 #else
 #define Arcade_mode 0
 #endif

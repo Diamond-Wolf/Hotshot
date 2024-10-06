@@ -29,11 +29,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 
-#include "main_d1/wall.h"
+#include "main_shared/wall.h"
 #include "kdefs.h"
-#include "main_d1/bm.h"		//	Needed for TmapInfo
-#include	"main_d1/effects.h"	//	Needed for effects_bm_num
-#include "main_d1/fvi.h"
+#include "main_shared/bm.h"		//	Needed for TmapInfo
+#include	"main_shared/effects.h"	//	Needed for effects_bm_num
+#include "main_shared/fvi.h"
 
 void cast_all_light_in_mine(int quick_flag);
 

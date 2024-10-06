@@ -39,7 +39,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "texpage.h"		// For texpage_goto_first
 #include "meddraw.h"		// For draw_World
-#include "main_d1/game.h"
+#include "main_shared/game.h"
 
 //return 2d distance, i.e, sqrt(x*x + y*y)
 int dist_2d(int x, int y)

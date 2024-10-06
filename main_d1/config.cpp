@@ -18,14 +18,14 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "platform/platform_filesys.h"
 #include "misc/types.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "main_shared/digi.h"
 #include "kconfig.h"
 #include "2d/palette.h"
 #include "platform/joy.h"
 #include "misc/args.h"
 #include "player.h"
-#include "mission.h"
+#include "main_shared/mission.h"
 #include "misc/error.h"
 #include "network.h"
 

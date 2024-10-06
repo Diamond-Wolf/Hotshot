@@ -50,9 +50,9 @@ int plat_read_chocolate_cfg()
 	WindowHeight = 600;
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	get_full_file_path(cfgpath, "chocolatedescent.cfg", CHOCOLATE_CONFIG_DIR);
+	get_full_file_path(cfgpath, "hotshot.cfg", CHOCOLATE_CONFIG_DIR);
 #else
-	snprintf(cfgpath, 21, "chocolatedescent.cfg");
+	snprintf(cfgpath, 21, "hotshot.cfg");
 #endif
 
 	infile = fopen(cfgpath, "rt");
@@ -125,9 +125,9 @@ void plat_save_chocolate_cfg()
 	char cfgpath[CHOCOLATE_MAX_FILE_PATH_SIZE];
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	get_full_file_path(cfgpath, "chocolatedescent.cfg", CHOCOLATE_CONFIG_DIR);
+	get_full_file_path(cfgpath, "hotshot.cfg", CHOCOLATE_CONFIG_DIR);
 #else
-	snprintf(cfgpath, 21, "chocolatedescent.cfg");
+	snprintf(cfgpath, 21, "hotshot.cfg");
 #endif
 
 	FILE* infile = fopen(cfgpath, "w");

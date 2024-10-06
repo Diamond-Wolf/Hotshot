@@ -22,14 +22,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "object.h"
 #include "misc/error.h"
-#include "ai.h"
+#include "main_shared/ai.h"
 #include "robot.h"
-#include "fvi.h"
+#include "main_shared/fvi.h"
 #include "physics.h"
-#include "wall.h"
+#include "main_shared/wall.h"
 #include "player.h"
-#include "fireball.h"
-#include "game.h"
+#include "main_shared/fireball.h"
+#include "main_shared/game.h"
 
 #ifdef EDITOR
 #include "editor\editor.h"

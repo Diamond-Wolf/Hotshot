@@ -30,7 +30,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 
 #include "objpage.h"
-#include "main_d1/bm.h"
+#include "main_shared/bm.h"
 #include "main_d1/player.h"
 #include "main_shared/piggy.h"
 

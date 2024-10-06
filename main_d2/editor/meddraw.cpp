@@ -28,7 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "ui/ui.h"
 #include "editor.h"
 
-#include "main_d2/wall.h"
+#include "main_shared/wall.h"
 #include "main_d2/switch.h"
 
 #include "platform/key.h"
@@ -36,7 +36,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "mem/mem.h"
 #include "main_d2/render.h"
-#include "main_d2/game.h"
+#include "main_shared/game.h"
 #include "kdefs.h"
 #include "func.h"
 #include "main_d2/textures.h"
@@ -44,7 +44,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "texmap/texmap.h"
 #include "main_d2/object.h"
 #include "cfile/cfile.h"
-#include "main_d2/fuelcen.h"
+#include "main_shared/fuelcen.h"
 
 //	Colors used in editor for indicating various kinds of segments.
 #define	SELECT_COLOR		BM_XRGB( 63/2 , 41/2 ,  0/2)

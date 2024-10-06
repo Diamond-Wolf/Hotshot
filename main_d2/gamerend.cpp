@@ -11,6 +11,8 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+#include "main_shared/fuelcen.h"
+
 #ifdef WINDOWS
 #include "desw.h"
 #include "winapp.h"
@@ -28,7 +30,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "2d/palette.h"
 #include "2d/ibitblt.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "player.h"
 #include "render.h"
 #include "menu.h"
@@ -36,19 +38,19 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "screens.h"
 #include "fix/fix.h"
 #include "robot.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "gauges.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 #include "newdemo.h"
 #include "stringtable.h"
 #include "multi.h"
-#include "endlevel.h"
-#include "cntrlcen.h"
+#include "main_shared/endlevel.h"
+#include "main_shared/cntrlcen.h"
 #include "powerup.h"
 #include "laser.h"
 #include "playsave.h"
-#include "automap.h"
-#include "mission.h" //for mission number
+#include "main_shared/automap.h"
+#include "main_shared/mission.h" //for mission number
 #include "gameseq.h" //for level number
 
 #if defined(POLY_ACC)
