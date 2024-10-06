@@ -19,7 +19,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "inferno.h"
 #include "object.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "player.h"
 #include "gauges.h"
 #include "hostage.h"

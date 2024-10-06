@@ -21,10 +21,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "inferno.h"
 #include "object.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "platform/key.h"
 
-#include "fireball.h"
+#include "main_shared/fireball.h"
 #include "powerup.h"
 #include "gauges.h"
 
@@ -38,11 +38,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "scores.h"
 #include "multi.h"
 #include "lighting.h"
-#include "controls.h"
+#include "main_shared/controls.h"
 #include "kconfig.h"
 
 #include "newdemo.h"
-#include "ai.h"
+#include "main_shared/ai.h"
 
 #ifdef EDITOR
 #include "2d/gr.h"	//	for powerup outline drawing

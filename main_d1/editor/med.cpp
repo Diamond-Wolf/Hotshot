@@ -32,7 +32,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "ui/ui.h"
 #include "editor.h"
-//#include "gamemine.h"
+//#include "main_shared/gamemine.h"
 #include "main_d1/gamesave.h"
 #include "main_d1/gameseg.h"
 
@@ -47,7 +47,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #endif
 #include "mem/mem.h"
 #include "main_d1/render.h"
-#include "main_d1/game.h"
+#include "main_shared/game.h"
 #include "main_d1/slew.h"
 #include "kdefs.h"
 #include "func.h"
@@ -59,7 +59,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d1/effects.h"
 #include "main_shared/wall.h"
 #include "info.h"
-#include "main_d1/ai.h"
+#include "main_shared/ai.h"
 
 #include "texpage.h"		// Textue selection paging stuff
 #include "objpage.h"		// Object selection paging stuff
@@ -73,7 +73,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "ehostage.h"
 #include "centers.h"
 
-#include "main_d1/fuelcen.h"
+#include "main_shared/fuelcen.h"
 #include "main_d1/gameseq.h"
 #include "main_d1/newmenu.h"
 

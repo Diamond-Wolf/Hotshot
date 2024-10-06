@@ -17,8 +17,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "cfile/cfile.h"
 
-#include "ai.h"
-#include "aistruct.h"
+#include "main_shared/ai.h"
+#include "main_shared/aistruct.h"
 
 void P_WriteAILocals(ai_local* info, FILE* fp)
 {

@@ -20,10 +20,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "2d/rle.h"
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "2d/gr.h"
 #include "stdlib.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "platform/mono.h"
 #include "3d/3d.h"
 #include "segment.h"
@@ -38,12 +38,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/wall.h"
 #include "main_shared/vclip.h"
 #include "polyobj.h"
-#include "fireball.h"
+#include "main_shared/fireball.h"
 #include "laser.h"
 #include "misc/error.h"
-#include "ai.h"
+#include "main_shared/ai.h"
 #include "hostage.h"
-#include "fuelcen.h"
+#include "main_shared/fuelcen.h"
 #include "sounds.h"
 #include "robot.h"
 #include "weapon.h"
@@ -58,11 +58,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "multi.h"
 #include "main_shared/cntrlcen.h"
 #include "newdemo.h"
-#include "endlevel.h"
+#include "main_shared/endlevel.h"
 #include "multibot.h"
 #include "main_shared/piggy.h"
 #include "stringtable.h"
-#include "automap.h"
+#include "main_shared/automap.h"
 #include "switch.h"
 #include "2d/palette.h"
 #include "gameseq.h"
@@ -75,7 +75,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "editor\editor.h"
 #endif
 
-#include "collide.h"
+#include "main_shared/collide.h"
 
 #define STANDARD_EXPL_DELAY (f1_0/4)
 

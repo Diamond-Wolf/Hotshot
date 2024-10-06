@@ -15,7 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdio.h>
 #include <string.h>
 
-#include "game.h"
+#include "main_shared/game.h"
 #include "laser.h"
 #include "weapon.h"
 #include "platform/mono.h"
@@ -25,11 +25,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "sounds.h"
 #include "stringtable.h"
 #include "powerup.h"
-#include "fireball.h"
+#include "main_shared/fireball.h"
 #include "newdemo.h"
 #include "multi.h"
 #include "newmenu.h"
-#include "ai.h"
+#include "main_shared/ai.h"
 #include "misc/args.h"
 
 #include "misc/rand.h"
@@ -650,7 +650,7 @@ void ReorderPrimary()
 	{
 		m[i].type = NM_TYPE_MENU;
 		if (PrimaryOrder[i] == 255)
-			m[i].text = const_cast<char*>("ˆˆˆˆˆˆˆ Never autoselect ˆˆˆˆˆˆˆ");
+			m[i].text = const_cast<char*>("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Never autoselect ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		else
 			m[i].text = (char*)PRIMARY_WEAPON_NAMES(PrimaryOrder[i]);
 		m[i].value = PrimaryOrder[i];
@@ -672,7 +672,7 @@ void ReorderSecondary()
 	{
 		m[i].type = NM_TYPE_MENU;
 		if (SecondaryOrder[i] == 255)
-			m[i].text = const_cast<char*>("ˆˆˆˆˆˆˆ Never autoselect ˆˆˆˆˆˆˆ");
+			m[i].text = const_cast<char*>("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Never autoselect ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		else
 			m[i].text = (char*)SECONDARY_WEAPON_NAMES(SecondaryOrder[i]);
 		m[i].value = SecondaryOrder[i];

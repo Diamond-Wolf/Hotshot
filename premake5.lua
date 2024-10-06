@@ -185,12 +185,6 @@ project "Hotshot-1"
 		"main_d1/*.h"
 	}
 	
-	removefiles {
-		"main_d1/effects.cpp",
-		"main_d1/wall.cpp",
-		"main_d1/wall.h"
-	}
-	
 	filter { "options:build-editor" }
 		files {
 			"main_d1/editor/*.cpp",
@@ -220,9 +214,7 @@ project "Hotshot-2"
 	}
 
 	removefiles {
-		"main_d2/i_main.cpp",
-		"main_d2/wall.cpp",
-		"main_d2/wall.h"
+		"main_d2/i_main.cpp"
 	}
 
 	filter { "options:build-editor" }

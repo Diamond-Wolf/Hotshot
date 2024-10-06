@@ -32,11 +32,11 @@ static char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE C
 #include "platform/key.h"
 #include "platform/timer.h"
 #include "3d/3d.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "inferno.h"
 #include "misc/error.h"
 #include "cfile/cfile.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "segment.h"		//for Side_to_verts
 #include "mem/mem.h"
 #include "textures.h"
@@ -63,7 +63,7 @@ static char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE C
 #endif
 #include "newdemo.h"
 #include "network.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 #include "kconfig.h"
 #ifdef ARCADE
 #include "main_shared/arcade.h"
@@ -72,7 +72,7 @@ static char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE C
 #include "platform/mouse.h"
 #include "platform/joy.h"
 #include "newmenu.h"
-#include "desc_id.h"
+#include "main_shared/desc_id.h"
 #include "main_shared/config.h"
 #include "joydefs.h"
 #include "multi.h"
@@ -85,7 +85,7 @@ static char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE C
 #include "editor\kdefs.h"
 #endif
 
-#include "vers_id.h"
+#include "main_shared/vers_id.h"
 #include "platform/platform.h"
 
 static const char desc_id_checksum_str[] = DESC_ID_CHKSUM;

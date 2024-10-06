@@ -32,7 +32,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/platform.h"
 //#include "pa_enabl.h"       //$$POLY_ACC //[ISB] todo figure out something here aaa
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "platform/key.h"
 #include "object.h"
 #include "physics.h"
@@ -54,8 +54,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "menu.h"
 #include "gameseg.h"
 #include "main_shared/wall.h"
-#include "ai.h"
-#include "fuelcen.h"
+#include "main_shared/ai.h"
+#include "main_shared/fuelcen.h"
 #include "main_shared/digi.h"
 #include "2d/ibitblt.h"
 #include "mem/mem.h"
@@ -63,24 +63,24 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "morph.h"
 #include "lighting.h"
 #include "newdemo.h"
-#include "collide.h"
+#include "main_shared/collide.h"
 #include "weapon.h"
 #include "sounds.h"
 #include "misc/args.h"
 #include "gameseq.h"
-#include "automap.h"
+#include "main_shared/automap.h"
 #include "stringtable.h"
 #include "powerup.h"
-#include "fireball.h"
+#include "main_shared/fireball.h"
 #include "newmenu.h"
 #include "network.h"
-#include "gamefont.h"
-#include "endlevel.h"
+#include "main_shared/gamefont.h"
+#include "main_shared/endlevel.h"
 #include "joydefs.h"
 #include "kconfig.h"
 #include "platform/mouse.h"
 #include "switch.h"
-#include "controls.h"
+#include "main_shared/controls.h"
 #include "main_shared/songs.h"
 #include "gamepal.h"
 
@@ -93,12 +93,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #endif
 
 #include "multi.h"
-#include "desc_id.h"
+#include "main_shared/desc_id.h"
 #include "main_shared/cntrlcen.h"
 #include "state.h"
 #include "main_shared/piggy.h"
 #include "multibot.h"
-#include "ai.h"
 //#include "rbaudio.h" //[ISB] ugh
 #include "robot.h"
 #include "playsave.h"
@@ -1139,7 +1138,7 @@ void fly_init(object *obj)
 
 int test_anim_states();
 
-#include "fvi.h"
+#include "main_shared/fvi.h"
 
 //put up the help message
 void do_show_help()

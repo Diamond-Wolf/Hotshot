@@ -17,7 +17,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "vecmat/vecmat.h"
 #include "segment.h"
 #include "gameseg.h"
-#include "aistruct.h"
+#include "main_shared/aistruct.h"
 #include "2d/gr.h"
 #include "main_shared/piggy.h"
 

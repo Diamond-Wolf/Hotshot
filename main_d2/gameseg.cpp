@@ -25,15 +25,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/rand.h"
 
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "vecmat/vecmat.h"
 #include "gameseg.h"
 #include "main_shared/wall.h"
-#include "fuelcen.h"
-#include "bm.h"
-#include "fvi.h"
+#include "main_shared/fuelcen.h"
+#include "main_shared/bm.h"
+#include "main_shared/fvi.h"
 #include "misc/byteswap.h"
 
 // How far a point can be from a plane, and still be "in" the plane

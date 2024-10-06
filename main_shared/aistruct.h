@@ -13,8 +13,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "inferno.h"
-//#include "polyobj.h"
+#include "misc/types.h"
+#include "fix/fix.h"
+#include "vecmat/vecmat.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/inferno.h"
+#else
+# include "main_d1/inferno.h"
+#endif
 
 #define	GREEN_GUY	1 //[ISB] heh
 
@@ -38,13 +45,19 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	AIB_STILL						0x80
 #define	AIB_NORMAL						0x81
 #define	AIB_BEHIND						0x82
+#define AIB_HIDE						0x82 // [DW] Renamed between D1/2
 #define	AIB_RUN_FROM					0x83
 #define	AIB_SNIPE						0x84
+#define AIB_FOLLOW_PATH					0x84 // [DW] Renamed between D1/2
 #define	AIB_STATION						0x85
 #define	AIB_FOLLOW						0x86
 
 #define	MIN_BEHAVIOR	0x80
-#define	MAX_BEHAVIOR	0x86
+#ifdef BUILD_DESCENT2
+# define	MAX_BEHAVIOR	0x86
+#else
+# define	MAX_BEHAVIOR	0x85
+#endif
 
 //	Modes
 #define	AIM_STILL						0
@@ -53,6 +66,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	AIM_CHASE_OBJECT				3
 #define	AIM_RUN_FROM_OBJECT			4
 #define	AIM_BEHIND						5
+#define AIM_HIDE						5 // [DW] Renamed between D1/2
 #define	AIM_FOLLOW_PATH_2				6
 #define	AIM_OPEN_DOOR					7
 #define	AIM_GOTO_PLAYER				8	//	Only for escort behavior
@@ -116,6 +130,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	GOAL_STATE		flags[2]			//	goal state
 #define	PATH_DIR			flags[3]			//	direction traveling path, 1 = forward, -1 = backward, other = error!
 #define	SUB_FLAGS		flags[4]			//	bit 0: Set -> Robot's current gun in different segment than robot's center.
+#define SUBMODE			flags[4]			// [DW] Renamed between D1/2
 #define	GOALSIDE			flags[5]			//	for guys who open doors, this is the side they are going after.
 #define	CLOAKED			flags[6]			//	Cloaked now.
 #define	SKIP_AI_COUNT	flags[7]			//	Skip AI this frame, but decrement in do_ai_frame.
@@ -133,8 +148,8 @@ typedef struct ai_static {
 	int8_t			cur_path_index;			//	Current index in path.
 	int8_t			dying_sound_playing;		//	!0 if this robot is playing its dying sound.
 
-// -- not needed! -- 	short			follow_path_start_seg;	//	Start segment for robot which follows path.
-// -- not needed! -- 	short			follow_path_end_seg;		//	End segment for robot which follows path.
+short			follow_path_start_seg;	//	Start segment for robot which follows path.
+short			follow_path_end_seg;		//	End segment for robot which follows path.
 
 	short			danger_laser_num;
 	int			danger_laser_signature;
@@ -156,8 +171,9 @@ typedef struct ai_local {
 	int			rapidfire_count;			//	number of shots fired rapidly
 	int			goal_segment;				//	goal segment for current path
 
-	// -- MK, 10/21/95, unused -- fix			last_see_time, last_attack_time;	//	For sound effects, time at which player last seen, attacked
-	
+	fix			last_see_time, last_attack_time;	//	For sound effects, time at which player last seen, attacked
+	fix			wait_time;
+
 	fix			next_action_time;			// time in seconds until something happens, mode dependent
 	fix			next_fire;					// time in seconds until can fire again
 	fix			next_fire2;					// time in seconds until can fire again from second weapon
@@ -194,11 +210,14 @@ extern	int			Overall_agitation;
 
 extern	void	ai_do_cloak_stuff(void);
 
+struct ai_cloak_info;
+
 #include <stdio.h>
 
 void P_WriteAILocals(ai_local* info, FILE* fp);
 void P_WriteSegPoint(point_seg* point, FILE* fp);
+void P_WriteCloakInfo(ai_cloak_info* info, FILE* fp);
 
 void P_ReadAILocals(ai_local* info, FILE* fp);
 void P_ReadSegPoint(point_seg* point, FILE* fp);
-
+void P_ReadCloakInfo(ai_cloak_info* info, FILE* fp);

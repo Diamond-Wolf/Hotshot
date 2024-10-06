@@ -25,7 +25,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/platform_filesys.h"
 #include "platform/posixstub.h"
 //#include "pa_enabl.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "gameseq.h"
 #include "player.h"
 #include "playsave.h"

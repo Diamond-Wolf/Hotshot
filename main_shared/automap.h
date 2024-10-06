@@ -13,18 +13,32 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-//This file contains defintions shared between Descent 1 and 2.
+#include "misc/types.h"
 
-//from mglobal.c
-extern fix FrameTime;					//time in seconds since last frame
-extern fix RealFrameTime;					//time in seconds since last frame
-extern fix GameTime;						//time in game (sum of FrameTime)
-extern int FrameCount;					//how many frames rendered
-extern fix	Next_laser_fire_time;	//	Time at which player can next fire his selected laser.
-extern fix	Last_laser_fired_time;
-extern fix	Next_missile_fire_time;	//	Time at which player can next fire his selected missile.
-extern fix	Laser_delay_time;			//	Delay between laser fires.
-extern int Cheats_enabled;
+#ifdef BUILD_DESCENT2
+# include "main_d2/player.h"
+# include "main_d2/segment.h"
+#else
+# include "main_d1/player.h"
+# include "main_d1/segment.h"
+#endif
 
-#define	NDL	5		//	Number of difficulty levels.
-#define	NUM_DETAIL_LEVELS	6
+extern void do_automap(int key_code);
+extern void automap_clear_visited();
+extern uint8_t Automap_visited[MAX_SEGMENTS];
+extern void modex_print_message(int x, int y, char *str);
+void DropBuddyMarker(object *objp);
+
+extern int Automap_active;
+
+#define NUM_MARKERS 				16
+#define MARKER_MESSAGE_LEN		40
+
+extern char MarkerMessage[NUM_MARKERS][MARKER_MESSAGE_LEN];
+extern char MarkerOwner[NUM_MARKERS][CALLSIGN_LEN+1];
+extern int	MarkerObject[NUM_MARKERS];
+
+
+void adjust_segment_limit(int SegmentLimit); 
+void draw_all_edges();
+void automap_build_edge_list();

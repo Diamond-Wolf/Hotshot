@@ -22,13 +22,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "morph.h"
 #include "polyobj.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "lighting.h"
 #include "newdemo.h"
 #include "main_shared/piggy.h"
 
 #include "platform/mono.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 
 morph_data morph_objects[MAX_MORPH_OBJECTS];
 

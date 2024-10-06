@@ -31,9 +31,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "kdefs.h"
 #include	"main_d1/object.h"
 #include "main_d1/polyobj.h"
-#include "main_d1/game.h"
+#include "main_shared/game.h"
 #include "main_d1/powerup.h"
-#include "main_d1/ai.h"
+#include "main_shared/ai.h"
 #include "main_d1/hostage.h"
 #include "eobject.h"
 #include "medwall.h"
@@ -41,7 +41,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "ehostage.h"
 #include "platform/key.h"
 #include "centers.h"
-#include "main_d1/bm.h"
+#include "main_shared/bm.h"
 
 #define	NUM_BOXES		6			//	Number of boxes, AI modes
 

@@ -16,7 +16,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //#include "pa_enabl.h"                   //$$POLY_ACC
 #include "2d/gr.h"
 #include "misc/error.h"
-#include "game_shared.h"
+#include "game.h"
 #ifdef BUILD_DESCENT2
 #include "main_d2/textures.h"
 #else

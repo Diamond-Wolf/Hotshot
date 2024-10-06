@@ -32,7 +32,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifndef DRIVE
 #include "texmap/texmap.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "textures.h"
 #include "object.h"
 #include "lighting.h"

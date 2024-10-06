@@ -39,7 +39,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "coindev.h"
 #endif
 #include "platform/mono.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 #include "cfile/cfile.h"
 #include "mem/mem.h"
 #include "misc/error.h"

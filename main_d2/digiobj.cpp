@@ -32,7 +32,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/args.h"
 #include "platform/key.h"
 #include "newdemo.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "misc/error.h"
 #include "main_shared/wall.h"
 #include "cfile/cfile.h"

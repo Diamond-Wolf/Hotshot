@@ -18,14 +18,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/rand.h"
 
-#include "fuelcen.h"
+#include "main_shared/fuelcen.h"
 #include "gameseg.h"
-#include "game.h"		// For FrameTime
+#include "main_shared/game.h"		// For FrameTime
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "gauges.h"
 #include "main_shared/vclip.h"
-#include "fireball.h"
+#include "main_shared/fireball.h"
 #include "robot.h"
 #include "powerup.h"
 
@@ -33,13 +33,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "sounds.h"
 #include "morph.h"
 #include "3d/3d.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "polyobj.h"
-#include "ai.h"
-#include "gamemine.h"
+#include "main_shared/ai.h"
+#include "main_shared/gamemine.h"
 #include "gamesave.h"
 #include "player.h"
-#include "collide.h"
+#include "main_shared/collide.h"
 #include "laser.h"
 #include "network.h"
 #include "multi.h"

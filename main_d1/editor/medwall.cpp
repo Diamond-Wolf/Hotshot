@@ -34,7 +34,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "medrobot.h"
 #include "platform/timer.h"
 #include "platform/mono.h"
-//#include "fuelcen.h"
+//#include "main_shared/fuelcen.h"
 #include "platform/key.h"
 #include "ehostage.h"
 #include "centers.h"

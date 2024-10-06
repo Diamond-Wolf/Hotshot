@@ -32,7 +32,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "mem/mem.h"
 #include "misc/byteswap.h"
 #include "cfile/cfile.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 #include "2d/gr.h"
 #include "2d/palette.h"
 #include "main_shared/config.h"

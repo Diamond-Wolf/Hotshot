@@ -22,17 +22,17 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "object.h"
 #include "misc/error.h"
-#include "ai.h"
+#include "main_shared/ai.h"
 #include "robot.h"
-#include "fvi.h"
+#include "main_shared/fvi.h"
 #include "physics.h"
 #include "main_shared/wall.h"
 #ifdef EDITOR
 #include "editor\editor.h"
 #endif
 #include "player.h"
-#include "fireball.h"
-#include "game.h"
+#include "main_shared/fireball.h"
+#include "main_shared/game.h"
 
 #define	PARALLAX	0		//	If !0, then special debugging for Parallax eyes enabled.
 

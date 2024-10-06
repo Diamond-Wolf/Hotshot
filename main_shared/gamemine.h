@@ -7,18 +7,23 @@ IN USING, DISPLAYING,  AND CREATING DERIVATIVE WORKS THEREOF, SO LONG AS
 SUCH USE, DISPLAY OR CREATION IS FOR NON-COMMERCIAL, ROYALTY OR REVENUE
 FREE PURPOSES.  IN NO EVENT SHALL THE END-USER USE THE COMPUTER CODE
 CONTAINED HEREIN FOR REVENUE-BEARING PURPOSES.  THE END-USER UNDERSTANDS
-AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
-COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
+AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.  
+COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #pragma once
 
-#define MINE_VERSION					17	// Current version expected
-#define COMPATIBLE_VERSION 		16 // Oldest version that can safely be loaded.
-
 #include "misc/types.h"
 
-#define MTFI_SIZEOF 8
+#ifdef BUILD_DESCENT2
+# define MINE_VERSION					20	// Current version expected
+#else
+# define MINE_VERSION					17	// Current version expected
+#endif
+
+#define COMPATIBLE_VERSION 		16 // Oldest version that can safely be loaded.
+
+#define MTFI_SIZEOF sizeof(mtfi) // [DW] Did the sizeof operator not exist then or something?
 struct mtfi 
 {
 	uint16_t  fileinfo_signature;
@@ -26,6 +31,7 @@ struct mtfi
 	int     fileinfo_sizeof;
 };    // Should be same as first two fields below...
 
+#define MFI_SIZEOF sizeof(mfi)
 struct mfi 
 {
 	uint16_t	fileinfo_signature;
@@ -60,23 +66,38 @@ struct mfi
 	int		links_howmany;
 	int		links_sizeof;
 	int		object_offset;				// Object info
-	int	  	object_howmany;
-	int	  	object_sizeof;
+	int	  	object_howmany;    	
+	int	  	object_sizeof;  
 	int	  	unused_offset;			//was: doors_offset
 	int		unused_howmamy;		//was: doors_howmany
 	int		unused_sizeof;			//was: doors_sizeof
+	short		level_shake_frequency, level_shake_duration;	//	Shakes every level_shake_frequency seconds
+																			// for level_shake_duration seconds (on average, random).  In 16ths second.
+	int		secret_return_segment;
+	vms_matrix	secret_return_orient;
+
+	int		dl_indices_offset;
+	int		dl_indices_howmany;
+	int		dl_indices_sizeof;
+
+	int		delta_light_offset;
+	int		delta_light_howmany;
+	int		delta_light_sizeof;
+
+	int		segment2_offset;
+	int		segment2_howmany;
+	int		segment2_sizeof;
+
 };
 
-#define MH_SIZEOF 8
-struct mh 
-{
+#define MH_SIZEOF sizeof(mh)
+struct mh {
 	int     num_vertices;
 	int     num_segments;
 };
 
-#define ME_SIZEOF 112
-struct me 
-{
+#define ME_SIZEOF sizeof(me)
+struct me {
 	int     current_seg;
 	int     newsegment_offset;
 	int     newsegment_size;
@@ -85,9 +106,9 @@ struct me
 	int     Markedside;
 	int	  Groupsegp[10];
 	int 	  Groupside[10];
-	int	  Num_groups;
-	int 	  Current_group;
-	//	int	  num_objects;
+	int	  num_groups;
+	int 	  current_group;
+//	int	  num_objects;
 };
 
 extern struct mtfi mine_top_fileinfo;    // Should be same as first two fields below...
@@ -96,6 +117,9 @@ extern struct mh mine_header;
 extern struct me mine_editor;
 
 // returns 1 if error, else 0
-//int game_load_mine(char* filename); //[ISB] cut from current gamemine.c
+int game_load_mine(char * filename);
 
 extern short tmap_xlate_table[];
+extern fix Level_shake_frequency, Level_shake_duration;
+extern int Secret_return_segment;
+extern vms_matrix Secret_return_orient;

@@ -30,11 +30,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_d1/gameseg.h"
 #include "main_d1/render.h"
-#include "main_d1/game.h"
+#include "main_shared/game.h"
 
 #include "main_shared/wall.h"
 #include "main_d1/switch.h"
-#include "main_d1/fuelcen.h"
+#include "main_shared/fuelcen.h"
 #include "seguvs.h"
 #include "main_d1/gameseq.h"
 

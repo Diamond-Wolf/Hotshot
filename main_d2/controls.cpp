@@ -21,11 +21,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "object.h"
 #include "player.h"
 
-#include "controls.h"
+#include "main_shared/controls.h"
 #include "joydefs.h"
 #include "render.h"
 #include "misc/args.h" 
@@ -35,7 +35,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "laser.h"
 #include "multi.h"
 #include "main_shared/vclip.h"
-#include "fireball.h"
+#include "main_shared/fireball.h"
 
 //look at keyboard, mouse, joystick, CyberMan, whatever, and set 
 //physics vars rotvel, velocity

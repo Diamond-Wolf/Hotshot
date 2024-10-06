@@ -16,15 +16,17 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 #include <algorithm>
 
+#include "main_shared/fuelcen.h"
+
 //#include "pa_enabl.h"                   //$$POLY_ACC
 #include "inferno.h"
 #include "segment.h"
 #include "misc/error.h"
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "texmap/texmap.h"
 #include "platform/mono.h"
 #include "render.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "object.h"
 #include "laser.h"
 #include "textures.h"
@@ -39,8 +41,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "lighting.h"
 #include "main_shared/cntrlcen.h"
 #include "newdemo.h"
-#include "automap.h"
-#include "endlevel.h"
+#include "main_shared/automap.h"
+#include "main_shared/endlevel.h"
 #include "platform/key.h"
 #include "newmenu.h"
 #include "mem/mem.h"

@@ -13,27 +13,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "object.h"
-
-extern int Endlevel_sequence;
-void do_endlevel_frame();
-void stop_endlevel_sequence();
-void start_endlevel_sequence();
-void render_endlevel_frame(fix eye_offset);
-
-void render_external_scene();
-void draw_exit_model();
-void init_endlevel();
-
-extern grs_bitmap* terrain_bitmap;	//*satellite_bitmap,*station_bitmap,
-extern int exit_segnum;
-
-//@@extern vms_vector mine_exit_point;
-//@@extern object external_explosion;
-//@@extern int ext_expl_playing;
-
-//called for each level to load & setup the exit sequence
-void load_endlevel_data(int level_num);
-
-extern int exit_modelnum, destroyed_exit_modelnum;
-
+//if filename passed is NULL, show normal credits
+#ifdef BUILD_DESCENT2
+void credits_show(char *credits_filename);
+#else
+void credits_show();
+#endif

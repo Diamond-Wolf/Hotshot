@@ -22,7 +22,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "platform/posixstub.h"
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "screens.h"
 #include "gauges.h"
 #include "physics.h"
@@ -30,10 +30,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "menu.h"			// For the font.
 #include "platform/mono.h"
-#include "collide.h"
+#include "main_shared/collide.h"
 #include "newdemo.h"
 #include "player.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 
 #include "main_shared/wall.h"
 #include "main_shared/arcade.h"

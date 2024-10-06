@@ -31,7 +31,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/args.h"
 
 #ifndef DRIVE
-#include "bm.h"
+#include "main_shared/bm.h"
 #include "textures.h"
 #include "object.h"
 #include "lighting.h"
@@ -458,6 +458,9 @@ void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_an
 	polymodel* po;
 	int i;
 
+	if (model_num >= N_polygon_models) {
+		printf("%d %d\n", model_num, N_polygon_models);
+	}
 	Assert(model_num < N_polygon_models);
 
 	po = &Polygon_models[model_num];

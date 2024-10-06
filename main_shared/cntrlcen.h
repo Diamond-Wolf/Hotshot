@@ -23,10 +23,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #endif
 //#include "switch.h"
 
-#define MAX_CONTROLCEN_GUNS 		8
-#define CONTROLCEN_WEAPON_NUM		6
-
 #define	MAX_CONTROLCEN_LINKS		10
+#define CONTROLCEN_WEAPON_NUM		6
+#ifdef BUILD_DESCENT2
+# define MAX_CONTROLCEN_GUNS 		8
+#else
+# define MAX_CONTROLCEN_GUNS		4
+#endif
 
 #ifdef BUILD_DESCENT2 //D1 defines it elsewhere
 typedef struct control_center_triggers

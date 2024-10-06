@@ -29,7 +29,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "coindev.h"
 #endif
 #include "platform/mono.h"
-#include "gamefont.h"
+#include "main_shared/gamefont.h"
 #include "cfile/cfile.h"
 #include "mem/mem.h"
 #include "misc/error.h"
@@ -47,7 +47,6 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "newmenu.h"
 #include "state.h"
 #include "titles.h"
-#include "vfx.h"
 #include "platform/platform.h"
 
 uint8_t New_pal[768];

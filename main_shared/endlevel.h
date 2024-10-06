@@ -14,8 +14,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "2d/gr.h"
-#include "object.h"
 #include "vecmat/vecmat.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/object.h"
+#else
+# include "main_d1/object.h"
+#endif
 
 extern int Endlevel_sequence;
 

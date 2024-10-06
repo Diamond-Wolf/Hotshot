@@ -15,9 +15,17 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <stdio.h>
 
-#include "object.h"
-#include "fvi.h"
-#include "robot.h"
+#include "main_shared/fvi.h"
+#include "fix/fix.h"
+#include "vecmat/vecmat.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/object.h"
+# include "main_d2/robot.h"
+#else
+# include "main_d1/object.h"
+# include "main_d1/robot.h"
+#endif
 
 #define	PLAYER_AWARENESS_INITIAL_TIME		(3*F1_0)
 #define	MAX_PATH_LENGTH						30			//	Maximum length of path in ai path following.
@@ -51,6 +59,7 @@ extern uint8_t	Boss_invulnerable_matter[NUM_D2_BOSSES];		//	Set int8_t if boss i
 extern uint8_t	Boss_invulnerable_spot[NUM_D2_BOSSES];		//	Set int8_t if boss is invulnerable in all but a certain spot.  (Dot product fvec|vec_to_collision < BOSS_INVULNERABLE_DOT)
 
 extern fix Boss_cloak_start_time, Boss_cloak_end_time;
+extern	int	Boss_hit_this_frame;
 extern int	Num_boss_teleport_segs;
 extern short	Boss_teleport_segs[MAX_BOSS_TELEPORT_SEGS];
 extern fix	Last_teleport_time;
@@ -77,7 +86,13 @@ extern void reset_ai_states(object *objp);
 extern int create_path_points(object *objp, int start_seg, int end_seg, point_seg *point_segs, short *num_points, int max_depth, int random_flag, int safety_flag, int avoid_seg);
 extern void create_all_paths(void);
 extern void create_path_to_station(object *objp, int max_length);
+
+#ifdef BUILD_DESCENT2
 extern void ai_follow_path(object *objp, int player_visibility, int previous_visibility, vms_vector *vec_to_player);
+#else
+extern void ai_follow_path(object *objp, int player_visibility);
+#endif
+
 extern void ai_turn_towards_vector(vms_vector *vec_to_player, object *obj, fix rate);
 extern void ai_turn_towards_vel_vec(object *objp, fix rate);
 extern void init_ai_objects(void);
@@ -93,6 +108,8 @@ extern int ready_to_fire(robot_info *robptr, ai_local *ailp);
 extern int polish_path(object *objp, point_seg *psegs, int num_points);
 extern void move_towards_player(object *objp, vms_vector *vec_to_player);
 
+void init_boss_segments(short segptr[], int* num_segs, int size_check);
+
 //	max_length is maximum depth of path to create.
 //	If -1, use default:	MAX_DEPTH_TO_SEARCH_FOR_PLAYER
 extern void create_path_to_player(object *objp, int max_length, int safety_flag);
@@ -102,6 +119,7 @@ extern void attempt_to_resume_path(object *objp);
 extern void do_ai_robot_hit_attack(object *robot, object *player, vms_vector *collision_point);
 extern void ai_open_doors_in_segment(object *robot);
 extern int ai_door_is_openable(object *objp, segment *segp, int sidenum);
+extern void ai_open_doors_in_segment(object *robot);
 extern int player_is_visible_from_object(object *objp, vms_vector *pos, fix field_of_view, vms_vector *vec_to_player);
 extern void ai_reset_all_paths(void);	//	Reset all paths.  Call at the start of a level.
 extern int ai_multiplayer_awareness(object *objp, int awareness_level);
@@ -122,6 +140,10 @@ extern void ai_init_boss_for_ship(void);
 extern int Boss_been_hit;
 extern fix AI_proc_time;
 
+void validate_all_paths();
+void maybe_ai_path_garbage_collect();
+void ai_path_set_orient_and_vel(object* objp, vms_vector* goal_point);
+
 //	Stuff moved from ai.c by MK on 05/25/95.
 #define	ANIM_RATE		(F1_0/16)
 #define	DELTA_ANG_SCALE	16
@@ -129,7 +151,7 @@ extern fix AI_proc_time;
 #define	OVERALL_AGITATION_MAX	100
 #define	MAX_AI_CLOAK_INFO	8	//	Must be a power of 2!
 
-typedef struct 
+typedef struct ai_cloak_info
 {
 	fix			last_time;
 	int			last_segment;
@@ -147,11 +169,15 @@ extern	vms_vector	Last_fired_upon_player_pos;
 extern	int	Laser_rapid_fire;
 
 #define	MAX_AWARENESS_EVENTS	64
+#ifdef BUILD_DESCENT2
 typedef struct awareness_event {
 	short 		segnum;				// segment the event occurred in
 	short			type;					// type of event, defines behavior
 	vms_vector	pos;					// absolute 3 space location of event
 } awareness_event;
+#else
+struct awareness_event;
+#endif
 
 #define	AIS_MAX	8
 #define	AIE_MAX	4
@@ -252,7 +278,11 @@ extern fix				Boss_cloak_duration;
 extern fix				Last_gate_time;
 extern fix				Gate_interval;
 extern fix				Boss_dying_start_time;
+#ifdef BUILD_DESCENT2
 extern int8_t				Boss_dying, Boss_dying_sound_playing;
+#else
+extern int                  Boss_dying, Boss_dying_sound_playing;
+#endif
 extern fix				Boss_hit_time;
 // -- extern int				Boss_been_hit;
 //	---------- John: End of variables which must be saved as part of gamesave. ----------
@@ -278,6 +308,7 @@ extern awareness_event	Awareness_events[MAX_AWARENESS_EVENTS];
 extern vms_vector		Believed_player_pos;
 
 #ifndef NDEBUG
+#ifdef BUILD_DESCENT2
 //	Index into this array with ailp->mode
 extern const char	*mode_text[18];
 
@@ -286,6 +317,7 @@ extern const char	behavior_text[6][9];
 
 //	Index into this array with aip->GOAL_STATE or aip->CURRENT_STATE
 extern const char	state_text[8][5];
+#endif
 
 extern int Do_ai_flag, Break_on_object;
 

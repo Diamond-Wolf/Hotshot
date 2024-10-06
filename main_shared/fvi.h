@@ -14,8 +14,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "vecmat/vecmat.h"
-#include "segment.h"
-#include "object.h"
+
+#ifdef BUILD_DESCENT2
+# include "main_d2/segment.h"
+# include "main_d2/object.h"
+#else
+# include "main_d1/segment.h"
+# include "main_d1/object.h"
+#endif
 
 //return values for find_vector_intersection() - what did we hit?
 #define HIT_NONE		0		//we hit nothing
@@ -71,7 +77,11 @@ int find_vector_intersection(fvi_query *fq,fvi_info *hit_data);
 
 //finds the uv coords of the given point on the given seg & side
 //fills in u & v. if l is non-NULL fills it in also
-void find_hitpoint_uv(fix *u,fix *v,fix *l, vms_vector *pnt,segment *seg,int sidenum,int facenum);
+void find_hitpoint_uv(fix *u,fix *v,
+#ifdef BUILD_DESCENT2
+fix *l, 
+#endif
+vms_vector *pnt,segment *seg,int sidenum,int facenum);
 
 //Returns true if the object is through any walls
 int object_intersects_wall(object *objp);

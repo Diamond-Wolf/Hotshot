@@ -23,7 +23,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 #include "2d/gr.h"
 
-#include "main_d2/bm.h"			// for MAX_TEXTURES
+#include "main_shared/bm.h"			// for MAX_TEXTURES
 
 #include "main_d2/inferno.h"
 #include "main_d2/segment.h"
@@ -32,7 +32,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d2/textures.h"
 #include "main_d2/object.h"
 
-#include "main_d2/gamemine.h"
+#include "main_shared/gamemine.h"
 #include "main_d2/gameseg.h"
 
 #include "ui/ui.h"			// Because texpage.h need UI_WINDOW type
@@ -41,7 +41,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "medwall.h"
 #include "main_d2/switch.h"
 
-#include "main_d2/fuelcen.h"
+#include "main_shared/fuelcen.h"
 
 
 

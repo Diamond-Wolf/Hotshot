@@ -13,8 +13,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "segment.h"
-#include "object.h"
+#ifdef BUILD_DESCENT2
+# include "main_d2/segment.h"
+# include "main_d2/object.h"
+# include "main_d2/switch.h"
+#else
+# include "main_d1/segment.h"
+# include "main_d1/object.h"
+# include "main_d1/switch.h"
+#endif
 
 //------------------------------------------------------------
 // A refueling center is one segment... to identify it in the
@@ -69,20 +76,40 @@ void fuelcen_update_all();
 void fuelcen_damage(segment *segp, fix AmountOfDamage );
 
 // Called to repair an object
-//--repair-- int refuel_do_repair_effect( object * obj, int first_time, int repair_seg );
+int refuel_do_repair_effect( object * obj, int first_time, int repair_seg );
 
-#define MAX_NUM_FUELCENS			70
+#ifdef BUILD_DESCENT1
+# define MAX_NUM_FUELCENS			50
+
+# define SEGMENT_IS_NOTHING			0
+# define SEGMENT_IS_FUELCEN			1
+# define SEGMENT_IS_REPAIRCEN		2
+# define SEGMENT_IS_CONTROLCEN		3
+# define SEGMENT_IS_ROBOTMAKER		4
+# define MAX_CENTER_TYPES			5
+#else
+# define MAX_NUM_FUELCENS			70
+#endif
 
 extern char Special_names[MAX_CENTER_TYPES][11];
 
-//--repair-- //do the repair center for this frame
-//--repair-- void do_repair_sequence(object *obj);
-//--repair-- 
-//--repair-- //see if we should start the repair center
-//--repair-- void check_start_repair_center(object *obj);
-//--repair-- 
-//--repair-- //if repairing, cut it short
-//--repair-- abort_repair_center();
+//do the repair center for this frame
+void do_repair_sequence(object *obj);
+
+//see if we should start the repair center
+void check_start_repair_center(object *obj);
+
+//if repairing, cut it short
+void abort_repair_center();
+
+#ifdef BUILD_DESCENT1
+typedef struct control_center_triggers {
+	short		num_links;
+	short 	seg[MAX_WALLS_PER_LINK];
+	short		side[MAX_WALLS_PER_LINK];
+} control_center_triggers;
+extern control_center_triggers ControlCenterTriggers;
+#endif
 
 // An array of pointers to segments with fuel centers.
 typedef struct FuelCenter 
@@ -109,7 +136,11 @@ extern int Num_robot_centers;
 
 typedef struct matcen_info
 {
+#ifdef BUILD_DESCENT2
 	int			robot_flags[2];	// Up to 64 different robots
+#else
+	int			robot_flags;
+#endif
 	fix			hit_points;			// How hard it is to destroy this particular matcen
 	fix			interval;			// Interval between materialogrifizations
 	short			segnum;				// Segment this is attached to.
@@ -118,7 +149,15 @@ typedef struct matcen_info
 
 extern matcen_info RobotCenters[MAX_ROBOT_CENTERS];
 
-//--repair-- extern object *RepairObj;			//which object getting repaired, or NULL
+#ifdef BUILD_DESCENT1
+extern int Fuelcen_control_center_dead_modelnum;
+extern fix Fuelcen_control_center_strength;
+extern int Fuelcen_seconds_left;
+#endif
+
+extern int Fuelcen_control_center_destroyed;
+
+extern object *RepairObj;			//which object getting repaired, or NULL
 
 //	Called when a materialization center gets triggered by the player flying through some trigger!
 extern void trigger_matcen(int segnum);
@@ -138,6 +177,14 @@ void read_fuelcen(FuelCenter* center, FILE* fp);
 void write_matcen(matcen_info* center, FILE* fp);
 void write_fuelcen(FuelCenter* center, FILE* fp);
 
-#ifdef NETWORK
+#if defined(NETWORK) && defined(BUILD_DESCENT2)
 void fuelcen_check_for_hoard_goal(segment* segp);
 #endif
+
+#ifdef BUILD_DESCENT1
+void read_reactor_triggers(control_center_triggers* trigger, FILE* fp);
+void write_reactor_triggers(control_center_triggers* trigger, FILE* fp);
+#endif
+
+//[ISB] til this was renamed in descent 2
+#define Control_center_destroyed Fuelcen_control_center_destroyed

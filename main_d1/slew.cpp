@@ -13,7 +13,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <stdlib.h>
 #include "inferno.h"
-#include "game.h"
+#include "main_shared/game.h"
 #include "vecmat/vecmat.h"
 #include "platform/key.h"
 #include "platform/joy.h"
