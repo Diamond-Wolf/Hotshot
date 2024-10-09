@@ -20,11 +20,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/inferno.h"
 #include "main_shared/gameseg.h"
-#include "main_d2/screens.h"			// For GAME_SCREEN?????
+#include "main_shared/screens.h"			// For GAME_SCREEN?????
 #include "editor.h"			// For TMAP_CURBOX??????
 #include "2d/gr.h"				// For canves, font stuff
 #include "ui/ui.h"				// For UI_GADGET stuff
-#include "main_d2/textures.h"		// For NumTextures
+#include "main_shared/textures.h"		// For NumTextures
 #include "misc/error.h"
 #include "platform/key.h"
 #include "platform/mono.h"

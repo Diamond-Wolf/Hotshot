@@ -31,8 +31,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "mem/mem.h"
 #include "main_shared/newmenu.h"
 #include "main_shared/menu.h"
-#include "player.h"
-#include "screens.h"
+#include "main_shared/player.h"
+#include "main_shared/screens.h"
 #include "main_shared/gamefont.h"
 #include "platform/mouse.h"
 #include "platform/joy.h"
@@ -42,7 +42,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/kmatrix.h"
 #include "main_shared/gauges.h"
 #include "2d/pcx.h"
-#include "network.h"
+#include "main_shared/network.h"
 
 #define CENTERING_OFFSET(x) ((300 - (70 + (x)*25 ))/2)
 

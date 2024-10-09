@@ -19,12 +19,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
 #include "object.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/robot.h"
-#else
-# include "main_d1/robot.h"
-#endif
+#include "robot.h"
 
 #define	PLAYER_AWARENESS_INITIAL_TIME		(3*F1_0)
 #define	MAX_PATH_LENGTH						30			//	Maximum length of path in ai path following.

@@ -32,14 +32,14 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "mem/mem.h"
 #include "main_shared/newmenu.h"
 #include "main_shared/menu.h"
-#include "player.h"
-#include "screens.h"
+#include "main_shared/player.h"
+#include "main_shared/screens.h"
 #include "main_shared/gamefont.h"
 #include "platform/mouse.h"
 #include "platform/joy.h"
 #include "platform/timer.h"
 #include "stringtable.h"
-#include "scores.h"
+#include "main_shared/scores.h"
 
 #define VERSION_NUMBER 		1
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)

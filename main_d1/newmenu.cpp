@@ -30,7 +30,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "main_shared/newmenu.h"
 #include "main_shared/gamefont.h"
-#include "network.h"
+#include "main_shared/network.h"
 #include "iff/iff.h"
 #include "2d/pcx.h"
 #include "mem/mem.h"
@@ -39,9 +39,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/digi.h"
 #include "main_shared/multi.h"
 #include "main_shared/endlevel.h"
-#include "screens.h"
+#include "main_shared/screens.h"
 #include "main_shared/kconfig.h"
-#include "player.h"
+#include "main_shared/player.h"
 #include "platform/platform.h"
 
 #define TITLE_FONT  		(Gamefonts[GFONT_BIG_1])

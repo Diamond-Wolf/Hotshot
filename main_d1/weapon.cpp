@@ -12,15 +12,15 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #include "main_shared/game.h"
-#include "weapon.h"
+#include "main_shared/weapon.h"
 #include "platform/mono.h"
-#include "player.h"
+#include "main_shared/player.h"
 #include "main_shared/gauges.h"
 #include "misc/error.h"
-#include "sounds.h"
+#include "main_shared/sounds.h"
 #include "stringtable.h"
-#include "powerup.h"
-#include "newdemo.h"
+#include "main_shared/powerup.h"
+#include "main_shared/newdemo.h"
 #include "main_shared/multi.h"
 
 //	Note, only Vulcan cannon requires ammo.

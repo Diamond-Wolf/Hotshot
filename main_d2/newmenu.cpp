@@ -38,8 +38,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/menu.h"
 #include "main_shared/newmenu.h"
 #include "main_shared/gamefont.h"
-#include "gamepal.h"
-#include "network.h"
+#include "main_shared/gamepal.h"
+#include "main_shared/network.h"
 #include "iff/iff.h"
 #include "2d/pcx.h"
 #include "mem/mem.h"
@@ -49,13 +49,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/multi.h"
 #include "main_shared/endlevel.h"
-#include "screens.h"
+#include "main_shared/screens.h"
 #include "main_shared/config.h"
-#include "player.h"
-#include "newdemo.h"
+#include "main_shared/player.h"
+#include "main_shared/newdemo.h"
 #include "main_shared/kconfig.h"
 
-#include "gamestat.h"
+#include "main_shared/gamestat.h"
 
 #if defined (TACTILE)
 #include "tactile.h"

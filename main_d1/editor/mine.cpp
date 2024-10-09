@@ -28,7 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/segment.h"
 #include "editor.h"
 #include "misc/error.h"
-#include "main_d1/textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/object.h"
 
 #include "main_shared/gamemine.h"
@@ -38,7 +38,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "texpage.h"		// For texpage_goto_first
 			 
 #include "medwall.h"
-#include "main_d1/switch.h"
+#include "main_shared/switch.h"
 
 #include "dcflib.h"
 #include "nocfile.h"

@@ -20,8 +20,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "main_shared/inferno.h"
 #include "main_shared/gameseq.h"
-#include "player.h"
-#include "playsave.h"
+#include "main_shared/player.h"
+#include "main_shared/playsave.h"
 #include "platform/joy.h"
 #include "main_shared/kconfig.h"
 #include "main_shared/digi.h"
@@ -33,13 +33,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/config.h"
 #include "stringtable.h"
 #include "platform/mono.h"
-#include "state.h"
+#include "main_shared/state.h"
 #include "cfile/cfile.h"
 
 #define SAVE_FILE_ID			'DPLR'
-
-//[ISB] stupid error codes
-#define EZERO 0
 
 //this is for version 5 and below
 typedef struct save_info_v5 

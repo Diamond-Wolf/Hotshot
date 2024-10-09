@@ -33,8 +33,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "editor.h"
 #include "main_shared/segment.h"
 
-#include "main_d1/render.h"
-#include "main_d1/screens.h"
+#include "main_shared/render.h"
+#include "main_shared/screens.h"
 #include "main_shared/object.h"
 
 #include "texpage.h"		// For texpage_goto_first

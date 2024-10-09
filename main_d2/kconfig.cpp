@@ -40,7 +40,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/gauges.h"
 #include "main_shared/joydefs.h"
 #include "main_shared/songs.h"
-#include "render.h"
+#include "main_shared/render.h"
 #include "main_shared/arcade.h"
 #include "main_shared/digi.h"
 #include "main_shared/newmenu.h"
@@ -48,7 +48,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/multi.h"
 #include "platform/timer.h"
 #include "stringtable.h"
-#include "player.h"
+#include "main_shared/player.h"
 #include "main_shared/menu.h"
 #include "main_shared/automap.h"
 #include "misc/args.h"
@@ -1301,7 +1301,7 @@ void kc_change_invert(kc_item * item)
 
 }
 
-#include "screens.h"
+#include "main_shared/screens.h"
 
 extern void gr_bm_bitblt(int w, int h, int dx, int dy, int sx, int sy, grs_bitmap * src, grs_bitmap * dest);
 

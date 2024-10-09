@@ -27,8 +27,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //#include "pa_enabl.h"
 #include "main_shared/game.h"
 #include "main_shared/gameseq.h"
-#include "player.h"
-#include "playsave.h"
+#include "main_shared/player.h"
+#include "main_shared/playsave.h"
 #include "platform/joy.h"
 #include "main_shared/kconfig.h"
 #include "main_shared/digi.h"
@@ -40,11 +40,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/config.h"
 #include "stringtable.h"
 #include "platform/mono.h"
-#include "state.h"
+#include "main_shared/state.h"
 #include "main_shared/gauges.h"
-#include "screens.h"
-#include "powerup.h"
+#include "main_shared/screens.h"
+#include "main_shared/powerup.h"
 #include "cfile/cfile.h"
+#include "main_shared/inferno.h"
 
 #define SAVE_FILE_ID			'DPLR'
 

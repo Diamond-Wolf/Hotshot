@@ -17,11 +17,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "misc/error.h"
 #include "game.h"
-#ifdef BUILD_DESCENT2
-#include "main_d2/textures.h"
-#else
-#include "main_d1/textures.h"
-#endif
+#include "textures.h"
 #include "platform/mono.h"
 #include "2d/rle.h"
 #include "piggy.h"

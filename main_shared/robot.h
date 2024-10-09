@@ -45,7 +45,6 @@ typedef struct jointlist
 	short offset;
 } jointlist;
 
-#ifdef BUILD_DESCENT2
 //robot info flags
 #define RIF_BIG_RADIUS	1	//pad the radius to fix robots firing through walls
 #define RIF_THIEF			2	//this guy steals!
@@ -87,8 +86,8 @@ typedef struct robot_info
 	fix		firing_wait[NDL];						//	time in seconds between shots
 	fix		firing_wait2[NDL];					//	time in seconds between shots
 	fix		turn_time[NDL];						// time in seconds to rotate 360 degrees in a dimension
-// -- unused, mk, 05/25/95	fix		fire_power[NDL];						//	damage done by a hit from this robot
-// -- unused, mk, 05/25/95	fix		shield[NDL];							//	shield strength of this robot
+	fix		fire_power[NDL];						//	damage done by a hit from this robot
+	fix		shield[NDL];							//	shield strength of this robot
 	fix		max_speed[NDL];						//	maximum speed attainable by this robot
 	fix		circle_distance[NDL];				//	distance at which robot circles player
 
@@ -128,57 +127,10 @@ typedef struct robot_info
 
 } robot_info;
 
-#define	MAX_ROBOT_TYPES	85			// maximum number of robot types
-
+#ifdef BUILD_DESCENT2
+# define MAX_ROBOT_TYPES	85			// maximum number of robot types
 #else
-	
-//	Robot information
-typedef struct robot_info {
-	int			model_num;							// which polygon model?
-	int			n_guns;								// how many different gun positions
-	vms_vector	gun_points[MAX_GUNS];			// where each gun model is
-	uint8_t			gun_submodels[MAX_GUNS];		// which submodel is each gun in?
-	short 		exp1_vclip_num;
-	short			exp1_sound_num;
-	short 		exp2_vclip_num;
-	short			exp2_sound_num;
-	short			weapon_type;
-	int8_t			contains_id;						//	ID of powerup this robot can contain.
-	int8_t			contains_count;					//	Max number of things this instance can contain.
-	int8_t			contains_prob;						//	Probability that this instance will contain something in N/16
-	int8_t			contains_type;						//	Type of thing contained, robot or powerup, in bitmaps.tbl, !0=robot, 0=powerup
-	int			score_value;						//	Score from this robot.
-	fix			lighting;							// should this be here or with polygon model?
-	fix			strength;							// Initial shields of robot
-
-	fix		mass;										// how heavy is this thing?
-	fix		drag;										// how much drag does it have?
-
-	fix		field_of_view[NDL];					// compare this value with forward_vector.dot.vector_to_player, if field_of_view <, then robot can see player
-	fix		firing_wait[NDL];						//	time in seconds between shots
-	fix		turn_time[NDL];						// time in seconds to rotate 360 degrees in a dimension
-	fix		fire_power[NDL];						//	damage done by a hit from this robot
-	fix		shield[NDL];							//	shield strength of this robot
-	fix		max_speed[NDL];						//	maximum speed attainable by this robot
-	fix		circle_distance[NDL];				//	distance at which robot circles player
-
-	int8_t		rapidfire_count[NDL];				//	number of shots fired rapidly
-	int8_t		evade_speed[NDL];						//	rate at which robot can evade shots, 0=none, 4=very fast
-	int8_t		cloak_type;								//	0=never, 1=always, 2=except-when-firing
-	int8_t		attack_type;							//	0=firing, 1=charge (like green guy)
-	int8_t		boss_flag;								//	0 = not boss, 1 = boss.  Is that surprising?
-	uint8_t		see_sound;								//	sound robot makes when it first sees the player
-	uint8_t		attack_sound;							//	sound robot makes when it attacks the player
-	uint8_t		claw_sound;								//	sound robot makes as it claws you (attack_type should be 1)
-
-	//animation info
-	jointlist anim_states[MAX_GUNS + 1][N_ANIM_STATES];
-
-	int		always_0xabcd;							// debugging
-
-} robot_info;
-
-#define	MAX_ROBOT_TYPES	30				// maximum number of robot types
+# define MAX_ROBOT_TYPES	30
 #endif
 
 #define	ROBOT_NAME_LENGTH	16
@@ -188,10 +140,15 @@ extern char	Robot_names[MAX_ROBOT_TYPES][ROBOT_NAME_LENGTH];
 extern robot_info Robot_info[];			// Robot info for AI system, loaded from bitmaps.tbl.
 
 //how many kinds of robots
-extern	int	N_robot_types;		// Number of robot types.  We used to assume this was the same as N_polygon_models.
+extern int N_robot_types;		// Number of robot types.  We used to assume this was the same as N_polygon_models.
 
 //test data for one robot
-#define MAX_ROBOT_JOINTS 1600
+#ifdef BUILD_DESCENT2
+# define MAX_ROBOT_JOINTS 1600
+#else
+# define MAX_ROBOT_JOINTS 600
+#endif
+
 extern jointpos Robot_joints[MAX_ROBOT_JOINTS];
 extern int	N_robot_joints;
 

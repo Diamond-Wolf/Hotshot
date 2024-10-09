@@ -21,7 +21,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/segment.h"
 #include "editor.h"
 #include "misc/error.h"
-#include "main_d1/slew.h"
+#include "main_shared/slew.h"
 #include "platform/mono.h"
 #include "main_shared/gamesave.h"
 #include "eobject.h"

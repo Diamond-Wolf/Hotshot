@@ -26,7 +26,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/wall.h"
 
-#include "main_d1/textures.h"
+#include "main_shared/textures.h"
 
 #include "fix/fix.h"
 #include "platform/mono.h"

@@ -33,21 +33,16 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "laser.h"		//	For seeing if a flare is stuck in a wall.
 #include "multi.h"
+#include "newdemo.h"
+#include "player.h"
+#include "textures.h"
+#include "sounds.h"
+# include "switch.h"
 
 #ifdef BUILD_DESCENT2
-# include "main_d2/switch.h"
-# include "main_d2/player.h"
 # include "main_d2/stringtable.h"
-# include "main_d2/textures.h"
-# include "main_d2/sounds.h"
-# include "main_d2/newdemo.h"
 #else
-# include "main_d1/switch.h"
-# include "main_d1/player.h"
 # include "main_d1/stringtable.h"
-# include "main_d1/textures.h"
-# include "main_d1/sounds.h"
-# include "main_d1/newdemo.h"
 #endif
 
 #ifdef EDITOR

@@ -24,19 +24,19 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "main_shared/object.h"
-#include "player.h"
+#include "main_shared/player.h"
 
 #include "main_shared/controls.h"
 #include "main_shared/joydefs.h"
 //#include "victor.h"
-#include "render.h"
+#include "main_shared/render.h"
 #include "2d/palette.h"
 #include "main_shared/newmenu.h"
 #include "misc/args.h" //[ISB] STOP PUTTING ARA ARA IN THE SOURCE AND FIX THE PROBLEM
 #include "stringtable.h"
 #include "main_shared/kconfig.h"
 #include "main_shared/digi.h"
-#include "playsave.h"
+#include "main_shared/playsave.h"
 
 int joydefs_calibrate_flag = 0;
 

@@ -13,8 +13,20 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "main_shared/bm.h"
-#include "main_shared/piggy.h"
+#include "object.h"
 
-extern int NumTextures;
-extern bitmap_index Textures[MAX_TEXTURES];	// Array of all texture tmaps.
+#ifndef RELEASE
+
+void	slew_init(object* obj);					//say this is slew obj
+int	slew_stop();								// Stops object
+void	slew_reset_orient();						// Resets orientation
+int	slew_frame(int dont_check_keys);		// Does slew frame
+
+#else
+
+#define slew_init(obj)
+#define slew_stop(obj)
+#define slew_reset_orient()
+//#define slew_frame(dont_check_keys) //KRB hack
+int	slew_frame(int dont_check_keys);		// Does slew frame
+#endif

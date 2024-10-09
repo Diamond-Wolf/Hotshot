@@ -11,7 +11,7 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
-#include "settings.h"
+#include "main_shared/settings.h"
 
 #ifdef EDITOR
 
@@ -26,16 +26,16 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/inferno.h"
 #include "2d/gr.h"
 #include "main_shared/bm.h"
-#include "gamepal.h"
+#include "main_shared/gamepal.h"
 #include "mem/mem.h"
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "main_shared/object.h"
 #include "main_shared/vclip.h"
 #include "main_shared/effects.h"
-#include "polyobj.h"
+#include "main_shared/polyobj.h"
 #include "main_shared/wall.h"
-#include "textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/game.h"
 #include "main_shared/multi.h"
 
@@ -43,15 +43,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cfile/cfile.h"
 
 #include "main_shared/hostage.h"
-#include "powerup.h"
+#include "main_shared/powerup.h"
 #include "main_shared/laser.h"
-#include "sounds.h"
+#include "main_shared/sounds.h"
 #include "main_shared/piggy.h"
 #include "main_shared/aistruct.h"
-#include "robot.h"
-#include "weapon.h"
+#include "main_shared/robot.h"
+#include "main_shared/weapon.h"
 #include "main_shared/gauges.h"
-#include "player.h"
+#include "main_shared/player.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/cntrlcen.h"
 #include "main_shared/compbit.h"

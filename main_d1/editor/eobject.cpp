@@ -29,18 +29,18 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "kdefs.h"
 #include	"main_shared/object.h"
-#include "main_d1/polyobj.h"
+#include "main_shared/polyobj.h"
 #include "main_shared/game.h"
 #include "main_shared/ai.h"
 #include "main_shared/bm.h"
 #include "3d/3d.h"		//	For g3_point_to_vec
 #include	"main_shared/fvi.h"
 
-#include "main_d1/powerup.h"
+#include "main_shared/powerup.h"
 #include "main_shared/fuelcen.h"
 #include "main_d1/hostage.h"
 #include "medrobot.h"
-#include "main_d1/player.h"
+#include "main_shared/player.h"
 #include "main_shared/gameseg.h"
 
 #define	OBJ_SCALE		(F1_0/2)

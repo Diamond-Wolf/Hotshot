@@ -13,11 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#ifdef BUILD_DESCENT2
-# include "main_d2/player.h"
-#else
-# include "main_d1/player.h"
-#endif
+#include "player.h"
 
 extern int ReadConfigFile(void);
 extern int WriteConfigFile(void);

@@ -24,10 +24,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/palette.h"
 #include "platform/joy.h"
 #include "misc/args.h"
-#include "player.h"
+#include "main_shared/player.h"
 #include "main_shared/mission.h"
 #include "misc/error.h"
-#include "network.h"
+#include "main_shared/network.h"
 
 static const char* digi_dev_str = "DigiDeviceID";
 static const char* digi_port_str = "DigiPort";

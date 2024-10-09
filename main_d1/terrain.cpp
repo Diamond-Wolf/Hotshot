@@ -24,11 +24,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 
 #include "main_shared/inferno.h"
-#include "textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/object.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/fireball.h"
-#include "terrain.h"
+#include "main_shared/terrain.h"
 
 #define GRID_MAX_SIZE	64
 #define GRID_SCALE	i2f(2*20)

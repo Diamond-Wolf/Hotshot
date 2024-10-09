@@ -13,9 +13,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/error.h"
 #include "main_shared/inferno.h"
-#include "robot.h"
+#include "main_shared/robot.h"
 #include "main_shared/object.h"
-#include "polyobj.h"
+#include "main_shared/polyobj.h"
 #include "platform/mono.h"
 
 int	N_robot_types = 0;

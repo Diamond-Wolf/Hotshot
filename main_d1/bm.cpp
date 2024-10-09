@@ -24,22 +24,22 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/object.h"
 #include "main_shared/vclip.h"
 #include "main_shared/effects.h"
-#include "polyobj.h"
+#include "main_shared/polyobj.h"
 #include "main_shared/wall.h"
-#include "textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/game.h"
 #include "main_shared/multi.h"
 #include "iff/iff.h"
 #include "cfile/cfile.h"
 #include "main_shared/hostage.h"
-#include "powerup.h"
-#include "sounds.h"
+#include "main_shared/powerup.h"
+#include "main_shared/sounds.h"
 #include "main_shared/piggy.h"
 #include "main_shared/aistruct.h"
-#include "robot.h"
-#include "weapon.h"
+#include "main_shared/robot.h"
+#include "main_shared/weapon.h"
 #include "main_shared/gauges.h"
-#include "player.h"
+#include "main_shared/player.h"
 #include "main_shared/fuelcen.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/cntrlcen.h"
@@ -419,8 +419,8 @@ void read_weapon_info(CFILE* fp)
 	for (i = 0; i < MAX_WEAPON_TYPES; i++)
 	{
 		Weapon_info[i].render_type = cfile_read_byte(fp);
-		Weapon_info[i].model_num = cfile_read_byte(fp);
-		Weapon_info[i].model_num_inner = cfile_read_byte(fp);
+		Weapon_info[i].model_num = (int8_t)cfile_read_byte(fp); //For unified weapon struct, bash to signed first so that it converts to short correctly
+		Weapon_info[i].model_num_inner = (int8_t)cfile_read_byte(fp);
 		Weapon_info[i].persistent = cfile_read_byte(fp);
 		Weapon_info[i].flash_vclip = cfile_read_byte(fp);
 		Weapon_info[i].flash_sound = cfile_read_short(fp);
@@ -739,6 +739,9 @@ void bm_read_all(CFILE* fp)
 
 	N_polygon_models = cfile_read_int(fp);
 	read_polygon_models(fp);
+
+	printf("Read:\n %d vclips\n %d eclips\n %d wclips\n %d robots\n %d joints\n %d weapons\n %d powerups\n %d models\n", 
+		Num_vclips, Num_effects, Num_wall_anims, N_robot_types, N_robot_joints, N_weapon_types, N_powerup_types, N_polygon_models);
 
 	for (i = 0; i < N_polygon_models; i++) 
 	{

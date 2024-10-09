@@ -18,16 +18,16 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/segment.h"
 #include "misc/error.h"
 #include "platform/mono.h"
-#include "render.h"
+#include "main_shared/render.h"
 #include "main_shared/game.h"
 #include "main_shared/vclip.h"
 #include "main_shared/lighting.h"
 #include "3d/3d.h"
 #include "main_shared/laser.h"
 #include "platform/timer.h"
-#include "player.h"
-#include "weapon.h"
-#include "powerup.h"
+#include "main_shared/player.h"
+#include "main_shared/weapon.h"
+#include "main_shared/powerup.h"
 
 //global saying how bright the light beam is
 fix	Beam_brightness = (F1_0 / 2);

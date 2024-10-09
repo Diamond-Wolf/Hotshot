@@ -13,20 +13,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "2d/gr.h"
+#include "bm.h"
+#include "piggy.h"
 
-//What graphics modes the game & editor open
-
-//for Screen_mode variable
-#define SCREEN_MENU				0	//viewing the menu screen
-#define SCREEN_GAME				1	//viewing the menu screen
-#define SCREEN_EDITOR			2	//viewing the editor screen
-
-//from editor.c
-#ifdef EDITOR
-extern grs_canvas * Canv_editor;			//the full on-scrren editor canvas
-extern grs_canvas* Canv_editor_game;	//the game window on the editor screen
-#endif
-
-//from game.c
-extern int set_screen_mode(int sm);		// True = editor screen
+extern int NumTextures;
+extern bitmap_index Textures[MAX_TEXTURES];	// Array of all texture tmaps.

@@ -21,7 +21,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/inferno.h"
 #endif
 
-#include "polyobj.h"
+#include "main_shared/polyobj.h"
 
 #include "vecmat/vecmat.h"
 #include "3d/3d.h"
@@ -32,7 +32,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifndef DRIVE
 #include "main_shared/bm.h"
-#include "textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/object.h"
 #include "main_shared/lighting.h"
 #include "cfile/cfile.h"

@@ -25,7 +25,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/fuelcen.h"
 #include "main_shared/wall.h"
 #include "main_shared/object.h"
-#include "robot.h"
+#include "main_shared/robot.h"
 
 vms_vector controlcen_gun_points[MAX_CONTROLCEN_GUNS];
 vms_vector controlcen_gun_dirs[MAX_CONTROLCEN_GUNS];

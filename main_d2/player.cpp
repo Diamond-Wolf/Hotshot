@@ -8,7 +8,7 @@ Instead, it is released under the terms of the MIT License.
 
 #include "cfile/cfile.h"
 
-#include "player.h"
+#include "main_shared/player.h"
 
 void read_player_file(player* plr, FILE* fp)
 {

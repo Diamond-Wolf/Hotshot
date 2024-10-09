@@ -14,7 +14,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "vecmat/vecmat.h"
-#include "main_shared/fvi.h"
+#include "fvi.h"
 
 //#define FL_NORMAL  0
 //#define FL_TURBO   1

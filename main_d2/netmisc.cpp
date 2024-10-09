@@ -19,9 +19,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/types.h"
 #include "platform/mono.h"
 #include "main_shared/multi.h"
-#include "network.h"
+#include "main_shared/network.h"
 #include "main_shared/object.h"
-#include "netmisc.h"
+#include "main_shared/netmisc.h"
 
 // Calculates the checksum of a block of memory.
 uint16_t netmisc_calc_checksum( void * vptr, int len )

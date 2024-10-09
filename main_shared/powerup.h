@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "main_shared/vclip.h"
+#include "vclip.h"
 
 #define	POW_EXTRA_LIFE 			0
 #define	POW_ENERGY					1
@@ -24,8 +24,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	POW_KEY_RED					5
 #define	POW_KEY_GOLD				6
 
-//#define	POW_RADAR_ROBOTS			7
-//#define	POW_RADAR_POWERUPS		8
+#define	POW_RADAR_ROBOTS			7
+#define POW_HOARD_ORB				7		//use unused slot
+#define	POW_RADAR_POWERUPS			8
+#define POW_D1_FULL_MAP				9
 
 #define	POW_MISSILE_1				10
 #define	POW_MISSILE_4				11		//4-pack MUST follow single missile
@@ -37,14 +39,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	POW_PLASMA_WEAPON			15
 #define	POW_FUSION_WEAPON			16
 #define	POW_PROXIMITY_WEAPON		17
+#define	POW_HOMING_AMMO_1			18
+#define	POW_HOMING_AMMO_4			19		//4-pack MUST follow single missile
 #define	POW_SMARTBOMB_WEAPON		20
 #define	POW_MEGA_WEAPON			21
 #define	POW_VULCAN_AMMO			22
-#define	POW_HOMING_AMMO_1			18
-#define	POW_HOMING_AMMO_4			19		//4-pack MUST follow single missile
 #define	POW_CLOAK					23
 #define	POW_TURBO					24
 #define	POW_INVULNERABILITY		25
+#define POW_D1_HEADLIGHT		26
 #define	POW_MEGAWOW					27
 
 #define	POW_GAUSS_WEAPON			28
@@ -71,15 +74,22 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	POW_FLAG_BLUE				46
 #define	POW_FLAG_RED				47
 
-#define 	POW_HOARD_ORB				7		//use unused slot
+#ifdef BUILD_DESCENT2
+# define	VULCAN_AMMO_MAX				(392*4)
+#else
+# define	VULCAN_AMMO_MAX				(392*2)
+#endif
 
-#define	VULCAN_AMMO_MAX				(392*4)
 #define	VULCAN_WEAPON_AMMO_AMOUNT	196
 #define	VULCAN_AMMO_AMOUNT			(49*2)
 
 #define	GAUSS_WEAPON_AMMO_AMOUNT	392
 
-#define MAX_POWERUP_TYPES		50
+#ifdef BUILD_DESCENT2
+# define MAX_POWERUP_TYPES		50
+#else
+# define MAX_POWERUP_TYPES		29
+#endif
 
 #define	POWERUP_NAME_LENGTH	16		//	Length of a robot or powerup name.
 extern char	Powerup_names[MAX_POWERUP_TYPES][POWERUP_NAME_LENGTH];

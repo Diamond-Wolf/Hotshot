@@ -14,12 +14,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "mission.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/player.h"
-#else
-# include "main_d1/player.h"
-#endif
+#include "player.h"
 
 #define SUPER_MISSILE		0
 #define SUPER_SEEKER		1

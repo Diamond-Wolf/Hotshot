@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "main_shared/inferno.h"
+#include "inferno.h"
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
 #include "weapon.h"
@@ -25,25 +25,35 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define INITIAL_ENERGY 	i2f(100)		//100% energy to start
 #define INITIAL_SHIELDS	i2f(100)		//100% shields to start
 
-#define MAX_ENERGY		i2f(200)		//go up to 200
-#define MAX_SHIELDS		i2f(200)
+#ifdef BUILD_DESCENT2
+# define MAX_ENERGY			i2f(200)		//go up to 200
+# define MAX_SHIELDS		i2f(200)
+#else
+# define MAX_ENERGY			INITIAL_ENERGY	// [DW] When D1 said "max", they didn't actually mean it
+# define MAX_SHIELDS		INITIAL_SHIELDS
+#endif
 
 #define INITIAL_LIVES					3			//start off with 3 lives
 
 // Values for special flags
+
 #define PLAYER_FLAGS_INVULNERABLE	1			// Player is invincible
-#define PLAYER_FLAGS_BLUE_KEY			2			// Player has blue key
-#define PLAYER_FLAGS_RED_KEY			4			// Player has red key
-#define PLAYER_FLAGS_GOLD_KEY			8			// Player has gold key
-#define PLAYER_FLAGS_FLAG				16			// Player has his team's flag
+#define PLAYER_FLAGS_BLUE_KEY		2			// Player has blue key
+#define PLAYER_FLAGS_RED_KEY		4			// Player has red key
+#define PLAYER_FLAGS_GOLD_KEY		8			// Player has gold key
+#define PLAYER_FLAGS_IMMATERIAL		16
+#define PLAYER_FLAGS_FLAG			16			// Player has his team's flag
+#define PLAYER_FLAGS_MAP_ENEMIES	32
 #define PLAYER_FLAGS_UNUSED			32			// 
-#define PLAYER_FLAGS_MAP_ALL			64			// Player can see unvisited areas on map
+#define PLAYER_FLAGS_MAP_ALL		64			// Player can see unvisited areas on map
+#define PLAYER_FLAGS_RADAR_ENEMIES	128
 #define PLAYER_FLAGS_AMMO_RACK		128		// Player has ammo rack
+#define PLAYER_FLAGS_RADAR_POWERUPS	256
 #define PLAYER_FLAGS_CONVERTER		256		// Player has energy->shield converter
 #define PLAYER_FLAGS_MAP_ALL_CHEAT	512		// Player can see unvisited areas on map normally
-#define PLAYER_FLAGS_QUAD_LASERS		1024		// Player shoots 4 at once
-#define PLAYER_FLAGS_CLOAKED			2048		// Player is cloaked for awhile
-#define PLAYER_FLAGS_AFTERBURNER		4096		//	Player's afterburner is engaged
+#define PLAYER_FLAGS_QUAD_LASERS	1024		// Player shoots 4 at once
+#define PLAYER_FLAGS_CLOAKED		2048		// Player is cloaked for awhile
+#define PLAYER_FLAGS_AFTERBURNER	4096		//	Player's afterburner is engaged
 #define PLAYER_FLAGS_HEADLIGHT		8192		// Player has headlight boost
 #define PLAYER_FLAGS_HEADLIGHT_ON	16384		// is headlight on or off?
 
@@ -130,19 +140,13 @@ typedef struct player_ship
 	vms_vector gun_points[N_PLAYER_GUNS];
 } player_ship;
 
-extern int N_players;								// Number of players ( >1 means a net game, eh?)
-extern int Player_num;								// The player number who is on the console.
-
-extern player Players[MAX_PLAYERS+4];                             // Misc player info
-extern player_ship *Player_ship;
-
-
 //version 16 structure
-typedef struct player16 
+/*typedef struct player16 
 {
 	// Who am I data
 	char		callsign[8+1];	// The callsign of this player, for net purposes.
 	uint8_t		net_address[6];				// The network address of the player.
+	uint16_t    net_port;                   // [ISB] the port last used by the player
 	int8_t		connected; 						//	Is the player connected or not?
 	int		objnum;							// What object number this player is. (made an int by mk because it's very often referenced)
 	int		n_packets_got;					// How many packets we got from them
@@ -161,8 +165,8 @@ typedef struct player16
 	short	 	killer_objnum;					// Who killed me.... (-1 if no one)
 	uint8_t		primary_weapon_flags;					//	bit set indicates the player has this weapon.
 	uint8_t		secondary_weapon_flags;					//	bit set indicates the player has this weapon.
-	uint16_t	primary_ammo[5];				// How much ammo of each type.
-	uint16_t	secondary_ammo[5];		 	// How much ammo of each type.
+	uint16_t	primary_ammo[MAX_PRIMARY_WEAPONS];				// How much ammo of each type.
+	uint16_t	secondary_ammo[MAX_SECONDARY_WEAPONS];		 	// How much ammo of each type.
 
 	//	-- make sure you're 4 byte aligned now
 
@@ -188,7 +192,18 @@ typedef struct player16
 	fix		homing_object_dist;			//	Distance of nearest homing object.
 	int8_t		hours_level;					// Hours played (since time_total can only go up to 9 hours)
 	int8_t		hours_total;					// Hours played (since time_total can only go up to 9 hours)
-} player16;
+} player16;*/
+
+extern int N_players;								// Number of players ( >1 means a net game, eh?)
+extern int Player_num;								// The player number who is on the console.
+
+#ifdef BUILD_DESCENT2
+extern player Players[MAX_PLAYERS+4];                             // Misc player info
+#else
+extern player Players[MAX_PLAYERS];
+#endif
+
+extern player_ship *Player_ship;
 
 #include <stdio.h>
 

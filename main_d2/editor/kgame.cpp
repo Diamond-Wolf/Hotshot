@@ -22,7 +22,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/game.h"
 #include "main_shared/gamesave.h"
 #include "main_shared/gameseq.h"
-#include "main_d2/gamepal.h"
+#include "main_shared/gamepal.h"
 
 char game_filename[128] = "*.LVL";
 

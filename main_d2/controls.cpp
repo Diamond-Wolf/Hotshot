@@ -23,11 +23,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "main_shared/object.h"
-#include "player.h"
+#include "main_shared/player.h"
 
 #include "main_shared/controls.h"
 #include "main_shared/joydefs.h"
-#include "render.h"
+#include "main_shared/render.h"
 #include "misc/args.h" 
 #include "2d/palette.h"
 #include "platform/mouse.h"

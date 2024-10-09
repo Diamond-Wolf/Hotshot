@@ -14,12 +14,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "digi.h"
-
-#ifdef BUILD_DESCENT2
-#include "main_d2/sounds.h"
-#else
-#include "main_d1/sounds.h"
-#endif
+#include "sounds.h"
 
 #include "inferno.h"
 

@@ -16,7 +16,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/inferno.h"
 #include "main_shared/segment.h"
-#include "main_d1/switch.h"
+#include "main_shared/switch.h"
 
 extern int bind_wall_to_trigger();
 

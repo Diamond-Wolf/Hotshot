@@ -17,19 +17,18 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdarg.h>
 #include "main_shared/inferno.h"
 #include "main_shared/game.h"
-#include "screens.h"
+#include "main_shared/screens.h"
 #include "main_shared/gauges.h"
-#include "physics.h"
+#include "main_shared/physics.h"
 #include "misc/error.h"
 #include "main_shared/menu.h"
 #include "platform/mono.h"
 #include "main_shared/collide.h"
-#include "newdemo.h"
-#include "player.h"
+#include "main_shared/newdemo.h"
+#include "main_shared/player.h"
 #include "main_shared/gamefont.h"
 #include "main_shared/wall.h"
 #include "main_shared/arcade.h"
-#include "screens.h"
 #include "stringtable.h"
 
 int hud_first = 0;

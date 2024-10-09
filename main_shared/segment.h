@@ -135,7 +135,9 @@ typedef struct segment2
 #define SEGMENT_IS_ROBOTMAKER		4
 #define SEGMENT_IS_GOAL_BLUE		5
 #define SEGMENT_IS_GOAL_RED		6
-#define MAX_CENTER_TYPES			7
+#ifdef BUILD_DESCENT2
+# define MAX_CENTER_TYPES			7
+#endif
 
 #ifdef COMPACT_SEGS
 extern void get_side_normal(segment *sp, int sidenum, int normal_num, vms_vector * vm );

@@ -14,7 +14,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #ifdef BUILD_DESCENT2
-# include "main_d2/settings.h"	//include personal settings
+# include "settings.h"	//include personal settings
 #endif
 
 #include "misc/types.h"
@@ -49,6 +49,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAC(x)
 #endif
 
+#define EZERO 0
 
 /**
  **	Global variables

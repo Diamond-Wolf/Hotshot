@@ -33,14 +33,14 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "editor.h"
 #include "main_shared/segment.h"
 
-#include "main_d2/render.h"
-#include "main_d2/screens.h"
+#include "main_shared/render.h"
+#include "main_shared/screens.h"
 #include "main_shared/object.h"
 
 #include "texpage.h"		// For texpage_goto_first
 #include "meddraw.h"		// For draw_World
 #include "main_shared/game.h"
-#include "main_d2/gamepal.h"
+#include "main_shared/gamepal.h"
 
 //return 2d distance, i.e, sqrt(x*x + y*y)
 int dist_2d(int x, int y)

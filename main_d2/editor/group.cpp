@@ -29,7 +29,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/gameseg.h"
 
 #include "main_shared/bm.h"				// For MAX_TEXTURES.
-#include "main_d2/textures.h"
+#include "main_shared/textures.h"
 #include "misc/hash.h"
 #include "main_shared/fuelcen.h"
 

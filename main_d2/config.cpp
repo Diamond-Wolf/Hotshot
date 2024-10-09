@@ -20,18 +20,18 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/types.h"
 #include "main_shared/game.h"
 #include "main_shared/menu.h"
-#include "movie.h"
+#include "main_shared/movie.h"
 #include "main_shared/digi.h"
 #include "main_shared/kconfig.h"
 #include "2d/palette.h"
 #include "platform/joy.h"
 #include "main_shared/songs.h"
 #include "misc/args.h"
-#include "player.h"
+#include "main_shared/player.h"
 #include "main_shared/mission.h"
 #include "platform/mono.h"
 //#include "pa_enabl.h"
-#include "network.h"
+#include "main_shared/network.h"
 
 uint8_t Config_digi_volume = 8;
 uint8_t Config_midi_volume = 8;

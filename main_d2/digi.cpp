@@ -28,7 +28,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/timer.h"
 #include "platform/joy.h"
 #include "main_shared/digi.h"
-#include "sounds.h"
+#include "main_shared/sounds.h"
 #include "misc/args.h"
 #include "platform/key.h"
 #include "main_shared/game.h"

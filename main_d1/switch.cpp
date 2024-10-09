@@ -17,7 +17,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 #include "main_shared/gauges.h"
 #include "main_shared/game.h"
-#include "switch.h"
+#include "main_shared/switch.h"
 #include "main_shared/inferno.h"
 #ifdef EDITOR
 #include "editor\editor.h"
@@ -28,12 +28,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "main_shared/wall.h"
 #include "main_shared/fuelcen.h"
-#include "newdemo.h"
-#include "player.h"
+#include "main_shared/newdemo.h"
+#include "main_shared/player.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/gameseq.h"
 #include "main_shared/multi.h"
-#include "network.h"
+#include "main_shared/network.h"
 #include "2d/palette.h"
 
 trigger Triggers[MAX_TRIGGERS];

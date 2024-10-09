@@ -24,18 +24,18 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "main_shared/object.h"
-#include "player.h"
+#include "main_shared/player.h"
 
 #include "main_shared/controls.h"
 #include "main_shared/joydefs.h"
-#include "render.h"
+#include "main_shared/render.h"
 #include "2d/palette.h"
 #include "main_shared/newmenu.h"
 #include "misc/args.h"
 #include "stringtable.h"
 #include "main_shared/kconfig.h"
 #include "main_shared/digi.h"
-#include "playsave.h"
+#include "main_shared/playsave.h"
 
 int joydefs_calibrate_flag = 0;
 

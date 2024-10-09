@@ -21,7 +21,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdio.h>
 
 #include "main_shared/inferno.h"
-#include "main_d1/screens.h"			// For GAME_SCREEN?????
+#include "main_shared/screens.h"			// For GAME_SCREEN?????
 #include "editor.h"			// For TMAP_CURBOX??????
 #include "2d/gr.h"				// For canves, font stuff
 #include "ui/ui.h"				// For UI_GADGET stuff
@@ -31,7 +31,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "objpage.h"
 #include "main_shared/bm.h"
-#include "main_d1/player.h"
+#include "main_shared/player.h"
 #include "main_shared/piggy.h"
 
 
@@ -70,11 +70,11 @@ static int ObjectPage = 0;
 
 #include "vecmat/vecmat.h"
 #include "3d/3d.h"
-#include "main_d1/polyobj.h"
+#include "main_shared/polyobj.h"
 #include "texmap/texmap.h"
 
 #include "main_d1/hostage.h"
-#include "main_d1/powerup.h"
+#include "main_shared/powerup.h"
 
 vms_angvec objpage_view_orient;
 fix objpage_view_dist;

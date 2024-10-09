@@ -25,9 +25,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "main_shared/gameseg.h"
 
-#include "main_d1/textures.h"
-#include "main_d1/screens.h"
-#include "main_d1/switch.h"
+#include "main_shared/textures.h"
+#include "main_shared/screens.h"
+#include "main_shared/switch.h"
 #include "eswitch.h"
 
 #include "main_shared/texmerge.h"

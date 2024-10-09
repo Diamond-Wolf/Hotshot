@@ -20,13 +20,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/inferno.h"
 #include "main_shared/segment.h"
-#include "textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/wall.h"
 #include "main_shared/object.h"
 #include "main_shared/gamemine.h"
 #include "misc/error.h"
 #include "main_shared/gameseg.h"
-#include "switch.h"
+#include "main_shared/switch.h"
 
 #include "main_shared/game.h"
 #include "main_shared/newmenu.h"

@@ -23,7 +23,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/rle.h"
 
 #include "main_shared/inferno.h"
-#include "gamepal.h"
+#include "main_shared/gamepal.h"
 #include "main_shared/mission.h"
 #include "main_shared/newmenu.h"
 #include "main_shared/texmerge.h"

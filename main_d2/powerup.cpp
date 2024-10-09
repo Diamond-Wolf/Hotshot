@@ -25,23 +25,23 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 
 #include "main_shared/fireball.h"
-#include "powerup.h"
+#include "main_shared/powerup.h"
 #include "main_shared/gauges.h"
 
-#include "sounds.h"
-#include "player.h"
+#include "main_shared/sounds.h"
+#include "main_shared/player.h"
 
 #include "main_shared/wall.h"
 #include "stringtable.h"
-#include "weapon.h"
+#include "main_shared/weapon.h"
 #include "main_shared/laser.h"
-#include "scores.h"
+#include "main_shared/scores.h"
 #include "main_shared/multi.h"
 #include "main_shared/lighting.h"
 #include "main_shared/controls.h"
 #include "main_shared/kconfig.h"
 
-#include "newdemo.h"
+#include "main_shared/newdemo.h"
 #include "main_shared/ai.h"
 
 #ifdef EDITOR

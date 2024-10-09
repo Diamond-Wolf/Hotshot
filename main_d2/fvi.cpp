@@ -33,9 +33,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/wall.h"
 #include "main_shared/laser.h"
 #include "2d/rle.h"
-#include "robot.h"
+#include "main_shared/robot.h"
 #include "main_shared/piggy.h"
-#include "player.h"
+#include "main_shared/player.h"
 
 extern int Physics_cheat_flag;
 
@@ -1187,7 +1187,7 @@ quit_looking:
 //--unused-- 	return mag;
 //--unused-- }
 
-#include "textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/texmerge.h"
 
 #define cross(v0,v1) (fixmul((v0)->i,(v1)->j) - fixmul((v0)->j,(v1)->i))

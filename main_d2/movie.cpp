@@ -45,8 +45,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/timer.h"
 #include "platform/joy.h"
 #include "platform/key.h"
-#include "movie.h"
-#include "screens.h"
+#include "main_shared/movie.h"
+#include "main_shared/screens.h"
 #include "main_shared/newmenu.h"
 //#include "vga.h"
 #include "main_shared/menu.h"
@@ -1136,7 +1136,7 @@ void close_movies()
 		close_movie(i);
 }
 
-#include "gamepal.h"
+#include "main_shared/gamepal.h"
 
 extern char CDROM_dir[];
 extern int MenuHiresAvailable;

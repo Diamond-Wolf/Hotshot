@@ -20,25 +20,25 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/laser.h"
 #include "main_shared/segment.h"
 #include "main_shared/fvi.h"
-#include "segpoint.h"
+#include "main_shared/segpoint.h"
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "platform/key.h"
-#include "textures.h"
-#include "render.h"
+#include "main_shared/textures.h"
+#include "main_shared/render.h"
 #include "main_shared/vclip.h"
 #include "main_shared/fireball.h"
-#include "polyobj.h"
-#include "robot.h"
-#include "weapon.h"
+#include "main_shared/polyobj.h"
+#include "main_shared/robot.h"
+#include "main_shared/weapon.h"
 #include "platform/timer.h"
-#include "player.h"
-#include "sounds.h"
-#include "network.h"
+#include "main_shared/player.h"
+#include "main_shared/sounds.h"
+#include "main_shared/network.h"
 #include "main_shared/ai.h"
-#include "powerup.h"
+#include "main_shared/powerup.h"
 #include "main_shared/multi.h"
-#include "physics.h"
+#include "main_shared/physics.h"
 
 int Laser_rapid_fire = 0;
 
@@ -1224,7 +1224,7 @@ int do_laser_firing(int objnum, int weapon_num, int level, int flags, int nfires
 
 #define	MAX_SMART_DISTANCE	(F1_0*150)
 #define	MAX_OBJDISTS			30
-#define	NUM_SMART_CHILDREN	6
+//#define	NUM_SMART_CHILDREN	6
 
 typedef	struct {
 	int	objnum;

@@ -20,17 +20,17 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/object.h"
 #include "main_shared/game.h"
 #include "main_shared/fireball.h"
-#include "powerup.h"
+#include "main_shared/powerup.h"
 #include "main_shared/gauges.h"
-#include "sounds.h"
-#include "player.h"
+#include "main_shared/sounds.h"
+#include "main_shared/player.h"
 #include "main_shared/wall.h"
 #include "stringtable.h"
-#include "weapon.h"
+#include "main_shared/weapon.h"
 #include "main_shared/laser.h"
-#include "scores.h"
+#include "main_shared/scores.h"
 #include "main_shared/multi.h"
-#include "newdemo.h"
+#include "main_shared/newdemo.h"
 
 #ifdef EDITOR
 #include "2d/gr.h"	//	for powerup outline drawing

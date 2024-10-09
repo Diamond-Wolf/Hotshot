@@ -15,11 +15,15 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifdef NETWORK
 
-#include "main_shared/gameseq.h"
-#include "main_shared/multi.h"
+#include "gameseq.h"
+#include "multi.h"
 
 // The default socket to use.
+#ifdef BUILD_DESCENT2
+#define IPX_DEFAULT_SOCKET 0x5130		// 0x869d
+#else
 #define IPX_DEFAULT_SOCKET 0x5100		// 0x869d
+#endif
 
 #define NETSTAT_MENU					0
 #define NETSTAT_PLAYING				1
@@ -90,6 +94,19 @@ typedef struct endlevel_info {
 	uint8_t					seconds_left;
 } endlevel_info;
 
+typedef struct short_frame_info
+{
+	uint8_t				type;						// What type of packet
+	uint8_t				pad[3];					// Pad out length of frame_info packet
+	int				numpackets;
+	shortpos			thepos;
+	uint16_t			data_size;		// Size of data appended to the net packet
+	uint8_t				playernum;
+	uint8_t				obj_render_type;
+	uint8_t				level_num;
+	uint8_t				data[NET_XDATA_SIZE];		// extra data to be tacked on the end
+} short_frame_info;
+
 void network_start_game();
 void network_join_game();
 void network_rejoin_game();
@@ -97,6 +114,9 @@ void network_leave_game();
 int network_endlevel(int* secret);
 void network_endlevel_poll2(int nitems, struct newmenu_item* menus, int* key, int citem);
 
+void network_send_naked_packet(char* buf, short len, int who);
+
+int HoardEquipped();
 
 int network_level_sync();
 void network_send_endlevel_packet();
@@ -109,6 +129,8 @@ char* network_get_player_name(int objnum);
 void network_disconnect_player(int playernum);
 
 #define MISSILE_ADJUST 6
+
+extern int NetGameType;
 
 extern int Network_send_objects;
 extern int Network_send_objnum;

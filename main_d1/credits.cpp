@@ -28,13 +28,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/newmenu.h"
 #include "main_shared/gamefont.h"
-#include "network.h"
+#include "main_shared/network.h"
 #include "iff/iff.h"
 #include "2d/pcx.h"
 #include "mem/mem.h"
 #include "platform/mouse.h"
 #include "platform/joy.h"
-#include "screens.h"
+#include "main_shared/screens.h"
 #include "main_shared/digi.h"
 
 #include "cfile/cfile.h"

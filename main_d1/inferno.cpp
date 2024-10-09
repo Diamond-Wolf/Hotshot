@@ -39,30 +39,30 @@ static char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE C
 #include "main_shared/game.h"
 #include "main_shared/segment.h"		//for Side_to_verts
 #include "mem/mem.h"
-#include "textures.h"
-#include "segpoint.h"
-#include "screens.h"
+#include "main_shared/textures.h"
+#include "main_shared/segpoint.h"
+#include "main_shared/screens.h"
 #include "texmap/texmap.h"
 #include "main_shared/texmerge.h"
 #include "main_shared/menu.h"
 #include "main_shared/wall.h"
-#include "switch.h"
-#include "polyobj.h"
+#include "main_shared/switch.h"
+#include "main_shared/polyobj.h"
 #include "main_shared/effects.h"
 #include "main_shared/digi.h"
 #include "iff/iff.h"
 #include "2d/pcx.h"
 #include "2d/palette.h"
 #include "misc/args.h"
-#include "sounds.h"
-#include "titles.h"
-#include "player.h"
+#include "main_shared/sounds.h"
+#include "main_shared/titles.h"
+#include "main_shared/player.h"
 #include "stringtable.h"
 #ifdef NETWORK
 #include "platform/i_net.h"
 #endif
-#include "newdemo.h"
-#include "network.h"
+#include "main_shared/newdemo.h"
+#include "main_shared/network.h"
 #include "main_shared/gamefont.h"
 #include "main_shared/kconfig.h"
 #ifdef ARCADE
@@ -240,7 +240,7 @@ unsigned descent_critical_errcode = 0;
 extern int Network_allow_socket_changes;
 
 #ifdef NETWORK
-#include "netmisc.h"
+#include "main_shared/netmisc.h"
 #endif
 
 //[ISB] Okay, the trouble is that SDL redefines main. I don't want to include SDL here. Solution is to rip off doom

@@ -26,12 +26,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/findfile.h"
 #include "inferno.h"
 #include "gameseq.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/titles.h"
-#else
-# include "main_d1/titles.h"
-#endif
+#include "titles.h"
 
 mle Mission_list[MAX_MISSIONS];
 

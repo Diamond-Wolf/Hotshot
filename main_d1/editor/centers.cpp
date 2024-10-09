@@ -19,7 +19,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 
 #include "main_shared/fuelcen.h"
-#include "main_d1/screens.h"
+#include "main_shared/screens.h"
 #include "main_shared/inferno.h"
 #include "main_shared/segment.h"
 #include "editor.h"
@@ -31,9 +31,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "kdefs.h"
 #include	"main_shared/object.h"
-#include "main_d1/polyobj.h"
+#include "main_shared/polyobj.h"
 #include "main_shared/game.h"
-#include "main_d1/powerup.h"
+#include "main_shared/powerup.h"
 #include "main_shared/ai.h"
 #include "main_d1/hostage.h"
 #include "eobject.h"

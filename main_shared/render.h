@@ -15,7 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "3d/3d.h"
 
-#include "main_shared/object.h"
+#include "object.h"
 
 #define MAX_RENDER_SEGS		500
 #define OBJS_PER_SEG 		5
@@ -23,7 +23,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 extern int	Clear_window;			//	1 = Clear whole background window, 2 = clear view portals into rest of world, 0 = no clear
 
+#ifdef BUILD_DESCENT2
 void render_frame(fix eye_offset, int window_num);		//draws the world into the current canvas
+#else
+void render_frame(fix eye_offset);		//draws the world into the current canvas
+#endif
 
 //cycle the flashing light for when mine destroyed
 void flash_frame();
@@ -81,6 +85,10 @@ g3s_codes rotate_list(int nv,short *pointnumlist);
 //Given a lit of point numbers, project any that haven't been projected
 void project_list(int nv,short *pointnumlist);
 
+#ifdef BUILD_DESCENT2
 extern void render_mine(int start_seg_num,fix eye_offset, int window_num);
+#else
+extern void render_mine(int start_seg_num,fix eye_offset);
+#endif
 
 extern void update_rendered_data(int window_num, object *viewer, int rear_view_flag, int user);

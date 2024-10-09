@@ -18,12 +18,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "segment.h"
 #include "object.h"
-
-#ifdef BUILD_DESCENT1
-# include "main_d1/switch.h"
-#else
-# include "main_d2/switch.h"
-#endif
+#include "switch.h"
 
 //#include "vclip.h"
 #ifdef BUILD_DESCENT2 

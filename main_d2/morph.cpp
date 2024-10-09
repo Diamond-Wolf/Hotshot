@@ -21,10 +21,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/inferno.h"
 #include "main_shared/morph.h"
-#include "polyobj.h"
+#include "main_shared/polyobj.h"
 #include "main_shared/game.h"
 #include "main_shared/lighting.h"
-#include "newdemo.h"
+#include "main_shared/newdemo.h"
 #include "main_shared/piggy.h"
 
 #include "platform/mono.h"

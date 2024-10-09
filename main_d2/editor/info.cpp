@@ -26,7 +26,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "platform/mono.h"
 #include "misc/error.h"
-#include "main_d2/textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/object.h"
 #include "main_shared/ai.h"
 
@@ -34,7 +34,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "objpage.h"		// Object selection paging stuff
 
 #include "main_shared/wall.h"
-#include "main_d2/switch.h"
+#include "main_shared/switch.h"
 
 int init_info;
 

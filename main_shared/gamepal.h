@@ -12,23 +12,21 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #pragma once
+#include "inferno.h"
 
-#include "main_shared/object.h"
+#define DEFAULT_PALETTE "default.256"
+#define MENU_PALETTE		"default.256"
 
-//from slew.c
+extern char Current_level_palette[FILENAME_LEN];
 
-#ifndef RELEASE
+//load a palette by name. returns 1 if new palette loaded, else 0
+//if used_for_level is set, load pig, etc.
+//if no_change_screen is set, the current screen does not get remapped,
+//and the hardware palette does not get changed
+int load_palette(const char *name,int used_for_level,int no_change_screen);
 
-void	slew_init(object *obj);					//say this is slew obj
-int	slew_stop();								// Stops object
-void	slew_reset_orient();						// Resets orientation
-int	slew_frame(int dont_check_keys);		// Does slew frame
+extern uint8_t last_palette_for_color_fonts[768];
 
-#else
+//remap color font & menu background into the current palette
+void remap_fonts_and_menus(int do_fadetable_hack);
 
-#define slew_init(obj)
-#define slew_stop(obj)
-#define slew_reset_orient()
-#define slew_frame(dont_check_keys)
-
-#endif

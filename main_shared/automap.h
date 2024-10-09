@@ -15,12 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/types.h"
 #include "segment.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/player.h"
-#else
-# include "main_d1/player.h"
-#endif
+#include "player.h"
 
 extern void do_automap(int key_code);
 extern void automap_clear_visited();

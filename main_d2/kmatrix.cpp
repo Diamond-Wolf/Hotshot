@@ -35,8 +35,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "mem/mem.h"
 #include "main_shared/newmenu.h"
 #include "main_shared/menu.h"
-#include "player.h"
-#include "screens.h"
+#include "main_shared/player.h"
+#include "main_shared/screens.h"
 #include "main_shared/gamefont.h"
 #include "main_shared/cntrlcen.h"
 #include "platform/mouse.h"
@@ -48,7 +48,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/kmatrix.h"
 #include "main_shared/gauges.h"
 #include "2d/pcx.h"
-#include "network.h"
+#include "main_shared/network.h"
 #include "platform/platform.h"
 
 #if defined(POLY_ACC)

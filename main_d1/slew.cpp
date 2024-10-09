@@ -19,7 +19,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/joy.h"
 #include "main_shared/object.h"
 #include "misc/error.h"
-#include "physics.h"
+#include "main_shared/physics.h"
 #include "main_shared/joydefs.h"
 #include "main_shared/kconfig.h"
 

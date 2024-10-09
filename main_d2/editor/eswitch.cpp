@@ -27,9 +27,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d2/wall.h"
 #include "medwall.h"
 
-#include "main_d2/screens.h"
+#include "main_shared/screens.h"
 
-#include "main_d2/textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/texmerge.h"
 #include "medrobot.h"
 #include "platform/timer.h"

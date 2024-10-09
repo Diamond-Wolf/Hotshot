@@ -16,13 +16,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "vecmat/vecmat.h"
 #include "2d/gr.h"
 #include "3d/3d.h"
-
-#ifndef DRIVE
 #include "robot.h"
-#endif
-#include "main_shared/piggy.h"
 
-#define MAX_POLYGON_MODELS 200
+#include "piggy.h"
+
+#ifdef BUILD_DESCENT2
+# define MAX_POLYGON_MODELS 200
+#else
+# define MAX_POLYGON_MODELS 85
+#endif
 
 //used to describe a polygon model
 typedef struct polymodel 
@@ -61,11 +63,7 @@ extern char Pof_names[MAX_POLYGON_MODELS][13];
 
 void init_polygon_models();
 
-#ifndef DRIVE
 int load_polygon_model(char *filename,int n_textures,int first_texture,robot_info *r);
-#else
-int load_polygon_model(char *filename,int n_textures,grs_bitmap ***textures);
-#endif
 
 //draw a polygon model
 void draw_polygon_model(vms_vector *pos,vms_matrix *orient,vms_angvec *anim_angles,int model_num,int flags,fix light,fix *glow_values,bitmap_index alt_textures[]);
@@ -79,7 +77,12 @@ int read_model_guns(char *filename,vms_vector *gun_points, vms_vector *gun_dirs,
 //canvas.
 void draw_model_picture(int mn,vms_angvec *orient_angles);
 
-#define MAX_POLYOBJ_TEXTURES 100
+#ifdef BUILD_DESCENT2
+# define MAX_POLYOBJ_TEXTURES 100
+#else
+# define MAX_POLYOBJ_TEXTURES 50
+#endif
+
 extern grs_bitmap *texture_list[MAX_POLYOBJ_TEXTURES];
 extern bitmap_index texture_list_index[MAX_POLYOBJ_TEXTURES];
 extern g3s_point robot_points[];

@@ -32,7 +32,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/multi.h"
 #include "main_shared/wall.h"
 #include "main_shared/object.h"
-#include "robot.h"
+#include "main_shared/robot.h"
 #include "main_shared/vclip.h"
 #include "main_shared/fireball.h"
 #include "main_shared/endlevel.h"

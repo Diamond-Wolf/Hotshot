@@ -21,12 +21,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "vclip.h"
 #include "inferno.h"
 #include "laser.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/weapon.h"
-#else
-# include "main_d1/weapon.h"
-#endif
+#include "weapon.h"
 
 //----------------- Variables for video clips -------------------
 int 					Num_vclips = 0;

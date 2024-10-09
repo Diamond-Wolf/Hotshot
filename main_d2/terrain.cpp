@@ -24,7 +24,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 
 #include "main_shared/inferno.h"
-#include "textures.h"
+#include "main_shared/textures.h"
 #include "main_shared/object.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/fireball.h"
