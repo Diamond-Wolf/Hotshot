@@ -13,8 +13,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "inferno.h"
-#include "segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 
 #define	MAX_WALLS_PER_LINK		10
 

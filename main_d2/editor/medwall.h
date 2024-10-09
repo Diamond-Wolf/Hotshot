@@ -15,8 +15,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define _MEDWALL_H
 
 #include "main_shared/wall.h"
-#include "main_d2/inferno.h"
-#include "main_d2/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 
 extern int wall_add_removable(); 
 

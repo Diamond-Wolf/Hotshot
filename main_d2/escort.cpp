@@ -22,13 +22,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/rand.h"
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "platform/mono.h"
 #include "3d/3d.h"
 #include "2d/palette.h"
 #include "platform/platform.h"
 
-#include "object.h"
+#include "main_shared/object.h"
 #include "misc/error.h"
 #include "main_shared/ai.h"
 #include "robot.h"
@@ -40,18 +40,18 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/game.h"
 #include "powerup.h"
 #include "main_shared/cntrlcen.h"
-#include "gauges.h"
+#include "main_shared/gameseq.h"
 #include "platform/key.h"
 #include "main_shared/fuelcen.h"
 #include "sounds.h"
 #include "screens.h"
 #include "stringtable.h"
 #include "main_shared/gamefont.h"
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 #include "playsave.h"
-#include "gameseq.h"
+#include "main_shared/gauges.h"
 #include "main_shared/automap.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 //#include "pa_enabl.h"
 
 #ifdef EDITOR

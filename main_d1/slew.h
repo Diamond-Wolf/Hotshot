@@ -13,7 +13,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "object.h"
+#include "main_shared/object.h"
 
 #ifndef RELEASE
 

@@ -19,8 +19,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //#include <math.h>
 //#include <string.h>
 
-#include "main_d2/inferno.h"
-#include "main_d2/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "editor.h"
 #include "seguvs.h"
 
@@ -32,7 +32,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "kdefs.h"
-#include "main_d2/gameseg.h"
+#include "main_shared/gameseg.h"
 
 #include "texmap/texmap.h"
 

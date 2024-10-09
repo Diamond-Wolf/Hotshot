@@ -15,10 +15,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include	<stdio.h>
 
-#include "main_d1/inferno.h"
+#include "main_shared/inferno.h"
 #include "platform/mono.h"
 #include "fix/fix.h"
-#include "main_d1/segment.h"
+#include "main_shared/segment.h"
 #include	"editor.h"
 
 #endif

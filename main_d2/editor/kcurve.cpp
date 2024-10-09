@@ -15,7 +15,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <string.h>
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
 #include "kdefs.h"
 

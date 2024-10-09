@@ -12,7 +12,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #pragma once
-#include "inferno.h"
+#include "main_shared/inferno.h"
 
 #define DEFAULT_PALETTE "default.256"
 #define MENU_PALETTE		"default.256"

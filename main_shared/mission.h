@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "inferno_shared.h"
+#include "inferno.h"
 #include "misc/types.h"
 #include "platform/platform_filesys.h"
 

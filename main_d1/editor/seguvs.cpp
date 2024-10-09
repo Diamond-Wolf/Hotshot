@@ -19,11 +19,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <math.h>
 #include <string.h>
 
-#include "main_d1/inferno.h"
-#include "main_d1/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "editor.h"
 
-#include "main_d1/gameseg.h"
+#include "main_shared/gameseg.h"
 
 #include "fix/fix.h"
 #include "platform/mono.h"

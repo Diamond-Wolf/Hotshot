@@ -20,7 +20,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/types.h"
 #include "main_shared/game.h"
 #include "main_shared/digi.h"
-#include "kconfig.h"
+#include "main_shared/kconfig.h"
 #include "2d/palette.h"
 #include "platform/joy.h"
 #include "misc/args.h"

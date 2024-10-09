@@ -19,11 +19,11 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 
 #include "medwall.h"
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
-#include "main_d2/segment.h"
+#include "main_shared/segment.h"
 #include "misc/error.h"
-#include "main_d2/gameseg.h"
+#include "main_shared/gameseg.h"
 
 #include "main_d2/textures.h"
 #include "main_d2/screens.h"

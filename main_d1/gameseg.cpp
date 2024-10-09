@@ -21,12 +21,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 #include <algorithm>
 #include "misc/rand.h"
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "vecmat/vecmat.h"
-#include "gameseg.h"
+#include "main_shared/gameseg.h"
 #include "main_shared/wall.h"
 #include "main_shared/fuelcen.h"
 

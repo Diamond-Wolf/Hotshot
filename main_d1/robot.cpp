@@ -12,9 +12,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #include "misc/error.h"
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "robot.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "polyobj.h"
 #include "platform/mono.h"
 

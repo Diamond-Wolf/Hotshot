@@ -13,7 +13,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifdef EDITOR
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
 
 // -- old -- int SegOrientCommon(fixang *ang, fix val)

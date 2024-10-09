@@ -77,8 +77,8 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad);
 //Returns segnum if found, or -1
 int find_point_seg(vms_vector *p,int segnum);
 
-//--repair-- // Create data specific to segments which does not need to get written to disk.
-//--repair-- extern void create_local_segment_data(void);
+// Create data specific to segments which does not need to get written to disk.
+extern void create_local_segment_data(void);
 
 //      Sort of makes sure create_local_segment_data has been called for the currently executing mine.
 //      Returns 1 if Lsegments appears valid, 0 if not.

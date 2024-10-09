@@ -20,41 +20,34 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "2d/gr.h"
 #include "misc/error.h"
-#include "main_shared/effects.h"
+#include "effects.h"
 #include "vclip.h"
 #include "collide.h"
-# include "fireball.h"
-# include "bm.h"
-# include "game.h"
+#include "fireball.h"
+#include "bm.h"
+#include "game.h"
+#include "inferno.h"
+#include "segment.h"
+#include "gameseg.h"
+#include "gameseq.h"
+#include "gauges.h"
+#include "laser.h"		//	For seeing if a flare is stuck in a wall.
+#include "multi.h"
 
 #ifdef BUILD_DESCENT2
 # include "main_d2/switch.h"
-# include "main_d2/inferno.h"
-# include "main_d2/segment.h"
-# include "main_d2/gameseg.h"
 # include "main_d2/player.h"
-# include "main_d2/gauges.h"
 # include "main_d2/stringtable.h"
 # include "main_d2/textures.h"
 # include "main_d2/sounds.h"
 # include "main_d2/newdemo.h"
-# include "main_d2/multi.h"
-# include "main_d2/gameseq.h"
-# include "main_d2/laser.h"		//	For seeing if a flare is stuck in a wall.
 #else
 # include "main_d1/switch.h"
-# include "main_d1/inferno.h"
-# include "main_d1/segment.h"
-# include "main_d1/gameseg.h"
 # include "main_d1/player.h"
-# include "main_d1/gauges.h"
 # include "main_d1/stringtable.h"
 # include "main_d1/textures.h"
 # include "main_d1/sounds.h"
 # include "main_d1/newdemo.h"
-# include "main_d1/multi.h"
-# include "main_d1/gameseq.h"
-# include "main_d1/laser.h"		//	For seeing if a flare is stuck in a wall.
 #endif
 
 #ifdef EDITOR

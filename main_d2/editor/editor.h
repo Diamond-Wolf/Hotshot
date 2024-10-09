@@ -15,8 +15,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define _EDITOR_H
 
 #include "vecmat/vecmat.h"
-#include "main_d2/segment.h"
-#include "main_d2/inferno.h"
+#include "main_shared/segment.h"
+#include "main_shared/inferno.h"
 #include "2d/gr.h"
 #include "ui/ui.h"
 

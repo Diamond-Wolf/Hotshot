@@ -23,7 +23,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/error.h"
 
-#include "main_d1/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
 #include "platform/mono.h"
 #include "mem/mem.h"

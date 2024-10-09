@@ -16,12 +16,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 #include <stdio.h>
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
 #include "ui/ui.h"
 #include "main_shared/game.h"
-#include "main_d2/gamesave.h"
-#include "main_d2/gameseq.h"
+#include "main_shared/gamesave.h"
+#include "main_shared/gameseq.h"
 #include "main_d2/gamepal.h"
 
 char game_filename[128] = "*.LVL";

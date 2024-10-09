@@ -15,13 +15,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "screens.h"
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "physics.h"
 #include "misc/error.h"
-#include "menu.h"
+#include "main_shared/menu.h"
 #include "platform/mono.h"
 #include "main_shared/collide.h"
 #include "newdemo.h"

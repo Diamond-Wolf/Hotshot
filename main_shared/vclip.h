@@ -14,13 +14,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "2d/gr.h"
-#include "main_shared/piggy.h"
+#include "piggy.h"
 
-#ifdef BUILD_DESCENT2
-# include "main_d2/object.h"
-#else
-# include "main_d1/object.h"
-#endif
+#include "object.h"
 
 #define VCLIP_SMALL_EXPLOSION		2
 #define VCLIP_PLAYER_HIT			1

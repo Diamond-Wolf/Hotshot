@@ -13,7 +13,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "main_shared/vclip.h"
+#include "vclip.h"
 #include "object.h"
 
 //#define HOSTAGE_FACES	1		//if defined, hostage faces are in

@@ -19,7 +19,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/platform_filesys.h"
 #include "platform/posixstub.h"
 #include "misc/types.h"
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "2d/gr.h"
 #include "cfile/cfile.h"
 #include "platform/mono.h"
@@ -38,7 +38,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/game.h"
 #include "stringtable.h"
 #include "cfile/cfile.h"
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 #include "platform/platform.h"
 
 int piggy_is_substitutable_bitmap(char* name, char* subst_name);

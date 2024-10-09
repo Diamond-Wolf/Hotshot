@@ -13,10 +13,26 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "settings.h"	//include personal settings
+#ifdef BUILD_DESCENT2
+# include "main_d2/settings.h"	//include personal settings
+#endif
 
 #include "misc/types.h"
-#include "main_shared/inferno_shared.h"
+
+//the maximum length of a filename
+#define FILENAME_LEN 13
+
+//for Function_mode variable
+#define FMODE_EXIT		0		//leaving the program
+#define FMODE_MENU		1		//Using the menu
+#define FMODE_GAME		2		//running the game
+#define FMODE_EDITOR		3		//running the editor
+
+//This constant doesn't really belong here, but it is because of horrible
+//circular dependencies involving object.h, aistruct.h, polyobj.h, & robot.h
+#define MAX_SUBMODELS 10			//how many animating sub-objects per model
+
+#define FIX_EPSILON 10
 
 //	MACRO for single line #ifdef WINDOWS #else DOS
 #ifdef WINDOWS_FAKE_NOTACTUALLYWINDOWS
@@ -40,6 +56,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 extern int Function_mode;			//in game or editor?
 extern int Screen_mode;				//editor screen or game screen?
+extern char Menu_pcx_name[13];
+
+void check_joystick_calibration();
+void show_order_form();
 
 //The version number of the game
 extern uint8_t Version_major,Version_minor;

@@ -18,18 +18,18 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "platform/mono.h"
 
-#include "inferno.h"
-#include "segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "textures.h"
 #include "main_shared/wall.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "main_shared/gamemine.h"
 #include "misc/error.h"
-#include "gameseg.h"
+#include "main_shared/gameseg.h"
 #include "switch.h"
 
 #include "main_shared/game.h"
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 
 #ifdef EDITOR
 #include "main_d2/editor/editor.h"

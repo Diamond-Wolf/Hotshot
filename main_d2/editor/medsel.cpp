@@ -26,10 +26,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "mem/mem.h"
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
-#include "main_d2/segment.h"
-#include "main_d2/object.h"
+#include "main_shared/segment.h"
+#include "main_shared/object.h"
 
 typedef struct sort_element {
 	short segnum;

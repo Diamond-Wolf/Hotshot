@@ -27,14 +27,14 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 //#define INCLUDE_XLISP
 
-#include "main_d1/inferno.h"
-#include "main_d1/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "2d/gr.h"
 #include "ui/ui.h"
 #include "editor.h"
 //#include "main_shared/gamemine.h"
-#include "main_d1/gamesave.h"
-#include "main_d1/gameseg.h"
+#include "main_shared/gamesave.h"
+#include "main_shared/gameseg.h"
 
 #include "platform/key.h"
 #include "platform/mono.h"
@@ -54,7 +54,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d1/textures.h"
 #include "main_d1/screens.h"
 #include "texmap/texmap.h"
-#include "main_d1/object.h"
+#include "main_shared/object.h"
 #include "cfile/cfile.h"
 #include "main_d1/effects.h"
 #include "main_shared/wall.h"
@@ -74,8 +74,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "centers.h"
 
 #include "main_shared/fuelcen.h"
-#include "main_d1/gameseq.h"
-#include "main_d1/newmenu.h"
+#include "main_shared/gameseq.h"
+#include "main_shared/newmenu.h"
 
 #include "platform/platform.h"
 #include "platform/timer.h"

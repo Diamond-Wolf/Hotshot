@@ -19,21 +19,21 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/error.h"
 
-#include "main_d1/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
 #include "ui/ui.h"
 #include "texpage.h"		// For texpage_goto_first
-#include "main_d1/segment.h"
+#include "main_shared/segment.h"
 #include "platform/mono.h"
 #include "kdefs.h"
 #include "info.h"
 #include "main_shared/game.h"
-#include "main_d1/gameseq.h"
+#include "main_shared/gameseq.h"
 
 #include "dcflib.h"
 #include "nocfile.h"
 
-#include "main_d1/object.h"
+#include "main_shared/object.h"
 
 #define MINESAVE_CRIPPLED	0
 

@@ -15,12 +15,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/object.h"
-#else
-# include "main_d1/object.h"
-#endif
+#include "object.h"
 
 void collide_init();
 void collide_two_objects(object* A, object* B, vms_vector* collision_point);

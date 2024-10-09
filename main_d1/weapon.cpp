@@ -15,13 +15,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "weapon.h"
 #include "platform/mono.h"
 #include "player.h"
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "misc/error.h"
 #include "sounds.h"
 #include "stringtable.h"
 #include "powerup.h"
 #include "newdemo.h"
-#include "multi.h"
+#include "main_shared/multi.h"
 
 //	Note, only Vulcan cannon requires ammo.
 //uint8_t	Default_primary_ammo_level[MAX_PRIMARY_WEAPONS] = {255, 0, 255, 255, 255};

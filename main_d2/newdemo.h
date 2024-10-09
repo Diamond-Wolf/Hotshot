@@ -15,7 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifdef NEWDEMO
 
-#include "morph.h"
+#include "main_shared/morph.h"
 
 #define ND_STATE_NORMAL				0
 #define ND_STATE_RECORDING			1

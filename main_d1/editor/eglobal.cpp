@@ -13,8 +13,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifdef EDITOR
 
-#include "main_d1/inferno.h"
-#include "main_d1/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "editor.h"
 
 // Global pointer to current vertices, right now always Vertices.  Set in create_new_mine.

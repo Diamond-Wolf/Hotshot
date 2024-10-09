@@ -26,7 +26,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //#include "pa_enabl.h"                   //$$POLY_ACC
 #include "platform/platform_filesys.h"
 #include "platform/platform.h"
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "stringtable.h"
 #include "misc/args.h"
 #include "mem/mem.h"
@@ -47,9 +47,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 #include "movie.h"
 #include "screens.h"
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 //#include "vga.h"
-#include "menu.h"
+#include "main_shared/menu.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"

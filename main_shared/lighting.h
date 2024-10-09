@@ -17,8 +17,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "vecmat/vecmat.h"
 #include "object.h"
 
-#define MAX_DIST		0x400000		//no light beyond this dist
-#define MAX_DIST_LOG	5				// log(MAX_DIST-expressed-as-integer)
+#define MAX_DIST_LOG	6				// log(MAX_DIST-expressed-as-integer)
+//#define MAX_DIST		0x400000		//no light beyond this dist
+#define MAX_DIST        (f1_0 << MAX_DIST_LOG)
 #define MAX_LIGHT		0x10000		//max value
 
 #define	NEAREST_LIGHT_DIST	(F1_0*60)
@@ -45,3 +46,6 @@ fix compute_seg_dynamic_light(int segnum);
 //and possibly a rotated 3d point.  If the point isn't specified, the
 //object's center point is rotated.
 fix compute_object_light(object* obj, vms_vector* rotated_pnt);
+
+//turn headlight boost on & off
+void toggle_headlight_active(void);

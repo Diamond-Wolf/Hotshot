@@ -19,18 +19,18 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/timer.h"
 #include "misc/error.h"
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "player.h"
 
 #include "main_shared/controls.h"
-#include "joydefs.h"
+#include "main_shared/joydefs.h"
 #include "render.h"
 #include "misc/args.h"
 #include "2d/palette.h"
 #include "platform/mouse.h"
-#include "kconfig.h"
+#include "main_shared/kconfig.h"
 
 //look at keyboard, mouse, joystick, CyberMan, whatever, and set 
 //physics vars rotvel, velocity

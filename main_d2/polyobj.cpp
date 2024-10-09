@@ -18,7 +18,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 // -- I hate this warning in make depend! -- #ifdef DRIVE
 // -- I hate this warning in make depend! -- #include "drive.h"
 // -- I hate this warning in make depend! -- #else
-#include "inferno.h"
+#include "main_shared/inferno.h"
 // -- I hate this warning in make depend! -- #endif
 
 #include "polyobj.h"
@@ -34,8 +34,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "texmap/texmap.h"
 #include "main_shared/bm.h"
 #include "textures.h"
-#include "object.h"
-#include "lighting.h"
+#include "main_shared/object.h"
+#include "main_shared/lighting.h"
 #include "cfile/cfile.h"
 #include "main_shared/piggy.h"
 #endif

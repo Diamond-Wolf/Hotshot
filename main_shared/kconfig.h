@@ -13,8 +13,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "main_shared/config.h"
-#include "gamestat.h"
+#include "config.h"
+#include "misc/types.h"
+#include "fix/fix.h"
+//#include "gamestat.h"
 
 typedef struct control_info 
 {
@@ -137,14 +139,36 @@ typedef struct advanced_ext_control_info
  
 } advanced_ext_control_info;
 
+#ifdef BUILD_DESCENT2
+struct kc_item;
+#else
+typedef struct kc_item
+{
+	short id;				// The id of this item
+	short x, y;
+	short w1;
+	short w2;
+	short u, d, l, r;
+	short text_num1;
+	uint8_t type;
+	uint8_t value;		// what key,button,etc
+} kc_item;
+#endif
+
 extern uint8_t ExtGameStatus;
 extern control_info Controls;
 extern void controls_read_all();
 extern void kconfig(int n, char * title );
 
-#define NUM_KEY_CONTROLS 57
-#define NUM_OTHER_CONTROLS 31
-#define MAX_CONTROLS 60         //there are actually 48, so this leaves room for more   
+#ifdef BUILD_DESCENT2
+# define NUM_KEY_CONTROLS 57
+# define NUM_OTHER_CONTROLS 31
+# define MAX_CONTROLS 60         //there are actually 48, so this leaves room for more   
+#else
+# define NUM_KEY_CONTROLS 46
+# define NUM_OTHER_CONTROLS 27
+# define MAX_CONTROLS 50
+#endif
 
 extern uint8_t kconfig_settings[CONTROL_MAX_TYPES][MAX_CONTROLS];
 extern uint8_t default_kconfig_settings[CONTROL_MAX_TYPES][MAX_CONTROLS];
@@ -162,3 +186,11 @@ extern void reset_cruise(void);
 extern int kconfig_is_axes_used(int axis);
 
 extern void kconfig_init_external_controls(int intno, int address);
+
+void kc_drawitem(kc_item* item, int is_current);
+void kc_change_key(kc_item* item);
+void kc_change_joybutton(kc_item* item);
+void kc_change_mousebutton(kc_item* item);
+void kc_change_joyaxis(kc_item* item);
+void kc_change_mouseaxis(kc_item* item);
+void kc_change_invert(kc_item* item);

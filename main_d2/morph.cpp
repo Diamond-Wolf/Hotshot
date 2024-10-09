@@ -19,11 +19,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "texmap/texmap.h"
 #include "misc/error.h"
 
-#include "inferno.h"
-#include "morph.h"
+#include "main_shared/inferno.h"
+#include "main_shared/morph.h"
 #include "polyobj.h"
 #include "main_shared/game.h"
-#include "lighting.h"
+#include "main_shared/lighting.h"
 #include "newdemo.h"
 #include "main_shared/piggy.h"
 

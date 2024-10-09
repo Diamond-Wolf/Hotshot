@@ -22,12 +22,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 #include "2d/gr.h"
 
-#include "main_d2/inferno.h"
-#include "main_d2/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 //#include "segment2.h"
 #include	"editor.h"
 #include "misc/error.h"
-#include "main_d2/gameseg.h"
+#include "main_shared/gameseg.h"
 
 #define SWAP(a,b) {temp = (a); (a) = (b); (b) = temp;}
 

@@ -22,13 +22,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 #include "2d/gr.h"
 
-#include "main_d2/inferno.h"
-#include "main_d2/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include	"editor.h"
 #include "misc/error.h"
-#include "main_d2/object.h"
+#include "main_shared/object.h"
 
-#include "main_d2/gameseg.h"
+#include "main_shared/gameseg.h"
 #include "main_d2/render.h"
 #include "main_shared/game.h"
 
@@ -36,7 +36,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d2/switch.h"
 #include "main_shared/fuelcen.h"
 #include "seguvs.h"
-#include "main_d2/gameseq.h"
+#include "main_shared/gameseq.h"
 
 #include "medwall.h"
 #include "main_d2/hostage.h"

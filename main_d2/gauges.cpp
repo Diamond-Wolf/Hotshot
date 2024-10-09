@@ -21,16 +21,16 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdarg.h>
 #include <algorithm>
 //#include "pa_enabl.h"                   //$$POLY_ACC
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "screens.h"
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "physics.h"
 #include "misc/error.h"
 #include "3d/3d.h"
 #include "3d/globvars.h"
 
-#include "menu.h"			// For the font.
+#include "main_shared/menu.h"			// For the font.
 #include "platform/mono.h"
 #include "main_shared/collide.h"
 #include "newdemo.h"
@@ -40,7 +40,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "powerup.h"
 #include "sounds.h"
-#include "multi.h"
+#include "main_shared/multi.h"
 #include "network.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/cntrlcen.h"
@@ -50,7 +50,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "render.h"
 #include "main_shared/piggy.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -1451,7 +1451,7 @@ void hud_show_weapons(void)
 
 	case VULCAN_INDEX:
 	case GAUSS_INDEX:
-		snprintf(weapon_str, 32, "%s: %i", weapon_name, f2i((unsigned)Players[Player_num].primary_ammo[VULCAN_INDEX] * (unsigned)VULCAN_AMMO_SCALE));
+		snprintf(weapon_str, 32, "%s: %u", weapon_name, (uint16_t)f2i(Players[Player_num].primary_ammo[VULCAN_INDEX] * VULCAN_AMMO_SCALE));
 		convert_1s(weapon_str);
 		break;
 

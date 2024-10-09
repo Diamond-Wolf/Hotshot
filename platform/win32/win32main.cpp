@@ -10,11 +10,7 @@ as described in copying.txt.
 
 #include <stdio.h>
 
-#ifndef BUILD_DESCENT2
-#include "main_d1/inferno.h"
-#else
-#include "main_d2/inferno.h"
-#endif
+#include "main_shared/inferno.h"
 #include "platform/platform.h"
 
 #include "SDL.h" 

@@ -16,13 +16,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //[ISB] stupid stuff
 //[Future ISB] good comment btw I guess they forgot fix or something.h
 #include "fix/fix.h"
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "main_shared/bm.h"
-#include "object.h"
-#include "laser.h"
+#include "main_shared/object.h"
+#include "main_shared/laser.h"
 #include "misc/args.h"
-#include "segment.h"
+#include "main_shared/segment.h"
 #include "main_shared/fvi.h"
 #include "segpoint.h"
 #include "misc/error.h"
@@ -43,9 +43,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "network.h"
 #include "main_shared/ai.h"
 #include "powerup.h"
-#include "multi.h"
+#include "main_shared/multi.h"
 #include "physics.h"
-#include "multi.h"
+#include "main_shared/multi.h"
 
 #include "misc/rand.h"
 

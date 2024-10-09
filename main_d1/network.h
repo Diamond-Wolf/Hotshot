@@ -15,8 +15,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifdef NETWORK
 
-#include "gameseq.h"
-#include "multi.h"
+#include "main_shared/gameseq.h"
+#include "main_shared/multi.h"
 
 // The default socket to use.
 #define IPX_DEFAULT_SOCKET 0x5100		// 0x869d

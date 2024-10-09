@@ -15,11 +15,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 #include <ctype.h>
 
+#include "inferno.h"
+
 #ifdef BUILD_DESCENT2
-#include "main_d2/inferno.h"
 extern uint8_t Config_redbook_volume;
-#else
-#include "main_d1/inferno.h"
 #endif
 
 #include "digi.h"

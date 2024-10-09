@@ -14,14 +14,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "vecmat/vecmat.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/segment.h"
-# include "main_d2/object.h"
-#else
-# include "main_d1/segment.h"
-# include "main_d1/object.h"
-#endif
+#include "segment.h"
+#include "object.h"
 
 //return values for find_vector_intersection() - what did we hit?
 #define HIT_NONE		0		//we hit nothing

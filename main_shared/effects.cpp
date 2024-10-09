@@ -26,13 +26,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fuelcen.h"
 #include "bm.h"
 #include "game.h"
+# include "inferno.h"
 
 //TODO: Some of these should be sharable
 #ifdef BUILD_DESCENT2
-# include "main_d2/inferno.h"
 # include "main_d2/textures.h"
 #else
-# include "main_d1/inferno.h"
 # include "main_d1/textures.h"
 #endif
 

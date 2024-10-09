@@ -14,8 +14,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifndef _ESWITCH_H
 #define _ESWITCH_H
 
-#include "main_d1/inferno.h"
-#include "main_d1/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "main_d1/switch.h"
 
 extern int bind_wall_to_trigger();

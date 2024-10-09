@@ -19,11 +19,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/rand.h"
 
 #include "main_shared/fuelcen.h"
-#include "gameseg.h"
+#include "main_shared/gameseg.h"
 #include "main_shared/game.h"		// For FrameTime
 #include "misc/error.h"
 #include "platform/mono.h"
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "main_shared/vclip.h"
 #include "main_shared/fireball.h"
 #include "robot.h"
@@ -31,19 +31,19 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "main_shared/wall.h"
 #include "sounds.h"
-#include "morph.h"
+#include "main_shared/morph.h"
 #include "3d/3d.h"
 #include "main_shared/bm.h"
 #include "polyobj.h"
 #include "main_shared/ai.h"
 #include "main_shared/gamemine.h"
-#include "gamesave.h"
+#include "main_shared/gamesave.h"
 #include "player.h"
 #include "main_shared/collide.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 #include "network.h"
-#include "multi.h"
-#include "multibot.h"
+#include "main_shared/multi.h"
+#include "main_shared/multibot.h"
 
 // The max number of fuel stations per mine.
 

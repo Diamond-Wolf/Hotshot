@@ -13,9 +13,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
-#include "inferno.h"
-#include "segment.h"
-#include "object.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
+#include "main_shared/object.h"
 #include "main_shared/bm.h"
 #include "3d/3d.h"
 #include "main_shared/game.h"

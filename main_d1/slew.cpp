@@ -12,16 +12,16 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #include <stdlib.h>
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "vecmat/vecmat.h"
 #include "platform/key.h"
 #include "platform/joy.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "misc/error.h"
 #include "physics.h"
-#include "joydefs.h"
-#include "kconfig.h"
+#include "main_shared/joydefs.h"
+#include "main_shared/kconfig.h"
 
 //variables for slew system
 

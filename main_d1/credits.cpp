@@ -26,7 +26,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/game.h"
 #include "platform/timer.h"
 
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 #include "main_shared/gamefont.h"
 #include "network.h"
 #include "iff/iff.h"

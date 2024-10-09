@@ -35,8 +35,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "stringtable.h"
 #include "platform/findfile.h"
 
-#include "menu.h"
-#include "newmenu.h"
+#include "main_shared/menu.h"
+#include "main_shared/newmenu.h"
 #include "main_shared/gamefont.h"
 #include "gamepal.h"
 #include "network.h"
@@ -47,13 +47,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/joy.h"
 #include "main_shared/digi.h"
 
-#include "multi.h"
+#include "main_shared/multi.h"
 #include "main_shared/endlevel.h"
 #include "screens.h"
 #include "main_shared/config.h"
 #include "player.h"
 #include "newdemo.h"
-#include "kconfig.h"
+#include "main_shared/kconfig.h"
+
+#include "gamestat.h"
 
 #if defined (TACTILE)
 #include "tactile.h"

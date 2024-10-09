@@ -11,10 +11,9 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+#pragma once
 
-
-#ifndef _NEWMENU_H
-#define _NEWMENU_H
+#include "misc/types.h"
 
 #define NM_TYPE_MENU  	0		// A menu item... when enter is hit on this, newmenu_do returns this item number
 #define NM_TYPE_INPUT 	1		// An input box... fills the text field in, and you need to fill in text_len field.
@@ -132,5 +131,3 @@ extern int newmenu_filelist( const char * title, const char * filespace, char * 
 
 //should be called whenever the palette changes
 extern void nm_remap_background(void);
-
-#endif

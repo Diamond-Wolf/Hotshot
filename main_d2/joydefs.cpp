@@ -21,20 +21,20 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/timer.h"
 #include "misc/error.h"
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "player.h"
 
 #include "main_shared/controls.h"
-#include "joydefs.h"
+#include "main_shared/joydefs.h"
 //#include "victor.h"
 #include "render.h"
 #include "2d/palette.h"
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 #include "misc/args.h" //[ISB] STOP PUTTING ARA ARA IN THE SOURCE AND FIX THE PROBLEM
 #include "stringtable.h"
-#include "kconfig.h"
+#include "main_shared/kconfig.h"
 #include "main_shared/digi.h"
 #include "playsave.h"
 

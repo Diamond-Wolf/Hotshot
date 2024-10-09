@@ -26,7 +26,7 @@ extern char config_last_player[CALLSIGN_LEN+1];
 
 extern char config_last_mission[];
 
-#ifdef BUILD_DESCENT2
+//#ifdef BUILD_DESCENT2
 
 extern uint8_t Config_digi_volume;
 extern uint8_t Config_midi_volume;
@@ -64,6 +64,10 @@ extern uint8_t Config_joystick_sensitivity;
 #define CONTROL_CYBERMAN 6
 #define CONTROL_WINJOYSTICK 7
 
-#define CONTROL_MAX_TYPES 8
-
+#ifdef BUILD_DESCENT2
+# define CONTROL_MAX_TYPES 8
+#else
+# define CONTROL_MAX_TYPES 7
 #endif
+
+//#endif

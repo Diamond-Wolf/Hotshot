@@ -15,7 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "3d/3d.h"
 
-#include "object.h"
+#include "main_shared/object.h"
 
 #define MAX_RENDER_SEGS		500
 #define OBJS_PER_SEG 		5

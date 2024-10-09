@@ -21,27 +21,27 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "2d/palette.h"
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #ifdef EDITOR
 #include "editor\editor.h"
 #endif
 #include "misc/error.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "main_shared/wall.h"
 #include "main_shared/gamemine.h"
 #include "robot.h"
 #include "player.h"
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 #include "textures.h"
 
 #include "main_shared/bm.h"
-#include "menu.h"
+#include "main_shared/menu.h"
 #include "switch.h"
 #include "main_shared/fuelcen.h"
 #include "powerup.h"
-#include "gameseq.h"
+#include "main_shared/gameseq.h"
 #include "polyobj.h"
-#include "gamesave.h"
+#include "main_shared/gamesave.h"
 
 
 #ifdef EDITOR

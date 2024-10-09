@@ -20,12 +20,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "main_d1/inferno.h"
+#include "main_shared/inferno.h"
 #include "main_d1/screens.h"			// For GAME_SCREEN?????
 #include "editor.h"			// For TMAP_CURBOX??????
 #include "2d/gr.h"				// For canves, font stuff
 #include "ui/ui.h"				// For UI_GADGET stuff
-#include "main_d1/object.h"			// For robot_bms
+#include "main_shared/object.h"			// For robot_bms
 #include "platform/mono.h"				// For debugging
 #include "misc/error.h"
 

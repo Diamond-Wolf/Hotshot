@@ -33,7 +33,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gamepal.h"
 #include "platform/timer.h"
 
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 #include "main_shared/gamefont.h"
 #include "network.h"
 #include "iff/iff.h"
@@ -47,7 +47,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cfile/cfile.h"
 #include "main_shared/compbit.h"
 #include "main_shared/songs.h"
-#include "menu.h"			// for MenuHires
+#include "main_shared/menu.h"			// for MenuHires
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"

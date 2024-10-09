@@ -16,9 +16,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/joy.h"
 #include "platform/mono.h"
 #include "misc/error.h"
-#include "inferno.h"
-#include "segment.h"
-#include "object.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
+#include "main_shared/object.h"
 #include "physics.h"
 #include "platform/key.h"
 #include "main_shared/game.h"
@@ -28,7 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/timer.h"
 #include "main_shared/ai.h"
 #include "main_shared/wall.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 
 //Global variables for physics system
 

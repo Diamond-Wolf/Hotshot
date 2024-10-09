@@ -21,9 +21,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 #include "2d/gr.h"
 #include "2d/palette.h"
-#include "newmenu.h"
+#include "main_shared/newmenu.h"
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #ifdef EDITOR
 #include "editor\editor.h"
 #include "player.h"
@@ -32,7 +32,7 @@ extern void compress_uv_coordinates_all(void);
 void do_load_save_levels(int save);
 #endif
 #include "misc/error.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "main_shared/game.h"
 #include "screens.h"
 #include "main_shared/wall.h"
@@ -40,21 +40,21 @@ void do_load_save_levels(int save);
 #include "robot.h"
 #include "cfile/cfile.h"
 #include "main_shared/bm.h"
-#include "menu.h"
+#include "main_shared/menu.h"
 #include "switch.h"
 #include "main_shared/fuelcen.h"
 #include "main_shared/cntrlcen.h"
 #include "powerup.h"
 #include "weapon.h"
 #include "newdemo.h"
-#include "gameseq.h"
+#include "main_shared/gameseq.h"
 #include "main_shared/automap.h"
 #include "polyobj.h"
 #include "stringtable.h"
 #include "main_shared/gamefont.h"
-#include "gamesave.h"
+#include "main_shared/gamesave.h"
 #include "gamepal.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 #include "misc/byteswap.h"
 
 char Gamesave_current_filename[128];

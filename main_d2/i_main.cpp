@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "platform/platform.h"
 
 #include "SDL.h" //[ISB] required for main replacement macro

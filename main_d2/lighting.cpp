@@ -17,23 +17,23 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/rand.h"
 
-#include "inferno.h"
-#include "segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "render.h"
 #include "main_shared/game.h"
 #include "main_shared/vclip.h"
-#include "lighting.h"
+#include "main_shared/lighting.h"
 #include "3d/3d.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 #include "platform/timer.h"
 #include "player.h"
 #include "weapon.h"
 #include "powerup.h"
 #include "main_shared/fvi.h"
 #include "robot.h"
-#include "multi.h"
+#include "main_shared/multi.h"
 
 int	Do_dynamic_light = 1;
 //int	Use_fvi_lighting = 0;

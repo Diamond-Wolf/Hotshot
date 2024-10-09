@@ -15,12 +15,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <stdlib.h>
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
 #include "platform/mono.h"
 #include "misc/error.h"
-#include "main_d2/segment.h"
-#include "main_d2/gameseg.h"
+#include "main_shared/segment.h"
+#include "main_shared/gameseg.h"
 
 #define XDIM	0
 #define YDIM	1

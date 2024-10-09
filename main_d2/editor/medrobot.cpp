@@ -19,8 +19,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 
 #include "main_d2/screens.h"
-#include "main_d2/inferno.h"
-#include "main_d2/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "editor.h"
 
 #include "platform/timer.h"
@@ -29,7 +29,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "kdefs.h"
-#include	"main_d2/object.h"
+#include	"main_shared/object.h"
 #include "main_d2/polyobj.h"
 #include "main_shared/game.h"
 #include "main_d2/powerup.h"

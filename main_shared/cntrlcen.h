@@ -14,13 +14,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "vecmat/vecmat.h"
-#include "main_shared/wall.h"
+#include "wall.h"
+#include "object.h"
 
-#ifdef BUILD_DESCENT2
-# include "main_d2/object.h"
-#else
-# include "main_d1/object.h"
-#endif
 //#include "switch.h"
 
 #define	MAX_CONTROLCEN_LINKS		10

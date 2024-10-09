@@ -13,13 +13,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include "segment.h"
+#include "object.h"
+
 #ifdef BUILD_DESCENT2
-# include "main_d2/segment.h"
-# include "main_d2/object.h"
 # include "main_d2/switch.h"
 #else
-# include "main_d1/segment.h"
-# include "main_d1/object.h"
 # include "main_d1/switch.h"
 #endif
 

@@ -17,12 +17,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/error.h"
 
-#include "inferno.h"
-#include "object.h"
+#include "main_shared/inferno.h"
+#include "main_shared/object.h"
 #include "main_shared/game.h"
 #include "player.h"
-#include "gauges.h"
-#include "hostage.h"
+#include "main_shared/gauges.h"
+#include "main_shared/hostage.h"
 #include "main_shared/vclip.h"
 #include "newdemo.h"
 #include "stringtable.h"

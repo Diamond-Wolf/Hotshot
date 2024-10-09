@@ -24,14 +24,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "platform/findfile.h"
+#include "inferno.h"
+#include "gameseq.h"
 
 #ifdef BUILD_DESCENT2
-# include "main_d2/inferno.h"
-# include "main_d2/gameseq.h"
 # include "main_d2/titles.h"
 #else
-# include "main_d1/inferno.h"
-# include "main_d1/gameseq.h"
 # include "main_d1/titles.h"
 #endif
 

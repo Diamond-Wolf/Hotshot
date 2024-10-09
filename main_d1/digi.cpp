@@ -24,7 +24,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/i_sound.h"
 #include "platform/s_midi.h"
 #include "fix/fix.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "platform/mono.h"
 #include "platform/timer.h"
 #include "platform/joy.h"
@@ -40,7 +40,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/piggy.h"
 #include "main_shared/hqmusic.h"
 #include "stringtable.h"
-#include "kconfig.h"
+#include "main_shared/kconfig.h"
 #include "main_shared/songs.h"
 #include <vector>
 

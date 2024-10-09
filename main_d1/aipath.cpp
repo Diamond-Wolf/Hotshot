@@ -15,12 +15,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdlib.h>		// for qsort()
 #include <string.h>		// for memset()
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "platform/mono.h"
 #include "3d/3d.h"
 #include "misc/rand.h"
 
-#include "object.h"
+#include "main_shared/object.h"
 #include "misc/error.h"
 #include "main_shared/ai.h"
 #include "robot.h"

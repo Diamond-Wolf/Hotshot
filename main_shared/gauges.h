@@ -15,12 +15,16 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "fix/fix.h"
 #include "2d/gr.h"
-#include "main_shared/piggy.h"
+#include "piggy.h"
 #include "object.h"
 
 //from gauges.c
 
-#define MAX_GAUGE_BMS 100	//	increased from 56 to 80 by a very unhappy MK on 10/24/94.
+#ifdef BUILD_DESCENT2
+# define MAX_GAUGE_BMS 100	//	increased from 56 to 80 by a very unhappy MK on 10/24/94.
+#else
+# define MAX_GAUGE_BMS 80	//	increased from 56 to 80 by a very unhappy MK on 10/24/94.
+#endif
 
 extern bitmap_index Gauges[MAX_GAUGE_BMS];   // Array of all gauge bitmaps.
 extern bitmap_index Gauges_hires[MAX_GAUGE_BMS];   // hires gauges
@@ -33,8 +37,8 @@ extern void close_gauge_canvases();
 
 extern void show_score();
 extern void show_score_added();
-extern void add_points_to_score(int points); //[ISB] did early C compilers accept literally fucking anything, including prototypes with no params, being passed a param?
-extern void add_bonus_points_to_score(int points); //[ISB] what the actual fuck
+extern void add_points_to_score(int points);
+extern void add_bonus_points_to_score(int points);
 
 void render_gauges(void);
 void init_gauges(void);
@@ -45,7 +49,11 @@ extern void HUD_clear_messages();
 
 // Call to flash a message on the HUD.  Returns true if message drawn.
 //  (message might not be drawn if previous message was same)
+#ifdef BUILD_DESCENT2
 extern int HUD_init_message(const char * format, ... );
+#else
+extern void HUD_init_message(const char * format, ... );
+#endif
 
 #define gauge_message HUD_init_message
 
@@ -63,8 +71,7 @@ void gauge_frame(void);
 extern void update_laser_weapon_info(void);
 extern void play_homing_warning(void);
 
-typedef struct 
-{
+typedef struct rgb {
 	uint8_t r,g,b;
 } rgb;
 

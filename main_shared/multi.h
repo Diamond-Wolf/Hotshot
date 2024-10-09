@@ -11,23 +11,31 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
-#ifndef _MULTI_H
-#define _MULTI_H
+#pragma once
 
 #define MAX_MESSAGE_LEN 35
+#define SHAREWARE_MAX_MESSAGE_LEN 25
 
 #ifdef NETWORK
 
-// Defines
+#include "misc/types.h"
 #include "gameseq.h"
-#include "main_shared/piggy.h"
+#include "piggy.h"
 
 // What version of the multiplayer protocol is this?
 
-#ifdef SHAREWARE
-#define MULTI_PROTO_VERSION	3
+#ifdef BUILD_DESCENT2
+# ifdef SHAREWARE
+#  define MULTI_PROTO_VERSION	3
+# else
+#  define MULTI_PROTO_VERSION	4
+# endif
 #else
-#define MULTI_PROTO_VERSION	4
+# ifdef SHAREWARE
+#  define MULTI_PROTO_VERSION	1
+# else
+#  define MULTI_PROTO_VERSION	3
+# endif
 #endif
 
 // Protocol versions:
@@ -111,7 +119,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MULTI_DROP_ORB						 62
 #define MULTI_PLAY_BY_PLAY					 63
 
-#define MULTI_MAX_TYPE                  63
+#ifdef BUILD_DESCENT2
+# define MULTI_MAX_TYPE 63
+#else
+# ifndef SHAREWARE
+#  define MULTI_MAX_TYPE			36
+# else
+#  define MULTI_MAX_TYPE			22
+# endif
+#endif
 
 #define MAX_NET_CREATE_OBJECTS 40
 
@@ -257,6 +273,8 @@ enum comp_type {DOS,WIN_32,WIN_95,MAC};
 typedef struct netplayer_info
 {
 	char callsign[CALLSIGN_LEN+1];
+
+	#ifdef BUILD_DESCENT2
 	union 
 	{
 		struct 
@@ -264,6 +282,9 @@ typedef struct netplayer_info
 			uint8_t		node[4];
 		} ipx;
 	} network;
+	#else
+	uint8_t node[4];
+	#endif
 
 	uint8_t version_major;
 	uint8_t version_minor;
@@ -287,7 +308,7 @@ typedef struct AllNetPlayers_info
 typedef struct netgame_info 
 {
 	uint8_t					type;
-   int               Security;
+	int               Security;
 	char					game_name[NETGAME_NAME_LEN+1];
 	char					mission_title[MISSION_NAME_LEN+1];
 	char					mission_name[9];
@@ -301,8 +322,8 @@ typedef struct netgame_info
 	uint8_t					numconnected;
 	uint8_t					game_flags;
 	uint8_t					protocol_version;
-   uint8_t 				version_major;
-   uint8_t 				version_minor;
+	uint8_t 				version_major;
+	uint8_t 				version_minor;
 	uint8_t					team_vector;
 
 // change the order of the bit fields for the mac compiler.
@@ -393,6 +414,10 @@ typedef struct netgame_info
    uint8_t             player_flags[MAX_PLAYERS];
 	short					PacketsPerSec;
 	uint8_t					ShortPackets;
+
+#ifdef BUILD_DESCENT1
+	netplayer_info      players[MAX_PLAYERS];
+#endif
 	
 } netgame_info;
 
@@ -406,7 +431,5 @@ void change_playernum_to(int new_pnum);
 #define MISSILE_ADJUST	100
 #define FLARE_ADJUST		127
 
-
-#endif
 
 #endif

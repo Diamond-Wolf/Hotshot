@@ -18,8 +18,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>												  
 #include <malloc.h>
 
-#include "main_d1/inferno.h"
-#include "main_d1/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "2d/gr.h"
 #include "ui/ui.h"
 #include "editor.h"
@@ -27,7 +27,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "main_d1/textures.h"
-#include "main_d1/object.h"
+#include "main_shared/object.h"
 #include "main_shared/ai.h"
 
 #include "texpage.h"		// Textue selection paging stuff

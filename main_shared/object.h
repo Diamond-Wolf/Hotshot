@@ -15,11 +15,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/types.h"
 #include "vecmat/vecmat.h"
+#include "aistruct.h"
+#include "2d/gr.h"
+#include "piggy.h"
 #include "segment.h"
 #include "gameseg.h"
-#include "main_shared/aistruct.h"
-#include "2d/gr.h"
-#include "main_shared/piggy.h"
 
 /*
  *		CONSTANTS
@@ -46,7 +46,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define OBJ_COOP		14		//a cooperative player object.
 #define OBJ_MARKER	15		//a map marker
 // WARNING!! If you add a type here, add its name to Object_type_names in object.c
-#define MAX_OBJECT_TYPES	16
+#ifdef BUILD_DESCENT2
+# define MAX_OBJECT_TYPES	16
+#else
+# define MAX_OBJECT_TYPES	15
+#endif
 
 //Result types
 #define RESULT_NOTHING	0		//Ignore this collision
@@ -119,6 +123,9 @@ extern char	Object_type_names[MAX_OBJECT_TYPES][9];
 
 //	List of objects rendered last frame in order.  Created at render time, used by homing missiles in laser.c
 #define	MAX_RENDERED_OBJECTS	50
+
+extern short Ordered_rendered_object_list[MAX_RENDERED_OBJECTS];
+extern int Num_rendered_objects;
 
 /*
  *		STRUCTURES
@@ -392,7 +399,7 @@ extern int find_object_seg(object * obj );
 
 //go through all objects and make sure they have the correct segment numbers
 //used when debugging is on
-void fix_object_segs(); //[ISB] I'm going to fucking lose it if I have to give yet another return type to some shit
+void fix_object_segs();
 
 //	Drops objects contained in objp.
 int object_create_egg(object *objp);
@@ -439,6 +446,9 @@ extern void create_small_fireball_on_object(object *objp, fix size_scale, int so
 int drop_marker_object(vms_vector *pos,int segnum,vms_matrix *orient,int marker_num);
 
 extern void wake_up_rendered_objects(object *gmissp, int window_num);
+
+void obj_detach_one(object* sub);
+void obj_detach_all(object* parent);
 
 #include <stdio.h>
 //Reads an object from disk. This code is my absolute nightmare. Thanks, unions.

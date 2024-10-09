@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "main_shared/digi.h"
+#include "digi.h"
 
 #ifdef BUILD_DESCENT2
 #include "main_d2/sounds.h"
@@ -21,7 +21,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d1/sounds.h"
 #endif
 
-#include "main_shared/inferno_shared.h"
+#include "inferno.h"
 
 #define MAX_ALIASES 20
 

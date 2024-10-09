@@ -15,15 +15,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <stdio.h>
 
-#include "main_shared/fvi.h"
+#include "fvi.h"
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
+#include "object.h"
 
 #ifdef BUILD_DESCENT2
-# include "main_d2/object.h"
 # include "main_d2/robot.h"
 #else
-# include "main_d1/object.h"
 # include "main_d1/robot.h"
 #endif
 

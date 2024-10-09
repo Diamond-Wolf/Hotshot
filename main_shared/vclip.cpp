@@ -19,15 +19,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 
 #include "vclip.h"
+#include "inferno.h"
+#include "laser.h"
 
 #ifdef BUILD_DESCENT2
-# include "main_d2/inferno.h"
 # include "main_d2/weapon.h"
-# include "main_d2/laser.h"
 #else
-# include "main_d1/inferno.h"
 # include "main_d1/weapon.h"
-# include "main_d1/laser.h"
 #endif
 
 //----------------- Variables for video clips -------------------

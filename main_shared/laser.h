@@ -13,19 +13,42 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#define	LASER_ID			0				//0..3 are lasers
-#define	CONCUSSION_ID	8
+#include "fix/fix.h"
+#include "vecmat/vecmat.h"
+#include "object.h"
+
+#ifdef BUILD_DESCENT2
+# define	LASER_ID		0				//0..3 are lasers
+#endif
+
+#define	CONCUSSION_ID		8
 #define	FLARE_ID			9							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
+
+#ifdef BUILD_DESCENT1
+# define	LASER_ID		10
+#endif
+
 #define	VULCAN_ID		11							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
-#define	SPREADFIRE_ID	12							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
+
+#ifdef BUILD_DESCENT2
+# define	SPREADFIRE_ID	12							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
+#else
+# define	XSPREADFIRE_ID	12							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
+#endif
+
 #define	PLASMA_ID		13							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
 #define	FUSION_ID		14							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
 #define	HOMING_ID		15
 #define	PROXIMITY_ID	16
-#define	SMART_ID			17
+#define	SMART_ID		17
 #define	MEGA_ID			18
 
 #define	PLAYER_SMART_HOMING_ID 	19
+
+#ifdef BUILD_DESCENT1
+# define	SPREADFIRE_ID	20							//	NOTE: This MUST correspond to the ID generated at bitmaps.tbl read time.
+#endif
+
 #define	SUPER_MECH_MISS			21
 #define	REGULAR_MECH_MISS			22
 #define	SILENT_SPREADFIRE_ID		23
@@ -77,7 +100,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 //	Constants governing homing missile behavior.
 //	MIN_TRACKABLE_DOT gets inversely scaled by FrameTime and stuffed in Min_trackable_dot
-#define	MIN_TRACKABLE_DOT					(7*F1_0/8)
+#ifdef BUILD_DESCENT2
+# define	MIN_TRACKABLE_DOT					(7*F1_0/8)
+#else
+# define	MIN_TRACKABLE_DOT					(3*F1_0/4)
+#endif
+
 #define	MAX_TRACKABLE_DIST				(F1_0*250)
 #define	HOMING_MISSILE_STRAIGHT_TIME	(F1_0/8)			//	Changed as per request of John, Adam, Yuan, but mostly John
 
@@ -94,8 +122,13 @@ void Flare_create(object *obj);
 int laser_are_related( int o1, int o2 );
 
 extern int do_laser_firing_player(void);
-extern void do_missile_firing(int do_autoselect);
 extern void net_missile_firing(int player, int weapon, int flags);
+
+#ifdef BUILD_DESCENT2
+extern void do_missile_firing(int do_autoselect);
+#else
+extern void do_missile_firing();
+#endif
 
 int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum, int parent, int type, int make_sound );
 
@@ -118,7 +151,12 @@ int create_weapon_object(int weapon_type,int segnum,vms_vector *position);
 //give up control of the guided missile
 void release_guided_missile(int player_num);
 
+#ifdef BUILD_DESCENT2
 extern void create_smart_children(object *objp, int count);
+#else
+extern void create_smart_children(object *objp);
+#endif
+
 extern int object_to_object_visibility(object *obj1, object *obj2, int trans_type);
 
 extern int		Muzzle_queue_index;

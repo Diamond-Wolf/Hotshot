@@ -29,13 +29,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/key.h"
 #include "func.h"
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
-#include "main_d2/segment.h"
+#include "main_shared/segment.h"
 
 #include "main_d2/render.h"
 #include "main_d2/screens.h"
-#include "main_d2/object.h"
+#include "main_shared/object.h"
 
 #include "texpage.h"		// For texpage_goto_first
 #include "meddraw.h"		// For draw_World

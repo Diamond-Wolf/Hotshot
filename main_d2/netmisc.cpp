@@ -15,12 +15,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdio.h>
 #include <string.h>
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "misc/types.h"
 #include "platform/mono.h"
-#include "multi.h"
+#include "main_shared/multi.h"
 #include "network.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "netmisc.h"
 
 // Calculates the checksum of a block of memory.

@@ -16,8 +16,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifndef _NETWORK_H
 #define _NETWORK_H
 
-#include "gameseq.h"
-#include "multi.h"
+#include "main_shared/gameseq.h"
+#include "main_shared/multi.h"
 
 // The default socket to use.
 

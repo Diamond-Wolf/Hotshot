@@ -35,6 +35,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+Additions and modifications made in Hotshot are under the same MIT license, (c) 2024 Diamond Wolf.
+
 The "mve" library is from the d2x project, and presumably falls under the D1X license, as follows:
 
 D1x License 

@@ -24,7 +24,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <algorithm>
 
 //#include "pa_enabl.h"                   //$$POLY_ACC
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "misc/error.h"
 #include "platform/mono.h"
 #include "2d/gr.h"
@@ -33,25 +33,25 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/bm.h"
 #include "player.h"
 #include "render.h"
-#include "menu.h"
-#include "newmenu.h"
+#include "main_shared/menu.h"
+#include "main_shared/newmenu.h"
 #include "screens.h"
 #include "fix/fix.h"
 #include "robot.h"
 #include "main_shared/game.h"
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "main_shared/gamefont.h"
 #include "newdemo.h"
 #include "stringtable.h"
-#include "multi.h"
+#include "main_shared/multi.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/cntrlcen.h"
 #include "powerup.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 #include "playsave.h"
 #include "main_shared/automap.h"
 #include "main_shared/mission.h" //for mission number
-#include "gameseq.h" //for level number
+#include "main_shared/gameseq.h" //for level number
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"

@@ -12,12 +12,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #include "misc/types.h"
-
-#if BUILD_DESCENT2
-# include "main_d2/object.h"
-#else
-# include "main_d1/object.h"
-#endif
+#include "object.h"
 
 #pragma once
 

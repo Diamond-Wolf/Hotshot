@@ -21,14 +21,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdarg.h>
 
 #include "platform/posixstub.h"
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "main_shared/game.h"
 #include "screens.h"
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "physics.h"
 #include "misc/error.h"
 
-#include "menu.h"			// For the font.
+#include "main_shared/menu.h"			// For the font.
 #include "platform/mono.h"
 #include "main_shared/collide.h"
 #include "newdemo.h"
@@ -39,7 +39,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/arcade.h"
 #include "screens.h"
 #include "stringtable.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 #include "misc/args.h" //[ISB] die
 //#include "pa_enabl.h"
 

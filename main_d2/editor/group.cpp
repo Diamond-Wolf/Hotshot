@@ -21,12 +21,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cfile/cfile.h"
 #include "ui/ui.h"
 
-#include "main_d2/inferno.h"
-#include "main_d2/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include	"editor.h"
 #include "misc/error.h"
 #include "main_shared/gamemine.h"
-#include "main_d2/gameseg.h"
+#include "main_shared/gameseg.h"
 
 #include "main_shared/bm.h"				// For MAX_TEXTURES.
 #include "main_d2/textures.h"

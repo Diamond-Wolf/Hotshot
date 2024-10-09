@@ -15,15 +15,15 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <stdlib.h>
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "func.h"
 #include "kdefs.h"
-#include "main_d2/segment.h"
+#include "main_shared/segment.h"
 #include "editor.h"
 #include "misc/error.h"
 #include "main_d2/slew.h"
 #include "platform/mono.h"
-#include "main_d2/gamesave.h"
+#include "main_shared/gamesave.h"
 #include "eobject.h"
 #include "medwall.h"
 

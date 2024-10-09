@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <stdlib.h>
 
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #include "2d/gr.h"
 #include "main_shared/gamefont.h"
 

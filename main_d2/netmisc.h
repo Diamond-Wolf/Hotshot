@@ -13,7 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "multi.h"
+#include "main_shared/multi.h"
 #include "network.h"
 
 //Returns a checksum of a block of memory.

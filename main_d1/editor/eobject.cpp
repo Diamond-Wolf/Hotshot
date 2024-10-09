@@ -19,8 +19,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <math.h>
 #include <string.h>
 
-#include "main_d1/inferno.h"
-#include "main_d1/segment.h"
+#include "main_shared/inferno.h"
+#include "main_shared/segment.h"
 #include "editor.h"
 
 #include "objpage.h"
@@ -28,7 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "misc/error.h"
 #include "kdefs.h"
-#include	"main_d1/object.h"
+#include	"main_shared/object.h"
 #include "main_d1/polyobj.h"
 #include "main_shared/game.h"
 #include "main_shared/ai.h"
@@ -41,7 +41,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_d1/hostage.h"
 #include "medrobot.h"
 #include "main_d1/player.h"
-#include "main_d1/gameseg.h"
+#include "main_shared/gameseg.h"
 
 #define	OBJ_SCALE		(F1_0/2)
 #define	OBJ_DEL_SIZE	(F1_0/2)

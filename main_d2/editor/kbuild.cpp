@@ -15,10 +15,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <string.h>
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "editor.h"
-#include "main_d2/gameseg.h"
-#include "main_d2/gamesave.h"
+#include "main_shared/gameseg.h"
+#include "main_shared/gamesave.h"
 #include "platform/mono.h"
 
 //  ---------- Create a bridge segment between current segment/side and marked segment/side ----------

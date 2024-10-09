@@ -2,7 +2,7 @@
 #pragma once
 
 #include "vecmat/vecmat.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "main_shared/game.h"
 
 #define MAX_GUNS 8		//should be multiple of 4 for uint8_t array

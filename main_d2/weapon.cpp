@@ -16,19 +16,19 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 
 #include "main_shared/game.h"
-#include "laser.h"
+#include "main_shared/laser.h"
 #include "weapon.h"
 #include "platform/mono.h"
 #include "player.h"
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "misc/error.h"
 #include "sounds.h"
 #include "stringtable.h"
 #include "powerup.h"
 #include "main_shared/fireball.h"
 #include "newdemo.h"
-#include "multi.h"
-#include "newmenu.h"
+#include "main_shared/multi.h"
+#include "main_shared/newmenu.h"
 #include "main_shared/ai.h"
 #include "misc/args.h"
 

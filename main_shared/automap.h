@@ -14,13 +14,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include "misc/types.h"
+#include "segment.h"
 
 #ifdef BUILD_DESCENT2
 # include "main_d2/player.h"
-# include "main_d2/segment.h"
 #else
 # include "main_d1/player.h"
-# include "main_d1/segment.h"
 #endif
 
 extern void do_automap(int key_code);

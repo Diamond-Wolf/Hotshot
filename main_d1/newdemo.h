@@ -13,7 +13,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#include "morph.h"
+#include "main_shared/morph.h"
 
 #define ND_STATE_NORMAL				0
 #define ND_STATE_RECORDING			1

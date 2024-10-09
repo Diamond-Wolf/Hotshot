@@ -18,14 +18,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "vecmat/vecmat.h"
 #include "misc/types.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/object.h"
-# include "main_d2/segment.h"
-#else
-# include "main_d1/object.h"
-# include "main_d1/segment.h"
-#endif
+#include "object.h"
+#include "segment.h"
 
 extern fix FrameTime;					//time in seconds since last frame
 extern fix RealFrameTime;					//time in seconds since last frame

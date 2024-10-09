@@ -20,13 +20,13 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <ctype.h>
 #include <stdarg.h>
 
-#include "main_d2/inferno.h"
+#include "main_shared/inferno.h"
 #include "platform/mono.h"
 #include "vecmat/vecmat.h"
 #include "2d/gr.h"
 #include "platform/key.h"
 #include "editor.h"
-#include "main_d2/gameseg.h"
+#include "main_shared/gameseg.h"
 
 void generate_banked_curve(fix maxscale, vms_equation coeffs);
 

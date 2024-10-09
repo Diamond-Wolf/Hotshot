@@ -18,7 +18,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifdef DRIVE
 #include "drive.h"
 #else
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #endif
 
 #include "polyobj.h"
@@ -33,8 +33,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifndef DRIVE
 #include "main_shared/bm.h"
 #include "textures.h"
-#include "object.h"
-#include "lighting.h"
+#include "main_shared/object.h"
+#include "main_shared/lighting.h"
 #include "cfile/cfile.h"
 #include "main_shared/piggy.h"
 #endif

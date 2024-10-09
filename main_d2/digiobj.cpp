@@ -23,7 +23,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <ctype.h>
 
 #include "fix/fix.h"
-#include "object.h"
+#include "main_shared/object.h"
 #include "platform/mono.h"
 #include "platform/timer.h"
 #include "platform/joy.h"
@@ -38,7 +38,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cfile/cfile.h"
 #include "main_shared/piggy.h"
 #include "stringtable.h"
-#include "kconfig.h"
+#include "main_shared/kconfig.h"
 
 #define SOF_USED				1 		// Set if this sample is used
 #define SOF_PLAYING			2		// Set if this sample is playing on a channel

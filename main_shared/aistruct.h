@@ -16,12 +16,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/types.h"
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
-
-#ifdef BUILD_DESCENT2
-# include "main_d2/inferno.h"
-#else
-# include "main_d1/inferno.h"
-#endif
+#include "inferno.h"
 
 #define	GREEN_GUY	1 //[ISB] heh
 

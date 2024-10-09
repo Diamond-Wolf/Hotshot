@@ -15,24 +15,24 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "gauges.h"
+#include "main_shared/gauges.h"
 #include "main_shared/game.h"
 #include "switch.h"
-#include "inferno.h"
+#include "main_shared/inferno.h"
 #ifdef EDITOR
 #include "editor\editor.h"
 #endif
-#include "segment.h"
+#include "main_shared/segment.h"
 #include "misc/error.h"
-#include "gameseg.h"
+#include "main_shared/gameseg.h"
 #include "platform/mono.h"
 #include "main_shared/wall.h"
 #include "main_shared/fuelcen.h"
 #include "newdemo.h"
 #include "player.h"
 #include "main_shared/endlevel.h"
-#include "gameseq.h"
-#include "multi.h"
+#include "main_shared/gameseq.h"
+#include "main_shared/multi.h"
 #include "network.h"
 #include "2d/palette.h"
 
