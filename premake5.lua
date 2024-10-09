@@ -46,7 +46,10 @@ workspace "Hotshot"
 	location "./build"
 	includedirs "."
 
-	buildoptions { "-funsigned-char", "-Wno-dangling-else", "-Wno-invalid-source-encoding", "-Wno-writable-strings", "-Wno-parentheses", "-Wno-parentheses-equality" }
+	unsignedchar "On"
+
+	filter { "action:gmake2" }
+		buildoptions { "-Wno-dangling-else", "-Wno-invalid-source-encoding", "-Wno-writable-strings", "-Wno-parentheses", "-Wno-parentheses-equality" }
 
 	filter { "configurations:Debug" }
 		symbols "On"
@@ -183,9 +186,7 @@ workspace "Hotshot"
 
 project "Hotshot-1"
 
-	defines {
-		"BUILD_DESCENT1"
-	}
+	defines "BUILD_DESCENT1"
 
 	files {
 		"2d/font.cpp",
@@ -209,9 +210,7 @@ project "Hotshot-1"
 
 project "Hotshot-2"
 
-	defines {
-		"BUILD_DESCENT2"
-	}
+	defines "BUILD_DESCENT2"
 
 	files {
 		"2d/font_d2.cpp",
