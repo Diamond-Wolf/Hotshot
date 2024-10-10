@@ -17,6 +17,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "wall.h"
 #include "object.h"
 
+#define Control_center_destroyed Fuelcen_control_center_destroyed
+
 //#include "switch.h"
 
 #define	MAX_CONTROLCEN_LINKS		10

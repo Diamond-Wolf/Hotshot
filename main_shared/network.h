@@ -43,6 +43,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 typedef struct sequence_packet {
 	uint8_t					type;
 	netplayer_info		player;
+	int		Security;
 } sequence_packet;
 
 #ifdef SHAREWARE
@@ -155,9 +156,9 @@ void network_do_frame(int force, int listen);
 
 // Tacks data of length 'len' onto the end of the next
 // packet that we're transmitting.
-void network_send_data(uint8_t* ptr, int len, int urgent);
+void network_send_data(char* ptr, int len, int urgent);
 
 //Connects to a game at a specific address with the current port.  
-void network_join_game_at(uint8_t* address);
+void network_join_game_at(char* address);
 
 #endif

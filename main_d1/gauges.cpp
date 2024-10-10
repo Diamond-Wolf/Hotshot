@@ -1747,7 +1747,7 @@ void show_reticle(int force_big_one)
 				color_num = get_team(pnum);
 			else
 				color_num = pnum;
-			snprintf(s, CALLSIGN+LEN + 1, "%s", Players[pnum].callsign);
+			snprintf(s, CALLSIGN_LEN + 1, "%s", Players[pnum].callsign);
 			gr_get_string_size(s, &w, &h, &aw);
 			gr_set_fontcolor(gr_getcolor(player_rgb[color_num].r, player_rgb[color_num].g, player_rgb[color_num].b), -1);
 			x1 = x - (w / 2);

@@ -1270,7 +1270,7 @@ void do_ip_address_menu()
 {
 	newmenu_item m;
 	static char text[256] = "";
-	uint8_t address[4];
+	char address[4];
 	char* ptr, * oldptr;
 	int i;
 	int value;

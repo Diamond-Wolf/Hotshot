@@ -1067,7 +1067,7 @@ void StartNewGame(int start_level)
 //@@}
 
 #ifndef _NETWORK_H
-extern int network_endlevel_poll2(int nitems, newmenu_item* menus, int* key, int citem); // network.c
+extern void network_endlevel_poll2(int nitems, newmenu_item* menus, int* key, int citem); // network.c
 #endif
 
 extern int N_secret_levels;

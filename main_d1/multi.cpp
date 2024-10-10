@@ -85,7 +85,7 @@ int multi_sending_message = 0;
 int multi_defining_message = 0;
 int multi_message_index = 0;
 
-uint8_t multibuf[MAX_MULTI_MESSAGE_LEN + 4];                // This is where multiplayer message are built
+char multibuf[MAX_MULTI_MESSAGE_LEN + 4];                // This is where multiplayer message are built
 
 short remote_to_local[MAX_NUM_NET_PLAYERS][MAX_OBJECTS];  // Remote object number for each local object
 short local_to_remote[MAX_OBJECTS];
@@ -761,7 +761,7 @@ multi_do_frame(void)
 	}
 }
 
-void multi_send_data(uint8_t* buf, int len, int repeat)
+void multi_send_data(char* buf, int len, int repeat)
 {
 	Assert(len == message_length[buf[0]]);
 	Assert(buf[0] <= MULTI_MAX_TYPE);
@@ -771,7 +771,7 @@ void multi_send_data(uint8_t* buf, int len, int repeat)
 		Assert(buf[0] > 0);
 
 	if (Game_mode & GM_NETWORK)
-		network_send_data((uint8_t*)buf, len, repeat);
+		network_send_data(buf, len, repeat);
 }
 
 void
@@ -929,7 +929,7 @@ multi_message_feedback(void)
 		snprintf(feedback_result, 200, "%s ", TXT_MESSAGE_SENT_TO);
 		if ((Game_mode & GM_TEAM) && (atoi(Network_message) > 0) && (atoi(Network_message) < 3))
 		{
-			len = strlen(feedback_result)
+			len = strlen(feedback_result);
 			snprintf(feedback_result + len, 200 - len, "%s '%s'", TXT_TEAM, Netgame.team_name[atoi(Network_message) - 1]);
 			found = 1;
 		}
@@ -944,7 +944,7 @@ multi_message_feedback(void)
 					found++;
 					if (!(found % 4))
 						strcat(feedback_result, "\n");
-					len = strlen(feedback_result)
+					len = strlen(feedback_result);
 					snprintf(feedback_result + len, 200 - len, "%s '%s'", TXT_TEAM, Netgame.team_name[i]);
 				}
 			}
@@ -958,7 +958,7 @@ multi_message_feedback(void)
 				found++;
 				if (!(found % 4))
 					strcat(feedback_result, "\n");
-				len = strlen(feedback_result)
+				len = strlen(feedback_result);
 				snprintf(feedback_result + len, 200 - len, "%s", Players[i].callsign);
 			}
 		}
@@ -1139,7 +1139,7 @@ multi_do_death(int objnum)
 }
 
 void
-multi_do_fire(uint8_t* buf)
+multi_do_fire(char* buf)
 {
 	uint8_t weapon;
 	char pnum;
@@ -1179,7 +1179,7 @@ multi_do_fire(uint8_t* buf)
 }
 
 void
-multi_do_message(uint8_t* buf)
+multi_do_message(char* buf)
 {
 	char* colon;
 
@@ -1206,7 +1206,7 @@ multi_do_message(uint8_t* buf)
 }
 
 void
-multi_do_position(uint8_t* buf)
+multi_do_position(char* buf)
 {
 	// This routine does only player positions, mode game only
 	//	mprintf((0, "Got position packet.\n"));
@@ -1219,7 +1219,7 @@ multi_do_position(uint8_t* buf)
 
 	Assert(!(Game_mode & GM_NETWORK));
 
-	netmisc_decode_shortpos((uint8_t*)buf, &loc, &pos);
+	netmisc_decode_shortpos(buf, &loc, &pos);
 	extract_shortpos(&Objects[Players[pnum].objnum], &pos);
 
 	if (Objects[Players[pnum].objnum].movement_type == MT_PHYSICS)
@@ -1227,7 +1227,7 @@ multi_do_position(uint8_t* buf)
 }
 
 void
-multi_do_reappear(uint8_t* buf)
+multi_do_reappear(char* buf)
 {
 	short objnum;
 
@@ -1244,7 +1244,7 @@ multi_do_reappear(uint8_t* buf)
 }
 
 void
-multi_do_player_explode(uint8_t* buf)
+multi_do_player_explode(char* buf)
 {
 	// Only call this for players, not robots.  pnum is player number, not
 	// Object number.
@@ -1344,7 +1344,7 @@ multi_do_player_explode(uint8_t* buf)
 }
 
 void
-multi_do_kill(uint8_t* buf)
+multi_do_kill(char* buf)
 {
 	int killer, killed;
 	int count = 1;
@@ -1383,7 +1383,7 @@ multi_do_kill(uint8_t* buf)
 
 //	Changed by MK on 10/20/94 to send NULL as object to net_destroy_controlcen if it got -1
 // which means not a controlcen object, but contained in another object
-void multi_do_controlcen_destroy(uint8_t* buf)
+void multi_do_controlcen_destroy(char* buf)
 {
 	int8_t who;
 	short objnum;
@@ -1409,7 +1409,7 @@ void multi_do_controlcen_destroy(uint8_t* buf)
 }
 
 void
-multi_do_escape(uint8_t* buf)
+multi_do_escape(char* buf)
 {
 	int objnum;
 
@@ -1443,7 +1443,7 @@ multi_do_escape(uint8_t* buf)
 
 
 void
-multi_do_remobj(uint8_t* buf)
+multi_do_remobj(char* buf)
 {
 	short objnum; // which object to remove
 	short local_objnum;
@@ -1486,7 +1486,7 @@ multi_do_remobj(uint8_t* buf)
 }
 
 void
-multi_do_quit(uint8_t* buf)
+multi_do_quit(char* buf)
 {
 
 	if (Game_mode & GM_NETWORK)
@@ -1514,7 +1514,7 @@ multi_do_quit(uint8_t* buf)
 }
 
 void
-multi_do_cloak(uint8_t* buf)
+multi_do_cloak(char* buf)
 {
 	int pnum;
 
@@ -1538,7 +1538,7 @@ multi_do_cloak(uint8_t* buf)
 }
 
 void
-multi_do_decloak(uint8_t* buf)
+multi_do_decloak(char* buf)
 {
 	int pnum;
 
@@ -1550,7 +1550,7 @@ multi_do_decloak(uint8_t* buf)
 }
 
 void
-multi_do_door_open(uint8_t* buf)
+multi_do_door_open(char* buf)
 {
 	int segnum;
 	short side;
@@ -1601,7 +1601,7 @@ multi_do_door_open(uint8_t* buf)
 }
 
 void
-multi_do_create_explosion(uint8_t* buf)
+multi_do_create_explosion(char* buf)
 {
 	int pnum;
 	int count = 1;
@@ -1613,7 +1613,7 @@ multi_do_create_explosion(uint8_t* buf)
 }
 
 void
-multi_do_controlcen_fire(uint8_t* buf)
+multi_do_controlcen_fire(char* buf)
 {
 	vms_vector to_target;
 	char gun_num;
@@ -1628,7 +1628,7 @@ multi_do_controlcen_fire(uint8_t* buf)
 }
 
 void
-multi_do_create_powerup(uint8_t* buf)
+multi_do_create_powerup(char* buf)
 {
 	short segnum;
 	short objnum;
@@ -1684,7 +1684,7 @@ multi_do_create_powerup(uint8_t* buf)
 }
 
 void
-multi_do_play_sound(uint8_t* buf)
+multi_do_play_sound(char* buf)
 {
 	int pnum = buf[1];
 #ifdef SHAREWARE
@@ -1706,7 +1706,7 @@ multi_do_play_sound(uint8_t* buf)
 
 #ifndef SHAREWARE
 void
-multi_do_score(uint8_t* buf)
+multi_do_score(char* buf)
 {
 	int pnum = buf[1];
 
@@ -1725,7 +1725,7 @@ multi_do_score(uint8_t* buf)
 }
 
 void
-multi_do_trigger(uint8_t* buf)
+multi_do_trigger(char* buf)
 {
 	int pnum = buf[1];
 	int trigger = buf[2];
@@ -1743,7 +1743,7 @@ multi_do_trigger(uint8_t* buf)
 	check_trigger_sub(trigger, pnum);
 }
 
-void multi_do_hostage_door_status(uint8_t* buf)
+void multi_do_hostage_door_status(char* buf)
 {
 	// Update hit point status of a door
 
@@ -1767,7 +1767,7 @@ void multi_do_hostage_door_status(uint8_t* buf)
 }
 #endif
 
-void multi_do_save_game(uint8_t* buf)
+void multi_do_save_game(char* buf)
 {
 	int count = 1;
 	uint8_t slot;
@@ -1781,7 +1781,7 @@ void multi_do_save_game(uint8_t* buf)
 	multi_save_game(slot, id, desc);
 }
 
-void multi_do_restore_game(uint8_t* buf)
+void multi_do_restore_game(char* buf)
 {
 	int count = 1;
 	uint8_t slot;
@@ -1794,7 +1794,7 @@ void multi_do_restore_game(uint8_t* buf)
 }
 
 // 
-void multi_do_req_player(uint8_t* buf)
+void multi_do_req_player(char* buf)
 {
 	netplayer_stats ps;
 	uint8_t player_n;
@@ -1805,11 +1805,11 @@ void multi_do_req_player(uint8_t* buf)
 		extract_netplayer_stats(&ps, &Players[Player_num]);
 		ps.Player_num = Player_num;
 		ps.message_type = MULTI_SEND_PLAYER;		// SET
-		multi_send_data((uint8_t*)&ps, sizeof(netplayer_stats), 1);
+		multi_send_data((char*)&ps, sizeof(netplayer_stats), 1);
 	}
 }
 
-void multi_do_send_player(uint8_t* buf)
+void multi_do_send_player(char* buf)
 {
 	// Got a player packet from someone!!!
 	netplayer_stats* p;
@@ -1901,7 +1901,7 @@ multi_reset_player_object(object* objp)
 }
 
 void
-multi_process_data(uint8_t* buf, int len)
+multi_process_data(char* buf, int len)
 {
 	// Take an entire message (that has already been checked for validity,
 	// if necessary) and act on it.  
@@ -1999,7 +1999,7 @@ multi_process_data(uint8_t* buf, int len)
 }
 
 void
-multi_process_bigdata(uint8_t* buf, int len)
+multi_process_bigdata(char* buf, int len)
 {
 	// Takes a bunch of messages, check them for validity,
 	// and pass them to multi_process_data. 
@@ -2196,7 +2196,7 @@ void multi_send_position(int objnum)
 
 	multibuf[count++] = (char)MULTI_POSITION;
 	create_shortpos(&pos, Objects + objnum);
-	netmisc_encode_shortpos((uint8_t*)multibuf, &count, &pos);
+	netmisc_encode_shortpos(multibuf, &count, &pos);
 	//count += sizeof(shortpos);
 
 	multi_send_data(multibuf, count, 0);
@@ -2307,8 +2307,7 @@ multi_send_decloak(void)
 	multi_send_data(multibuf, 2, 1);
 }
 
-void
-multi_send_door_open(int segnum, int side)
+void multi_send_door_open(int segnum, int side, uint8_t d2Flags)
 {
 	// When we open a door make sure everyone else opens that door
 

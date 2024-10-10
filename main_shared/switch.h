@@ -94,7 +94,7 @@ extern void trigger_init();
 
 #ifdef BUILD_DESCENT2
 extern void check_trigger(segment* seg, short side, short objnum, int shot);
-extern int check_trigger_sub(int trigger_num, int player_num);
+extern int check_trigger_sub(int trigger_num, int player_num, int shot);
 #else
 extern void check_trigger(segment* seg, short side, short objnum);
 extern int check_trigger_sub(int trigger_num, int player_num);

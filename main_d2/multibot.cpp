@@ -419,7 +419,7 @@ multi_send_robot_position_sub(int objnum)
 	create_shortpos(&sp, Objects + objnum, 1);
 	memcpy(&(multibuf[loc]), (uint8_t*)(sp.bytemat), 9);
 	loc += 9;
-	memcpy(&(multibuf[loc]), (uint8_t*)&(sp.xo), 14);
+	memcpy(&(multibuf[loc]), (char*)&(sp.xo), 14);
 	loc += 14;
 #endif
 	multi_send_data(multibuf, loc, 1);

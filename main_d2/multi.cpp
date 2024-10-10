@@ -62,6 +62,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/args.h"
 #include "main_shared/automap.h"
 #include "platform/posixstub.h"
+#include "main_shared/gamestat.h"
 
 //
 // Local macros and prototypes
@@ -947,7 +948,7 @@ multi_send_data(char* buf, int len, int repeat)
 		Assert(buf[0] > 0);
 
 	if (Game_mode & GM_NETWORK)
-		network_send_data((uint8_t*)buf, len, repeat);
+		network_send_data(buf, len, repeat);
 }
 
 extern void AdjustMineSpawn();
@@ -1207,7 +1208,7 @@ extern fix StartingShields;
 fix PingLaunchTime, PingReturnTime;
 
 extern void network_send_ping(uint8_t);
-extern void network_dump_player(uint8_t* node, int why);
+extern void network_dump_player(char* node, int why);
 extern int network_who_is_master();
 extern void network_send_netgame_update();
 extern char NameReturning;
@@ -2998,7 +2999,7 @@ multi_send_position(int objnum)
 	create_shortpos(&sp, Objects + objnum, 1);
 	memcpy(&(multibuf[count]), (uint8_t*)(sp.bytemat), 9);
 	count += 9;
-	memcpy(&(multibuf[count]), (uint8_t*)&(sp.xo), 14);
+	memcpy(&(multibuf[count]), (char*)&(sp.xo), 14);
 	count += 14;
 #endif
 
@@ -3125,8 +3126,7 @@ multi_send_decloak(void)
 	multi_send_data(multibuf, 2, 1);
 }
 
-void
-multi_send_door_open(int segnum, int side, uint8_t flag)
+void multi_send_door_open(int segnum, int side, uint8_t flag)
 {
 	// When we open a door make sure everyone else opens that door
 
@@ -4050,7 +4050,7 @@ void multi_send_guided_info(object* miss, char done)
 	create_shortpos(&sp, miss, 1);
 	memcpy(&(multibuf[count]), (uint8_t*)(sp.bytemat), 9);
 	count += 9;
-	memcpy(&(multibuf[count]), (uint8_t*)&(sp.xo), 14);
+	memcpy(&(multibuf[count]), (char*)&(sp.xo), 14);
 	count += 14;
 #endif
 
@@ -4130,7 +4130,7 @@ void multi_do_stolen_items(char* buf)
 	mprintf((0, "\n"));
 }
 
-extern void network_send_important_packet(char*, int);
+extern void network_send_important_packet(uint8_t*, int);
 extern void network_send_naked_packet(char* buf, short len, int who);
 
 void multi_send_wall_status(int wallnum, uint8_t type, uint8_t flags, uint8_t state)
@@ -5230,7 +5230,7 @@ void init_bitmap(grs_bitmap* bm, int w, int h, int flags, uint8_t* data)
 	bm->bm_h = h;
 	bm->bm_type = BM_LINEAR;
 	bm->bm_flags = flags;
-	bm->bm_data = data;
+	bm->bm_data = (uint8_t*)data;
 	//bm->bm_handle = 0;
 	bm->avg_color = 0;
 }

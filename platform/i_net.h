@@ -31,30 +31,30 @@ extern int NetChangeDefaultSocket(uint16_t socket_number);
 extern int NetChangeRole(dbool host);
 
 // Returns a pointer to 4-byte address [ISB] Note that this information is not reliable and shouldn't actually be used.
-extern uint8_t* NetGetLocalAddress();
+extern char* NetGetLocalAddress();
 // Returns a pointer to 4-byte server
-extern uint8_t* NetGetServerAddress();
+extern char* NetGetServerAddress();
 // Returns the port number currently in use. 
 extern uint16_t NetGetCurrentPort();
 
 // Determines the local address equivalent of an internetwork address.
-void NetGetLocalTarget(uint8_t* server, uint8_t* node, uint8_t* local_target);
+void NetGetLocalTarget(char* server, char* node, char* local_target);
 
 // If any packets waiting to be read in, this fills data in with the packet data and returns
 // the number of bytes read.  Else returns 0 if no packets waiting.
-extern int NetGetPacketData(uint8_t* data);
+extern int NetGetPacketData(char* data);
 
 //After reading a packet from NetGetPacketData, this can be used to get the origin address from it.
 //Call this instead of letting the protocol specify return addresses, because that system won't
 //get you on the internet. 
-extern void NetGetLastPacketOrigin(uint8_t* addrBuf);
+extern void NetGetLastPacketOrigin(char* addrBuf);
 
 // Sends a broadcast packet to everyone on this socket.
-extern void NetSendBroadcastPacket(uint8_t* data, int datasize);
+extern void NetSendBroadcastPacket(char* data, int datasize);
 
 // Sends a packet to a certain address
-extern void NetSendPacket(uint8_t* data, int datasize, uint8_t* address, uint8_t* immediate_address);
-extern void NetSendInternetworkPacket(uint8_t* data, int datasize, uint8_t* address);
+extern void NetSendPacket(char* data, int datasize, char* address, char* immediate_address);
+extern void NetSendInternetworkPacket(char* data, int datasize, char* address);
 
 //[ISB] changed to fit aligned size of network information structure. God, this is going to be an adenture...
 #define IPX_MAX_DATA_SIZE (1024)

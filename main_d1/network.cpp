@@ -135,17 +135,17 @@ void network_flush();
 void network_send_endlevel_sub(int player_num);
 void network_listen();
 void network_update_netgame(void);
-void network_dump_player(uint8_t* node, int why);
+void network_dump_player(char* node, int why);
 void network_send_objects(void);
 void network_send_rejoin_sync(int player_num);
 void network_update_netgame(void);
 void network_send_game_info(sequence_packet* their);
-void network_send_data(uint8_t* ptr, int len, int urgent);
+void network_send_data(char* ptr, int len, int urgent);
 void network_read_sync_packet(netgame_info* sp);
 void network_read_pdata_packet(frame_info* pd);
-void network_read_object_packet(uint8_t* data);
-void network_read_endlevel_packet(uint8_t* data);
-void network_send_game_info_request_to(uint8_t* address);
+void network_read_object_packet(char* data);
+void network_read_endlevel_packet(char* data);
+void network_send_game_info_request_to(char* address);
 
 void network_init(void)
 {
@@ -513,7 +513,7 @@ void network_new_player(sequence_packet* their)
 void network_welcome_player(sequence_packet* their)
 {
 	// Add a player to a game already in progress
-	uint8_t local_address[4];
+	char local_address[4];
 	int player_num;
 	int i;
 
@@ -677,9 +677,9 @@ void network_send_door_updates(void)
 	for (i = 0; i < Num_walls; i++)
 	{
 		if ((Walls[i].type == WALL_DOOR) && ((Walls[i].state == WALL_DOOR_OPENING) || (Walls[i].state == WALL_DOOR_WAITING)))
-			multi_send_door_open(Walls[i].segnum, Walls[i].sidenum);
+			multi_send_door_open(Walls[i].segnum, Walls[i].sidenum, Walls[i].flags);
 		else if ((Walls[i].type == WALL_BLASTABLE) && (Walls[i].flags & WALL_BLASTED))
-			multi_send_door_open(Walls[i].segnum, Walls[i].sidenum);
+			multi_send_door_open(Walls[i].segnum, Walls[i].sidenum, Walls[i].flags);
 		else if ((Walls[i].type == WALL_BLASTABLE) && (Walls[i].hps != WALL_HPS))
 			multi_send_hostage_door_status(i);
 	}
@@ -791,7 +791,7 @@ void network_stop_resync(sequence_packet* their)
 	}
 }
 
-uint8_t object_buffer[IPX_MAX_DATA_SIZE];
+char object_buffer[IPX_MAX_DATA_SIZE];
 
 void network_send_objects(void)
 {
@@ -925,7 +925,7 @@ void network_send_rejoin_sync(int player_num)
 {
 	int i, j;
 	int len = 0;
-	uint8_t buf[1024];
+	char buf[1024];
 
 	Players[player_num].connected = 1; // connect the new guy
 	LastPacketTime[player_num] = timer_get_approx_seconds();
@@ -1076,10 +1076,10 @@ void network_remove_player(sequence_packet* p)
 }
 
 void
-network_dump_player(uint8_t* node, int why)
+network_dump_player(char* node, int why)
 {
 	// Inform player that he was not chosen for the netgame
-	uint8_t buf[128];
+	char buf[128];
 	int len = 0;
 	sequence_packet temp;
 
@@ -1094,7 +1094,7 @@ void
 network_send_game_list_request(void)
 {
 	// Send a broadcast request for game info
-	uint8_t buf[128];
+	char buf[128];
 	int len = 0;
 	sequence_packet me;
 
@@ -1105,13 +1105,13 @@ network_send_game_list_request(void)
 	me.type = PID_GAME_LIST;
 
 	netmisc_encode_sequence_packet(buf, &len, &me);
-	NetSendBroadcastPacket((uint8_t*)& me, len);
+	NetSendBroadcastPacket((char*)& me, len);
 }
 
-void network_send_game_info_request_to(uint8_t* address)
+void network_send_game_info_request_to(char* address)
 {
 	// Send a broadcast request for game info
-	uint8_t buf[128];
+	char buf[128];
 	int len = 0;
 	sequence_packet me;
 
@@ -1122,7 +1122,7 @@ void network_send_game_info_request_to(uint8_t* address)
 	me.type = PID_GAME_LIST;
 
 	netmisc_encode_sequence_packet(buf, &len, &me);
-	NetSendInternetworkPacket((uint8_t*)&me, len, address);
+	NetSendInternetworkPacket((char*)&me, len, address);
 }
 
 void
@@ -1161,7 +1161,7 @@ network_send_endlevel_sub(int player_num)
 {
 	endlevel_info end;
 	int i, len = 0;
-	uint8_t buf[1024];
+	char buf[1024];
 
 	// Send an endlevel packet for a player
 	end.type = PID_ENDLEVEL;
@@ -1201,7 +1201,7 @@ void network_send_game_info(sequence_packet* their)
 	// Send game info to someone who requested it
 	int i, len = 0;
 	char old_type, old_status;
-	uint8_t buf[1024];
+	char buf[1024];
 
 	mprintf((0, "Sending game info.\n"));
 
@@ -1218,7 +1218,7 @@ void network_send_game_info(sequence_packet* their)
 
 	if (!their)
 	{
-		//NetSendBroadcastPacket((uint8_t*)& Netgame, sizeof(netgame_info));
+		//NetSendBroadcastPacket((char*)& Netgame, sizeof(netgame_info));
 
 		//Can't just broadcast this since all our clients are hypothetically on different ports.
 		//A mess, but it'll hopefully work. 
@@ -1242,7 +1242,7 @@ int network_send_request(void)
 	// Send a request to join a game 'Netgame'.  Returns 0 if we can join this
 	// game, non-zero if there is some problem.
 	int i, len = 0;
-	uint8_t buf[128];
+	char buf[128];
 
 	Assert(Netgame.numplayers > 0);
 
@@ -1264,12 +1264,12 @@ int network_send_request(void)
 	return i;
 }
 
-void network_process_gameinfo(uint8_t* data)
+void network_process_gameinfo(char* data)
 {
 	int i, j;
 	netgame_info newgame;
 	int len = 0;
-	uint8_t origin_address[4];
+	char origin_address[4];
 	int connected_to = -1;
 
 	//newgame = (netgame_info*)data;
@@ -1342,7 +1342,7 @@ void network_process_request(sequence_packet* their)
 		}
 }
 
-void network_process_packet(uint8_t* data, int length)
+void network_process_packet(char* data, int length)
 {
 	//sequence_packet* their = (sequence_packet*)data;
 	sequence_packet their;
@@ -1451,7 +1451,7 @@ void dump_segments()
 #endif
 
 void
-network_read_endlevel_packet(uint8_t* data)
+network_read_endlevel_packet(char* data)
 {
 	// Special packet for end of level syncing
 
@@ -1519,7 +1519,7 @@ network_verify_objects(int remote, int local)
 	return(1);
 }
 
-void network_read_object_packet(uint8_t* data)
+void network_read_object_packet(char* data)
 {
 	// Object from another net player we need to sync with
 
@@ -1988,7 +1988,7 @@ void network_read_sync_packet(netgame_info* sp)
 {
 	int i, j;
 	int connected_to = -1;
-	uint8_t origin_address[4];
+	char origin_address[4];
 
 	char temp_callsign[CALLSIGN_LEN + 1];
 
@@ -2139,7 +2139,7 @@ void network_read_sync_packet(netgame_info* sp)
 void network_send_sync(void)
 {
 	int i, j, np;
-	uint8_t buf[1024];
+	char buf[1024];
 	int len = 0;
 
 	// Randomize their starting locations...
@@ -2576,7 +2576,7 @@ menu:
 	if (Network_status != NETSTAT_PLAYING)
 	{
 		sequence_packet me;
-		uint8_t buf[128];
+		char buf[128];
 		int len = 0;
 
 		//		if (Network_status == NETSTAT_ENDLEVEL)
@@ -2829,7 +2829,7 @@ remenu:
 	return;		// look ma, we're in a game!!!
 }
 
-void network_join_game_at(uint8_t* address)
+void network_join_game_at(char* address)
 {
 	int i;
 	char menu_text[(MAX_ACTIVE_NETGAMES * 2) + 1][70];
@@ -2954,7 +2954,7 @@ void network_leave_game()
 
 void network_flush()
 {
-	uint8_t packet[IPX_MAX_DATA_SIZE];
+	char packet[IPX_MAX_DATA_SIZE];
 
 	if (!Network_active)
 		return;
@@ -2966,7 +2966,7 @@ void network_flush()
 void network_listen()
 {
 	int size;
-	uint8_t packet[IPX_MAX_DATA_SIZE];
+	char packet[IPX_MAX_DATA_SIZE];
 
 	if (!Network_active) return;
 
@@ -2980,7 +2980,7 @@ void network_listen()
 	}
 }
 
-void network_send_data(uint8_t* ptr, int len, int urgent)
+void network_send_data(char* ptr, int len, int urgent)
 {
 	char check;
 
@@ -3045,7 +3045,7 @@ fix last_timeout_check = 0;
 void network_do_frame(int force, int listen)
 {
 	int i;
-	uint8_t buf[1024];
+	char buf[1024];
 	int len = 0;
 
 	if (!(Game_mode & GM_NETWORK)) return;
@@ -3097,7 +3097,7 @@ void network_do_frame(int force, int listen)
 					netmisc_encode_frame_info(buf, &len, &MySyncPack);
 					//					mprintf((0, "sync pack is %d bytes long.\n", sizeof(frame_info)));
 					NetSendPacket(buf, len - NET_XDATA_SIZE + MySyncPack.data_size, Netgame.players[i].node, Players[i].net_address);
-					//NetSendPacket((uint8_t*)& MySyncPack, sizeof(frame_info) - NET_XDATA_SIZE + MySyncPack.data_size, Netgame.players[i].node, Players[i].net_address);
+					//NetSendPacket((char*)& MySyncPack, sizeof(frame_info) - NET_XDATA_SIZE + MySyncPack.data_size, Netgame.players[i].node, Players[i].net_address);
 				}
 			}
 			MySyncPack.data_size = 0;		// Start data over at 0 length.
@@ -3187,7 +3187,7 @@ void network_read_pdata_packet(frame_info* pd)
 		Endlevel_sequence = 1;
 		if (pd->data_size > 0) {
 			// pass pd->data to some parser function....
-			multi_process_bigdata(pd->data, pd->data_size);
+			multi_process_bigdata((char*)pd->data, pd->data_size);
 		}
 		Endlevel_sequence = old_Endlevel_sequence;
 		return;
@@ -3262,7 +3262,7 @@ void network_read_pdata_packet(frame_info* pd)
 	if (pd->data_size > 0) 
 	{
 		// pass pd->data to some parser function....
-		multi_process_bigdata(pd->data, pd->data_size);
+		multi_process_bigdata((char*)pd->data, pd->data_size);
 	}
 	//	mprintf( (0, "Got packet with %d bytes on it!\n", pd->data_size ));
 

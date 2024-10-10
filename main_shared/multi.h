@@ -156,7 +156,6 @@ void multi_send_reappear();
 void multi_send_kill(int objnum);
 void multi_send_remobj(int objnum);
 void multi_send_quit(int why);
-void multi_send_door_open(int segnum, int side,uint8_t flag);
 void multi_send_create_explosion(int player_num);
 void multi_send_controlcen_fire(vms_vector *to_target, int gun_num, int objnum);
 void multi_send_cloak(void);
@@ -172,14 +171,19 @@ void multi_send_drop_weapon (int objnum,int seed);
 void multi_send_drop_marker (int player,vms_vector position,char messagenum,char text[]);
 void multi_send_guided_info (object *miss,char);
 
+#if 1 //#ifdef BUILD_DESCENT2
+void multi_send_door_open(int segnum, int side,uint8_t flag);
+#else
+void multi_send_door_open(int segnum, int side);
+#endif
 
 void multi_endlevel_score(void);
 void multi_prep_level(void);
 int multi_endlevel(int *secret);
 int multi_menu_poll(void);
 void multi_leave_game(void);
-void multi_process_data(char *dat, int len);
-void multi_process_bigdata(char *buf, int len);		
+void multi_process_data(uint8_t *dat, int len);
+void multi_process_bigdata(char* buf, int len);		
 void multi_do_death(int objnum);
 void multi_send_message_dialog(void);
 int multi_delete_extra_objects(void);
@@ -193,7 +197,7 @@ void multi_sort_kill_list(void);
 int multi_choose_mission(int *anarchy_only);
 void multi_reset_stuff(void);
 
-void multi_send_data(char *buf, int len, int repeat);
+void multi_send_data(char* buf, int len, int repeat);
 void multi_send_got_orb(char pnum);
 
 int get_team(int pnum);
@@ -279,11 +283,11 @@ typedef struct netplayer_info
 	{
 		struct 
 		{
-			uint8_t		node[4];
+			char		node[4];
 		} ipx;
 	} network;
 	#else
-	uint8_t node[4];
+	char node[4];
 	#endif
 
 	uint8_t version_major;

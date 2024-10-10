@@ -22,8 +22,8 @@ as described in copying.txt.
 #include "platform/i_net.h"
 #include "platform/mono.h"
 
-uint8_t currentAddress[] = { 0, 0, 0, 0, 0, 0 };
-uint8_t serverAddress[] = { 0, 0, 0, 0 };
+char currentAddress[] = { 0, 0, 0, 0, 0, 0 };
+char serverAddress[] = { 0, 0, 0, 0 };
 
 SOCKET netSocket = INVALID_SOCKET;
 WSADATA socketData;
@@ -160,13 +160,13 @@ int NetChangeDefaultSocket(uint16_t socket_number)
 	return 0;
 }
 
-uint8_t* NetGetLocalAddress()
+char* NetGetLocalAddress()
 {
 	mprintf((0, "Getting IP address, it is %d.%d.%d.%d\n", currentAddress[0], currentAddress[1], currentAddress[2], currentAddress[3]));
 	return &currentAddress[0];
 }
 
-uint8_t* NetGetServerAddress()
+char* NetGetServerAddress()
 {
 	return &serverAddress[0];
 }
@@ -176,18 +176,18 @@ uint16_t NetGetCurrentPort()
 	return port;
 }
 
-void NetGetLocalTarget(uint8_t* server, uint8_t* node, uint8_t* local_target)
+void NetGetLocalTarget(char* server, char* node, char* local_target)
 {
 	//no concept of a local target, so eh.
 	//TODO: This needs to be refactored into an interface that makes more sense for UDP.
 	memcpy(local_target, node, 4);
 }
 
-uint8_t packetBuffer[IPX_MAX_DATA_SIZE];
+char packetBuffer[IPX_MAX_DATA_SIZE];
 sockaddr_in lastAddr;
 int addrSize = sizeof(lastAddr);
 
-int NetGetPacketData(uint8_t* data)
+int NetGetPacketData(char* data)
 {
 	int err;
 	int size;
@@ -207,12 +207,12 @@ int NetGetPacketData(uint8_t* data)
 	return size;
 }
 
-void NetGetLastPacketOrigin(uint8_t* addrBuf)
+void NetGetLastPacketOrigin(char* addrBuf)
 {
 	*((long*)addrBuf) = lastAddr.sin_addr.s_addr;
 }
 
-void NetSendBroadcastPacket(uint8_t* data, int datasize)
+void NetSendBroadcastPacket(char* data, int datasize)
 {
 	sockaddr_in addr = {};
 	addr.sin_family = AF_INET;
@@ -227,12 +227,12 @@ void NetSendBroadcastPacket(uint8_t* data, int datasize)
 
 //The server, address, and immediate address system isn't a great fit for this UDP nonsense, but what can I do...
 //TODO: Refactor Net API, I'll probably have to for internet connections. 
-void NetSendPacket(uint8_t* data, int datasize, uint8_t* address, uint8_t* immediate_address)
+void NetSendPacket(char* data, int datasize, char* address, char* immediate_address)
 {
 	NetSendInternetworkPacket(data, datasize, immediate_address);
 }
 
-void NetSendInternetworkPacket(uint8_t* data, int datasize, uint8_t* address)
+void NetSendInternetworkPacket(char* data, int datasize, char* address)
 {
 	sockaddr_in addr = {};
 	addr.sin_family = AF_INET;
