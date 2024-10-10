@@ -98,7 +98,7 @@ void AL_InitSource(ALuint source)
 
 int plat_init_audio()
 {
-	int i;
+	int i; 
 	ALDevice = alcOpenDevice(NULL);
 	if (ALDevice == NULL)
 	{
@@ -122,14 +122,14 @@ int plat_init_audio()
 	{
 		AL_InitSource(sourceNames[i]);
 	}
-
+	
 	if (!alIsExtensionPresent("AL_EXT_FLOAT32"))
 	{
-		Error("OpenAL implementation doesn't support floating point samples for HQ Music.\n");
+		Warning("OpenAL implementation doesn't support floating point samples for HQ Music.\n");
 	}
 	if (!alIsExtensionPresent("AL_SOFT_loop_points"))
 	{
-		Error("OpenAL implementation doesn't support OpenAL soft loop points.\n");
+		Warning("OpenAL implementation doesn't support OpenAL soft loop points.\n");
 	}
 	AL_ErrorCheck("Checking exts");
 

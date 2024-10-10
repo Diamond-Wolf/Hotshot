@@ -126,6 +126,8 @@ workspace "Hotshot"
 			"_WIN32"
 		}
 
+		architecture "x86_64" --isn't this supposed to set the architecture to x86_64? Not "default" which is just regular x86?
+
 	filter { "system:bsd or linux or macosx" }
 		files {
 			"platform/unix/**.cpp",
@@ -149,22 +151,50 @@ workspace "Hotshot"
 	
 	libdirs {
 		sdl2 .. "/lib",
+		sdl2 .. "/lib/x64",
 		openal .. "/lib",
+		openal .. "/libs/Win64",
 		fluidsynth .. "/lib"
 	}
 	
 	includedirs {
+		sdl2 .. "/include",
 		sdl2 .. "/include/SDL2",
 		openal .. "/include",
 		fluidsynth .. "/include",
 	}
 	
 	links {
-		"fluidsynth",
-		"openal",
 		"sdl2",
 		"sdl2main"
 	}
+	
+	filter { "system:not windows" }
+		links {
+			"fluidsynth",
+			"openal",
+		}
+	
+	filter { "system:windows" }
+
+		links "OpenAL32"
+
+		--is it bad when you have to tell the engine to override itself to use the
+		--right file, rather than something simple like specifying the right file?
+		--AND IT DOESNT EVEN WORK
+		--[[premake.override(premake.tools.msc, "getLibraryExtensions", 
+			function(oldfn)
+				local extensions = oldfn()
+				extensions["a"] = true
+				extensions["lib"] = false
+				return extensions
+			end
+		)
+			
+		links "libfluidsynth"
+		]]
+
+	filter {}
 	
 	defines {
 		"USE_SDL",

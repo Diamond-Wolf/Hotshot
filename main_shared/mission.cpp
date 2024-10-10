@@ -234,10 +234,12 @@ int ml_sort_func(mle *e0,mle *e1)
 	return _stricmp(e0->mission_name,e1->mission_name);
 }
 
-extern char CDROM_dir[];
 extern int HoardEquipped();
 
-#define BUILTIN_MISSION "d2.mn2"
+#ifdef BUILD_DESCENT2
+extern char CDROM_dir[];
+# define BUILTIN_MISSION "d2.mn2"
+#endif
 
 //returns 1 if file read ok, else 0
 int read_mission_file(char *filename,int count,int location)
@@ -258,11 +260,13 @@ int read_mission_file(char *filename,int count,int location)
 			get_full_file_path(filename2, filename, CHOCOLATE_MISSIONS_DIR);
 			break;
 
+#ifdef BUILD_DESCENT2
 		case ML_CDROM:
 			//This isn't really implemented at this point
 			songs_stop_redbook();
 			Int3();
 			break;
+#endif
 
 		default:
 			Int3();
@@ -280,10 +284,12 @@ int read_mission_file(char *filename,int count,int location)
 			strcpy(filename2,MISSION_DIR);	
 			break;
 
+#ifdef BUILD_DESCENT2
 		case ML_CDROM:			
 			songs_stop_redbook();		//so we can read from the CD
 			strcpy(filename2,CDROM_dir);		
 			break;
+#endif
 
 		default:					
 			Int3();		//fall through
@@ -363,8 +369,6 @@ int read_mission_file(char *filename,int count,int location)
 //fills in the global list of missions.  Returns the number of missions
 //in the list.  If anarchy_mode set, don't include non-anarchy levels.
 //if there is only one mission, this function will call load_mission on it.
-
-extern char CDROM_dir[];
 
 int build_mission_list(int anarchy_mode)
 {
@@ -545,10 +549,12 @@ int load_mission(int mission_num)
 			get_full_file_path(buf, temp_short_filename, CHOCOLATE_MISSIONS_DIR);
 			break;
 
+#ifdef BUILD_DESCENT2
 		case ML_CDROM:
 			//This isn't really implemented at this point
 			Int3();
 			break;
+#endif
 
 		default:
 			Int3();
@@ -560,7 +566,9 @@ int load_mission(int mission_num)
 #else
 	switch (Mission_list[mission_num].location) {
 		case ML_MISSIONDIR:	strcpy(buf,MISSION_DIR);	break;
+#ifdef BUILD_DESCENT2
 		case ML_CDROM:			strcpy(buf,CDROM_dir);		break;
+#endif
 		default:					Int3();							//fall through
 		case ML_CURDIR:		strcpy(buf,"");				break;
 	}

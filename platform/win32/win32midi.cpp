@@ -6,8 +6,10 @@ as described in copying.txt.
 */
 
 #include <stdlib.h>
-#include "win32midi.h"
 #include "platform/mono.h"
+
+#undef UNICODE
+#include "win32midi.h"
 
 MidiWin32Synth::MidiWin32Synth()
 {

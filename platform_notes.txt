@@ -1,4 +1,14 @@
-Note: Any working installs for Chocolate Descent can be simply copied.
+Note: Any working installs for Chocolate Descent can be simply copied, though
+there are no guarantees that player or save files will transfer perfectly.
+
+-------------------------------------------------------------------------------
+Windows platform notes
+-------------------------------------------------------------------------------
+
+Currently, Hotshot only builds through Visual Studio. Due to a bug in Premake,
+you may need to manually change Hotshot to build on x64. To do this, go to each
+project's settings, go to Advanced under Configuration Properties, and change
+Preferred Build Tool Architecture from default to 64-bit (x64).
 
 -------------------------------------------------------------------------------
 macOS platform notes

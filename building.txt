@@ -17,3 +17,5 @@ Additional options are available:
 	swap     - build both games with the other game's texmapper
 
 After running Premake, navigate to the build directory. Run make to build both games in debug configuration. You can also specify config=release for an optimized release build, or independently make Hotshot-1 or Hotshot-2 to build just one game.
+
+See platform_notes.txt for further info.

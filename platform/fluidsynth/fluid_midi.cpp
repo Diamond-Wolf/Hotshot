@@ -14,6 +14,10 @@ as described in copying.txt.
 #include "fluid_midi.h"
 #include "platform/s_midi.h"
 
+#ifdef _WIN32
+# pragma comment(lib, "libfluidsynth.dll.a") //As nice as premake is, it doesn't play nice with anything non-standard
+#endif
+
 #ifdef USE_FLUIDSYNTH
 
 MidiFluidSynth::MidiFluidSynth()
