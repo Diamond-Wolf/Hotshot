@@ -10,21 +10,30 @@ CONTAINED HEREIN FOR REVENUE-BEARING PURPOSES.  THE END-USER UNDERSTANDS
 AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstddef>
 #include <sys/types.h>
-#include <dirent.h>
+//#include <dirent.h>
+
+#include <string>
+#include <filesystem>
+#include <cstring>
+
 #include "platform/mono.h"
 #include "platform/findfile.h"
 #include "platform/posixstub.h"
 #include "platform/platform_filesys.h"
 
-char searchStr[13];
-DIR *currentDir;
+namespace fs = std::filesystem;
 
-int	FileFindFirst(const char* search_str, FILEFINDSTRUCT* ffstruct)
-{
+char searchStr[13];
+//DIR *currentDir;
+//fs::path currentPath;
+fs::directory_iterator currentDir;
+fs::directory_iterator end;
+
+int	FileFindFirst(const char* search_str, FILEFINDSTRUCT* ffstruct) {
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char dir[CHOCOLATE_MAX_FILE_PATH_SIZE];
 	char temp_search_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -63,63 +72,62 @@ int	FileFindFirst(const char* search_str, FILEFINDSTRUCT* ffstruct)
 		dir[0] = '.';
 #endif
 	}
-	//mprintf((0, "FindFileFirst: Opening %s\n", dir));
-	currentDir = opendir(dir);
-	if (!currentDir) return 1;
-	//It opened, so get search string
-	search = strrchr(search_str, '*');
-	strncpy(searchStr, search+2, 12);
-	//mprintf((0, "FindFileFirst: Search is %s\n", searchStr));
 
-	return FileFindNext(ffstruct);
-}
-
-int	FileFindNext(FILEFINDSTRUCT* ffstruct)
-{
-	char name[13];
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	char fname[CHOCOLATE_MAX_FILE_PATH_SIZE];
-	char ext[CHOCOLATE_MAX_FILE_PATH_SIZE];
-#else
-	char fname[256];
-	char ext[256];
-#endif
-	struct dirent *entry;
-	struct stat stats;
-	if (!currentDir) return 1;
-	entry = readdir(currentDir);
-	while (entry != NULL)
-	{
-		//What a mess. ugh
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-		memset(fname, 0, CHOCOLATE_MAX_FILE_PATH_SIZE);
-		memset(ext, 0, CHOCOLATE_MAX_FILE_PATH_SIZE);
-#else
-		memset(fname, 0, 256);
-		memset(ext, 0, 256);
-#endif
-		_splitpath(entry->d_name, NULL, NULL, fname, ext);
-		if (strlen(fname) + strlen(ext) + 1 < 13) //Only care about entries that are short enough. This is to prevent problems with Descent's limitation of 8.3 character filenames.
-		{
-			if (!strncmp(ext, searchStr, 3))
-			{
-				//mprintf((0, "got %s (%s, %s)\n", entry->d_name, fname, ext));
-				stat(entry->d_name, &stats);
-				ffstruct->size = static_cast<uint32_t>(stats.st_size);
-				strncpy(ffstruct->name, entry->d_name, FF_PATHSIZE);
-				return 0;
-			}
-			
-		}
-		entry = readdir(currentDir);
+	if (!(fs::exists(dir) && fs::is_directory(dir))) {
+		printf("Checking non-directory %s", dir);
+		return 1;
 	}
 
-	return 1;
+	currentDir = fs::directory_iterator(dir);
+
+	search = strrchr(search_str, '*');
+	strncpy(searchStr, search+2, 12);
+
+	return FileFindNext(ffstruct);
+
 }
 
-int	FileFindClose(void)
-{
-	if (!currentDir) return 0;
-	closedir(currentDir);
-	return 0;
+inline std::string AsLower(const std::string& s) {
+	std::string s2 = s;
+	for (char& c : s2)
+		c = std::tolower(c);
+
+	return s2;
 }
+
+inline bool CompareExt(const fs::path& path, const std::string& comp) {
+	std::string check = path.extension().string();
+	if (check.length() == 0)
+		return false;
+
+	if (check.c_str()[0] == '.')
+		check = check.substr(1);
+
+	return AsLower(check) == AsLower(comp);
+}
+
+int	FileFindNext(FILEFINDSTRUCT* ffstruct) {
+	
+	while (currentDir != end) {
+
+		auto& entry = *currentDir;
+		currentDir++;
+
+		auto path = entry.path();
+
+		if (path.extension().string().length() == 0)
+			continue;
+
+		if (CompareExt(path, searchStr)) {
+			printf("Found");
+			strncpy(ffstruct->name, path.filename().c_str(), FF_PATHSIZE);
+			ffstruct->size = static_cast<uint32_t>(entry.file_size());
+			return 0;
+		}
+	};
+
+	return 1;
+
+}
+
+int	FileFindClose(void) {}
