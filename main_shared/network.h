@@ -19,13 +19,15 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "multi.h"
 
 // The default socket to use.
-#ifdef BUILD_DESCENT2
+/*#ifdef BUILD_DESCENT2
 #define IPX_DEFAULT_SOCKET 0x5130		// 0x869d
 #else
 #define IPX_DEFAULT_SOCKET 0x5100		// 0x869d
-#endif
+#endif*/
 
-#define NETSTAT_MENU					0
+#define IPX_DEFAULT_SOCKET 0x5200
+
+#define NETSTAT_MENU				0
 #define NETSTAT_PLAYING				1
 #define NETSTAT_BROWSING			2
 #define NETSTAT_WAITING				3

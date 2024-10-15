@@ -119,11 +119,11 @@ int checkmuldiv(fix* r, fix a, fix b, fix c);
 
 //draws a bitmap with the specified 3d width & height 
 //returns 1 if off screen, 0 if drew
-#ifdef BUILD_DESCENT2
+//#ifdef BUILD_DESCENT2
 dbool g3_draw_bitmap(vms_vector* pos, fix width, fix height, grs_bitmap* bm, int orientation)
-#else
+/*#else
 dbool g3_draw_bitmap(vms_vector* pos, fix width, fix height, grs_bitmap* bm)
-#endif
+#endif*/
 {
 	g3s_point pnt;
 	fix t, w, h;
@@ -151,11 +151,7 @@ dbool g3_draw_bitmap(vms_vector* pos, fix width, fix height, grs_bitmap* bm)
 	blob_vertices[1].x = blob_vertices[2].x = pnt.p3_sx + w;
 	blob_vertices[2].y = pnt.p3_sy + h;
 
-#ifdef BUILD_DESCENT2
 	scale_bitmap(bm, blob_vertices, orientation);
-#else
-	scale_bitmap(bm, blob_vertices);
-#endif
 
 	return 0;
 }

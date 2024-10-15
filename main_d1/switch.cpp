@@ -141,7 +141,7 @@ void do_il_off(int8_t trigger_num)
 	}
 }
 
-int check_trigger_sub(int trigger_num, int pnum)
+int check_trigger_sub(int trigger_num, int pnum, int shot)
 {
 	if (pnum == Player_num) 
 	{
@@ -213,7 +213,7 @@ int check_trigger_sub(int trigger_num, int pnum)
 
 //-----------------------------------------------------------------
 // Checks for a trigger whenever an object hits a trigger side.
-void check_trigger(segment* seg, short side, short objnum)
+void check_trigger(segment* seg, short side, short objnum, int shot)
 {
 	int wall_num, trigger_num, ctrigger_num;
 	segment* csegp;
@@ -238,7 +238,7 @@ void check_trigger(segment* seg, short side, short objnum)
 		if (trigger_num == -1)
 			return;
 
-		if (check_trigger_sub(trigger_num, Player_num))
+		if (check_trigger_sub(trigger_num, Player_num, shot))
 			return;
 
 		if (Triggers[trigger_num].flags & TRIGGER_ONE_SHOT) 

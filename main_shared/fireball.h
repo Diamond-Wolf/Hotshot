@@ -42,11 +42,11 @@ object *object_create_badass_explosion(object *objp, short segnum,
 
 //blows up a badass weapon, creating the badass explosion
 //return the explosion object
-#ifdef BUILD_DESCENT2
+//#ifdef BUILD_DESCENT2
 object *explode_badass_weapon(object *obj,vms_vector *pos);
-#else
+/*#else
 object *explode_badass_weapon(object *obj);
-#endif
+#endif*/
 
 //blows up the player with a badass explosion
 //return the explosion object

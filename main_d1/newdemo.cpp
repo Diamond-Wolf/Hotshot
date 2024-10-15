@@ -1635,7 +1635,7 @@ int newdemo_read_frame_information()
 			nd_read_int(&objnum);
 			if (nd_bad_read) { done = -1; break; }
 			if (Newdemo_vcr_state != ND_STATE_PAUSED)
-				check_trigger(&Segments[segnum], side, objnum);
+				check_trigger(&Segments[segnum], side, objnum, false);
 			break;
 
 		case ND_EVENT_HOSTAGE_RESCUED: {

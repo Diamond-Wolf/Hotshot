@@ -41,7 +41,7 @@ newoption {
 workspace "Hotshot"
 	configurations {"Debug", "Release"}
 	language "C++"
-	cppdialect "C++14"
+	cppdialect "C++20"
 	kind "WindowedApp"
 	location "./build"
 	includedirs "."
@@ -220,7 +220,8 @@ project "Hotshot-1"
 
 	files {
 		"2d/font.cpp",
-		"2d/scale.cpp",
+		--"2d/scale.cpp",
+		"2d/scale_d2.cpp",
 		"main_d1/*.cpp",
 		"main_d1/*.h"
 	}

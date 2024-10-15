@@ -46,11 +46,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define OBJ_COOP		14		//a cooperative player object.
 #define OBJ_MARKER	15		//a map marker
 // WARNING!! If you add a type here, add its name to Object_type_names in object.c
-#ifdef BUILD_DESCENT2
-# define MAX_OBJECT_TYPES	16
-#else
-# define MAX_OBJECT_TYPES	15
-#endif
+
+#define MAX_OBJECT_TYPES 16
 
 //Result types
 #define RESULT_NOTHING	0		//Ignore this collision

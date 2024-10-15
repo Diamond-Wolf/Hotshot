@@ -1740,7 +1740,7 @@ multi_do_trigger(char* buf)
 		Int3(); // Illegal trigger number in multiplayer
 		return;
 	}
-	check_trigger_sub(trigger, pnum);
+	check_trigger_sub(trigger, pnum, false);
 }
 
 void multi_do_hostage_door_status(char* buf)

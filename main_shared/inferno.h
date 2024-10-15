@@ -19,6 +19,18 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/types.h"
 
+enum GameMode {
+	GM_DESCENT_1,
+	GM_DESCENT_2
+};
+
+inline GameMode currentGame =
+#ifdef BUILD_DESCENT1
+	GM_DESCENT_1;
+#else
+	GM_DESCENT_2;
+#endif
+
 //the maximum length of a filename
 #define FILENAME_LEN 13
 

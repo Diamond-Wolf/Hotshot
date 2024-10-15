@@ -115,6 +115,7 @@ char	Object_type_names[MAX_OBJECT_TYPES][9] = {
 	"GHOST   ",
 	"LIGHT   ",
 	"COOP    ",
+	"MARKER  ",
 };
 #endif
 
@@ -150,11 +151,11 @@ void draw_object_blob(object* obj, bitmap_index bmi)
 
 	if (bm->bm_w > bm->bm_h)
 
-		g3_draw_bitmap(&obj->pos, obj->size, fixmuldiv(obj->size, bm->bm_h, bm->bm_w), bm);
+		g3_draw_bitmap(&obj->pos, obj->size, fixmuldiv(obj->size, bm->bm_h, bm->bm_w), bm, 0);
 
 	else
 
-		g3_draw_bitmap(&obj->pos, fixmuldiv(obj->size, bm->bm_w, bm->bm_h), obj->size, bm);
+		g3_draw_bitmap(&obj->pos, fixmuldiv(obj->size, bm->bm_w, bm->bm_h), obj->size, bm, 0);
 
 }
 
@@ -1690,7 +1691,7 @@ void object_move_one(object* obj)
 	if (obj->lifeleft < 0) {		// We died of old age
 		obj->flags |= OF_SHOULD_BE_DEAD;
 		if (Weapon_info[obj->id].damage_radius)
-			explode_badass_weapon(obj);
+			explode_badass_weapon(obj, &obj->pos);
 	}
 
 	if (obj->type == OBJ_NONE || obj->flags & OF_SHOULD_BE_DEAD)
@@ -1713,7 +1714,7 @@ void object_move_one(object* obj)
 			for (i = 0; i < n_phys_segs - 1; i++) {
 				connect_side = find_connect_side(&Segments[phys_seglist[i + 1]], &Segments[phys_seglist[i]]);
 				if (connect_side != -1)
-					check_trigger(&Segments[phys_seglist[i]], connect_side, obj - Objects);
+					check_trigger(&Segments[phys_seglist[i]], connect_side, obj - Objects, false);
 				//check_trigger(&Segments[previous_segment], connect_side, obj-Objects);
 #ifndef NDEBUG
 				else {	// segments are not directly connected, so do binary subdivision until you find connected segments.

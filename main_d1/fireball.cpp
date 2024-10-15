@@ -197,7 +197,7 @@ object* object_create_badass_explosion(object* objp, short segnum, vms_vector* p
 
 //blows up a badass weapon, creating the badass explosion
 //return the explosion object
-object* explode_badass_weapon(object* obj)
+object* explode_badass_weapon(object* obj, vms_vector* pos)
 {
 	weapon_info* wi = &Weapon_info[obj->id];
 
