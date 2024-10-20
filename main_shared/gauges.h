@@ -20,10 +20,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 //from gauges.c
 
+#define MAX_GAUGE_BMS_D1 80
+#define MAX_GAUGE_BMS_D2 100
+
 #ifdef BUILD_DESCENT2
-# define MAX_GAUGE_BMS 100	//	increased from 56 to 80 by a very unhappy MK on 10/24/94.
+# define MAX_GAUGE_BMS MAX_GAUGE_BMS_D2
 #else
-# define MAX_GAUGE_BMS 80	//	increased from 56 to 80 by a very unhappy MK on 10/24/94.
+# define MAX_GAUGE_BMS MAX_GAUGE_BMS_D1
 #endif
 
 #ifdef BUILD_DESCENT1

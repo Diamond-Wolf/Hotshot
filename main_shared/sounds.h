@@ -137,10 +137,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define SOUND_OPPONENT_HAS_SCORED					87
 
 //--------------------------------------------------------------
+
+#define MAX_SOUNDS_D1 250
+#define MAX_SOUNDS_D2 254 //bad to have sound 255!
+
 #ifdef BUILD_DESCENT2
-# define MAX_SOUNDS 	254		//bad to have sound 255!
+# define MAX_SOUNDS MAX_SOUNDS_D2
 #else
-# define MAX_SOUNDS     250
+# define MAX_SOUNDS MAX_SOUNDS_D1
 #endif
 
 //I think it would be nice to have a scrape sound... 

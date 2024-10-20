@@ -127,10 +127,13 @@ typedef struct robot_info
 
 } robot_info;
 
+#define MAX_ROBOT_TYPES_D1 30
+#define MAX_ROBOT_TYPES_D2 85
+
 #ifdef BUILD_DESCENT2
-# define MAX_ROBOT_TYPES	85			// maximum number of robot types
+# define MAX_ROBOT_TYPES MAX_ROBOT_TYPES_D2
 #else
-# define MAX_ROBOT_TYPES	30
+# define MAX_ROBOT_TYPES MAX_ROBOT_TYPES_D1
 #endif
 
 #define	ROBOT_NAME_LENGTH	16
@@ -145,10 +148,14 @@ extern int N_robot_types;		// Number of robot types.  We used to assume this was
 #endif
 
 //test data for one robot
+
+#define MAX_ROBOT_JOINTS_D1 600
+#define MAX_ROBOT_JOINTS_D2 1600
+
 #ifdef BUILD_DESCENT2
-# define MAX_ROBOT_JOINTS 1600
+# define MAX_ROBOT_JOINTS MAX_ROBOT_JOINTS_D2
 #else
-# define MAX_ROBOT_JOINTS 600
+# define MAX_ROBOT_JOINTS MAX_ROBOT_JOINTS_D1
 #endif
 
 #ifdef BUILD_DESCENT1

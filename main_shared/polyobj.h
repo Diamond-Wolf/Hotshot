@@ -20,10 +20,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "piggy.h"
 
+#define MAX_POLYGON_MODELS_D1 85
+#define MAX_POLYGON_MODELS_D2 200
+
 #ifdef BUILD_DESCENT2
-# define MAX_POLYGON_MODELS 200
+# define MAX_POLYGON_MODELS MAX_POLYGON_MODELS_D2
 #else
-# define MAX_POLYGON_MODELS 85
+# define MAX_POLYGON_MODELS MAX_POLYGON_MODELS_D1
 #endif
 
 //used to describe a polygon model
@@ -79,10 +82,13 @@ int read_model_guns(char *filename,vms_vector *gun_points, vms_vector *gun_dirs,
 //canvas.
 void draw_model_picture(int mn,vms_angvec *orient_angles);
 
+#define MAX_POLYOBJ_TEXTURES_D1 50
+#define MAX_POLYOBJ_TEXTURES_D2 100
+
 #ifdef BUILD_DESCENT2
-# define MAX_POLYOBJ_TEXTURES 100
+# define MAX_POLYOBJ_TEXTURES MAX_POLYOBJ_TEXTURES_D2
 #else
-# define MAX_POLYOBJ_TEXTURES 50
+# define MAX_POLYOBJ_TEXTURES MAX_POLYOBJ_TEXTURES_D1
 #endif
 
 extern grs_bitmap *texture_list[MAX_POLYOBJ_TEXTURES];

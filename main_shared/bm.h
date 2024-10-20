@@ -124,10 +124,13 @@ extern int8_t	ObjType[MAX_OBJTYPE];		// Type of an object, such as Robot, eg if 
 extern int8_t	ObjId[MAX_OBJTYPE];			// ID of a robot, within its class, eg if ObjType[11] == 3, then object #11 is the third robot
 extern fix	ObjStrength[MAX_OBJTYPE];	// initial strength of each object
 
+#define MAX_OBJ_BITMAPS_D1 210
+#define MAX_OBJ_BITMAPS_D2 600
+
 #ifdef BUILD_DESCENT2
-# define MAX_OBJ_BITMAPS				600
+# define MAX_OBJ_BITMAPS MAX_OBJ_BITMAPS_D2
 #else
-# define MAX_OBJ_BITMAPS				210
+# define MAX_OBJ_BITMAPS MAX_OBJ_BITMAPS_D1
 #endif
 
 #ifdef BUILD_DESCENT1

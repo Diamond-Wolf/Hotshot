@@ -836,25 +836,25 @@ void bm_read_all(CFILE* fp)
 	read_vclip_info(fp, READ_LIMIT(VCLIP_MAXNUM_D1, Num_vclips), 0);
 
 	auto Num_effects = cfile_read_int(fp);
-	read_effect_info(fp, READ_LIMIT(MAX_EFFECTS, Num_effects), 0);
+	read_effect_info(fp, READ_LIMIT(MAX_EFFECTS_D1, Num_effects), 0);
 
 	auto Num_wall_anims = cfile_read_int(fp);
-	read_wallanim_info(fp, READ_LIMIT(MAX_WALL_ANIMS, Num_wall_anims), 0);
+	read_wallanim_info(fp, READ_LIMIT(MAX_WALL_ANIMS_D1, Num_wall_anims), 0);
 
 	auto N_robot_types = cfile_read_int(fp);
-	read_robot_info(fp, READ_LIMIT(MAX_ROBOT_TYPES, N_robot_types), 0);
+	read_robot_info(fp, READ_LIMIT(MAX_ROBOT_TYPES_D1, N_robot_types), 0);
 
 	auto N_robot_joints = cfile_read_int(fp);
-	read_robot_joint_info(fp, READ_LIMIT(MAX_ROBOT_JOINTS, N_robot_joints), 0);
+	read_robot_joint_info(fp, READ_LIMIT(MAX_ROBOT_JOINTS_D1, N_robot_joints), 0);
 
 	auto N_weapon_types = cfile_read_int(fp);
-	read_weapon_info(fp, READ_LIMIT(MAX_WEAPON_TYPES, N_weapon_types), 0);
+	read_weapon_info(fp, READ_LIMIT(MAX_WEAPON_TYPES_D1, N_weapon_types), 0);
 
 	auto N_powerup_types = cfile_read_int(fp);
-	read_powerup_info(fp, READ_LIMIT(MAX_POWERUP_TYPES, N_powerup_types), 0);
+	read_powerup_info(fp, READ_LIMIT(MAX_POWERUP_TYPES_D1, N_powerup_types), 0);
 
 	auto N_polygon_models = cfile_read_int(fp);
-	read_polygon_models(fp, READ_LIMIT(MAX_POLYGON_MODELS, N_polygon_models), 0);
+	read_polygon_models(fp, READ_LIMIT(MAX_POLYGON_MODELS_D1, N_polygon_models), 0);
 
 	for (i = 0; i < N_polygon_models; i++)
 	{
@@ -872,17 +872,17 @@ void bm_read_all(CFILE* fp)
 
 	if (currentGame == G_DESCENT_1) {
 
-		for (i = 0; i < MAX_GAUGE_BMS; i++)
+		for (i = 0; i < MAX_GAUGE_BMS_D1; i++)
 			activeBMTable->gauges.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
 
-		for (i = 0; i < MAX_POLYGON_MODELS; i++)
+		for (i = 0; i < MAX_POLYGON_MODELS_D1; i++)
 			activeBMTable->dyingModels.push_back(cfile_read_int(fp));
-		for (i = 0; i < MAX_POLYGON_MODELS; i++)
+		for (i = 0; i < MAX_POLYGON_MODELS_D1; i++)
 			activeBMTable->deadModels.push_back(cfile_read_int(fp));
 
-		for (i = 0; i < MAX_OBJ_BITMAPS; i++)
+		for (i = 0; i < MAX_OBJ_BITMAPS_D1; i++)
 			activeBMTable->objectBitmaps.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
-		for (i = 0; i < MAX_OBJ_BITMAPS; i++)
+		for (i = 0; i < MAX_OBJ_BITMAPS_D1; i++)
 			activeBMTable->objectBitmapPointers.push_back((uint16_t)cfile_read_short(fp));
 
 	} else {
@@ -894,8 +894,8 @@ void bm_read_all(CFILE* fp)
 			activeBMTable->deadModels.push_back(cfile_read_int(fp));
 
 		t = cfile_read_int(fp);
-		if (t > MAX_GAUGE_BMS)
-			Error("Too many gauges present in hamfile. Got %d, max %d.", t, MAX_GAUGE_BMS);
+		//if (t > MAX_GAUGE_BMS)
+		//	Error("Too many gauges present in hamfile. Got %d, max %d.", t, MAX_GAUGE_BMS);
 		for (i = 0; i < t; i++)
 		{
 			activeBMTable->gauges.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
@@ -936,28 +936,28 @@ void bm_read_all(CFILE* fp)
 
 	if (currentGame == G_DESCENT_1) {
 
-		cfread(sounds, sizeof(uint8_t), MAX_SOUNDS, fp);
-		cfread(altSounds, sizeof(uint8_t), MAX_SOUNDS, fp);
+		cfread(sounds, sizeof(uint8_t), MAX_SOUNDS_D1, fp);
+		cfread(altSounds, sizeof(uint8_t), MAX_SOUNDS_D1, fp);
 
-		activeBMTable->sounds.assign(sounds, sounds + MAX_SOUNDS);
-		activeBMTable->altSounds.assign(altSounds, altSounds + MAX_SOUNDS);
+		activeBMTable->sounds.assign(sounds, sounds + MAX_SOUNDS_D1);
+		activeBMTable->altSounds.assign(altSounds, altSounds + MAX_SOUNDS_D1);
 
 		Num_total_object_types = cfile_read_int(fp); 
-		cfread(ObjType, sizeof(int8_t), MAX_OBJTYPE, fp); //Is this actually used anywhere?
-		cfread(ObjId, sizeof(int8_t), MAX_OBJTYPE, fp);
-		for (i = 0; i < MAX_OBJTYPE; i++)
+		cfread(ObjType, sizeof(int8_t), MAX_OBJTYPE_D1, fp); //Is this actually used anywhere?
+		cfread(ObjId, sizeof(int8_t), MAX_OBJTYPE_D1, fp);
+		for (i = 0; i < MAX_OBJTYPE_D1; i++)
 			ObjStrength[i] = cfile_read_fix(fp);
 
 		activeBMTable->firstMultiBitmapNum = cfile_read_int(fp);
 		auto N_controlcen_guns = cfile_read_int(fp);
 
-		for (i = 0; i < MAX_CONTROLCEN_GUNS; i++) 
+		for (i = 0; i < MAX_CONTROLCEN_GUNS_D1; i++) 
 		{
 			activeBMTable->reactorGunPos[i].x = cfile_read_fix(fp);
 			activeBMTable->reactorGunPos[i].y = cfile_read_fix(fp);
 			activeBMTable->reactorGunPos[i].z = cfile_read_fix(fp);
 		}
-		for (i = 0; i < MAX_CONTROLCEN_GUNS; i++) 
+		for (i = 0; i < MAX_CONTROLCEN_GUNS_D1; i++) 
 		{
 			activeBMTable->reactorGunDirs[i].x = cfile_read_fix(fp);
 			activeBMTable->reactorGunDirs[i].y = cfile_read_fix(fp);

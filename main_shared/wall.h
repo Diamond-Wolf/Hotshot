@@ -20,15 +20,23 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "object.h"
 #include "switch.h"
 
+#define MAX_WALLS_D1		175
+#define MAX_WALL_ANIMS_D1	30
+#define MAX_DOORS_D1		50
+
+#define MAX_WALLS_D2		254
+#define MAX_WALL_ANIMS_D2	60
+#define MAX_DOORS_D2		90
+
 //#include "vclip.h"
 #ifdef BUILD_DESCENT2 
-# define MAX_WALLS					254	// Maximum number of walls
-# define MAX_WALL_ANIMS			60		// Maximum different types of doors
-# define MAX_DOORS					90		// Maximum number of open doors
+# define MAX_WALLS MAX_WALLS_D2	// Maximum number of walls
+# define MAX_WALL_ANIMS MAX_WALL_ANIMS_D2	// Maximum different types of doors
+# define MAX_DOORS MAX_DOORS_D2	// Maximum number of open doors
 #else
-# define MAX_WALLS					175	// Maximum number of walls
-# define MAX_WALL_ANIMS			30		// Maximum different types of doors
-# define MAX_DOORS					50		// Maximum number of open doors
+# define MAX_WALLS MAX_WALLS_D1	// Maximum number of walls
+# define MAX_WALL_ANIMS MAX_WALL_ANIMS_D1	// Maximum different types of doors
+# define MAX_DOORS MAX_DOORS_D1	// Maximum number of open doors
 #endif
 
 // Various wall types.

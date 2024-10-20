@@ -23,17 +23,21 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #define	MAX_CONTROLCEN_LINKS		10
 #define CONTROLCEN_WEAPON_NUM		6
+
+#define MAX_CONTROLCEN_GUNS_D1		4
+#define MAX_CONTROLCEN_GUNS_D2		8
+
 #ifdef BUILD_DESCENT2
-# define MAX_CONTROLCEN_GUNS 		8
+# define MAX_CONTROLCEN_GUNS MAX_CONTROLCEN_GUNS_D2
 #else
-# define MAX_CONTROLCEN_GUNS		4
+# define MAX_CONTROLCEN_GUNS MAX_CONTROLCEN_GUNS_D1
 #endif
 
 #ifdef BUILD_DESCENT2 //D1 defines it elsewhere
 typedef struct control_center_triggers
 {
 	short		num_links;
-	short 	seg[MAX_CONTROLCEN_LINKS];
+	short 		seg[MAX_CONTROLCEN_LINKS];
 	short		side[MAX_CONTROLCEN_LINKS];
 } control_center_triggers;
 #else

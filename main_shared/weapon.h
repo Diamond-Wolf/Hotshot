@@ -139,10 +139,13 @@ typedef struct weapon_info {
 #define WEAPON_TYPE_CANNON_BALL	2
 #define WEAPON_TYPE_MISSILE		3
 
+#define MAX_WEAPON_TYPES_D1 30
+#define MAX_WEAPON_TYPES_D2 70
+
 #ifdef BUILD_DESCENT2
-# define MAX_WEAPON_TYPES 			70
+# define MAX_WEAPON_TYPES MAX_WEAPON_TYPES_D2
 #else
-# define MAX_WEAPON_TYPES 			30
+# define MAX_WEAPON_TYPES MAX_WEAPON_TYPES_D1
 #endif
 
 #define WEAPON_RENDER_NONE			-1
