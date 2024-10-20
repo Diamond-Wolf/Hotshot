@@ -88,16 +88,16 @@ void collide_robot_and_wall(object* robot, fix hitspeed, short hitseg, short hit
 {
 	ai_local* ailp = &Ai_local_info[robot - Objects];
 
-	if ((robot->id == ROBOT_BRAIN) || (robot->ctype.ai_info.behavior == AIB_RUN_FROM) || (Robot_info[robot->id].companion == 1) || (robot->ctype.ai_info.behavior == AIB_SNIPE)) {
+	if ((robot->id == ROBOT_BRAIN) || (robot->ctype.ai_info.behavior == AIB_RUN_FROM) || (activeBMTable->robots[robot->id].companion == 1) || (robot->ctype.ai_info.behavior == AIB_SNIPE)) {
 		int	wall_num = Segments[hitseg].sides[hitwall].wall_num;
 		if (wall_num != -1) {
 			if ((Walls[wall_num].type == WALL_DOOR) && (Walls[wall_num].keys == KEY_NONE) && (Walls[wall_num].state == WALL_DOOR_CLOSED) && !(Walls[wall_num].flags & WALL_DOOR_LOCKED)) {
 				// -- mprintf((0, "Trying to open door at segment %i, side %i\n", hitseg, hitwall));
 				wall_open_door(&Segments[hitseg], hitwall);
 				// -- Changed from this, 10/19/95, MK: Don't want buddy getting stranded from player
-				//-- } else if ((Robot_info[robot->id].companion == 1) && (Walls[wall_num].type == WALL_DOOR) && (Walls[wall_num].keys != KEY_NONE) && (Walls[wall_num].state == WALL_DOOR_CLOSED) && !(Walls[wall_num].flags & WALL_DOOR_LOCKED)) {
+				//-- } else if ((activeBMTable->robots[robot->id].companion == 1) && (Walls[wall_num].type == WALL_DOOR) && (Walls[wall_num].keys != KEY_NONE) && (Walls[wall_num].state == WALL_DOOR_CLOSED) && !(Walls[wall_num].flags & WALL_DOOR_LOCKED)) {
 			}
-			else if ((Robot_info[robot->id].companion == 1) && (Walls[wall_num].type == WALL_DOOR)) {
+			else if ((activeBMTable->robots[robot->id].companion == 1) && (Walls[wall_num].type == WALL_DOOR)) {
 				if ((ailp->mode == AIM_GOTO_PLAYER) || (Escort_special_goal == ESCORT_GOAL_SCRAM)) {
 					if (Walls[wall_num].keys != KEY_NONE) {
 						if (Walls[wall_num].keys & Players[Player_num].flags)
@@ -107,7 +107,7 @@ void collide_robot_and_wall(object* robot, fix hitspeed, short hitseg, short hit
 						wall_open_door(&Segments[hitseg], hitwall);
 				}
 			}
-			else if (Robot_info[robot->id].thief) {		//	Thief allowed to go through doors to which player has key.
+			else if (activeBMTable->robots[robot->id].thief) {		//	Thief allowed to go through doors to which player has key.
 				if (Walls[wall_num].keys != KEY_NONE)
 					if (Walls[wall_num].keys & Players[Player_num].flags)
 						wall_open_door(&Segments[hitseg], hitwall);
@@ -162,7 +162,7 @@ void apply_force_damage(object* obj, fix force, object* other_obj)
 
 	case OBJ_ROBOT:
 
-		if (Robot_info[obj->id].attack_type == 1) {
+		if (activeBMTable->robots[obj->id].attack_type == 1) {
 			if (other_obj->type == OBJ_WEAPON)
 				result = apply_damage_to_robot(obj, damage / 4, other_obj->ctype.laser_info.parent_num);
 			else
@@ -176,14 +176,14 @@ void apply_force_damage(object* obj, fix force, object* other_obj)
 		}
 
 		if (result && (other_obj->ctype.laser_info.parent_signature == ConsoleObject->signature))
-			add_points_to_score(Robot_info[obj->id].score_value);
+			add_points_to_score(activeBMTable->robots[obj->id].score_value);
 		break;
 
 	case OBJ_PLAYER:
 
 		//	If colliding with a claw type robot, do damage proportional to FrameTime because you can collide with those
 		//	bots every frame since they don't move.
-		if ((other_obj->type == OBJ_ROBOT) && (Robot_info[other_obj->id].attack_type))
+		if ((other_obj->type == OBJ_ROBOT) && (activeBMTable->robots[other_obj->id].attack_type))
 			damage = fixmul(damage, FrameTime * 2);
 
 		//	Make trainee easier.
@@ -226,13 +226,13 @@ void bump_this_object(object* objp, object* other_objp, vms_vector* force, int d
 			force2.y = force->y / 4;
 			force2.z = force->z / 4;
 			phys_apply_force(objp, &force2);
-			if (damage_flag && ((other_objp->type != OBJ_ROBOT) || !Robot_info[other_objp->id].companion)) {
+			if (damage_flag && ((other_objp->type != OBJ_ROBOT) || !activeBMTable->robots[other_objp->id].companion)) {
 				force_mag = vm_vec_mag_quick(&force2);
 				apply_force_damage(objp, force_mag, other_objp);
 			}
 		}
 		else if ((objp->type == OBJ_ROBOT) || (objp->type == OBJ_CLUTTER) || (objp->type == OBJ_CNTRLCEN)) {
-			if (!Robot_info[objp->id].boss_flag) {
+			if (!activeBMTable->robots[objp->id].boss_flag) {
 				vms_vector force2;
 				force2.x = force->x / (4 + Difficulty_level);
 				force2.y = force->y / (4 + Difficulty_level);
@@ -307,10 +307,10 @@ void collide_player_and_wall(object* playerobj, fix hitspeed, short hitseg, shor
 	tmap_num = Segments[hitseg].sides[hitwall].tmap_num;
 
 	//	If this wall does damage, don't make *BONK* sound, we'll be making another sound.
-	if (TmapInfo[tmap_num].damage > 0)
+	if (activeBMTable->tmaps[tmap_num].damage > 0)
 		return;
 
-	if (TmapInfo[tmap_num].flags & TMI_FORCE_FIELD) {
+	if (activeBMTable->tmaps[tmap_num].flags & TMI_FORCE_FIELD) {
 		vms_vector force;
 
 		PALETTE_FLASH_ADD(0, 0, 60);	//flash blue
@@ -357,7 +357,7 @@ void collide_player_and_wall(object* playerobj, fix hitspeed, short hitseg, shor
 	tmap_num2 = Segments[hitseg].sides[hitwall].tmap_num2;
 
 	//don't do wall damage and sound if hit lava or water
-	if ((TmapInfo[tmap_num].flags & (TMI_WATER | TMI_VOLATILE)) || (tmap_num2 && (TmapInfo[tmap_num2 & 0x3fff].flags & (TMI_WATER | TMI_VOLATILE))))
+	if ((activeBMTable->tmaps[tmap_num].flags & (TMI_WATER | TMI_VOLATILE)) || (tmap_num2 && (activeBMTable->tmaps[tmap_num2 & 0x3fff].flags & (TMI_WATER | TMI_VOLATILE))))
 		damage = 0;
 
 	if (damage >= DAMAGE_THRESHOLD) {
@@ -381,14 +381,14 @@ void collide_player_and_wall(object* playerobj, fix hitspeed, short hitseg, shor
 				apply_damage_to_player(playerobj, playerobj, damage);
 
 		// -- No point in doing this unless we compute a reasonable hitpt.  Currently it is just the player's position. --MK, 01/18/96
-		// -- if (!(TmapInfo[Segments[hitseg].sides[hitwall].tmap_num].flags & TMI_FORCE_FIELD)) {
+		// -- if (!(activeBMTable->tmaps[Segments[hitseg].sides[hitwall].tmap_num].flags & TMI_FORCE_FIELD)) {
 		// -- 	vms_vector	hitpt1;
 		// -- 	int			hitseg1;
 		// --
 		// -- 		vm_vec_avg(&hitpt1, hitpt, &Objects[Players[Player_num].objnum].pos);
 		// -- 	hitseg1 = find_point_seg(&hitpt1, Objects[Players[Player_num].objnum].segnum);
 		// -- 	if (hitseg1 != -1)
-		// -- 		object_create_explosion( hitseg, hitpt, Weapon_info[0].impact_size, Weapon_info[0].wall_hit_vclip );
+		// -- 		object_create_explosion( hitseg, hitpt, activeBMTable->weapons[0].impact_size, activeBMTable->weapons[0].wall_hit_vclip );
 		// -- }
 
 	}
@@ -412,8 +412,8 @@ int check_volatile_wall(object* obj, int segnum, int sidenum, vms_vector* hitpt)
 
 	tmap_num = Segments[segnum].sides[sidenum].tmap_num;
 
-	d = TmapInfo[tmap_num].damage;
-	water = (TmapInfo[tmap_num].flags & TMI_WATER);
+	d = activeBMTable->tmaps[tmap_num].damage;
+	water = (activeBMTable->tmaps[tmap_num].flags & TMI_WATER);
 
 	if (d > 0 || water) {
 
@@ -528,7 +528,7 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 		int	ok_to_blow = 0;
 
 		if (blower->ctype.laser_info.parent_type == OBJ_ROBOT)
-			if (Robot_info[Objects[blower->ctype.laser_info.parent_num].id].companion)
+			if (activeBMTable->robots[Objects[blower->ctype.laser_info.parent_num].id].companion)
 				ok_to_blow = 1;
 
 		if (!(ok_to_blow || (blower->ctype.laser_info.parent_type == OBJ_PLAYER))) {
@@ -551,12 +551,14 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 		tm &= 0x3fff;			//tm without flags
 
 		//check if it's an animation (monitor) or casts light
-		if ((((ec = TmapInfo[tm].eclip_num) != -1) && ((db = Effects[ec].dest_bm_num) != -1 && !(Effects[ec].flags & EF_ONE_SHOT))) || (ec == -1 && (TmapInfo[tm].destroyed != -1))) {
+		if ((((ec = activeBMTable->tmaps[tm].eclip_num) != -1) && ((db = activeBMTable->eclips[ec].dest_bm_num) != -1 && !(activeBMTable->eclips[ec].flags & EF_ONE_SHOT))) || (ec == -1 && (activeBMTable->tmaps[tm].destroyed != -1))) {
 			fix u, v;
-			grs_bitmap* bm = &GameBitmaps[Textures[tm].index];
+			grs_bitmap* bm = &activePiggyTable->gameBitmaps[activeBMTable->textures
+[tm].index];
 			int x, y, t;
 
-			PIGGY_PAGE_IN(Textures[tm]);
+			PIGGY_PAGE_IN(activeBMTable->textures
+[tm]);
 
 			//this can be blown up...did we hit it?
 
@@ -587,7 +589,7 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 
 #ifdef NETWORK
 				if ((Game_mode & GM_MULTI) && Netgame.AlwaysLighting)
-					if (!(ec != -1 && db != -1 && !(Effects[ec].flags & EF_ONE_SHOT)))
+					if (!(ec != -1 && db != -1 && !(activeBMTable->eclips[ec].flags & EF_ONE_SHOT)))
 						return(0);
 #endif
 
@@ -602,8 +604,8 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 					newdemo_record_effect_blowup(seg - Segments, side, pnt);
 
 				if (ec != -1) {
-					dest_size = Effects[ec].dest_size;
-					vc = Effects[ec].dest_vclip;
+					dest_size = activeBMTable->eclips[ec].dest_size;
+					vc = activeBMTable->eclips[ec].dest_vclip;
 				}
 				else {
 					dest_size = i2f(20);
@@ -612,19 +614,19 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 
 				object_create_explosion(seg - Segments, pnt, dest_size, vc);
 
-				if (ec != -1 && db != -1 && !(Effects[ec].flags & EF_ONE_SHOT)) {
+				if (ec != -1 && db != -1 && !(activeBMTable->eclips[ec].flags & EF_ONE_SHOT)) {
 
-					if ((sound_num = Vclip[vc].sound_num) != -1)
+					if ((sound_num = activeBMTable->vclips[vc].sound_num) != -1)
 						digi_link_sound_to_pos(sound_num, seg - Segments, 0, pnt, 0, F1_0);
 
-					if ((sound_num = Effects[ec].sound_num) != -1)		//kill sound
+					if ((sound_num = activeBMTable->eclips[ec].sound_num) != -1)		//kill sound
 						digi_kill_sound_linked_to_segment(seg - Segments, side, sound_num);
 
-					if (Effects[ec].dest_eclip != -1 && Effects[Effects[ec].dest_eclip].segnum == -1) {
+					if (activeBMTable->eclips[ec].dest_eclip != -1 && activeBMTable->eclips[activeBMTable->eclips[ec].dest_eclip].segnum == -1) {
 						int bm_num;
 						eclip* new_ec;
 
-						new_ec = &Effects[Effects[ec].dest_eclip];
+						new_ec = &activeBMTable->eclips[activeBMTable->eclips[ec].dest_eclip];
 						bm_num = new_ec->changing_wall_texture;
 
 						mprintf((0, "bm_num = %d\n", bm_num));
@@ -634,7 +636,7 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 						new_ec->segnum = seg - Segments;
 						new_ec->sidenum = side;
 						new_ec->flags |= EF_ONE_SHOT;
-						new_ec->dest_bm_num = Effects[ec].dest_bm_num;
+						new_ec->dest_bm_num = activeBMTable->eclips[ec].dest_bm_num;
 
 						Assert(bm_num != 0 && seg->sides[side].tmap_num2 != 0);
 						seg->sides[side].tmap_num2 = bm_num | tmf;		//replace with destoyed
@@ -646,7 +648,7 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 					}
 				}
 				else {
-					seg->sides[side].tmap_num2 = TmapInfo[tm].destroyed | tmf;
+					seg->sides[side].tmap_num2 = activeBMTable->tmaps[tm].destroyed | tmf;
 
 					//assume this is a light, and play light sound
 					digi_link_sound_to_pos(SOUND_LIGHT_BLOWNUP, seg - Segments, 0, pnt, 0, F1_0);
@@ -727,8 +729,8 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 	}
 
 	//if an energy weapon hits a forcefield, let it bounce
-	if ((TmapInfo[seg->sides[hitwall].tmap_num].flags & TMI_FORCE_FIELD) &&
-		!(weapon->type == OBJ_WEAPON && Weapon_info[weapon->id].energy_usage == 0)) {
+	if ((activeBMTable->tmaps[seg->sides[hitwall].tmap_num].flags & TMI_FORCE_FIELD) &&
+		!(weapon->type == OBJ_WEAPON && activeBMTable->weapons[weapon->id].energy_usage == 0)) {
 
 		//make sound
 		digi_link_sound_to_pos(SOUND_FORCEFIELD_BOUNCE_WEAPON, hitseg, 0, hitpt, 0, f1_0);
@@ -765,9 +767,9 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 
 	blew_up = check_effect_blowup(seg, hitwall, hitpt, weapon, 0);
 
-	//if ((seg->sides[hitwall].tmap_num2==0) && (TmapInfo[seg->sides[hitwall].tmap_num].flags & TMI_VOLATILE)) {
+	//if ((seg->sides[hitwall].tmap_num2==0) && (activeBMTable->tmaps[seg->sides[hitwall].tmap_num].flags & TMI_VOLATILE)) {
 
-	if ((weapon->ctype.laser_info.parent_type == OBJ_ROBOT) && (Robot_info[Objects[weapon->ctype.laser_info.parent_num].id].companion == 1)) {
+	if ((weapon->ctype.laser_info.parent_type == OBJ_ROBOT) && (activeBMTable->robots[Objects[weapon->ctype.laser_info.parent_num].id].companion == 1)) {
 		robot_escort = 1;
 
 		if (Game_mode & GM_MULTI)
@@ -802,8 +804,8 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 	wall_type = wall_hit_process(seg, hitwall, weapon->shields, playernum, weapon);
 
 	// Wall is volatile if either tmap 1 or 2 is volatile
-	if ((TmapInfo[seg->sides[hitwall].tmap_num].flags & TMI_VOLATILE) || (seg->sides[hitwall].tmap_num2 && (TmapInfo[seg->sides[hitwall].tmap_num2 & 0x3fff].flags & TMI_VOLATILE))) {
-		weapon_info* wi = &Weapon_info[weapon->id];
+	if ((activeBMTable->tmaps[seg->sides[hitwall].tmap_num].flags & TMI_VOLATILE) || (seg->sides[hitwall].tmap_num2 && (activeBMTable->tmaps[seg->sides[hitwall].tmap_num2 & 0x3fff].flags & TMI_VOLATILE))) {
+		weapon_info* wi = &activeBMTable->weapons[weapon->id];
 		int vclip;
 
 		//we've hit a volatile wall
@@ -811,7 +813,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 		digi_link_sound_to_pos(SOUND_VOLATILE_WALL_HIT, hitseg, 0, hitpt, 0, F1_0);
 
 		//for most weapons, use volatile wall hit.  For mega, use its special vclip
-		vclip = (weapon->id == MEGA_ID) ? Weapon_info[weapon->id].robot_hit_vclip : VCLIP_VOLATILE_WALL_HIT;
+		vclip = (weapon->id == MEGA_ID) ? activeBMTable->weapons[weapon->id].robot_hit_vclip : VCLIP_VOLATILE_WALL_HIT;
 
 		//	New by MK: If powerful badass, explode as badass, not due to lava, fixes megas being wimpy in lava.
 		if (wi->damage_radius >= VOLATILE_WALL_DAMAGE_RADIUS / 2) {
@@ -831,17 +833,17 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 		weapon->flags |= OF_SHOULD_BE_DEAD;		//make flares die in lava
 
 	}
-	else if ((TmapInfo[seg->sides[hitwall].tmap_num].flags & TMI_WATER) || (seg->sides[hitwall].tmap_num2 && (TmapInfo[seg->sides[hitwall].tmap_num2 & 0x3fff].flags & TMI_WATER))) {
-		weapon_info* wi = &Weapon_info[weapon->id];
+	else if ((activeBMTable->tmaps[seg->sides[hitwall].tmap_num].flags & TMI_WATER) || (seg->sides[hitwall].tmap_num2 && (activeBMTable->tmaps[seg->sides[hitwall].tmap_num2 & 0x3fff].flags & TMI_WATER))) {
+		weapon_info* wi = &activeBMTable->weapons[weapon->id];
 
 		//we've hit water
 
 		//	MK: 09/13/95: Badass in water is 1/2 normal intensity.
-		if (Weapon_info[weapon->id].matter) {
+		if (activeBMTable->weapons[weapon->id].matter) {
 
 			digi_link_sound_to_pos(SOUND_MISSILE_HIT_WATER, hitseg, 0, hitpt, 0, F1_0);
 
-			if (Weapon_info[weapon->id].damage_radius) {
+			if (activeBMTable->weapons[weapon->id].damage_radius) {
 
 				digi_link_sound_to_object(SOUND_BADASS_EXPLOSION, weapon - Objects, 0, F1_0);
 
@@ -855,12 +857,12 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 					weapon->ctype.laser_info.parent_num);
 			}
 			else
-				object_create_explosion(weapon->segnum, &weapon->pos, Weapon_info[weapon->id].impact_size, Weapon_info[weapon->id].wall_hit_vclip);
+				object_create_explosion(weapon->segnum, &weapon->pos, activeBMTable->weapons[weapon->id].impact_size, activeBMTable->weapons[weapon->id].wall_hit_vclip);
 
 		}
 		else {
 			digi_link_sound_to_pos(SOUND_LASER_HIT_WATER, hitseg, 0, hitpt, 0, F1_0);
-			object_create_explosion(weapon->segnum, &weapon->pos, Weapon_info[weapon->id].impact_size, VCLIP_WATER_HIT);
+			object_create_explosion(weapon->segnum, &weapon->pos, activeBMTable->weapons[weapon->id].impact_size, VCLIP_WATER_HIT);
 		}
 
 		weapon->flags |= OF_SHOULD_BE_DEAD;		//make flares die in water
@@ -878,14 +880,14 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 			//if it's not the player's weapon, or it is the player's and there
 			//is no wall, and no blowing up monitor, then play sound
 			if ((weapon->ctype.laser_info.parent_type != OBJ_PLAYER) || ((seg->sides[hitwall].wall_num == -1 || wall_type == WHP_NOT_SPECIAL) && !blew_up))
-				if ((Weapon_info[weapon->id].wall_hit_sound > -1) && (!(weapon->flags & OF_SILENT)))
-					digi_link_sound_to_pos(Weapon_info[weapon->id].wall_hit_sound, weapon->segnum, 0, &weapon->pos, 0, F1_0);
+				if ((activeBMTable->weapons[weapon->id].wall_hit_sound > -1) && (!(weapon->flags & OF_SILENT)))
+					digi_link_sound_to_pos(activeBMTable->weapons[weapon->id].wall_hit_sound, weapon->segnum, 0, &weapon->pos, 0, F1_0);
 
-			if (Weapon_info[weapon->id].wall_hit_vclip > -1) {
-				if (Weapon_info[weapon->id].damage_radius)
+			if (activeBMTable->weapons[weapon->id].wall_hit_vclip > -1) {
+				if (activeBMTable->weapons[weapon->id].damage_radius)
 					explode_badass_weapon(weapon, hitpt);
 				else
-					object_create_explosion(weapon->segnum, &weapon->pos, Weapon_info[weapon->id].impact_size, Weapon_info[weapon->id].wall_hit_vclip);
+					object_create_explosion(weapon->segnum, &weapon->pos, activeBMTable->weapons[weapon->id].impact_size, activeBMTable->weapons[weapon->id].wall_hit_vclip);
 			}
 		}
 	}
@@ -904,7 +906,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 				weapon->flags |= OF_SHOULD_BE_DEAD;
 
 			//don't let flares stick in force fields
-			if ((weapon->id == FLARE_ID) && (TmapInfo[seg->sides[hitwall].tmap_num].flags & TMI_FORCE_FIELD))
+			if ((weapon->id == FLARE_ID) && (activeBMTable->tmaps[seg->sides[hitwall].tmap_num].flags & TMI_FORCE_FIELD))
 				weapon->flags |= OF_SHOULD_BE_DEAD;
 
 			if (!(weapon->flags & OF_SILENT)) {
@@ -912,7 +914,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 
 				case WHP_NOT_SPECIAL:
 					//should be handled above
-					//digi_link_sound_to_pos( Weapon_info[weapon->id].wall_hit_sound, weapon->segnum, 0, &weapon->pos, 0, F1_0 );
+					//digi_link_sound_to_pos( activeBMTable->weapons[weapon->id].wall_hit_sound, weapon->segnum, 0, &weapon->pos, 0, F1_0 );
 					break;
 
 				case WHP_NO_KEY:
@@ -927,7 +929,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 
 				case WHP_BLASTABLE:
 					//play special blastable wall sound (if/when we get it)
-					if ((Weapon_info[weapon->id].wall_hit_sound > -1) && (!(weapon->flags & OF_SILENT)))
+					if ((activeBMTable->weapons[weapon->id].wall_hit_sound > -1) && (!(weapon->flags & OF_SILENT)))
 						digi_link_sound_to_pos(SOUND_WEAPON_HIT_BLASTABLE, weapon->segnum, 0, &weapon->pos, 0, F1_0);
 					break;
 
@@ -1043,19 +1045,19 @@ void collide_robot_and_player(object* robot, object* playerobj, vms_vector* coll
 	{
 		collision_seg = find_point_seg(collision_point, playerobj->segnum);
 		if (collision_seg != -1)
-			object_create_explosion(collision_seg, collision_point, Weapon_info[0].impact_size, Weapon_info[0].wall_hit_vclip);
+			object_create_explosion(collision_seg, collision_point, activeBMTable->weapons[0].impact_size, activeBMTable->weapons[0].wall_hit_vclip);
 	}
 
 	if (playerobj->id == Player_num) {
-		if (Robot_info[robot->id].companion)	//	Player and companion don't collide.
+		if (activeBMTable->robots[robot->id].companion)	//	Player and companion don't collide.
 			return;
-		if (Robot_info[robot->id].kamikaze) {
+		if (activeBMTable->robots[robot->id].kamikaze) {
 			apply_damage_to_robot(robot, robot->shields + 1, playerobj - Objects);
 			if (playerobj == ConsoleObject)
-				add_points_to_score(Robot_info[robot->id].score_value);
+				add_points_to_score(activeBMTable->robots[robot->id].score_value);
 		}
 
-		if (Robot_info[robot->id].thief) {
+		if (activeBMTable->robots[robot->id].thief) {
 			if (Ai_local_info[robot - Objects].mode == AIM_THIEF_ATTACK) {
 				Last_thief_hit_time = GameTime;
 				attempt_to_steal_item(robot, playerobj->id);
@@ -1080,7 +1082,7 @@ void collide_robot_and_player(object* robot, object* playerobj, vms_vector* coll
 	// added this if to remove the bump sound if it's the thief.
 	// A "steal" sound was added and it was getting obscured by the bump. -AP 10/3/95
 	//	Changed by MK to make this sound unless the robot stole.
-	if ((!steal_attempt) && !Robot_info[robot->id].energy_drain)
+	if ((!steal_attempt) && !activeBMTable->robots[robot->id].energy_drain)
 		digi_link_sound_to_pos(SOUND_ROBOT_HIT_PLAYER, playerobj->segnum, 0, collision_point, 0, F1_0);
 
 	bump_two_objects(robot, playerobj, 1);
@@ -1266,7 +1268,7 @@ void collide_weapon_and_controlcen(object* weapon, object* controlcen, vms_vecto
 		if (Objects[weapon->ctype.laser_info.parent_num].id == Player_num)
 			Control_center_been_hit = 1;
 
-		if (Weapon_info[weapon->id].damage_radius)
+		if (activeBMTable->weapons[weapon->id].damage_radius)
 			explode_badass_weapon(weapon, collision_point);
 		else
 			object_create_explosion(controlcen->segnum, collision_point, controlcen->size * 3 / 20, VCLIP_SMALL_EXPLOSION);
@@ -1371,12 +1373,12 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 
 	if (robot->shields < 0) return 0;	//robot already dead...
 
-	if (Robot_info[robot->id].boss_flag)
+	if (activeBMTable->robots[robot->id].boss_flag)
 		Boss_hit_time = GameTime;
 
 	//	Buddy invulnerable on level 24 so he can give you his important messages.  Bah.
 	//	Also invulnerable if his cheat for firing weapons is in effect.
-	if (Robot_info[robot->id].companion)
+	if (activeBMTable->robots[robot->id].companion)
 		//		if ((Current_mission_num == 0 && Current_level_num == Last_level) || Buddy_dude_cheat)
 		if ((Current_mission_num == 0 && Current_level_num == Last_level))
 			return 0;
@@ -1384,13 +1386,13 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 	//	if (robot->control_type == CT_REMOTE)
 	//		return 0; // Can't damange a robot controlled by another player
 
-	// -- MK, 10/21/95, unused! --	if (Robot_info[robot->id].boss_flag)
+	// -- MK, 10/21/95, unused! --	if (activeBMTable->robots[robot->id].boss_flag)
 	//		Boss_been_hit = 1;
 
 	robot->shields -= damage;
 
 	//	Do unspeakable hacks to make sure player doesn't die after killing boss.  Or before, sort of.
-	if (Robot_info[robot->id].boss_flag)
+	if (activeBMTable->robots[robot->id].boss_flag)
 		if ((Current_mission_num == 0) && Current_level_num == Last_level)
 			if (robot->shields < 0)
 			{
@@ -1419,7 +1421,7 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 	{
 		if (Game_mode & GM_MULTI) 
 		{
-			if (Robot_info[robot->id].thief)
+			if (activeBMTable->robots[robot->id].thief)
 				isthief = 1;
 			else
 				isthief = 0;
@@ -1429,13 +1431,13 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 					temp_stolen[i] = Stolen_items[i];
 
 #ifdef NETWORK
-			if (multi_explode_robot_sub(robot - Objects, killer_objnum, Robot_info[robot->id].thief))
+			if (multi_explode_robot_sub(robot - Objects, killer_objnum, activeBMTable->robots[robot->id].thief))
 			{
 				if (isthief)
 					for (i = 0; i < MAX_STOLEN_ITEMS; i++)
 						Stolen_items[i] = temp_stolen[i];
 
-				multi_send_robot_explode(robot - Objects, killer_objnum, Robot_info[robot->id].thief);
+				multi_send_robot_explode(robot - Objects, killer_objnum, activeBMTable->robots[robot->id].thief);
 
 				if (isthief)
 					for (i = 0; i < MAX_STOLEN_ITEMS; i++)
@@ -1451,11 +1453,11 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 		Players[Player_num].num_kills_level++;
 		Players[Player_num].num_kills_total++;
 
-		if (Robot_info[robot->id].boss_flag) 
+		if (activeBMTable->robots[robot->id].boss_flag) 
 		{
 			start_boss_death_sequence(robot);	//do_controlcen_destroyed_stuff(NULL);
 		}
-		else if (Robot_info[robot->id].death_roll) 
+		else if (activeBMTable->robots[robot->id].death_roll) 
 		{
 			start_robot_death_sequence(robot);	//do_controlcen_destroyed_stuff(NULL);
 		}
@@ -1464,12 +1466,12 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 			if (robot->id == SPECIAL_REACTOR_ROBOT)
 				special_reactor_stuff();
 #ifdef RESTORE_BLOBS_ON_DEATH
-			if (Robot_info[robot->id].smart_blobs)
-				create_smart_children(robot, Robot_info[robot->id].smart_blobs);
-			//if (Robot_info[robot->id].badass)
-			//	explode_badass_object(robot, F1_0*Robot_info[robot->id].badass, F1_0*40, F1_0*150);
+			if (activeBMTable->robots[robot->id].smart_blobs)
+				create_smart_children(robot, activeBMTable->robots[robot->id].smart_blobs);
+			//if (activeBMTable->robots[robot->id].badass)
+			//	explode_badass_object(robot, F1_0*activeBMTable->robots[robot->id].badass, F1_0*40, F1_0*150);
 #endif
-			if (Robot_info[robot->id].kamikaze)
+			if (activeBMTable->robots[robot->id].kamikaze)
 				explode_object(robot, 1);		//	Kamikaze, explode right away, IN YOUR FACE!
 			else
 				explode_object(robot, STANDARD_EXPL_DELAY);
@@ -1505,13 +1507,13 @@ int do_boss_weapon_collision(object* robot, object* weapon, vms_vector* collisio
 
 	damage_flag = 1;
 
-	d2_boss_index = Robot_info[robot->id].boss_flag - BOSS_D2;
+	d2_boss_index = activeBMTable->robots[robot->id].boss_flag - BOSS_D2;
 
 	Assert((d2_boss_index >= 0) && (d2_boss_index < NUM_D2_BOSSES));
 
 	//	See if should spew a bot.
 	if (weapon->ctype.laser_info.parent_type == OBJ_PLAYER)
-		if ((Weapon_info[weapon->id].matter && Boss_spews_bots_matter[d2_boss_index]) || (!Weapon_info[weapon->id].matter && Boss_spews_bots_energy[d2_boss_index])) {
+		if ((activeBMTable->weapons[weapon->id].matter && Boss_spews_bots_matter[d2_boss_index]) || (!activeBMTable->weapons[weapon->id].matter && Boss_spews_bots_energy[d2_boss_index])) {
 			if (Boss_spew_more[d2_boss_index])
 				if (P_Rand() > 16384) {
 					if (boss_spew_robot(robot, collision_point) != -1)
@@ -1561,7 +1563,7 @@ int do_boss_weapon_collision(object* robot, object* weapon, vms_vector* collisio
 
 			//	Cause weapon to bounce.
 			//	Make a copy of this weapon, because the physics wants to destroy it.
-			if (!Weapon_info[weapon->id].matter) {
+			if (!activeBMTable->weapons[weapon->id].matter) {
 				new_obj = obj_create(weapon->type, weapon->id, weapon->segnum, &weapon->pos,
 					&weapon->orient, weapon->size, weapon->control_type, weapon->movement_type, weapon->render_type);
 
@@ -1571,12 +1573,12 @@ int do_boss_weapon_collision(object* robot, object* weapon, vms_vector* collisio
 					fix			speed;
 
 					if (weapon->render_type == RT_POLYOBJ) {
-						Objects[new_obj].rtype.pobj_info.model_num = Weapon_info[Objects[new_obj].id].model_num;
-						Objects[new_obj].size = fixdiv(Polygon_models[Objects[new_obj].rtype.pobj_info.model_num].rad, Weapon_info[Objects[new_obj].id].po_len_to_width_ratio);
+						Objects[new_obj].rtype.pobj_info.model_num = activeBMTable->weapons[Objects[new_obj].id].model_num;
+						Objects[new_obj].size = fixdiv(activeBMTable->models[Objects[new_obj].rtype.pobj_info.model_num].rad, activeBMTable->weapons[Objects[new_obj].id].po_len_to_width_ratio);
 					}
 
-					Objects[new_obj].mtype.phys_info.mass = Weapon_info[weapon->type].mass;
-					Objects[new_obj].mtype.phys_info.drag = Weapon_info[weapon->type].drag;
+					Objects[new_obj].mtype.phys_info.mass = activeBMTable->weapons[weapon->type].mass;
+					Objects[new_obj].mtype.phys_info.drag = activeBMTable->weapons[weapon->type].drag;
 					vm_vec_zero(&Objects[new_obj].mtype.phys_info.thrust);
 
 					vm_vec_sub(&vec_to_point, collision_point, &robot->pos);
@@ -1590,7 +1592,7 @@ int do_boss_weapon_collision(object* robot, object* weapon, vms_vector* collisio
 			}
 		}
 	}
-	else if ((Weapon_info[weapon->id].matter && Boss_invulnerable_matter[d2_boss_index]) || (!Weapon_info[weapon->id].matter && Boss_invulnerable_energy[d2_boss_index])) {
+	else if ((activeBMTable->weapons[weapon->id].matter && Boss_invulnerable_matter[d2_boss_index]) || (!activeBMTable->weapons[weapon->id].matter && Boss_invulnerable_energy[d2_boss_index])) {
 		int	segnum;
 
 		segnum = find_point_seg(collision_point, robot->segnum);
@@ -1613,9 +1615,9 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 		if (!ok_to_do_omega_damage(weapon))
 			return;
 
-	if (Robot_info[robot->id].boss_flag) {
+	if (activeBMTable->robots[robot->id].boss_flag) {
 		Boss_hit_time = GameTime;
-		if (Robot_info[robot->id].boss_flag >= BOSS_D2) {
+		if (activeBMTable->robots[robot->id].boss_flag >= BOSS_D2) {
 			damage_flag = do_boss_weapon_collision(robot, weapon, collision_point);
 			boss_invul_flag = !damage_flag;
 		}
@@ -1623,7 +1625,7 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 
 	//	Put in at request of Jasen (and Adam) because the Buddy-Bot gets in their way.
 	//	MK has so much fun whacking his butt around the mine he never cared...
-	if ((Robot_info[robot->id].companion) && ((weapon->ctype.laser_info.parent_type != OBJ_ROBOT) && !Robots_kill_robots_cheat))
+	if ((activeBMTable->robots[robot->id].companion) && ((weapon->ctype.laser_info.parent_type != OBJ_ROBOT) && !Robots_kill_robots_cheat))
 		return;
 
 	if (weapon->id == EARTHSHAKER_ID)
@@ -1645,13 +1647,13 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 
 	//	Changed, 10/04/95, put out blobs based on skill level and power of weapon doing damage.
 	//	Also, only a weapon hit from a player weapon causes smart blobs.
-	if ((weapon->ctype.laser_info.parent_type == OBJ_PLAYER) && (Robot_info[robot->id].energy_blobs))
+	if ((weapon->ctype.laser_info.parent_type == OBJ_PLAYER) && (activeBMTable->robots[robot->id].energy_blobs))
 		if ((robot->shields > 0) && Weapon_is_energy[weapon->id]) {
 			fix	probval;
 			int	num_blobs;
 
 			probval = (Difficulty_level + 2) * std::min(weapon->shields, robot->shields);
-			probval = Robot_info[robot->id].energy_blobs * probval / (NDL * 32);
+			probval = activeBMTable->robots[robot->id].energy_blobs * probval / (NDL * 32);
 
 			num_blobs = probval >> 16;
 			if (2 * P_Rand() < (probval & 0xffff))
@@ -1663,9 +1665,9 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 
 	//	Note: If weapon hits an invulnerable boss, it will still do badass damage, including to the boss,
 	//	unless this is trapped elsewhere.
-	if (Weapon_info[weapon->id].damage_radius)
+	if (activeBMTable->weapons[weapon->id].damage_radius)
 		if (boss_invul_flag) {			//don't make badass sound
-			weapon_info* wi = &Weapon_info[weapon->id];
+			weapon_info* wi = &activeBMTable->weapons[weapon->id];
 
 			//this code copied from explode_badass_weapon()
 
@@ -1692,16 +1694,16 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 			multi_robot_request_change(robot, Objects[weapon->ctype.laser_info.parent_num].id);
 #endif
 
-		if (Robot_info[robot->id].exp1_vclip_num > -1)
-			expl_obj = object_create_explosion(weapon->segnum, collision_point, (robot->size / 2 * 3) / 4, Robot_info[robot->id].exp1_vclip_num);
-		else if (Weapon_info[weapon->id].robot_hit_vclip > -1)
-			expl_obj = object_create_explosion(weapon->segnum, collision_point, Weapon_info[weapon->id].impact_size, Weapon_info[weapon->id].robot_hit_vclip);
+		if (activeBMTable->robots[robot->id].exp1_vclip_num > -1)
+			expl_obj = object_create_explosion(weapon->segnum, collision_point, (robot->size / 2 * 3) / 4, activeBMTable->robots[robot->id].exp1_vclip_num);
+		else if (activeBMTable->weapons[weapon->id].robot_hit_vclip > -1)
+			expl_obj = object_create_explosion(weapon->segnum, collision_point, activeBMTable->weapons[weapon->id].impact_size, activeBMTable->weapons[weapon->id].robot_hit_vclip);
 
 		if (expl_obj)
 			obj_attach(robot, expl_obj);
 
-		if (damage_flag && (Robot_info[robot->id].exp1_sound_num > -1))
-			digi_link_sound_to_pos(Robot_info[robot->id].exp1_sound_num, robot->segnum, 0, collision_point, 0, F1_0);
+		if (damage_flag && (activeBMTable->robots[robot->id].exp1_sound_num > -1))
+			digi_link_sound_to_pos(activeBMTable->robots[robot->id].exp1_sound_num, robot->segnum, 0, collision_point, 0, F1_0);
 
 		if (!(weapon->flags & OF_HARMLESS)) {
 			fix	damage = weapon->shields;
@@ -1714,20 +1716,20 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 			//	Cut Gauss damage on bosses because it just breaks the game.  Bosses are so easy to
 			//	hit, and missing a robot is what prevents the Gauss from being game-breaking.
 			if (weapon->id == GAUSS_ID)
-				if (Robot_info[robot->id].boss_flag)
+				if (activeBMTable->robots[robot->id].boss_flag)
 					damage = damage * (2 * NDL - Difficulty_level) / (2 * NDL);
 
 			if (!apply_damage_to_robot(robot, damage, weapon->ctype.laser_info.parent_num))
 				bump_two_objects(robot, weapon, 0);		//only bump if not dead. no damage from bump
 			else if (weapon->ctype.laser_info.parent_signature == ConsoleObject->signature) {
-				add_points_to_score(Robot_info[robot->id].score_value);
+				add_points_to_score(activeBMTable->robots[robot->id].score_value);
 				detect_escort_goal_accomplished(robot - Objects);
 			}
 		}
 
 
 		//	If Gauss Cannon, spin robot.
-		if ((robot != NULL) && (!Robot_info[robot->id].companion) && (!Robot_info[robot->id].boss_flag) && (weapon->id == GAUSS_ID)) {
+		if ((robot != NULL) && (!activeBMTable->robots[robot->id].companion) && (!activeBMTable->robots[robot->id].boss_flag) && (weapon->id == GAUSS_ID)) {
 			ai_static* aip = &robot->ctype.ai_info;
 
 			if (aip->SKIP_AI_COUNT * FrameTime < F1_0) {
@@ -1801,7 +1803,7 @@ void collide_hostage_and_player(object* hostage, object* player, vms_vector* col
 //--unused-- 		hostage->flags |= OF_SHOULD_BE_DEAD;
 //--unused-- 	}
 //--unused-- 
-//--unused-- 	if ( Weapon_info[weapon->id].damage_radius )
+//--unused-- 	if ( activeBMTable->weapons[weapon->id].damage_radius )
 //--unused-- 		explode_badass_weapon(weapon);
 //--unused-- 
 //--unused-- 	maybe_kill_weapon(weapon,hostage);
@@ -2152,7 +2154,7 @@ void apply_damage_to_player(object* playerobj, object* killer, fix damage)
 			playerobj->flags |= OF_SHOULD_BE_DEAD;
 
 			if (Buddy_objnum != -1)
-				if (killer && (killer->type == OBJ_ROBOT) && (Robot_info[killer->id].companion))
+				if (killer && (killer->type == OBJ_ROBOT) && (activeBMTable->robots[killer->id].companion))
 					Buddy_sorry_time = GameTime;
 		}
 		// -- removed, 09/06/95, MK --  else if (Players[Player_num].shields < LOSE_WEAPON_THRESHOLD) {
@@ -2201,7 +2203,7 @@ void collide_player_and_weapon(object* playerobj, object* weapon, vms_vector* co
 
 	damage = fixmul(damage, weapon->ctype.laser_info.multiplier);
 	if (Game_mode & GM_MULTI)
-		damage = fixmul(damage, Weapon_info[weapon->id].multi_damage_scale);
+		damage = fixmul(damage, activeBMTable->weapons[weapon->id].multi_damage_scale);
 
 	if (weapon->mtype.phys_info.flags & PF_PERSISTENT)
 		if (weapon->ctype.laser_info.last_hitobj == playerobj - Objects)
@@ -2230,14 +2232,14 @@ void collide_player_and_weapon(object* playerobj, object* weapon, vms_vector* co
 	}
 
 	object_create_explosion(playerobj->segnum, collision_point, i2f(10) / 2, VCLIP_PLAYER_HIT);
-	if (Weapon_info[weapon->id].damage_radius)
+	if (activeBMTable->weapons[weapon->id].damage_radius)
 		explode_badass_weapon(weapon, collision_point);
 
 	maybe_kill_weapon(weapon, playerobj);
 
 	bump_two_objects(playerobj, weapon, 0);	//no damage from bump
 
-	if (!Weapon_info[weapon->id].damage_radius) {
+	if (!activeBMTable->weapons[weapon->id].damage_radius) {
 		if (weapon->ctype.laser_info.parent_num > -1)
 			killer = &Objects[weapon->ctype.laser_info.parent_num];
 
@@ -2257,8 +2259,8 @@ void collide_player_and_weapon(object* playerobj, object* weapon, vms_vector* co
 //	Nasty robots are the ones that attack you by running into you and doing lots of damage.
 void collide_player_and_nasty_robot(object* playerobj, object* robot, vms_vector* collision_point)
 {
-	//	if (!(Robot_info[robot->id].energy_drain && Players[playerobj->id].energy))
-	digi_link_sound_to_pos(Robot_info[robot->id].claw_sound, playerobj->segnum, 0, collision_point, 0, F1_0);
+	//	if (!(activeBMTable->robots[robot->id].energy_drain && Players[playerobj->id].energy))
+	digi_link_sound_to_pos(activeBMTable->robots[robot->id].claw_sound, playerobj->segnum, 0, collision_point, 0, F1_0);
 
 	object_create_explosion(playerobj->segnum, collision_point, i2f(10) / 2, VCLIP_PLAYER_HIT);
 
@@ -2313,8 +2315,8 @@ void collide_robot_and_materialization_center(object* objp)
 	digi_link_sound_to_pos(SOUND_ROBOT_HIT, objp->segnum, 0, &objp->pos, 0, F1_0);
 	//	digi_play_sample( SOUND_ROBOT_HIT, F1_0 );
 
-	if (Robot_info[objp->id].exp1_vclip_num > -1)
-		object_create_explosion(objp->segnum, &objp->pos, (objp->size / 2 * 3) / 4, Robot_info[objp->id].exp1_vclip_num);
+	if (activeBMTable->robots[objp->id].exp1_vclip_num > -1)
+		object_create_explosion(objp->segnum, &objp->pos, (objp->size / 2 * 3) / 4, activeBMTable->robots[objp->id].exp1_vclip_num);
 
 	for (side = 0; side < MAX_SIDES_PER_SEGMENT; side++)
 		if (WALL_IS_DOORWAY(segp, side) & WID_FLY_FLAG) {
@@ -2388,7 +2390,7 @@ void collide_player_and_clutter(object* playerobj, object* clutter, vms_vector* 
 //	Return true if weapon does proximity (as opposed to only contact) damage when it explodes.
 int maybe_detonate_weapon(object* weapon1, object* weapon2, vms_vector* collision_point)
 {
-	if (Weapon_info[weapon1->id].damage_radius) {
+	if (activeBMTable->weapons[weapon1->id].damage_radius) {
 		fix	dist;
 
 		dist = vm_vec_dist_quick(&weapon1->pos, &weapon2->pos);
@@ -2396,7 +2398,7 @@ int maybe_detonate_weapon(object* weapon1, object* weapon2, vms_vector* collisio
 			maybe_kill_weapon(weapon1, weapon2);
 			if (weapon1->flags & OF_SHOULD_BE_DEAD) {
 				explode_badass_weapon(weapon1, collision_point);
-				digi_link_sound_to_pos(Weapon_info[weapon1->id].robot_hit_sound, weapon1->segnum, 0, collision_point, 0, F1_0);
+				digi_link_sound_to_pos(activeBMTable->weapons[weapon1->id].robot_hit_sound, weapon1->segnum, 0, collision_point, 0, F1_0);
 			}
 			return 1;
 		}
@@ -2429,18 +2431,18 @@ void collide_weapon_and_weapon(object* weapon1, object* weapon2, vms_vector* col
 		}
 	}
 
-	if ((Weapon_info[weapon1->id].destroyable) || (Weapon_info[weapon2->id].destroyable)) 
+	if ((activeBMTable->weapons[weapon1->id].destroyable) || (activeBMTable->weapons[weapon2->id].destroyable)) 
 	{
 
 		//	Bug reported by Adam Q. Pletcher on September 9, 1994, smart bomb homing missiles were toasting each other.
 		if ((weapon1->id == weapon2->id) && (weapon1->ctype.laser_info.parent_num == weapon2->ctype.laser_info.parent_num))
 			return;
 
-		if (Weapon_info[weapon1->id].destroyable)
+		if (activeBMTable->weapons[weapon1->id].destroyable)
 			if (maybe_detonate_weapon(weapon1, weapon2, collision_point))
 				maybe_detonate_weapon(weapon2, weapon1, collision_point);
 
-		if (Weapon_info[weapon2->id].destroyable)
+		if (activeBMTable->weapons[weapon2->id].destroyable)
 			if (maybe_detonate_weapon(weapon2, weapon1, collision_point))
 				maybe_detonate_weapon(weapon1, weapon2, collision_point);
 
@@ -2468,7 +2470,7 @@ void collide_weapon_and_debris(object* weapon, object* debris, vms_vector* colli
 		digi_link_sound_to_pos(SOUND_ROBOT_HIT, weapon->segnum, 0, collision_point, 0, F1_0);
 
 		explode_object(debris, 0);
-		if (Weapon_info[weapon->id].damage_radius)
+		if (activeBMTable->weapons[weapon->id].damage_radius)
 			explode_badass_weapon(weapon, collision_point);
 		maybe_kill_weapon(weapon, debris);
 		weapon->flags |= OF_SHOULD_BE_DEAD;

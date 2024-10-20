@@ -104,8 +104,10 @@ typedef struct powerup_type_info
 	fix	light;		//	amount of light cast by this powerup, set in bitmaps.tbl
 } powerup_type_info;
 
+#ifdef BUILD_DESCENT1
 extern int N_powerup_types;
 extern powerup_type_info Powerup_info[MAX_POWERUP_TYPES];
+#endif
 
 void draw_powerup(object *obj);
 

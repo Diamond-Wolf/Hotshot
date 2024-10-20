@@ -59,6 +59,11 @@ extern grs_bitmap * rle_get_id_sub( grs_bitmap * bmp );
 // Returns 0xFFFFFFFF if this bitmap isn't a texmerge'd bitmap.
 uint texmerge_get_unique_id( grs_bitmap * bmp )
 {
+
+#ifdef BUILD_DESCENT2
+	auto& GameBitmaps = activePiggyTable->gameBitmaps;
+#endif
+
     int i,n;
     uint tmp;
     grs_bitmap * tmpbmp;
@@ -151,6 +156,11 @@ grs_bitmap * texmerge_get_cached_bitmap( int tmap_bottom, int tmap_top )
 //	} else {
 //		info_printed = 0;
 //	}
+
+#ifndef BUILD_DESCENT1
+	auto& GameBitmaps = activePiggyTable->gameBitmaps;
+	auto& Textures = activeBMTable->textures;
+#endif
 
 	bitmap_top = &GameBitmaps[Textures[tmap_top&0x3FFF].index];
 	bitmap_bottom = &GameBitmaps[Textures[tmap_bottom].index];

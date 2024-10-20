@@ -15,13 +15,28 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include <stdio.h>
 
+#include <vector>
+
 #include "2d/gr.h"
 #include "piggy.h"
+#include "main_shared/polyobj.h"
+#include "vclip.h"
+#include "effects.h"
+#include "wall.h"
+#include "weapon.h"
+#include "powerup.h"
+#include "player.h"
+#include "cntrlcen.h"
+
+#define SANTA
+
+#define MAX_TEXTURES_D1 800
+#define MAX_TEXTURES_D2 1200
 
 #ifdef BUILD_DESCENT2
-# define MAX_TEXTURES		1200
+# define MAX_TEXTURES		MAX_TEXTURES_D2
 #else
-# define MAX_TEXTURES		800
+# define MAX_TEXTURES		MAX_TEXTURES_D1
 #endif
 
 #define BM_MAX_ARGS			10
@@ -34,7 +49,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define TMI_GOAL_RED		16		//this is used to remap the red goal
 #define TMI_GOAL_HOARD	32		//this is used to remap the goals
 
-#ifdef BUILD_DESCENT2
 typedef struct
 {
 	uint8_t		flags;				//values defined above
@@ -44,46 +58,41 @@ typedef struct
 	short		eclip_num;			//the eclip that changes this, or -1
 	short		destroyed;			//bitmap to show when destroyed, or -1
 	short		slide_u,slide_v;	//slide rates of texture, stored in 8:8 fix
-	#ifdef EDITOR
 	char		filename[13];		//used by editor to remap textures
-	char		pad2[3];
-	#endif
 } tmap_info;
-#else
-typedef struct {
-	char			filename[13];
-	uint8_t			flags;
-	fix			lighting;		// 0 to 1
-	fix			damage;			//how much damage being against this does
-	int			eclip_num;		//if not -1, the eclip that changes this   
-} tmap_info;
-#endif
 
 extern int Num_object_types;
 
+#define N_COCKPIT_BITMAPS_D1 4
+#define N_COCKPIT_BITMAPS_D2 6
+
 #ifdef BUILD_DESCENT2
-# define N_COCKPIT_BITMAPS 6
+# define N_COCKPIT_BITMAPS N_COCKPIT_BITMAPS_D2
 #else
-# define N_COCKPIT_BITMAPS 4
+# define N_COCKPIT_BITMAPS N_COCKPIT_BITMAPS_D1
 #endif
 
+#ifdef BUILD_DESCENT1
 extern int Num_cockpits;
 extern bitmap_index cockpit_bitmap[N_COCKPIT_BITMAPS];
 
 extern int Num_tmaps;
+extern tmap_info TmapInfo[MAX_TEXTURES];
+#endif
+
 #ifdef EDITOR
 extern int TmapList[MAX_TEXTURES];
 void bm_write_all(FILE* fp); //[ISB] for piggy.cpp
 #endif
 
-extern tmap_info TmapInfo[MAX_TEXTURES];
-
 //for each model, a model number for dying & dead variants, or -1 if none
+#ifdef BUILD_DESCENT1
 extern int Dying_modelnums[];
 extern int Dead_modelnums[];
+#endif
 
 //the model number of the marker object
-extern int Marker_model_num;
+//extern int Marker_model_num;
 
 // Initializes the palette, bitmap system...
 int bm_init();
@@ -101,10 +110,13 @@ void init_textures();
 #define OL_EXIT				7		//the exit model for external scenes
 #define OL_WEAPON				8		//a weapon that can be placed
 
+#define MAX_OBJTYPE_D1 100
+#define MAX_OBJTYPE_D2 140
+
 #ifdef BUILD_DESCENT2
-# define	MAX_OBJTYPE			140
+# define	MAX_OBJTYPE			MAX_OBJTYPE_D2
 #else
-# define	MAX_OBJTYPE			100
+# define	MAX_OBJTYPE			MAX_OBJTYPE_D1
 #endif
 
 extern int Num_total_object_types;		//	Total number of object types, including robots, hostages, powerups, control centers, faces
@@ -118,9 +130,69 @@ extern fix	ObjStrength[MAX_OBJTYPE];	// initial strength of each object
 # define MAX_OBJ_BITMAPS				210
 #endif
 
+#ifdef BUILD_DESCENT1
 extern bitmap_index ObjBitmaps[MAX_OBJ_BITMAPS];
 extern uint16_t ObjBitmapPtrs[MAX_OBJ_BITMAPS];
 extern int First_multi_bitmap_num;
+#endif
+
+inline bool shouldAutoClearBMTable = false;
+
+struct bmtable {
+
+	std::vector<bitmap_index> cockpits;
+	std::vector<tmap_info> tmaps;
+	std::vector<bitmap_index> objectBitmaps;
+	std::vector<uint16_t> objectBitmapPointers;
+
+	std::vector<bitmap_index> textures;
+	std::vector<polymodel> models;
+	std::vector<uint8_t> sounds;
+	std::vector<uint8_t> altSounds;
+
+	std::vector<vclip> vclips;
+	std::vector<eclip> eclips;
+	std::vector<wclip> wclips;
+
+	std::vector<robot_info> robots;
+	std::vector<jointpos> robotJoints;
+
+	std::vector<weapon_info> weapons;
+	std::vector<powerup_type_info> powerups;
+
+	std::vector<reactor> reactors;
+
+	std::vector<bitmap_index> gauges;
+	std::vector<bitmap_index> hiresGauges;
+
+	std::vector<int> dyingModels;
+	std::vector<int> deadModels;
+
+	std::vector<vms_vector> reactorGunPos;
+	std::vector<vms_vector> reactorGunDirs;
+
+	player_ship player;
+
+	int exitModel;
+	int destroyedExitModel;
+	int markerModel;
+
+	int firstMultiBitmapNum;
+
+	bool initialized;
+
+	piggytable piggy;
+
+	//bmtable();
+	void Init(bool reinitialize = false);
+	void SetActive();
+	~bmtable();
+};
+
+extern bmtable d1Table;
+extern bmtable d2Table;
+
+inline bmtable* activeBMTable;
 
 // Initializes all bitmaps from BITMAPS.TBL file.
 int bm_init_use_tbl(void);

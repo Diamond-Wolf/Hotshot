@@ -1546,7 +1546,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 			}
 
 			//look for, and fix, boss with bogus shields
-			if (obj->type == OBJ_ROBOT && Robot_info[obj->id].boss_flag)
+			if (obj->type == OBJ_ROBOT && activeBMTable->robots[obj->id].boss_flag)
 			{
 				fix save_shields = obj->shields;
 

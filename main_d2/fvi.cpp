@@ -37,6 +37,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/piggy.h"
 #include "main_shared/player.h"
 
+#include "main_shared/bm.h"
+
 extern int Physics_cheat_flag;
 
 #define face_type_num(nfaces,face_num,tri_edge) ((nfaces==1)?0:(tri_edge*2 + face_num))
@@ -667,7 +669,7 @@ fix check_vector_to_object(vms_vector *intp,vms_vector *p0,vms_vector *p1,fix ra
 {
 	fix size = obj->size;
 
-	if (obj->type == OBJ_ROBOT && Robot_info[obj->id].attack_type)
+	if (obj->type == OBJ_ROBOT && activeBMTable->robots[obj->id].attack_type)
 		size = (size*3)/4;
 
 	//if obj is player, and bumping into other player or a weapon of another coop player, reduce radius
@@ -917,10 +919,10 @@ int fvi_sub(vms_vector *intp,int *ints,vms_vector *p0,int startseg,vms_vector *p
 				//	If this is a robot:robot collision, only do it if both of them have attack_type != 0 (eg, green guy)
 				if (Objects[thisobjnum].type == OBJ_ROBOT)
 					if (Objects[objnum].type == OBJ_ROBOT)
-						// -- MK: 11/18/95, 4claws glomming together...this is easy.  -- if (!(Robot_info[Objects[objnum].id].attack_type && Robot_info[Objects[thisobjnum].id].attack_type))
+						// -- MK: 11/18/95, 4claws glomming together...this is easy.  -- if (!(activeBMTable->robots[Objects[objnum].id].attack_type && activeBMTable->robots[Objects[thisobjnum].id].attack_type))
 							continue;
 
-				if (Objects[thisobjnum].type == OBJ_ROBOT && Robot_info[Objects[thisobjnum].id].attack_type)
+				if (Objects[thisobjnum].type == OBJ_ROBOT && activeBMTable->robots[Objects[thisobjnum].id].attack_type)
 					fudged_rad = (rad*3)/4;
 
 				//if obj is player, and bumping into other player or a weapon of another coop player, reduce radius
@@ -1307,8 +1309,10 @@ int check_trans_wall(vms_vector *pnt,segment *seg,int sidenum,int facenum)
 	if (side->tmap_num2 != 0)	{
 		bm = texmerge_get_cached_bitmap( side->tmap_num, side->tmap_num2 );
 	} else {
-		bm = &GameBitmaps[Textures[side->tmap_num].index];
-		PIGGY_PAGE_IN( Textures[side->tmap_num] );
+		bm = &activePiggyTable->gameBitmaps[activeBMTable->textures
+[side->tmap_num].index];
+		PIGGY_PAGE_IN( activeBMTable->textures
+[side->tmap_num] );
 	}
 
 	if (bm->bm_flags & BM_FLAG_RLE)

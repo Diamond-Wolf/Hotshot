@@ -28,6 +28,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gameseq.h"
 #include "titles.h"
 
+#ifdef BUILD_DESCENT2
+# define SANTA
+#endif
+
 mle Mission_list[MAX_MISSIONS];
 
 int Current_mission_num;
@@ -54,6 +58,12 @@ char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
 #define D1_BIM_LAST_SECRET_LEVEL	-3
 #define D1_BIM_BRIEFING_FILE		"briefing.tex"
 #define D1_BIM_ENDING_FILE			"endreg.tex"
+
+#ifdef BUILD_DESCENT1
+DataVer CurrentDataVersion = DataVer::FULL;
+# define bm_read_extra_robots(fname, type)
+# define init_extra_robot_movie(fname)
+#endif
 
 #ifdef SHAREWARE
 
@@ -105,9 +115,7 @@ int load_mission_by_name(char *mission_name)
 		return load_mission(0);
 }
 
-#else
-
-#if defined(D2_OEM)
+#elif defined(D2_OEM)
 
 //
 //  Special versions of mission routines for Diamond/S3 version
@@ -236,18 +244,18 @@ int ml_sort_func(mle *e0,mle *e1)
 
 extern int HoardEquipped();
 
-#ifdef BUILD_DESCENT2
+//#ifdef BUILD_DESCENT2
 extern char CDROM_dir[];
-# define BUILTIN_MISSION "d2.mn2"
-#endif
+#define BUILTIN_MISSION "d2.mn2"
+//#endif
 
 //returns 1 if file read ok, else 0
 int read_mission_file(char *filename,int count,int location)
 {
-#ifdef BUILD_DESCENT2
-	if (CurrentDataVersion == DataVer::DEMO)
+//#ifdef BUILD_DESCENT2
+	if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
 		return 1;
-#endif
+//#endif
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char filename2[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -433,10 +441,10 @@ int build_mission_list(int anarchy_mode)
 	{
 		do	
 		{
-#ifdef BUILD_DESCENT2
-			if (_strfcmp(find.name,BUILTIN_MISSION)==0)
+//#ifdef BUILD_DESCENT2
+			if (currentGame == G_DESCENT_2 && _strfcmp(find.name,BUILTIN_MISSION)==0)
 				continue;		//skip the built-in
-#endif
+//#endif
 
 
 			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
@@ -444,25 +452,25 @@ int build_mission_list(int anarchy_mode)
 			{
 				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
 					count++;
-			}
+			} 
 
 		} while( !FileFindNext( &find ) && count<MAX_MISSIONS);
 		FileFindClose();
 	}
 
-#ifdef BUILD_DESCENT2
 	//move vertigo to top of mission list
-	{
+	if (currentGame == G_DESCENT_2) {
 		int i;
 
 		for (i=special_count;i<count;i++)
 		{
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-			if (!_strfcmp(Mission_list[i].filename, "d2x"))
-#else
+# if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+			if (!_strnicmp(Mission_list[i].filename, "d2x", 3))
+# else
 			if (!_strfcmp(Mission_list[i].filename,"D2X")) //swap!
-#endif
+# endif
 			{
+				printf("found D2X");
 				mle temp;
 
 				temp = Mission_list[special_count];
@@ -475,7 +483,6 @@ int build_mission_list(int anarchy_mode)
 			}
 		}
 	}
-#endif
 
 	if (count>special_count)
 		qsort(&Mission_list[special_count],count-special_count,sizeof(*Mission_list),
@@ -497,11 +504,11 @@ void init_extra_robot_movie(char *filename);
 int load_mission(int mission_num)
 {
 	CFILE *mfile;
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+# if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char buf[CHOCOLATE_MAX_FILE_PATH_SIZE], temp_short_filename[CHOCOLATE_MAX_FILE_PATH_SIZE], *v;
-#else
+# else
 	char buf[80], *v;
-#endif
+# endif
 	int found_hogfile;
 	int enhanced_mission = 0;
 
@@ -509,8 +516,7 @@ int load_mission(int mission_num)
 
 	mprintf(( 0, "Loading mission %d\n", mission_num ));
 
-#ifdef BUILD_DESCENT2
-	if (CurrentDataVersion == DataVer::DEMO)
+	if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
 	{
 		Assert(mission_num == 0);
 
@@ -529,19 +535,13 @@ int load_mission(int mission_num)
 
 		return 1;
 	}
-#endif
 
 	//read mission from file 
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 
 	snprintf(temp_short_filename, CHOCOLATE_MAX_FILE_PATH_SIZE, 
-# ifdef BUILD_DESCENT2
-	"%s.mn2"
-# else
-	"%s.msn"
-# endif
-	, Mission_list[mission_num].filename);
+		(currentGame == G_DESCENT_1 ? "%s.msn" : "%s.mn2"), Mission_list[mission_num].filename);
 
 	switch (Mission_list[mission_num].location)
 	{
@@ -549,12 +549,12 @@ int load_mission(int mission_num)
 			get_full_file_path(buf, temp_short_filename, CHOCOLATE_MISSIONS_DIR);
 			break;
 
-#ifdef BUILD_DESCENT2
+# ifdef BUILD_DESCENT2
 		case ML_CDROM:
 			//This isn't really implemented at this point
 			Int3();
 			break;
-#endif
+# endif
 
 		default:
 			Int3();
@@ -573,18 +573,10 @@ int load_mission(int mission_num)
 		case ML_CURDIR:		strcpy(buf,"");				break;
 	}
 	strcat(buf,Mission_list[mission_num].filename);
-	strcat(buf,
-# ifdef BUILD_DESCENT2
-	".MN2"
-# else
-	".MSN"
-# endif
-	);
+	strcat(buf, (currentGame == G_DESCENT_1 ? ".MSN" : ".MN2"));
 #endif
 
-
-#ifdef BUILD_DESCENT1 
-	if (mission_num == 0) 
+	if (currentGame == G_DESCENT_1 && mission_num == 0) 
 	{
 		int i;
 
@@ -606,7 +598,6 @@ int load_mission(int mission_num)
 		cfile_use_alternate_hogfile(NULL);		//disable alternate
 	} 
 	else
-#endif
 	{
 		mfile = cfopen(buf,"rb");
 		if (mfile == NULL) 
@@ -637,10 +628,12 @@ int load_mission(int mission_num)
 		//init vars
 		Last_level = 0;
 		Last_secret_level = 0;
-#ifdef BUILD_DESCENT1
-		Briefing_text_filename[0] = 0;
-		Ending_text_filename[0] = 0;
-#endif
+
+		if (currentGame == G_DESCENT_1) {
+			Briefing_text_filename[0] = 0;
+			Ending_text_filename[0] = 0;
+		}
+
 
 		while (mfgets(buf,80,mfile)) 
 		{
@@ -673,8 +666,8 @@ int load_mission(int mission_num)
 				cfile_use_alternate_hogfile(bufp);
 				mprintf((0, "Hog file override = [%s]\n", bufp));
 			}
-#ifdef BUILD_DESCENT1
-			else if (istok(buf, "briefing")) 
+//#ifdef BUILD_DESCENT1
+			else if (currentGame == G_DESCENT_1 && istok(buf, "briefing")) 
 			{
 				if ((v = get_value(buf)) != NULL) 
 				{
@@ -692,7 +685,7 @@ int load_mission(int mission_num)
 						strcpy(Ending_text_filename, v);
 				}
 			}
-#endif
+//#endif
 			else if (istok(buf,"num_levels")) 
 			{
 				if ((v=get_value(buf))!=NULL)
@@ -762,8 +755,8 @@ int load_mission(int mission_num)
 	Current_mission_filename = Mission_list[Current_mission_num].filename;
 	Current_mission_longname = Mission_list[Current_mission_num].mission_name;
 
-#ifdef BUILD_DESCENT2
-	if (enhanced_mission) 
+//#ifdef BUILD_DESCENT2
+	if (currentGame == G_DESCENT_2 && enhanced_mission) 
 	{
 		char t[50];
 		extern void bm_read_extra_robots(char* fname, int type);
@@ -773,7 +766,7 @@ int load_mission(int mission_num)
 		strcat(t,"-l.mvl");
 		init_extra_robot_movie(t);
 	}
-#endif
+//#endif
 
 	return 1;
 }
@@ -784,15 +777,15 @@ int load_mission_by_name(char *mission_name)
 {
 	int n,i;
 
-#ifdef BUILD_DESCENT2
-	if (CurrentDataVersion == DataVer::DEMO)
+//#ifdef BUILD_DESCENT2
+	if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
 	{
 		if (strcmp(mission_name, SHAREWARE_MISSION_FILENAME))
 			return 0;		//cannot load requested mission
 		else
 			return load_mission(0);
 	}
-#endif
+//#endif
 
 	n = build_mission_list(1);
 
@@ -804,4 +797,4 @@ int load_mission_by_name(char *mission_name)
 }
 
 #endif
-#endif
+//#endif

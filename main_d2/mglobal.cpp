@@ -77,8 +77,8 @@ int Side_to_verts_int[MAX_SIDES_PER_SEGMENT][4] = {
 
 // Texture map stuff
 
-int NumTextures = 0;
-bitmap_index Textures[MAX_TEXTURES];		// All textures.
+//int NumTextures = 0;
+//bitmap_index Textures[MAX_TEXTURES];		// All textures.
 
 fix	Next_laser_fire_time;			//	Time at which player can next fire his selected laser.
 fix	Next_missile_fire_time;			//	Time at which player can next fire his selected missile.

@@ -76,24 +76,24 @@ short	Boss_gate_segs[MAX_BOSS_TELEPORT_SEGS];
 
 // ---------------------------------------------------------
 //	On entry, N_robot_types had darn sure better be set.
-//	Mallocs N_robot_types robot_info structs into global Robot_info.
+//	Mallocs N_robot_types robot_info structs into global activeBMTable->robots.
 void init_ai_system(void)
 {
 #if 0
 	int	i;
 
-	mprintf((0, "Trying to malloc %i bytes for Robot_info.\n", N_robot_types * sizeof(*Robot_info)));
-	Robot_info = (robot_info *) mem_malloc( N_robot_types * sizeof(*Robot_info) );
-	mprintf((0, "Robot_info = %i\n", Robot_info));
+	mprintf((0, "Trying to malloc %i bytes for activeBMTable->robots.\n", N_robot_types * sizeof(*activeBMTable->robots)));
+	activeBMTable->robots = (robot_info *) mem_malloc( N_robot_types * sizeof(*activeBMTable->robots) );
+	mprintf((0, "activeBMTable->robots = %i\n", activeBMTable->robots));
 
 	for (i=0; i<N_robot_types; i++) {
-		Robot_info[i].field_of_view = F1_0/2;
-		Robot_info[i].firing_wait = F1_0;
-		Robot_info[i].turn_time = F1_0*2;
-		// -- Robot_info[i].fire_power = F1_0;
-		// -- Robot_info[i].shield = F1_0/2;
-		Robot_info[i].max_speed = F1_0*10;
-		Robot_info[i].always_0xabcd = 0xabcd;
+		activeBMTable->robots[i].field_of_view = F1_0/2;
+		activeBMTable->robots[i].firing_wait = F1_0;
+		activeBMTable->robots[i].turn_time = F1_0*2;
+		// -- activeBMTable->robots[i].fire_power = F1_0;
+		// -- activeBMTable->robots[i].shield = F1_0/2;
+		activeBMTable->robots[i].max_speed = F1_0*10;
+		activeBMTable->robots[i].always_0xabcd = 0xabcd;
 	}
 #endif
 
@@ -132,7 +132,7 @@ void init_ai_object(int objnum, int behavior, int hide_segment)
 	object	*objp = &Objects[objnum];
 	ai_static	*aip = &objp->ctype.ai_info;
 	ai_local		*ailp = &Ai_local_info[objnum];
-	robot_info	*robptr = &Robot_info[objp->id];
+	robot_info	*robptr = &activeBMTable->robots[objp->id];
 
 	if (behavior == 0) {
 		// mprintf((0, "Behavior of 0 for object #%i, bashing to AIB_NORMAL.\n", objnum));
@@ -216,12 +216,12 @@ void create_buddy_bot(void)
 	int	buddy_id;
 	vms_vector	object_pos;
 
-	for (buddy_id=0; buddy_id<N_robot_types; buddy_id++)
-		if (Robot_info[buddy_id].companion)
+	for (buddy_id=0; buddy_id<activeBMTable->robots.size(); buddy_id++)
+		if (activeBMTable->robots[buddy_id].companion)
 			break;
 
-	if (buddy_id == N_robot_types) {
-		mprintf((0, "Can't create Buddy.  No 'companion' bot found in Robot_info!\n"));
+	if (buddy_id == activeBMTable->robots.size()) {
+		mprintf((0, "Can't create Buddy.  No 'companion' bot found in activeBMTable->robots!\n"));
 		return;
 	}
 
@@ -256,7 +256,7 @@ if (size_check)
 	mprintf((0, "Boss fits in segments:\n"));
 	//	See if there is a boss.  If not, quick out.
 	for (i=0; i<=Highest_object_index; i++)
-		if ((Objects[i].type == OBJ_ROBOT) && (Robot_info[Objects[i].id].boss_flag)) {
+		if ((Objects[i].type == OBJ_ROBOT) && (activeBMTable->robots[Objects[i].id].boss_flag)) {
 			if (boss_objnum != -1)		//	There are two bosses in this mine!  i and boss_objnum!
 				Int3();			//do int3 here instead of assert so museum will work
 			boss_objnum = i;
@@ -403,13 +403,13 @@ void do_lunacy_on(void)
 	Difficulty_level = NDL-1;
 
 	for (i=0; i<MAX_ROBOT_TYPES; i++) {
-		Firing_wait_copy[i] = Robot_info[i].firing_wait[NDL-1];
-		Firing_wait2_copy[i] = Robot_info[i].firing_wait2[NDL-1];
-		Rapidfire_count_copy[i] = Robot_info[i].rapidfire_count[NDL-1];
+		Firing_wait_copy[i] = activeBMTable->robots[i].firing_wait[NDL-1];
+		Firing_wait2_copy[i] = activeBMTable->robots[i].firing_wait2[NDL-1];
+		Rapidfire_count_copy[i] = activeBMTable->robots[i].rapidfire_count[NDL-1];
 
-		Robot_info[i].firing_wait[NDL-1] = Robot_info[i].firing_wait[1];
-		Robot_info[i].firing_wait2[NDL-1] = Robot_info[i].firing_wait2[1];
-		Robot_info[i].rapidfire_count[NDL-1] = Robot_info[i].rapidfire_count[1];
+		activeBMTable->robots[i].firing_wait[NDL-1] = activeBMTable->robots[i].firing_wait[1];
+		activeBMTable->robots[i].firing_wait2[NDL-1] = activeBMTable->robots[i].firing_wait2[1];
+		activeBMTable->robots[i].rapidfire_count[NDL-1] = activeBMTable->robots[i].rapidfire_count[1];
 	}
 
 }
@@ -424,9 +424,9 @@ void do_lunacy_off(void)
 	Lunacy = 0;
 
 	for (i=0; i<MAX_ROBOT_TYPES; i++) {
-		Robot_info[i].firing_wait[NDL-1] = Firing_wait_copy[i];
-		Robot_info[i].firing_wait2[NDL-1] = Firing_wait2_copy[i];
-		Robot_info[i].rapidfire_count[NDL-1] = Rapidfire_count_copy[i];
+		activeBMTable->robots[i].firing_wait[NDL-1] = Firing_wait_copy[i];
+		activeBMTable->robots[i].firing_wait2[NDL-1] = Firing_wait2_copy[i];
+		activeBMTable->robots[i].rapidfire_count[NDL-1] = Rapidfire_count_copy[i];
 	}
 
 	Difficulty_level = Diff_save;
@@ -498,7 +498,7 @@ void ai_turn_towards_vector(vms_vector *goal_vector, object *objp, fix rate)
 		vms_vector	rand_vec;
 		fix			scale;
 		make_random_vector(&rand_vec);
-		scale = fixdiv(2*Seismic_tremor_magnitude, Robot_info[objp->id].mass);
+		scale = fixdiv(2*Seismic_tremor_magnitude, activeBMTable->robots[objp->id].mass);
 		vm_vec_scale_add2(&new_fvec, &rand_vec, scale);
 	}
 
@@ -612,8 +612,8 @@ int do_silly_animation(object *objp)
 	int				flinch_attack_scale = 1;
 
 	robot_type = objp->id;
-	num_guns = Robot_info[robot_type].n_guns;
-	attack_type = Robot_info[robot_type].attack_type;
+	num_guns = activeBMTable->robots[robot_type].n_guns;
+	attack_type = activeBMTable->robots[robot_type].attack_type;
 
 	if (num_guns == 0) {
 		// mprintf((0, "Object #%i of type #%i has 0 guns.\n", objp-Objects, robot_type));
@@ -641,7 +641,7 @@ int do_silly_animation(object *objp)
 			vms_angvec	*jp = &jp_list[joint].angles;
 			vms_angvec	*pobjp = &pobj_info->anim_angles[jointnum];
 
-			if (jointnum >= Polygon_models[objp->rtype.pobj_info.model_num].n_models) {
+			if (jointnum >= activeBMTable->models[objp->rtype.pobj_info.model_num].n_models) {
 				Int3();		// Contact Mike: incompatible data, illegal jointnum, problem in pof file?
 				continue;
 			}
@@ -739,7 +739,7 @@ void ai_frame_animation(object *objp)
 	int	joint;
 	int	num_joints;
 
-	num_joints = Polygon_models[objp->rtype.pobj_info.model_num].n_models;
+	num_joints = activeBMTable->models[objp->rtype.pobj_info.model_num].n_models;
 
 	for (joint=1; joint<num_joints; joint++) {
 		fix			delta_to_goal;
@@ -828,7 +828,7 @@ void set_next_fire_time(object *objp, ai_local *ailp, robot_info *robptr, int gu
 void do_ai_robot_hit_attack(object *robot, object *playerobj, vms_vector *collision_point)
 {
 	ai_local		*ailp = &Ai_local_info[robot-Objects];
-	robot_info *robptr = &Robot_info[robot->id];
+	robot_info *robptr = &activeBMTable->robots[robot->id];
 
 //#ifndef NDEBUG
 	if (!Robot_firing_enabled)
@@ -914,13 +914,13 @@ int lead_player(object *objp, vms_vector *fire_point, vms_vector *believed_playe
 		return 0;
 
 	//	Looks like it might be worth trying to lead the player.
-	robptr = &Robot_info[objp->id];
+	robptr = &activeBMTable->robots[objp->id];
 	weapon_type = robptr->weapon_type;
 	if (robptr->weapon_type2 != -1)
 		if (gun_num == 0)
 			weapon_type = robptr->weapon_type2;
 
-	wptr = &Weapon_info[weapon_type];
+	wptr = &activeBMTable->weapons[weapon_type];
 	max_weapon_speed = wptr->speed[Difficulty_level];
 	if (max_weapon_speed < F1_0)
 		return 0;
@@ -964,7 +964,7 @@ void ai_fire_laser_at_player(object *obj, vms_vector *fire_point, int gun_num, v
 {
 	int			objnum = obj-Objects;
 	ai_local		*ailp = &Ai_local_info[objnum];
-	robot_info	*robptr = &Robot_info[obj->id];
+	robot_info	*robptr = &activeBMTable->robots[obj->id];
 	vms_vector	fire_vec;
 	vms_vector	bpp_diff;
 	int			weapon_type;
@@ -992,7 +992,7 @@ void ai_fire_laser_at_player(object *obj, vms_vector *fire_point, int gun_num, v
 
 	//	Don't let the boss fire while in death roll.  Sorry, this is the easiest way to do this.
 	//	If you try to key the boss off obj->ctype.ai_info.dying_start_time, it will hose the endlevel stuff.
-	if (Boss_dying_start_time & Robot_info[obj->id].boss_flag)
+	if (Boss_dying_start_time & activeBMTable->robots[obj->id].boss_flag)
 		return;
 
 	//	If player is cloaked, maybe don't fire based on how long cloaked and randomness.
@@ -1113,7 +1113,7 @@ void move_towards_vector(object *objp, vms_vector *vec_goal, int dot_based)
 {
 	physics_info	*pptr = &objp->mtype.phys_info;
 	fix				speed, dot, max_speed;
-	robot_info		*robptr = &Robot_info[objp->id];
+	robot_info		*robptr = &activeBMTable->robots[objp->id];
 	vms_vector		vel;
 
 	//	Trying to move towards player.  If forward vector much different than velocity vector,
@@ -1165,7 +1165,7 @@ void move_around_player(object *objp, vms_vector *vec_to_player, int fast_flag)
 {
 	physics_info	*pptr = &objp->mtype.phys_info;
 	fix				speed;
-	robot_info		*robptr = &Robot_info[objp->id];
+	robot_info		*robptr = &activeBMTable->robots[objp->id];
 	int				objnum = objp-Objects;
 	int				dir;
 	int				dir_change;
@@ -1259,7 +1259,7 @@ void move_away_from_player(object *objp, vms_vector *vec_to_player, int attack_t
 {
 	fix				speed;
 	physics_info	*pptr = &objp->mtype.phys_info;
-	robot_info		*robptr = &Robot_info[objp->id];
+	robot_info		*robptr = &activeBMTable->robots[objp->id];
 	int				objref;
 
 	pptr->velocity.x -= fixmul(vec_to_player->x, FrameTime*16);
@@ -1297,7 +1297,7 @@ void move_away_from_player(object *objp, vms_vector *vec_to_player, int attack_t
 void ai_move_relative_to_player(object *objp, ai_local *ailp, fix dist_to_player, vms_vector *vec_to_player, fix circle_distance, int evade_only, int player_visibility)
 {
 	object		*dobjp;
-	robot_info	*robptr = &Robot_info[objp->id];
+	robot_info	*robptr = &activeBMTable->robots[objp->id];
 
 	Assert(player_visibility != -1);
 
@@ -1311,7 +1311,7 @@ void ai_move_relative_to_player(object *objp, ai_local *ailp, fix dist_to_player
 			fix			dot, dist_to_laser, field_of_view;
 			vms_vector	vec_to_laser, laser_fvec;
 
-			field_of_view = Robot_info[objp->id].field_of_view[Difficulty_level];
+			field_of_view = activeBMTable->robots[objp->id].field_of_view[Difficulty_level];
 
 			vm_vec_sub(&vec_to_laser, &dobjp->pos, &objp->pos);
 			dist_to_laser = vm_vec_normalize_quick(&vec_to_laser);
@@ -1337,7 +1337,7 @@ void ai_move_relative_to_player(object *objp, ai_local *ailp, fix dist_to_player
 					int	evade_speed;
 
 					ai_evaded = 1;
-					evade_speed = Robot_info[objp->id].evade_speed[Difficulty_level];
+					evade_speed = activeBMTable->robots[objp->id].evade_speed[Difficulty_level];
 
 					move_around_player(objp, vec_to_player, evade_speed);
 				}
@@ -1503,7 +1503,7 @@ void do_ai_robot_hit(object *objp, int type)
 					int	r;
 
 					//	Attack robots (eg, green guy) shouldn't have behavior = still.
-					Assert(Robot_info[objp->id].attack_type == 0);
+					Assert(activeBMTable->robots[objp->id].attack_type == 0);
 
 					r = P_Rand();
 					//	1/8 time, charge player, 1/4 time create path, rest of time, do nothing
@@ -1669,7 +1669,7 @@ void move_object_to_legal_spot(object *objp)
 		}
 	}
 
-	if (Robot_info[objp->id].boss_flag) {
+	if (activeBMTable->robots[objp->id].boss_flag) {
 		Int3();		//	Note: Boss is poking outside mine.  Will try to resolve.
 		teleport_boss(objp);
 	} else {
@@ -1745,7 +1745,7 @@ int ai_door_is_openable(object *objp, segment *segp, int sidenum)
 
 	wallp = &Walls[wall_num];
 
-	if ((objp == NULL) || (Robot_info[objp->id].companion == 1)) {
+	if ((objp == NULL) || (activeBMTable->robots[objp->id].companion == 1)) {
 		int	ailp_mode;
 
 		if (wallp->flags & WALL_BUDDY_PROOF) {
@@ -1795,7 +1795,7 @@ int ai_door_is_openable(object *objp, segment *segp, int sidenum)
 
 			if (clip_num == -1)
 				return 1;
-			else if (WallAnims[clip_num].flags & WCF_HIDDEN) {
+			else if (activeBMTable->wclips[clip_num].flags & WCF_HIDDEN) {
 				if (wallp->state == WALL_DOOR_CLOSED)
 					return 0;
 				else
@@ -1813,7 +1813,7 @@ int ai_door_is_openable(object *objp, segment *segp, int sidenum)
 				if (clip_num == -1)
 					return 1;
 				//	Buddy allowed to go through secret doors to get to player.
-				else if ((ailp_mode != AIM_GOTO_PLAYER) && (WallAnims[clip_num].flags & WCF_HIDDEN)) {
+				else if ((ailp_mode != AIM_GOTO_PLAYER) && (activeBMTable->wclips[clip_num].flags & WCF_HIDDEN)) {
 					if (wallp->state == WALL_DOOR_CLOSED)
 						return 0;
 					else
@@ -1846,7 +1846,7 @@ int openable_doors_in_segment(int segnum)
 	for (i=0; i<MAX_SIDES_PER_SEGMENT; i++) {
 		if (Segments[segnum].sides[i].wall_num != -1) {
 			int	wall_num = Segments[segnum].sides[i].wall_num;
-			if ((Walls[wall_num].type == WALL_DOOR) && (Walls[wall_num].keys == KEY_NONE) && (Walls[wall_num].state == WALL_DOOR_CLOSED) && !(Walls[wall_num].flags & WALL_DOOR_LOCKED) && !(WallAnims[Walls[wall_num].clip_num].flags & WCF_HIDDEN))
+			if ((Walls[wall_num].type == WALL_DOOR) && (Walls[wall_num].keys == KEY_NONE) && (Walls[wall_num].state == WALL_DOOR_CLOSED) && !(Walls[wall_num].flags & WALL_DOOR_LOCKED) && !(activeBMTable->wclips[Walls[wall_num].clip_num].flags & WCF_HIDDEN))
 				return i;
 		}
 	}
@@ -1921,9 +1921,9 @@ int create_gated_robot( int segnum, int object_id, vms_vector *pos)
 	object	*objp;
 	segment	*segp = &Segments[segnum];
 	vms_vector	object_pos;
-	robot_info	*robptr = &Robot_info[object_id];
+	robot_info	*robptr = &activeBMTable->robots[object_id];
 	int		i, count=0;
-	fix		objsize = Polygon_models[robptr->model_num].rad;
+	fix		objsize = activeBMTable->models[robptr->model_num].rad;
 	int		default_behavior;
 
 	if (GameTime - Last_gate_time < Gate_interval)
@@ -1986,11 +1986,11 @@ int create_gated_robot( int segnum, int object_id, vms_vector *pos)
 	objp->shields = robptr->strength;
 	objp->matcen_creator = BOSS_GATE_MATCEN_NUM;	//	flag this robot as having been created by the boss.
 
-	default_behavior = Robot_info[objp->id].behavior;
+	default_behavior = activeBMTable->robots[objp->id].behavior;
 	init_ai_object(objp-Objects, default_behavior, -1 );		//	Note, -1 = segment this robot goes to to hide, should probably be something useful
 
 	object_create_explosion(segnum, &object_pos, i2f(10), VCLIP_MORPHING_ROBOT );
-	digi_link_sound_to_pos( Vclip[VCLIP_MORPHING_ROBOT].sound_num, segnum, 0, &object_pos, 0 , F1_0);
+	digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, segnum, 0, &object_pos, 0 , F1_0);
 	morph_start(objp);
 
 	Last_gate_time = GameTime;
@@ -2024,7 +2024,7 @@ int boss_spew_robot(object *objp, vms_vector *pos)
 	int		objnum, segnum;
 	int		boss_index;
 
-	boss_index = Robot_info[objp->id].boss_flag - BOSS_D2;
+	boss_index = activeBMTable->robots[objp->id].boss_flag - BOSS_D2;
 
 	Assert((boss_index >= 0) && (boss_index < NUM_D2_BOSSES));
 
@@ -2147,9 +2147,9 @@ void teleport_boss(object *objp)
 	vm_vec_sub(&boss_dir, &Objects[Players[Player_num].objnum].pos, &objp->pos);
 	vm_vector_2_matrix(&objp->orient, &boss_dir, NULL, NULL);
 
-	digi_link_sound_to_pos( Vclip[VCLIP_MORPHING_ROBOT].sound_num, rand_segnum, 0, &objp->pos, 0 , F1_0);
+	digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, rand_segnum, 0, &objp->pos, 0 , F1_0);
 	digi_kill_sound_linked_to_object( objp-Objects);
-	digi_link_sound_to_object2( Robot_info[objp->id].see_sound, objp-Objects, 1, F1_0, F1_0*512 );	//	F1_0*512 means play twice as loud
+	digi_link_sound_to_object2( activeBMTable->robots[objp->id].see_sound, objp-Objects, 1, F1_0, F1_0*512 );	//	F1_0*512 means play twice as loud
 
 	//	After a teleport, boss can fire right away.
 	Ai_local_info[objp-Objects].next_fire = 0;
@@ -2160,7 +2160,7 @@ void teleport_boss(object *objp)
 //	----------------------------------------------------------------------
 void start_boss_death_sequence(object *objp)
 {
-	if (Robot_info[objp->id].boss_flag) {
+	if (activeBMTable->robots[objp->id].boss_flag) {
 		Boss_dying = 1;
 		Boss_dying_start_time = GameTime;
 	}
@@ -2193,7 +2193,7 @@ int do_robot_dying_frame(object *objp, fix start_time, fix roll_duration, int8_t
 	{
 		int soundno = digi_xlat_sound(death_sound);
 		if (soundno >= 0 && soundno != 255)
-			sound_duration = fixdiv(GameSounds[soundno].length, digi_sample_rate);
+			sound_duration = fixdiv(activePiggyTable->gameSounds[soundno].length, digi_sample_rate);
 		else
 			sound_duration = F1_0;
 	}
@@ -2232,7 +2232,7 @@ void do_boss_dying_frame(object *objp)
 {
 	int	rval;
 
-	rval = do_robot_dying_frame(objp, Boss_dying_start_time, BOSS_DEATH_DURATION, &Boss_dying_sound_playing, Robot_info[objp->id].deathroll_sound, F1_0*4, F1_0*4);
+	rval = do_robot_dying_frame(objp, Boss_dying_start_time, BOSS_DEATH_DURATION, &Boss_dying_sound_playing, activeBMTable->robots[objp->id].deathroll_sound, F1_0*4, F1_0*4);
 
 	if (rval) {
 		do_controlcen_destroyed_stuff(NULL);
@@ -2249,13 +2249,13 @@ int do_any_robot_dying_frame(object *objp)
 	if (objp->ctype.ai_info.dying_start_time) {
 		int	rval, death_roll;
 
-		death_roll = Robot_info[objp->id].death_roll;
-		rval = do_robot_dying_frame(objp, objp->ctype.ai_info.dying_start_time, std::min(death_roll/2+1,6)*F1_0, &objp->ctype.ai_info.dying_sound_playing, Robot_info[objp->id].deathroll_sound, death_roll*F1_0/8, death_roll*F1_0/2);
+		death_roll = activeBMTable->robots[objp->id].death_roll;
+		rval = do_robot_dying_frame(objp, objp->ctype.ai_info.dying_start_time, std::min(death_roll/2+1,6)*F1_0, &objp->ctype.ai_info.dying_sound_playing, activeBMTable->robots[objp->id].deathroll_sound, death_roll*F1_0/8, death_roll*F1_0/2);
 
 		if (rval) {
 			explode_object(objp, F1_0/4);
 			digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objp-Objects, 0, F2_0, F1_0*512);
-			if ((Current_level_num < 0) && (Robot_info[objp->id].thief))
+			if ((Current_level_num < 0) && (activeBMTable->robots[objp->id].thief))
 				recreate_thief(objp);
 		}
 
@@ -2302,7 +2302,7 @@ void do_boss_stuff(object *objp, int player_visibility)
 {
 	int	boss_id, boss_index;
 
-	boss_id = Robot_info[objp->id].boss_flag;
+	boss_id = activeBMTable->robots[objp->id].boss_flag;
 
 	Assert((boss_id >= BOSS_D2) && (boss_id < BOSS_D2 + NUM_D2_BOSSES));
 
@@ -2461,7 +2461,7 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 			dot = vm_vec_dot(&obj->orient.fvec, vec_to_player);
 			if ((dot >= 7*F1_0/8) || ((dot > F1_0/4) &&  robptr->boss_flag)) {
 
-				if (gun_num < Robot_info[obj->id].n_guns) {
+				if (gun_num < activeBMTable->robots[obj->id].n_guns) {
 					if (robptr->attack_type == 1) {
 						if (!Player_exploded && (dist_to_player < obj->size + ConsoleObject->size + F1_0*2)) {		// robptr->circle_distance[Difficulty_level] + ConsoleObject->size) {
 							if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION-2))
@@ -2512,14 +2512,14 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 
 				// Switch to next gun for next fire.  If has 2 gun types, select gun #1, if exists.
 				aip->CURRENT_GUN++;
-				if (aip->CURRENT_GUN >= Robot_info[obj->id].n_guns)
-					if ((Robot_info[obj->id].n_guns == 1) || (Robot_info[obj->id].weapon_type2 == -1))
+				if (aip->CURRENT_GUN >= activeBMTable->robots[obj->id].n_guns)
+					if ((activeBMTable->robots[obj->id].n_guns == 1) || (activeBMTable->robots[obj->id].weapon_type2 == -1))
 						aip->CURRENT_GUN = 0;
 					else
 						aip->CURRENT_GUN = 1;
 			}
 		}
-	} else if (!robptr->attack_type && (Weapon_info[Robot_info[obj->id].weapon_type].homing_flag == 1) || ((Robot_info[obj->id].weapon_type2 != -1) && (Weapon_info[Robot_info[obj->id].weapon_type2].homing_flag == 1))) {
+	} else if (!robptr->attack_type && (activeBMTable->weapons[activeBMTable->robots[obj->id].weapon_type].homing_flag == 1) || ((activeBMTable->robots[obj->id].weapon_type2 != -1) && (activeBMTable->weapons[activeBMTable->robots[obj->id].weapon_type2].homing_flag == 1))) {
 		//	Robots which fire homing weapons might fire even if they don't have a bead on the player.
 		if (((!object_animates) || (ailp->achieved_state[aip->CURRENT_GUN] == AIS_FIRE))
 			 && (((ailp->next_fire <= 0) && (aip->CURRENT_GUN != 0)) || ((ailp->next_fire2 <= 0) && (aip->CURRENT_GUN == 0)))
@@ -2533,12 +2533,12 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 
 			// Switch to next gun for next fire.
 			aip->CURRENT_GUN++;
-			if (aip->CURRENT_GUN >= Robot_info[obj->id].n_guns)
+			if (aip->CURRENT_GUN >= activeBMTable->robots[obj->id].n_guns)
 				aip->CURRENT_GUN = 0;
 		} else {
 			// Switch to next gun for next fire.
 			aip->CURRENT_GUN++;
-			if (aip->CURRENT_GUN >= Robot_info[obj->id].n_guns)
+			if (aip->CURRENT_GUN >= activeBMTable->robots[obj->id].n_guns)
 				aip->CURRENT_GUN = 0;
 		}
 	} else {
@@ -2554,7 +2554,7 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 			dot = vm_vec_dot(&obj->orient.fvec, &vec_to_last_pos);
 			if (dot >= 7*F1_0/8) {
 
-				if (aip->CURRENT_GUN < Robot_info[obj->id].n_guns) {
+				if (aip->CURRENT_GUN < activeBMTable->robots[obj->id].n_guns) {
 					if (robptr->attack_type == 1) {
 						if (!Player_exploded && (dist_to_player < obj->size + ConsoleObject->size + F1_0*2)) {		// robptr->circle_distance[Difficulty_level] + ConsoleObject->size) {
 							if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION-2))
@@ -2594,8 +2594,8 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 
 				// Switch to next gun for next fire.
 				aip->CURRENT_GUN++;
-				if (aip->CURRENT_GUN >= Robot_info[obj->id].n_guns)
-					if (Robot_info[obj->id].n_guns == 1)
+				if (aip->CURRENT_GUN >= activeBMTable->robots[obj->id].n_guns)
+					if (activeBMTable->robots[obj->id].n_guns == 1)
 						aip->CURRENT_GUN = 0;
 					else
 						aip->CURRENT_GUN = 1;

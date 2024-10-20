@@ -222,7 +222,7 @@ void do_morph_frame(object *obj)
 		return;
 	}
 
-	pm = &Polygon_models[md->obj->rtype.pobj_info.model_num];
+	pm = &activeBMTable->models[md->obj->rtype.pobj_info.model_num];
 
 	for (i=0;i<pm->n_models;i++)
 		if (md->submodel_active[i]==1)
@@ -306,7 +306,7 @@ void morph_start(object *obj)
 
 	obj->mtype.phys_info.rotvel = morph_rotvel;
 
-	pm = &Polygon_models[obj->rtype.pobj_info.model_num];
+	pm = &activeBMTable->models[obj->rtype.pobj_info.model_num];
 
 	find_min_max(pm,0,&pmmin,&pmmax);
 
@@ -372,8 +372,8 @@ void draw_model(polymodel *pm,int submodel_num,vms_angvec *anim_angles,fix light
 
 			for (i=0;i<pm->n_textures;i++)		
 			{
-				texture_list_index[i] = ObjBitmaps[ObjBitmapPtrs[pm->first_texture+i]];
-				texture_list[i] = &GameBitmaps[ObjBitmaps[ObjBitmapPtrs[pm->first_texture+i]].index];
+				texture_list_index[i] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[pm->first_texture+i]];
+				texture_list[i] = &activePiggyTable->gameBitmaps[activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[pm->first_texture+i]].index];
 			}
 
 #ifdef PIGGY_USE_PAGING			
@@ -416,9 +416,9 @@ void draw_morph_object(object *obj)
 	md = find_morph_data(obj);
 	Assert(md != NULL);
 
-	Assert(obj->rtype.pobj_info.model_num < N_polygon_models);
+	Assert(obj->rtype.pobj_info.model_num < activeBMTable->models.size());
 
-	po=&Polygon_models[obj->rtype.pobj_info.model_num];
+	po=&activeBMTable->models[obj->rtype.pobj_info.model_num];
 
 	light = compute_object_light(obj,NULL);
 

@@ -57,6 +57,8 @@ void do_load_save_levels(int save);
 #include "main_shared/laser.h"
 #include "misc/byteswap.h"
 
+#define SANTA
+
 char Gamesave_current_filename[128];
 
 #define GAME_VERSION					32
@@ -266,25 +268,25 @@ void verify_object(object* obj)
 		Gamesave_num_org_robots++;
 
 		// Make sure valid id...
-		if (obj->id >= N_robot_types)
-			obj->id = obj->id % N_robot_types;
+		if (obj->id >= activeBMTable->robots.size())
+			obj->id = obj->id % activeBMTable->robots.size();
 
 		// Make sure model number & size are correct...		
 		if (obj->render_type == RT_POLYOBJ) 
 		{
-			Assert(Robot_info[obj->id].model_num != -1);
+			Assert(activeBMTable->robots[obj->id].model_num != -1);
 			//if you fail this assert, it means that a robot in this level
 			//hasn't been loaded, possibly because he's marked as
 			//non-shareware.  To see what robot number, print obj->id.
 
-			Assert(Robot_info[obj->id].always_0xabcd == 0xabcd);
+			Assert(activeBMTable->robots[obj->id].always_0xabcd == 0xabcd);
 			//if you fail this assert, it means that the robot_ai for
 			//a robot in this level hasn't been loaded, possibly because 
 			//it's marked as non-shareware.  To see what robot number, 
 			//print obj->id.
 
-			obj->rtype.pobj_info.model_num = Robot_info[obj->id].model_num;
-			obj->size = Polygon_models[obj->rtype.pobj_info.model_num].rad;
+			obj->rtype.pobj_info.model_num = activeBMTable->robots[obj->id].model_num;
+			obj->size = activeBMTable->models[obj->rtype.pobj_info.model_num].rad;
 
 			//@@Took out this ugly hack 1/12/96, because Mike has added code
 			//@@that should fix it in a better way.
@@ -293,10 +295,10 @@ void verify_object(object* obj)
 			//@@//can poke through a wall if the robots are very close to it. So
 			//@@//we make their radii bigger so the guns can't get too close to 
 			//@@//the walls
-			//@@if (Robot_info[obj->id].flags & RIF_BIG_RADIUS)
+			//@@if (activeBMTable->robots[obj->id].flags & RIF_BIG_RADIUS)
 			//@@	obj->size = (obj->size*3)/2;
 
-			//@@if (obj->control_type==CT_AI && Robot_info[obj->id].attack_type)
+			//@@if (obj->control_type==CT_AI && activeBMTable->robots[obj->id].attack_type)
 			//@@	obj->size = obj->size*3/4;
 		}
 
@@ -305,8 +307,8 @@ void verify_object(object* obj)
 
 		if (obj->movement_type == MT_PHYSICS) 
 		{
-			obj->mtype.phys_info.mass = Robot_info[obj->id].mass;
-			obj->mtype.phys_info.drag = Robot_info[obj->id].drag;
+			obj->mtype.phys_info.mass = activeBMTable->robots[obj->id].mass;
+			obj->mtype.phys_info.drag = activeBMTable->robots[obj->id].drag;
 		}
 	}
 	else {		//Robots taken care of above
@@ -316,7 +318,7 @@ void verify_object(object* obj)
 			int i;
 			char* name = Save_pof_names[obj->rtype.pobj_info.model_num];
 
-			for (i = 0; i < N_polygon_models; i++)
+			for (i = 0; i < activeBMTable->models.size(); i++)
 				if (!_stricmp(Pof_names[i], name)) //found it!	
 				{
 					// mprintf((0,"Mapping <%s> to %d (was %d)\n",name,i,obj->rtype.pobj_info.model_num));
@@ -328,13 +330,13 @@ void verify_object(object* obj)
 
 	if (obj->type == OBJ_POWERUP)
 	{
-		if (obj->id >= N_powerup_types) 
+		if (obj->id >= activeBMTable->powerups.size()) 
 		{
 			obj->id = 0;
 			Assert(obj->render_type != RT_POLYOBJ);
 		}
 		obj->control_type = CT_POWERUP;
-		obj->size = Powerup_info[obj->id].size;
+		obj->size = activeBMTable->powerups[obj->id].size;
 		obj->ctype.powerup_info.creation_time = 0;
 
 		if (Game_mode & GM_NETWORK)
@@ -357,7 +359,7 @@ void verify_object(object* obj)
 
 	if (obj->type == OBJ_WEAPON)
 	{
-		if (obj->id >= N_weapon_types) 
+		if (obj->id >= activeBMTable->weapons.size()) 
 		{
 			obj->id = 0;
 			Assert(obj->render_type != RT_POLYOBJ);
@@ -365,15 +367,15 @@ void verify_object(object* obj)
 
 		if (obj->id == PMINE_ID) //make sure pmines have correct values
 		{		
-			obj->mtype.phys_info.mass = Weapon_info[obj->id].mass;
-			obj->mtype.phys_info.drag = Weapon_info[obj->id].drag;
+			obj->mtype.phys_info.mass = activeBMTable->weapons[obj->id].mass;
+			obj->mtype.phys_info.drag = activeBMTable->weapons[obj->id].drag;
 			obj->mtype.phys_info.flags |= PF_FREE_SPINNING;
 
 			// Make sure model number & size are correct...		
 			Assert(obj->render_type == RT_POLYOBJ);
 
-			obj->rtype.pobj_info.model_num = Weapon_info[obj->id].model_num;
-			obj->size = Polygon_models[obj->rtype.pobj_info.model_num].rad;
+			obj->rtype.pobj_info.model_num = activeBMTable->weapons[obj->id].model_num;
+			obj->size = activeBMTable->models[obj->rtype.pobj_info.model_num].rad;
 		}
 	}
 
@@ -1579,10 +1581,10 @@ int load_game_data(CFILE* LoadFile)
 			if ((sidep->wall_num != -1) && (Walls[sidep->wall_num].clip_num != -1)) 
 			{
 				//mprintf((0, "Checking Wall %d\n", Segments[i].sides[j].wall_num));
-				if (WallAnims[Walls[sidep->wall_num].clip_num].flags & WCF_TMAP1) 
+				if (activeBMTable->wclips[Walls[sidep->wall_num].clip_num].flags & WCF_TMAP1) 
 				{
 					//mprintf((0, "Fixing non-transparent door.\n"));
-					sidep->tmap_num = WallAnims[Walls[sidep->wall_num].clip_num].frames[0];
+					sidep->tmap_num = activeBMTable->wclips[Walls[sidep->wall_num].clip_num].frames[0];
 					sidep->tmap_num2 = 0;
 				}
 			}
@@ -2156,8 +2158,8 @@ int save_game_data(FILE* SaveFile)
 	// Write the mine name
 	fprintf(SaveFile, "%s\n", Current_level_name);
 
-	file_write_short(SaveFile, N_polygon_models);
-	fwrite(Pof_names, N_polygon_models, sizeof(*Pof_names), SaveFile);
+	file_write_short(SaveFile, activeBMTable->models.size());
+	fwrite(Pof_names, activeBMTable->models.size(), sizeof(*Pof_names), SaveFile);
 
 	//==================== SAVE PLAYER INFO ===========================
 

@@ -25,14 +25,17 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define VCLIP_POWERUP_DISAPPEARANCE	62
 #define VCLIP_VOLATILE_WALL_HIT	5
 
-#ifdef BUILD_DESCENT2
-# define VCLIP_WATER_HIT				84
-# define VCLIP_AFTERBURNER_BLOB	95
-# define VCLIP_MONITOR_STATIC		99
+#define VCLIP_WATER_HIT				84
+#define VCLIP_AFTERBURNER_BLOB	95
+#define VCLIP_MONITOR_STATIC		99
 
-# define VCLIP_MAXNUM			110
+#define VCLIP_MAXNUM_D2 110
+#define VCLIP_MAXNUM_D1 70
+
+#ifdef BUILD_DESCENT2
+# define VCLIP_MAXNUM	VCLIP_MAXNUM_D2
 #else
-# define VCLIP_MAXNUM			70
+# define VCLIP_MAXNUM	VCLIP_MAXNUM_D1
 #endif
 
 #define VCLIP_MAX_FRAMES	30
@@ -51,8 +54,10 @@ typedef struct
 	fix				light_value;
 } vclip;
 
+#ifdef BUILD_DESCENT1
 extern int Num_vclips;
 extern vclip Vclip[VCLIP_MAXNUM];
+#endif
 
 //draw an object which renders as a vclip.
 void draw_vclip_object(object *obj,fix timeleft,int lighted, int vclip_num);

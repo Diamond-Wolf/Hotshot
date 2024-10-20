@@ -378,14 +378,18 @@ void init_cockpit()
 		mem_free(Game_cockpit_copy_code);
 	Game_cockpit_copy_code  = NULL;
 
+	bitmap_index cbi = activeBMTable->cockpits[CM_STATUS_BAR+(Current_display_mode?(activeBMTable->cockpits.size()/2):0)];
+
 	switch( Cockpit_mode )	
 	{
 	case CM_FULL_COCKPIT:
 	case CM_REAR_VIEW:		
 	{
-		grs_bitmap *bm = &GameBitmaps[cockpit_bitmap[Cockpit_mode+(Current_display_mode?(Num_cockpits/2):0)].index];
+		bitmap_index cbi = activeBMTable->cockpits[Cockpit_mode+(Current_display_mode?(activeBMTable->cockpits.size()/2):0)];
+		grs_bitmap *bm = &activePiggyTable->gameBitmaps[cbi.index];
 
-		PIGGY_PAGE_IN(cockpit_bitmap[Cockpit_mode+(Current_display_mode?(Num_cockpits/2):0)]);
+		//PIGGY_PAGE_IN(cockpit_bitmap[Cockpit_mode+(Current_display_mode?(Num_cockpits/2):0)]);
+		PIGGY_PAGE_IN(cbi);
 
 		gr_set_current_canvas(VR_offscreen_buffer);
 		gr_bitmap( 0, 0, bm );
@@ -428,7 +432,7 @@ void init_cockpit()
 
 	case CM_STATUS_BAR:
 
-     	max_window_h = grd_curscreen->sc_h - GameBitmaps[cockpit_bitmap[CM_STATUS_BAR+(Current_display_mode?(Num_cockpits/2):0)].index].bm_h;
+     	max_window_h = grd_curscreen->sc_h - activePiggyTable->gameBitmaps[cbi.index].bm_h;
 
 		if (Game_window_h > max_window_h)
 			Game_window_h = max_window_h;
@@ -638,8 +642,10 @@ int set_screen_mode(int sm)
 
 			if (VR_screen_flags & VRF_ALLOW_COCKPIT) 
 			{
-				if (Cockpit_mode == CM_STATUS_BAR)
-		      	max_window_h = grd_curscreen->sc_h - GameBitmaps[cockpit_bitmap[CM_STATUS_BAR+(Current_display_mode?(Num_cockpits/2):0)].index].bm_h;
+				if (Cockpit_mode == CM_STATUS_BAR) {
+					bitmap_index cbi = activeBMTable->cockpits[CM_STATUS_BAR+(Current_display_mode?(activeBMTable->cockpits.size()/2):0)];
+		      		max_window_h = grd_curscreen->sc_h - activePiggyTable->gameBitmaps[cbi.index].bm_h;
+				}
 			}
 			else if (Cockpit_mode != CM_LETTERBOX) 
 				Cockpit_mode = CM_FULL_SCREEN;
@@ -1274,11 +1280,11 @@ void do_afterburner_stuff(void)
 // -- //	if energy < F1_0/2, recharge up to F1_0/2
 // -- void recharge_energy_frame(void)
 // -- {
-// -- 	if (Players[Player_num].energy < Weapon_info[0].energy_usage) {
+// -- 	if (Players[Player_num].energy < activeBMTable->weapons[0].energy_usage) {
 // -- 		Players[Player_num].energy += FrameTime/4;
 // --
-// -- 		if (Players[Player_num].energy > Weapon_info[0].energy_usage)
-// -- 			Players[Player_num].energy = Weapon_info[0].energy_usage;
+// -- 		if (Players[Player_num].energy > activeBMTable->weapons[0].energy_usage)
+// -- 			Players[Player_num].energy = activeBMTable->weapons[0].energy_usage;
 // -- 	}
 // -- }
 
@@ -1450,7 +1456,7 @@ int allowed_to_fire_flare(void)
 		if (Next_flare_fire_time < GameTime + FLARE_BIG_DELAY)	//	In case time is bogus, never wait > 1 second.
 			return 0;
 
-	if (Players[Player_num].energy >= Weapon_info[FLARE_ID].energy_usage)
+	if (Players[Player_num].energy >= activeBMTable->weapons[FLARE_ID].energy_usage)
 		Next_flare_fire_time = GameTime + F1_0/4;
 	else
 		Next_flare_fire_time = GameTime + FLARE_BIG_DELAY;
@@ -1620,7 +1626,7 @@ void turn_cheats_off()
 
 	if (HomingCheat)
 		for (i=0;i<20;i++)
-			Weapon_info[i].homing_flag=OldHomingState[i];
+			activeBMTable->weapons[i].homing_flag=OldHomingState[i];
 
 	if (AcidCheatOn)
 	{
@@ -1976,7 +1982,7 @@ object *find_escort()
 
 	for (i=0; i<=Highest_object_index; i++)
 		if (Objects[i].type == OBJ_ROBOT)
-			if (Robot_info[Objects[i].id].companion)
+			if (activeBMTable->robots[Objects[i].id].companion)
 				return &Objects[i];
 
 	return NULL;
@@ -2455,11 +2461,11 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 //!!		fix light;
 //!!		int frame;
 //!!
-//!!		frame = Effects[Hoard_goal_eclip].frame_count;
+//!!		frame = activeBMTable->eclips[Hoard_goal_eclip].frame_count;
 //!!
 //!!		frame++;
 //!!
-//!!		if (frame >= Effects[Hoard_goal_eclip].vc.num_frames)
+//!!		if (frame >= activeBMTable->eclips[Hoard_goal_eclip].vc.num_frames)
 //!!			frame = 0;
 //!!
 //!!		light = abs(frame - 5) * f1_0 / 5;
@@ -2482,7 +2488,7 @@ void compute_slide_segs(void)
 		for (sidenum=0;sidenum<6;sidenum++) 
 		{
 			int tmn = Segments[segnum].sides[sidenum].tmap_num;
-			if (TmapInfo[tmn].slide_u != 0 || TmapInfo[tmn].slide_v != 0)
+			if (activeBMTable->tmaps[tmn].slide_u != 0 || activeBMTable->tmaps[tmn].slide_v != 0)
 				Slide_segs[segnum] |= 1 << sidenum;
 		}
 	}
@@ -2507,12 +2513,12 @@ void slide_textures(void)
 				if (Slide_segs[segnum] & (1 << sidenum))
 				{
 					int tmn = Segments[segnum].sides[sidenum].tmap_num;
-					if (TmapInfo[tmn].slide_u != 0 || TmapInfo[tmn].slide_v != 0) 
+					if (activeBMTable->tmaps[tmn].slide_u != 0 || activeBMTable->tmaps[tmn].slide_v != 0) 
 					{
 						for (i=0;i<4;i++) 
 						{
-							Segments[segnum].sides[sidenum].uvls[i].u += fixmul(FrameTime,TmapInfo[tmn].slide_u<<8);
-							Segments[segnum].sides[sidenum].uvls[i].v += fixmul(FrameTime,TmapInfo[tmn].slide_v<<8);
+							Segments[segnum].sides[sidenum].uvls[i].u += fixmul(FrameTime,activeBMTable->tmaps[tmn].slide_u<<8);
+							Segments[segnum].sides[sidenum].uvls[i].v += fixmul(FrameTime,activeBMTable->tmaps[tmn].slide_v<<8);
 							if (Segments[segnum].sides[sidenum].uvls[i].u > f2_0) 
 							{
 								int j;
@@ -2562,7 +2568,7 @@ void flicker_lights()
 		//make sure this is actually a light
 		if (! (WALL_IS_DOORWAY(segp, f->sidenum) & WID_RENDER_FLAG))
 			continue;
-		if (! (TmapInfo[segp->sides[f->sidenum].tmap_num].lighting | TmapInfo[segp->sides[f->sidenum].tmap_num2 & 0x3fff].lighting))
+		if (! (activeBMTable->tmaps[segp->sides[f->sidenum].tmap_num].lighting | activeBMTable->tmaps[segp->sides[f->sidenum].tmap_num2 & 0x3fff].lighting))
 			continue;
 
 		if (f->timer == 0x80000000)		//disabled
@@ -2671,7 +2677,7 @@ int add_flicker(int segnum,int sidenum,fix delay, uint32_t mask)
 void FireLaser()
 {
 
-	Global_laser_firing_count += Weapon_info[Primary_weapon_to_weapon_info[Primary_weapon]].fire_count * (Controls.fire_primary_state || Controls.fire_primary_down_count);
+	Global_laser_firing_count += activeBMTable->weapons[Primary_weapon_to_weapon_info[Primary_weapon]].fire_count * (Controls.fire_primary_state || Controls.fire_primary_down_count);
 
 	if ((Primary_weapon == FUSION_INDEX) && (Global_laser_firing_count)) {
 		if ((Players[Player_num].energy < F1_0*2) && (Auto_fire_fusion_cannon_time == 0)) {
@@ -2810,7 +2816,7 @@ int mark_player_path_to_segment(int segnum)
 		mprintf((0, "%3i ", segnum));
 		seg_center = Point_segs[player_hide_index+i].point;
 
-		objnum = obj_create( OBJ_POWERUP, POW_ENERGY, segnum, &seg_center, &vmd_identity_matrix, Powerup_info[POW_ENERGY].size, CT_POWERUP, MT_NONE, RT_POWERUP);
+		objnum = obj_create( OBJ_POWERUP, POW_ENERGY, segnum, &seg_center, &vmd_identity_matrix, activeBMTable->powerups[POW_ENERGY].size, CT_POWERUP, MT_NONE, RT_POWERUP);
 		if (objnum == -1) 
 		{
 			Int3();		//	Unable to drop energy powerup for path
@@ -2818,8 +2824,8 @@ int mark_player_path_to_segment(int segnum)
 		}
 
 		obj = &Objects[objnum];
-		obj->rtype.vclip_info.vclip_num = Powerup_info[obj->id].vclip_num;
-		obj->rtype.vclip_info.frametime = Vclip[obj->rtype.vclip_info.vclip_num].frame_time;
+		obj->rtype.vclip_info.vclip_num = activeBMTable->powerups[obj->id].vclip_num;
+		obj->rtype.vclip_info.frametime = activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].frame_time;
 		obj->rtype.vclip_info.framenum = 0;
 		obj->lifeleft = F1_0*100 + P_Rand() * 4;
 	}

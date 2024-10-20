@@ -62,6 +62,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/switch.h"
 #include "main_shared/automap.h"
 #include "main_shared/cntrlcen.h"
+
+#include "main_shared/bm.h"
+
 #ifndef WINDOWS
 //#include "vga.h"
 #endif
@@ -1428,7 +1431,7 @@ void add_segment_edges(segment* seg)
 					color = Wall_door_red;
 					//mprintf((0, "Seg %i, side %i has RED wall\n", segnum, sn));
 				}
-				else if (!(WallAnims[Walls[seg->sides[sn].wall_num].clip_num].flags & WCF_HIDDEN))
+				else if (!(activeBMTable->wclips[Walls[seg->sides[sn].wall_num].clip_num].flags & WCF_HIDDEN))
 				{
 					int	connected_seg = seg->children[sn];
 					if (connected_seg != -1) {

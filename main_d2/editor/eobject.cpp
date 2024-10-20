@@ -132,7 +132,7 @@ int place_object(segment* segp, vms_vector* object_pos, int object_type)
 		obj->control_type = CT_POWERUP;
 
 		obj->rtype.vclip_info.vclip_num = Hostage_vclip_num[ObjId[object_type]];
-		obj->rtype.vclip_info.frametime = Vclip[obj->rtype.vclip_info.vclip_num].frame_time;
+		obj->rtype.vclip_info.frametime = activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].frame_time;
 		obj->rtype.vclip_info.framenum = 0;
 
 		break;
@@ -188,7 +188,7 @@ int place_object(segment* segp, vms_vector* object_pos, int object_type)
 		//set powerup-specific data
 
 		obj->rtype.vclip_info.vclip_num = Powerup_info[obj->id].vclip_num;
-		obj->rtype.vclip_info.frametime = Vclip[obj->rtype.vclip_info.vclip_num].play_time / Vclip[obj->rtype.vclip_info.vclip_num].num_frames;
+		obj->rtype.vclip_info.frametime = activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].play_time / activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].num_frames;
 		obj->rtype.vclip_info.framenum = 0;
 
 		if (obj->id == POW_VULCAN_WEAPON)

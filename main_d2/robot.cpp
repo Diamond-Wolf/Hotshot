@@ -20,17 +20,22 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/polyobj.h"
 #include "platform/mono.h"
 
+#include "main_shared/bm.h"
+
+#ifdef BUILD_DESCENT1
 int	N_robot_types = 0;
 int	N_robot_joints = 0;
+#endif
 
 //	Robot stuff
-robot_info Robot_info[MAX_ROBOT_TYPES];
+//robot_info Robot_info[MAX_ROBOT_TYPES];
 
 //Big array of joint positions.  All robots index into this array
 
 #define deg(a) ((int) (a) * 32768 / 180)
 
 //test data for one robot
+#ifdef BUILD_DESCENT1
 jointpos Robot_joints[MAX_ROBOT_JOINTS] = {
 
 //gun 0
@@ -79,6 +84,7 @@ jointpos Robot_joints[MAX_ROBOT_JOINTS] = {
 
 
 };
+#endif
 
 //given an object and a gun number, return position in 3-space of gun
 //fills in gun_point
@@ -91,10 +97,10 @@ void calc_gun_point(vms_vector *gun_point,object *obj,int gun_num)
 	int mn;				//submodel number
 
 	Assert(obj->render_type==RT_POLYOBJ || obj->render_type==RT_MORPH);
-	Assert(obj->id < N_robot_types);
+	Assert(obj->id < activeBMTable->robots.size());
 
-	r = &Robot_info[obj->id];
-	pm =&Polygon_models[r->model_num];
+	r = &activeBMTable->robots[obj->id];
+	pm =&activeBMTable->models[r->model_num];
 
 	if (gun_num >= r->n_guns)
 	{
@@ -133,9 +139,9 @@ void calc_gun_point(vms_vector *gun_point,object *obj,int gun_num)
 //takes the robot type (object id), gun number, and desired state
 int robot_get_anim_state(jointpos **jp_list_ptr,int robot_type,int gun_num,int state)
 {
-	Assert(gun_num <= Robot_info[robot_type].n_guns);
-	*jp_list_ptr = &Robot_joints[Robot_info[robot_type].anim_states[gun_num][state].offset];
-	return Robot_info[robot_type].anim_states[gun_num][state].n_joints;
+	Assert(gun_num <= activeBMTable->robots[robot_type].n_guns);
+	*jp_list_ptr = &activeBMTable->robotJoints[activeBMTable->robots[robot_type].anim_states[gun_num][state].offset];
+	return activeBMTable->robots[robot_type].anim_states[gun_num][state].n_joints;
 }
 
 
@@ -148,7 +154,7 @@ void set_robot_state(object *obj,int state)
 
 	Assert(obj->type == OBJ_ROBOT);
 
-	ri = &Robot_info[obj->id];
+	ri = &activeBMTable->robots[obj->id];
 
 	for (g=0;g<ri->n_guns+1;g++)
 	{
@@ -160,9 +166,9 @@ void set_robot_state(object *obj,int state)
 		{
 			int jn;
 
-			jn = Robot_joints[jo].jointnum;
+			jn = activeBMTable->robotJoints[jo].jointnum;
 
-			obj->rtype.pobj_info.anim_angles[jn] = Robot_joints[jo].angles;
+			obj->rtype.pobj_info.anim_angles[jn] = activeBMTable->robotJoints[jo].angles;
 
 		}
 	}
@@ -202,18 +208,20 @@ void robot_set_angles(robot_info *r,polymodel *pm,vms_angvec angs[N_ANIM_STATES]
 			//mprintf(0," State %d:\n",state);
 
 			r->anim_states[g][state].n_joints = 0;
-			r->anim_states[g][state].offset = N_robot_joints;
+			r->anim_states[g][state].offset = activeBMTable->robotJoints.size();
 
 			for (m=0;m<pm->n_models;m++) 
 			{
 				if (gun_nums[m] == g) 
 				{
 					//mprintf(0,"  Joint %d: %x %x %x\n",m,angs[state][m].pitch,angs[state][m].bank,angs[state][m].head);
-					Robot_joints[N_robot_joints].jointnum = m;
-					Robot_joints[N_robot_joints].angles = angs[state][m];
+					jointpos pos;
+					pos.jointnum = m;
+					pos.angles = angs[state][m];
 					r->anim_states[g][state].n_joints++;
-					N_robot_joints++;
-					Assert(N_robot_joints < MAX_ROBOT_JOINTS);
+					//N_robot_joints++;
+					activeBMTable->robotJoints.push_back(std::move(pos));
+					//Assert(N_robot_joints < MAX_ROBOT_JOINTS);
 				}
 			}
 		}

@@ -54,6 +54,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/laser.h"
 //#include "pa_enabl.h"
 
+#include "main_shared/bm.h"
+
 #ifdef EDITOR
 #include "editor\editor.h"
 #endif
@@ -120,7 +122,7 @@ void init_buddy_for_level(void)
 	Buddy_messages_suppressed = 0;
 
 	for (i=0; i<=Highest_object_index; i++)
-		if (Robot_info[Objects[i].id].companion)
+		if (activeBMTable->robots[Objects[i].id].companion)
 			break;
 	if (i <= Highest_object_index)
 		Buddy_objnum = i;
@@ -255,9 +257,9 @@ int ok_for_buddy_to_talk(void)
 	if (Buddy_allowed_to_talk)
 		return 1;
 
-	if ((Objects[Buddy_objnum].type == OBJ_ROBOT) && (Buddy_objnum <= Highest_object_index) && !Robot_info[Objects[Buddy_objnum].id].companion) {
+	if ((Objects[Buddy_objnum].type == OBJ_ROBOT) && (Buddy_objnum <= Highest_object_index) && !activeBMTable->robots[Objects[Buddy_objnum].id].companion) {
 		for (i=0; i<=Highest_object_index; i++)
-			if (Robot_info[Objects[i].id].companion)
+			if (activeBMTable->robots[Objects[i].id].companion)
 				break;
 		if (i > Highest_object_index)
 			return 0;
@@ -482,7 +484,7 @@ void set_escort_special_goal(int special_key)
 			int	i;
 
 			for (i=0; i<=Highest_object_index; i++)
-				if ((Objects[i].type == OBJ_ROBOT) && Robot_info[Objects[i].id].companion) {
+				if ((Objects[i].type == OBJ_ROBOT) && activeBMTable->robots[Objects[i].id].companion) {
 					HUD_init_message("%s has not been released.",guidebot_name);
 					break;
 				}
@@ -580,7 +582,7 @@ void set_escort_special_goal(int special_key)
 // -- old, pre-bfs, way -- 		for (i=0; i<=Highest_object_index; i++) {
 // -- old, pre-bfs, way -- 			if (Objects[i].type == objtype) {
 // -- old, pre-bfs, way -- 				//	Don't find escort robots if looking for robot!
-// -- old, pre-bfs, way -- 				if ((Objects[i].type == OBJ_ROBOT) && (Robot_info[Objects[i].id].companion))
+// -- old, pre-bfs, way -- 				if ((Objects[i].type == OBJ_ROBOT) && (activeBMTable->robots[Objects[i].id].companion))
 // -- old, pre-bfs, way -- 					continue;
 // -- old, pre-bfs, way -- 
 // -- old, pre-bfs, way -- 				if (objid == -1) {
@@ -606,7 +608,7 @@ int get_boss_id(void)
 
 	for (i=0; i<=Highest_object_index; i++)
 		if (Objects[i].type == OBJ_ROBOT)
-			if (Robot_info[Objects[i].id].boss_flag)
+			if (activeBMTable->robots[Objects[i].id].boss_flag)
 				return Objects[i].id;
 
 	return -1;
@@ -630,7 +632,7 @@ int exists_in_mine_2(int segnum, int objtype, int objid, int special)
 
 			if (curobjp->type == objtype) {
 				//	Don't find escort robots if looking for robot!
-				if ((curobjp->type == OBJ_ROBOT) && (Robot_info[curobjp->id].companion))
+				if ((curobjp->type == OBJ_ROBOT) && (activeBMTable->robots[curobjp->id].companion))
 					;
 				else if (objid == -1) {
 					if ((objtype == OBJ_POWERUP) && (curobjp->id != POW_KEY_BLUE) && (curobjp->id != POW_KEY_GOLD) && (curobjp->id != POW_KEY_RED))
@@ -1041,7 +1043,7 @@ void do_buddy_dude_stuff(void)
 	if (Buddy_last_missile_time + F1_0*2 < GameTime) {
 		//	See if a robot potentially in view cone
 		for (i=0; i<=Highest_object_index; i++)
-			if ((Objects[i].type == OBJ_ROBOT) && !Robot_info[Objects[i].id].companion)
+			if ((Objects[i].type == OBJ_ROBOT) && !activeBMTable->robots[Objects[i].id].companion)
 				if (maybe_buddy_fire_mega(i)) {
 					Buddy_last_missile_time = GameTime;
 					return;
@@ -1049,7 +1051,7 @@ void do_buddy_dude_stuff(void)
 
 		//	See if a robot near enough that buddy should fire smart missile
 		for (i=0; i<=Highest_object_index; i++)
-			if ((Objects[i].type == OBJ_ROBOT) && !Robot_info[Objects[i].id].companion)
+			if ((Objects[i].type == OBJ_ROBOT) && !activeBMTable->robots[Objects[i].id].companion)
 				if (maybe_buddy_fire_smart(i)) {
 					Buddy_last_missile_time = GameTime;
 					return;
@@ -1391,7 +1393,7 @@ void do_thief_frame(object *objp, fix dist_to_player, int player_visibility, vms
 						if (aip->path_length < 4) {
 							// -- mprintf((0, "Thief is cornered.  Willing to fly through player.\n"));
 							create_n_segment_path(objp, 10, -1);
-						} else if (objp->shields* 4 < Robot_info[objp->id].strength) {
+						} else if (objp->shields* 4 < activeBMTable->robots[objp->id].strength) {
 							//	If robot really low on hits, will run through player with even longer path
 							if (aip->path_length < 8) {
 								create_n_segment_path(objp, 10, -1);
@@ -1751,7 +1753,7 @@ void do_escort_menu(void)
 	for (i=0; i<=Highest_object_index; i++) 
 	{
 		if (Objects[i].type == OBJ_ROBOT)
-			if (Robot_info[Objects[i].id].companion)
+			if (activeBMTable->robots[Objects[i].id].companion)
 				break;
 	}
 

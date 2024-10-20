@@ -317,9 +317,11 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 
 	face_light = -vm_vec_dot(&Viewer->orient.fvec,norm);
 
-	if (tmap1 >= NumTextures)
+	if (tmap1 >= activeBMTable->textures.size()
+)
 	{
-		mprintf((0, "Invalid tmap number %d, NumTextures=%d, changing to 0\n", tmap1, NumTextures));
+		mprintf((0, "Invalid tmap number %d, NumTextures=%d, changing to 0\n", tmap1, activeBMTable->textures.size()
+));
 
 #ifndef RELEASE
 		//Int3();
@@ -334,8 +336,10 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 	}
 	else
 	{
-		bm = &GameBitmaps[Textures[tmap1].index];
-		PIGGY_PAGE_IN(Textures[tmap1]);
+		bm = &activePiggyTable->gameBitmaps[activeBMTable->textures
+[tmap1].index];
+		PIGGY_PAGE_IN(activeBMTable->textures
+[tmap1]);
 	}
 
 	Assert(!(bm->bm_flags & BM_FLAG_PAGED_OUT));
@@ -375,7 +379,8 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 
 #ifdef EDITOR
 	if ((Render_only_bottom) && (sidenum == WBOTTOM))
-		g3_draw_tmap(nv, pointlist, (g3s_uvl*)uvl_copy, &GameBitmaps[Textures[Bottom_bitmap_num].index]);
+		g3_draw_tmap(nv, pointlist, (g3s_uvl*)uvl_copy, &GameBitmaps[activeBMTable->textures
+[Bottom_bitmap_num].index]);
 	else
 #endif
 
@@ -403,7 +408,8 @@ void check_face(int segnum, int sidenum, int facenum, int nv, short* vp, int tma
 		if (tmap2 > 0)
 			bm = texmerge_get_cached_bitmap(tmap1, tmap2);
 		else
-			bm = &GameBitmaps[Textures[tmap1].index];
+			bm = &GameBitmaps[activeBMTable->textures
+[tmap1].index];
 
 		for (i = 0; i < nv; i++) {
 			uvl_copy[i] = uvlp[i];

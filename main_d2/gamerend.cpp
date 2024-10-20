@@ -75,6 +75,8 @@ extern int Saving_movie_frames;
 #define Saving_movie_frames 0
 #endif
 
+#define GET_COCKPIT_INDEX(CockpitMode) activeBMTable->cockpits[CockpitMode + (Current_display_mode ? (activeBMTable->cockpits.size() / 2) : 0)].index
+
 // Returns the length of the first 'n' characters of a string.
 int string_width(char* s, int n)
 {
@@ -902,7 +904,7 @@ void toggle_cockpit()
 	{
 	case CM_FULL_COCKPIT:
 	{
-		int max_h = grd_curscreen->sc_h - GameBitmaps[cockpit_bitmap[CM_STATUS_BAR + (Current_display_mode ? (Num_cockpits / 2) : 0)].index].bm_h;
+		int max_h = grd_curscreen->sc_h - activePiggyTable->gameBitmaps[GET_COCKPIT_INDEX(CM_STATUS_BAR)].bm_h;
 		if (Game_window_h > max_h)		//too big for statusbar
 			new_mode = CM_FULL_SCREEN;
 		else
@@ -1153,9 +1155,9 @@ void update_cockpits(int force_redraw)
 	case CM_REAR_VIEW:
 
 		gr_set_current_canvas(&VR_screen_pages);
-		PIGGY_PAGE_IN(cockpit_bitmap[Cockpit_mode + (Current_display_mode ? (Num_cockpits / 2) : 0)]);
+		PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + (Current_display_mode ? (activeBMTable->cockpits.size() / 2) : 0)]);
 
-		gr_ubitmapm(0, 0, &GameBitmaps[cockpit_bitmap[Cockpit_mode + (Current_display_mode ? (Num_cockpits / 2) : 0)].index]);
+		gr_ubitmapm(0, 0, &activePiggyTable->gameBitmaps[GET_COCKPIT_INDEX(Cockpit_mode)]);
 		break;
 
 	case CM_FULL_SCREEN:
@@ -1168,9 +1170,9 @@ void update_cockpits(int force_redraw)
 
 		gr_set_current_canvas(&VR_screen_pages);
 
-		PIGGY_PAGE_IN(cockpit_bitmap[Cockpit_mode + (Current_display_mode ? (Num_cockpits / 2) : 0)]);
+		PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + (Current_display_mode ? (activeBMTable->cockpits.size() / 2) : 0)]);
 
-		gr_ubitmapm(0, max_window_h, &GameBitmaps[cockpit_bitmap[Cockpit_mode + (Current_display_mode ? (Num_cockpits / 2) : 0)].index]);
+		gr_ubitmapm(0, max_window_h, &activePiggyTable->gameBitmaps[GET_COCKPIT_INDEX(Cockpit_mode)]);
 
 		Game_window_x = (max_window_w - Game_window_w) / 2;
 		Game_window_y = (max_window_h - Game_window_h) / 2;

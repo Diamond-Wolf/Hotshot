@@ -51,6 +51,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/newmenu.h"
 #include "misc/byteswap.h"
 #include "platform/findfile.h"
+#include "main_shared/bm.h"
 
 //#include "unarj.h" //[ISB] goddamnit
 
@@ -67,15 +68,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 uint8_t* BitmapBits = NULL;
 uint8_t* SoundBits = NULL;
 
-typedef struct BitmapFile {
-	char                    name[15];
-} BitmapFile;
-
-typedef struct SoundFile {
-	char                    name[15];
-} SoundFile;
-
-hashtable AllBitmapsNames;
+/*hashtable AllBitmapsNames;
 hashtable AllDigiSndNames;
 
 int Num_bitmap_files = 0;
@@ -86,22 +79,23 @@ int SoundOffset[MAX_SOUND_FILES];
 grs_bitmap GameBitmaps[MAX_BITMAP_FILES];
 
 alias alias_list[MAX_ALIASES];
-int Num_aliases = 0;
+int Num_aliases = 0;*/
 
 int Must_write_hamfile = 0;
 int Num_bitmap_files_new = 0;
 int Num_sound_files_new = 0;
-BitmapFile AllBitmaps[MAX_BITMAP_FILES];
-static SoundFile AllSounds[MAX_SOUND_FILES];
+/*BitmapFile AllBitmaps[MAX_BITMAP_FILES];
+static SoundFile AllSounds[MAX_SOUND_FILES];*/
 
 int piggy_low_memory = 0;
 
 int Piggy_bitmap_cache_size = 0;
 int Piggy_bitmap_cache_next = 0;
 uint8_t* Piggy_bitmap_cache_data = NULL;
-static int GameBitmapOffset[MAX_BITMAP_FILES];
+
+/*static int GameBitmapOffset[MAX_BITMAP_FILES];
 static uint8_t GameBitmapFlags[MAX_BITMAP_FILES];
-uint16_t GameBitmapXlat[MAX_BITMAP_FILES];
+uint16_t GameBitmapXlat[MAX_BITMAP_FILES];*/
 
 #define PIGGY_BUFFER_SIZE (2400*1024)
 
@@ -168,10 +162,48 @@ void swap_0_255(grs_bitmap* bmp)
 }
 #endif
 
-bitmap_index piggy_register_bitmap(grs_bitmap* bmp, const char* name, int in_file)
+#define XLAT_SIZE MAX_BITMAP_FILES
+
+//piggytable::piggytable() {
+//	init();
+//}
+
+void piggytable::Init() {
+
+	gameSounds.reserve(MAX_SOUND_FILES);
+	soundOffsets.reserve(MAX_SOUND_FILES);
+	gameBitmaps.reserve(MAX_BITMAP_FILES);
+	aliases.reserve(MAX_ALIASES);
+	bitmapFiles.reserve(MAX_BITMAP_FILES);
+	soundFiles.reserve(MAX_SOUND_FILES);
+	gameBitmapOffsets.reserve(MAX_BITMAP_FILES);
+	gameBitmapFlags.reserve(MAX_BITMAP_FILES);
+	
+	gameBitmapXlat.resize(XLAT_SIZE); //we actually want the elements here
+	for (int i = 0; i < XLAT_SIZE; i++) {
+		gameBitmapXlat[i] = i;
+	}
+
+	hashtable_init(&bitmapNames, MAX_BITMAP_FILES);
+	hashtable_init(&soundNames, MAX_SOUND_FILES);
+
+}
+
+void piggytable::SetActive() {
+	activePiggyTable = this;
+}
+
+piggytable::~piggytable() {
+	hashtable_free(&bitmapNames);
+	hashtable_free(&soundNames);
+}
+
+bitmap_index piggy_register_bitmap(grs_bitmap* bmp, const char* name, int in_file, uint8_t flag, int offset)
 {
 	bitmap_index temp;
-	Assert(Num_bitmap_files < MAX_BITMAP_FILES);
+	//Assert(Num_bitmap_files < MAX_BITMAP_FILES);
+
+	auto Num_bitmap_files = activePiggyTable->bitmapFiles.size();
 
 	temp.index = Num_bitmap_files;
 
@@ -181,19 +213,26 @@ bitmap_index piggy_register_bitmap(grs_bitmap* bmp, const char* name, int in_fil
 		if (FindArg("-macdata"))
 			swap_0_255(bmp);
 #endif
-		if (!BigPig)  gr_bitmap_rle_compress(bmp);
+		if (!BigPig)  
+			gr_bitmap_rle_compress(bmp);
 		Num_bitmap_files_new++;
 	}
 
-	strncpy(AllBitmaps[Num_bitmap_files].name, name, 12);
-	hashtable_insert(&AllBitmapsNames, AllBitmaps[Num_bitmap_files].name, Num_bitmap_files);
-	GameBitmaps[Num_bitmap_files] = *bmp;
+	BitmapFile file;
+	strncpy(file.name, name, 12);
+	activePiggyTable->bitmapFiles.push_back(file);
+	hashtable_insert(&activePiggyTable->bitmapNames, file.name, Num_bitmap_files);
+	//activePiggyTable->gameBitmaps[Num_bitmap_files] = *bmp;
+	activePiggyTable->gameBitmaps.push_back(*bmp);
 	if (!in_file)
 	{
-		GameBitmapOffset[Num_bitmap_files] = 0;
-		GameBitmapFlags[Num_bitmap_files] = bmp->bm_flags;
+		activePiggyTable->gameBitmapOffsets[Num_bitmap_files] = 0;
+		activePiggyTable->gameBitmapFlags[Num_bitmap_files] = bmp->bm_flags;
 	}
-	Num_bitmap_files++;
+
+	activePiggyTable->gameBitmapFlags.push_back(flag);
+	activePiggyTable->gameBitmapOffsets.push_back(offset);
+	//Num_bitmap_files++;
 
 	return temp;
 }
@@ -202,23 +241,21 @@ int piggy_register_sound(digi_sound* snd, const char* name, int in_file)
 {
 	int i;
 
-	Assert(Num_sound_files < MAX_SOUND_FILES);
+	//Assert(Num_sound_files < MAX_SOUND_FILES);
 
-	strncpy(AllSounds[Num_sound_files].name, name, 12);
-	hashtable_insert(&AllDigiSndNames, AllSounds[Num_sound_files].name, Num_sound_files);
-	GameSounds[Num_sound_files] = *snd;
-	if (!in_file)
-	{
-		SoundOffset[Num_sound_files] = 0;
+	SoundFile file;
+	strncpy(file.name, name, 12);
+	activePiggyTable->soundFiles.push_back(file);
+	hashtable_insert(&activePiggyTable->soundNames, file.name, activePiggyTable->soundFiles.size());
+	//GameSounds[Num_sound_files] = *snd;
+	activePiggyTable->gameSounds.push_back(*snd);
+	if (!in_file) {
+		activePiggyTable->soundOffsets[activePiggyTable->gameSounds.size() - 1] = 0;
+		Num_sound_files_new++;
 	}
 
-	i = Num_sound_files;
-
-	if (!in_file)
-		Num_sound_files_new++;
-
-	Num_sound_files++;
-	return i;
+	//Num_sound_files++;
+	return activePiggyTable->gameSounds.size() - 1;
 }
 
 bitmap_index piggy_find_bitmap(char* name)
@@ -229,29 +266,31 @@ bitmap_index piggy_find_bitmap(char* name)
 
 	bmp.index = 0;
 
-	if ((t = strchr(name, '#')) != NULL)
-		* t = 0;
+	auto& aliases = activePiggyTable->aliases;
 
-	for (i = 0; i < Num_aliases; i++)
-		if (_strfcmp(name, alias_list[i].alias_name) == 0)
+	if ((t = strchr(name, '#')) != NULL)
+		*t = 0;
+
+	for (i = 0; i < aliases.size(); i++)
+		if (_strfcmp(name, aliases[i].alias_name) == 0)
 		{
 			if (t) //extra stuff for ABMs
 			{
 				static char temp[FILENAME_LEN];
-				_splitpath(alias_list[i].file_name, NULL, NULL, temp, NULL);
+				_splitpath(aliases[i].file_name, NULL, NULL, temp, NULL);
 				name = temp;
 				strcat(name, "#");
 				strcat(name, t + 1);
 			}
 			else
-				name = alias_list[i].file_name;
+				name = aliases[i].file_name;
 			break;
 		}
 
 	if (t)
-		* t = '#';
+		*t = '#';
 
-	i = hashtable_search(&AllBitmapsNames, name);
+	i = hashtable_search(&activePiggyTable->bitmapNames, name);
 	Assert(i != 0);
 	if (i < 0)
 		return bmp;
@@ -264,7 +303,7 @@ int piggy_find_sound(const char* name)
 {
 	int i;
 
-	i = hashtable_search(&AllDigiSndNames, const_cast<char*>(name));
+	i = hashtable_search(&activePiggyTable->soundNames, const_cast<char*>(name));
 
 	if (i < 0)
 		return 255;
@@ -373,7 +412,7 @@ void piggy_init_pigfile(const char* filename)
 	header_size = N_bitmaps * BITMAP_HEADER_SIZE;
 	data_start = header_size + cftell(Piggy_fp);
 	data_size = cfilelength(Piggy_fp) - data_start;
-	Num_bitmap_files = 1;
+	//Num_bitmap_files = 1;
 
 	for (i = 0; i < N_bitmaps; i++)
 	{
@@ -399,16 +438,17 @@ void piggy_init_pigfile(const char* filename)
 		temp_bitmap.avg_color = bmh.avg_color;
 		temp_bitmap.bm_data = Piggy_bitmap_cache_data;
 
-		GameBitmapFlags[i + 1] = 0;
-		if (bmh.flags & BM_FLAG_TRANSPARENT) GameBitmapFlags[i + 1] |= BM_FLAG_TRANSPARENT;
-		if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) GameBitmapFlags[i + 1] |= BM_FLAG_SUPER_TRANSPARENT;
-		if (bmh.flags & BM_FLAG_NO_LIGHTING) GameBitmapFlags[i + 1] |= BM_FLAG_NO_LIGHTING;
-		if (bmh.flags & BM_FLAG_RLE) GameBitmapFlags[i + 1] |= BM_FLAG_RLE;
-		if (bmh.flags & BM_FLAG_RLE_BIG) GameBitmapFlags[i + 1] |= BM_FLAG_RLE_BIG;
+		uint8_t flag = 0;
+		//GameBitmapFlags[i + 1] = 0;
+		if (bmh.flags & BM_FLAG_TRANSPARENT) flag |= BM_FLAG_TRANSPARENT;
+		if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) flag |= BM_FLAG_SUPER_TRANSPARENT;
+		if (bmh.flags & BM_FLAG_NO_LIGHTING) flag |= BM_FLAG_NO_LIGHTING;
+		if (bmh.flags & BM_FLAG_RLE) flag |= BM_FLAG_RLE;
+		if (bmh.flags & BM_FLAG_RLE_BIG) flag |= BM_FLAG_RLE_BIG;
 
-		GameBitmapOffset[i + 1] = bmh.offset + data_start;
-		Assert((i + 1) == Num_bitmap_files);
-		piggy_register_bitmap(&temp_bitmap, temp_name, 1);
+		int offset = bmh.offset + data_start;
+		//Assert((i + 1) == Num_bitmap_files); 
+		piggy_register_bitmap(&temp_bitmap, temp_name, 1, flag, offset);
 	}
 
 #ifdef EDITOR
@@ -530,13 +570,13 @@ void piggy_new_pigfile(const char* pigname)
 				strcpy(temp_name, temp_name_read);
 
 			//Make sure name matches
-			if (strcmp(temp_name, AllBitmaps[i].name))
+			if (strcmp(temp_name, activePiggyTable->bitmapFiles[i].name))
 			{
 				//Int3();       //this pig is out of date.  Delete it
 				must_rewrite_pig = 1;
 			}
 
-			strcpy(AllBitmaps[i].name, temp_name);
+			strcpy(activePiggyTable->bitmapFiles[i].name, temp_name);
 
 			memset(&temp_bitmap, 0, sizeof(grs_bitmap));
 
@@ -546,17 +586,17 @@ void piggy_new_pigfile(const char* pigname)
 			temp_bitmap.avg_color = bmh.avg_color;
 			temp_bitmap.bm_data = Piggy_bitmap_cache_data;
 
-			GameBitmapFlags[i] = 0;
+			activePiggyTable->gameBitmapFlags[i] = 0;
 
-			if (bmh.flags & BM_FLAG_TRANSPARENT) GameBitmapFlags[i] |= BM_FLAG_TRANSPARENT;
-			if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) GameBitmapFlags[i] |= BM_FLAG_SUPER_TRANSPARENT;
-			if (bmh.flags & BM_FLAG_NO_LIGHTING) GameBitmapFlags[i] |= BM_FLAG_NO_LIGHTING;
-			if (bmh.flags & BM_FLAG_RLE) GameBitmapFlags[i] |= BM_FLAG_RLE;
-			if (bmh.flags & BM_FLAG_RLE_BIG) GameBitmapFlags[i] |= BM_FLAG_RLE_BIG;
+			if (bmh.flags & BM_FLAG_TRANSPARENT) activePiggyTable->gameBitmapFlags[i] |= BM_FLAG_TRANSPARENT;
+			if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) activePiggyTable->gameBitmapFlags[i] |= BM_FLAG_SUPER_TRANSPARENT;
+			if (bmh.flags & BM_FLAG_NO_LIGHTING) activePiggyTable->gameBitmapFlags[i] |= BM_FLAG_NO_LIGHTING;
+			if (bmh.flags & BM_FLAG_RLE) activePiggyTable->gameBitmapFlags[i] |= BM_FLAG_RLE;
+			if (bmh.flags & BM_FLAG_RLE_BIG) activePiggyTable->gameBitmapFlags[i] |= BM_FLAG_RLE_BIG;
 
-			GameBitmapOffset[i] = bmh.offset + data_start;
+			activePiggyTable->gameBitmapOffsets[i] = bmh.offset + data_start;
 
-			GameBitmaps[i] = temp_bitmap;
+			activePiggyTable->gameBitmaps[i] = temp_bitmap;
 		}
 	}
 	else
@@ -564,7 +604,7 @@ void piggy_new_pigfile(const char* pigname)
 
 #ifndef EDITOR
 
-	Assert(N_bitmaps == Num_bitmap_files - 1);
+	//Assert(N_bitmaps == Num_bitmap_files - 1);
 
 #else
 
@@ -774,7 +814,14 @@ int read_hamfile()
 #ifndef EDITOR
 	{
 		bm_read_all(ham_fp);  // Note connection to above if!!!
-		cfread(GameBitmapXlat, sizeof(uint16_t) * MAX_BITMAP_FILES, 1, ham_fp);
+		uint16_t xlatRaw[MAX_BITMAP_FILES];
+		cfread(xlatRaw, sizeof(uint16_t) * MAX_BITMAP_FILES, 1, ham_fp);
+		activePiggyTable->gameBitmapXlat.reserve(MAX_BITMAP_FILES);
+		//for (auto& e : xlatRaw) {
+		for (int i = 0; i < MAX_BITMAP_FILES; i++) {
+			//activePiggyTable->gameBitmapXlat.push_back(e);
+			activePiggyTable->gameBitmapXlat[i] = xlatRaw[i];
+		}
 	}
 #endif
 
@@ -865,7 +912,8 @@ int read_sndfile()
 				//size -= sizeof(DiskSoundHeader);
 		temp_sound.length = sndh.length;
 		temp_sound.data = (uint8_t*)(sndh.offset + header_size + sound_start);
-		SoundOffset[Num_sound_files] = sndh.offset + header_size + sound_start;
+		//SoundOffset[Num_sound_files] = sndh.offset + header_size + sound_start;
+		activePiggyTable->soundOffsets.push_back(sndh.offset + header_size + sound_start);
 		memcpy(temp_name_read, sndh.name, 8);
 		temp_name_read[8] = 0;
 		piggy_register_sound(&temp_sound, temp_name_read, 1);
@@ -894,10 +942,7 @@ int piggy_init(void)
 	int ham_ok = 0, snd_ok = 0;
 	int i;
 
-	hashtable_init(&AllBitmapsNames, MAX_BITMAP_FILES);
-	hashtable_init(&AllDigiSndNames, MAX_SOUND_FILES);
-
-	for (i = 0; i < MAX_SOUND_FILES; i++)
+	/*for (i = 0; i < MAX_SOUND_FILES; i++)
 	{
 		GameSounds[i].length = 0;
 		GameSounds[i].data = NULL;
@@ -905,7 +950,8 @@ int piggy_init(void)
 	}
 
 	for (i = 0; i < MAX_BITMAP_FILES; i++)
-		GameBitmapXlat[i] = i;
+		//GameBitmapXlat[i] = i;
+		activePiggyTable->gameBitmapXlat.push_back(i);*/
 
 	if (!bogus_bitmap_initialized)
 	{
@@ -924,10 +970,9 @@ int piggy_init(void)
 			bogus_data[i * 64 + i] = c;
 			bogus_data[i * 64 + (63 - i)] = c;
 		}
-		piggy_register_bitmap(&bogus_bitmap, "bogus", 1);
+		piggy_register_bitmap(&bogus_bitmap, "bogus", 1, 0, 0);
 		bogus_sound.length = 64 * 64;
 		bogus_sound.data = bogus_data;
-		GameBitmapOffset[0] = 0;
 	}
 
 	if (FindArg("-bigpig"))
@@ -973,7 +1018,7 @@ int piggy_is_needed(int soundnum)
 
 	for (i = 0; i < MAX_SOUNDS; i++)
 	{
-		if ((AltSounds[i] < 255) && (Sounds[AltSounds[i]] == soundnum))
+		if ((activeBMTable->altSounds[i] < 255) && (activeBMTable->sounds[activeBMTable->altSounds[i]] == soundnum))
 			return 1;
 	}
 	return 0;
@@ -1020,15 +1065,15 @@ void piggy_read_sounds(void)
 	if (fp == NULL)
 		return;
 
-	for (i = 0; i < Num_sound_files; i++)
+	for (i = 0; i < activePiggyTable->soundFiles.size(); i++)
 	{
-		digi_sound* snd = &GameSounds[i];
+		digi_sound* snd = &activePiggyTable->gameSounds[i];
 
-		if (SoundOffset[i] > 0) 
+		if (activePiggyTable->soundOffsets[i] > 0) 
 		{
 			if (piggy_is_needed(i))
 			{
-				cfseek(fp, SoundOffset[i], SEEK_SET);
+				cfseek(fp, activePiggyTable->soundOffsets[i], SEEK_SET);
 
 				// Read in the sound data!!!
 				snd->data = ptr;
@@ -1078,36 +1123,36 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 
 	i = bitmap.index;
 	Assert(i >= 0);
-	Assert(i < MAX_BITMAP_FILES);
-	Assert(i < Num_bitmap_files);
+	//Assert(i < MAX_BITMAP_FILES);
+	Assert(i < activePiggyTable->bitmapFiles.size());
 	Assert(Piggy_bitmap_cache_size > 0);
 
 	if (i < 1) return;
 	if (i >= MAX_BITMAP_FILES) return;
-	if (i >= Num_bitmap_files) return;
+	if (i >= activePiggyTable->bitmapFiles.size()) return;
 
-	if (GameBitmapOffset[i] == 0) return;         // A read-from-disk bitmap!!!
+	if (activePiggyTable->gameBitmapOffsets[i] == 0) return;         // A read-from-disk bitmap!!!
 
 	if (piggy_low_memory) {
 		org_i = i;
-		i = GameBitmapXlat[i];          // Xlat for low-memory settings!
+		i = activePiggyTable->gameBitmapXlat[i];          // Xlat for low-memory settings!
 	}
 
-	bmp = &GameBitmaps[i];
+	bmp = &activePiggyTable->gameBitmaps[i];
 
 	if (bmp->bm_flags & BM_FLAG_PAGED_OUT) {
 		stop_time();
 
 	ReDoIt:
 		descent_critical_error = 0;
-		cfseek(Piggy_fp, GameBitmapOffset[i], SEEK_SET);
+		cfseek(Piggy_fp, activePiggyTable->gameBitmapOffsets[i], SEEK_SET);
 		if (descent_critical_error) {
 			piggy_critical_error();
 			goto ReDoIt;
 		}
 
 		bmp->bm_data = &Piggy_bitmap_cache_data[Piggy_bitmap_cache_next];
-		bmp->bm_flags = GameBitmapFlags[i];
+		bmp->bm_flags = activePiggyTable->gameBitmapFlags[i];
 
 		if (bmp->bm_flags & BM_FLAG_RLE)
 		{
@@ -1168,7 +1213,7 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 
 	if (piggy_low_memory) {
 		if (org_i != i)
-			GameBitmaps[org_i] = GameBitmaps[i];
+			activePiggyTable->gameBitmaps[org_i] = activePiggyTable->gameBitmaps[i];
 	}
 
 	//@@Removed from John's code:
@@ -1192,10 +1237,10 @@ void piggy_bitmap_page_out_all()
 	texmerge_flush();
 	rle_cache_flush();
 
-	for (i = 0; i < Num_bitmap_files; i++) {
-		if (GameBitmapOffset[i] > 0) {       // Don't page out bitmaps read from disk!!!
-			GameBitmaps[i].bm_flags = BM_FLAG_PAGED_OUT;
-			GameBitmaps[i].bm_data = Piggy_bitmap_cache_data;
+	for (i = 0; i < activePiggyTable->bitmapFiles.size(); i++) {
+		if (activePiggyTable->gameBitmapOffsets[i] > 0) {       // Don't page out bitmaps read from disk!!!
+			activePiggyTable->gameBitmaps[i].bm_flags = BM_FLAG_PAGED_OUT;
+			activePiggyTable->gameBitmaps[i].bm_data = Piggy_bitmap_cache_data;
 		}
 	}
 
@@ -1331,7 +1376,7 @@ void piggy_write_pigfile(const char* filename)
 		if (piggy_is_substitutable_bitmap(AllBitmaps[i].name, subst_name)) {
 			bitmap_index other_bitmap;
 			other_bitmap = piggy_find_bitmap(subst_name);
-			GameBitmapXlat[i] = other_bitmap.index;
+			activePiggyTable->gameBitmapXlat[i] = other_bitmap.index;
 			bmh.flags |= BM_FLAG_PAGED_OUT;
 			//mprintf(( 0, "Skipping bitmap %d\n", i ));
 			//mprintf(( 0, "Marking '%s' as substitutible\n", AllBitmaps[i].name ));
@@ -1500,17 +1545,14 @@ void piggy_close()
 	if (SoundBits)
 		mem_free(SoundBits);
 
-	hashtable_free(&AllBitmapsNames);
-	hashtable_free(&AllDigiSndNames);
-
 }
 
 int piggy_does_bitmap_exist_slow(char* name)
 {
 	int i;
 
-	for (i = 0; i < Num_bitmap_files; i++) {
-		if (!strcmp(AllBitmaps[i].name, name))
+	for (i = 0; i < activePiggyTable->bitmapFiles.size(); i++) {
+		if (!strcmp(activePiggyTable->bitmapFiles[i].name, name))
 			return 1;
 	}
 	return 0;

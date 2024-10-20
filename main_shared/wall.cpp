@@ -57,8 +57,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 wall Walls[MAX_WALLS];					// Master walls array
 int Num_walls = 0;							// Number of walls
 
+#ifdef BUILD_DESCENT1
 std::vector<wclip> WallAnims(MAX_WALL_ANIMS);		// Wall animations
 int Num_wall_anims;
+#else
+# define WallAnims activeBMTable->wclips
+# define Num_wall_anims activeBMTable->wclips.size()
+#endif
 //--unused-- int walls_bm_num[MAX_WALL_ANIMS];
 
 //door Doors[MAX_DOORS];					//	Master doors array
@@ -99,6 +104,12 @@ void kill_stuck_objects(int wallnum);
 //		0 = NO
 int check_transparency(segment* seg, int side)
 {
+
+	#ifndef BUILD_DESCENT1
+	auto& GameBitmaps = activePiggyTable->gameBitmaps;
+	auto& Textures = activeBMTable->textures;
+	#endif
+
 	if ((seg->sides[side].tmap_num2 & 0x3FFF) == 0) {
 		if (GameBitmaps[Textures[seg->sides[side].tmap_num].index].bm_flags & BM_FLAG_TRANSPARENT)
 			return 1;
@@ -1333,7 +1344,7 @@ void wall_frame_process()
 		else if (w->state == WALL_DOOR_DECLOAKING)
 			do_decloaking_wall_frame(i);
 		else
-			Int3();	//unexpected wall state
+			printf("Cloak state: %d\n", w->state);//Int3();	//unexpected wall state
 	}
 #endif
 }
@@ -1490,7 +1501,7 @@ void clear_stuck_objects(void)
 }
 
 // -----------------------------------------------------------------------------------
-#ifdef BUILD_DESCENT2
+#ifndef BUILD_DESCENT1
 # define	MAX_BLAST_GLASS_DEPTH	5
 
 void bng_process_segment(object * objp, fix damage, segment * segp, int depth, int8_t * visited)
@@ -1501,6 +1512,10 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 		return;
 
 	depth++;
+
+	#ifndef BUILD_DESCENT1
+	auto& Effects = activeBMTable->eclips;
+	#endif
 
 	for (sidenum = 0; sidenum < MAX_SIDES_PER_SEGMENT; sidenum++) {
 		int			tm;
@@ -1513,7 +1528,7 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 
 			tm &= 0x3fff;			//tm without flags
 
-			if ((((ec = TmapInfo[tm].eclip_num) != -1) && ((db = Effects[ec].dest_bm_num) != -1 && !(Effects[ec].flags & EF_ONE_SHOT))) || (ec == -1 && (TmapInfo[tm].destroyed != -1))) {
+			if ((((ec = activeBMTable->tmaps[tm].eclip_num) != -1) && ((db = Effects[ec].dest_bm_num) != -1 && !(Effects[ec].flags & EF_ONE_SHOT))) || (ec == -1 && (activeBMTable->tmaps[tm].destroyed != -1))) {
 				compute_center_point_on_side(&pnt, segp, sidenum);
 				dist = vm_vec_dist_quick(&pnt, &objp->pos);
 				if (dist < damage / 2) {

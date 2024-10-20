@@ -44,8 +44,10 @@ typedef struct eclip
 	int			segnum,sidenum;	//what seg & side, for one-shot clips
 } eclip;
 
+#ifdef BUILD_DESCENT1
 extern int Num_effects;
 extern eclip Effects[MAX_EFFECTS];
+#endif
 
 // Set up special effects.
 extern void init_special_effects(); 

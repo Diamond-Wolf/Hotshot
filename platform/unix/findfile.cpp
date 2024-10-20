@@ -73,29 +73,30 @@ int	FileFindFirst(const char* search_str, FILEFINDSTRUCT* ffstruct) {
 #endif
 	}
 
+	search = strrchr(search_str, '*');
+	strncpy(searchStr, search+2, 12);
+
 	if (!(fs::exists(dir) && fs::is_directory(dir))) {
-		printf("Checking non-directory %s", dir);
+		printf("Checking non-directory %s for %s", dir, search_str);
 		return 1;
 	}
 
 	currentDir = fs::directory_iterator(dir);
 
-	search = strrchr(search_str, '*');
-	strncpy(searchStr, search+2, 12);
-
 	return FileFindNext(ffstruct);
 
 }
 
-inline std::string AsLower(const std::string& s) {
+/*inline std::string AsLower(const std::string& s) {
 	std::string s2 = s;
 	for (char& c : s2)
 		c = std::tolower(c);
 
 	return s2;
-}
+}*/
 
 inline bool CompareExt(const fs::path& path, const std::string& comp) {
+	
 	std::string check = path.extension().string();
 	if (check.length() == 0)
 		return false;
@@ -103,7 +104,13 @@ inline bool CompareExt(const fs::path& path, const std::string& comp) {
 	if (check.c_str()[0] == '.')
 		check = check.substr(1);
 
-	return AsLower(check) == AsLower(comp);
+	auto cl = check.length();
+
+	if (cl != comp.length())
+		return false;
+
+	return !_strnicmp(check.c_str(), comp.c_str(), cl);
+
 }
 
 int	FileFindNext(FILEFINDSTRUCT* ffstruct) {
@@ -119,9 +126,9 @@ int	FileFindNext(FILEFINDSTRUCT* ffstruct) {
 			continue;
 
 		if (CompareExt(path, searchStr)) {
-			printf("Found");
 			strncpy(ffstruct->name, path.filename().c_str(), FF_PATHSIZE);
 			ffstruct->size = static_cast<uint32_t>(entry.file_size());
+			ffstruct->type = FF_TYPE_FILE;
 			return 0;
 		}
 	};

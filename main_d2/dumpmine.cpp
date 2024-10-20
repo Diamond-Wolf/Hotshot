@@ -891,7 +891,7 @@ void say_used_tmaps(FILE* my_file, int* tb)
 // --05/17/95--				level_name = Shareware_level_names[level_num];
 // --05/17/95--			}
 // --05/17/95--
-// --05/17/95--			fprintf(my_file, "Texture %3i %8s used only once on level %s\n", i, TmapInfo[i].filename, level_name);
+// --05/17/95--			fprintf(my_file, "Texture %3i %8s used only once on level %s\n", i, activeBMTable->tmaps[i].filename, level_name);
 // --05/17/95--		}
 // --05/17/95--}
 

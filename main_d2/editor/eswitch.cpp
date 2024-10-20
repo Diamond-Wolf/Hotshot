@@ -554,8 +554,10 @@ void do_trigger_window()
 		{
 			if (Markedsegp->sides[Markedside].tmap_num > 0)	
 			{
-				PIGGY_PAGE_IN(Textures[Markedsegp->sides[Markedside].tmap_num]);
-				gr_ubitmap(0,0, &GameBitmaps[Textures[Markedsegp->sides[Markedside].tmap_num].index]);
+				PIGGY_PAGE_IN(activeBMTable->textures
+[Markedsegp->sides[Markedside].tmap_num]);
+				gr_ubitmap(0,0, &GameBitmaps[activeBMTable->textures
+[Markedsegp->sides[Markedside].tmap_num].index]);
 			} else
 				gr_clear_canvas( CGREY );
 		}

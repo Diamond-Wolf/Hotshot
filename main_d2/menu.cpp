@@ -75,6 +75,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/powerup.h"
 #include "platform/i_net.h"
 
+#define SANTA
+
 #ifdef EDITOR
 #include "editor\editor.h"
 #endif
@@ -270,7 +272,7 @@ void create_main_menu(newmenu_item * m, int* menu_choice, int* callers_num_optio
 		ADD_ITEM(const_cast<char*>("  Editor"), MENU_EDITOR, KEY_E);
 #endif
 	}
-	ADD_ITEM(const_cast<char*>("  Play song"), MENU_PLAY_SONG, -1 );
+	ADD_ITEM(const_cast<char*>("  Play song"), MENU_PLAY_SONG, -1);
 #endif
 
 	* callers_num_options = num_options;
@@ -416,7 +418,6 @@ void do_option(int select)
 		break;
 	}
 #endif
-
 
 	case MENU_START_IPX_NETGAME:
 #ifdef NETWORK
@@ -1161,7 +1162,7 @@ void do_sound_menu()
 
 		m[5].type = NM_TYPE_CHECK;  m[5].text = TXT_REVERSE_STEREO; m[5].value = Config_channels_reversed;
 
-		i = newmenu_do1(NULL, "Sound Effects & Music", sizeof(m) / sizeof(*m), m, sound_menuset, i);
+		i = newmenu_do1(NULL, "Sound activeBMTable->eclips & Music", sizeof(m) / sizeof(*m), m, sound_menuset, i);
 
 		Redbook_enabled = m[4].value;
 		Config_channels_reversed = m[5].value;

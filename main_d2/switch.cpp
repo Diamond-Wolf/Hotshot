@@ -124,7 +124,7 @@ int do_light_on(int8_t trigger_num)
 
 			//check if tmap2 casts light before turning the light on.  This
 			//is to keep us from turning on blown-out lights
-			if (TmapInfo[Segments[segnum].sides[sidenum].tmap_num2 & 0x3fff].lighting)
+			if (activeBMTable->tmaps[Segments[segnum].sides[sidenum].tmap_num2 & 0x3fff].lighting)
 			{
 				ret |= add_light(segnum, sidenum); 		//any light sets flag
 				enable_flicker(segnum, sidenum);
@@ -153,7 +153,7 @@ int do_light_off(int8_t trigger_num)
 
 			//check if tmap2 casts light before turning the light off.  This
 			//is to keep us from turning off blown-out lights
-			if (TmapInfo[Segments[segnum].sides[sidenum].tmap_num2 & 0x3fff].lighting) 
+			if (activeBMTable->tmaps[Segments[segnum].sides[sidenum].tmap_num2 & 0x3fff].lighting) 
 			{
 				ret |= subtract_light(segnum, sidenum); 	//any light sets flag
 				disable_flicker(segnum, sidenum);
@@ -271,7 +271,7 @@ int do_change_walls(int8_t trigger_num)
 				case TT_OPEN_WALL:
 					mprintf((0,"Open wall\n"));
 
-					if ((TmapInfo[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD)) 
+					if ((activeBMTable->tmaps[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD)) 
 					{
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
@@ -291,7 +291,7 @@ int do_change_walls(int8_t trigger_num)
 				case TT_CLOSE_WALL:
 					mprintf((0,"Close wall\n"));
 
-					if ((TmapInfo[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD)) 
+					if ((activeBMTable->tmaps[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD)) 
 					{
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
@@ -404,7 +404,7 @@ int wall_is_forcefield(trigger *trig)
 	int i;
 
 	for (i=0;i<trig->num_links;i++)
-		if ((TmapInfo[Segments[trig->seg[i]].sides[trig->side[i]].tmap_num].flags & TMI_FORCE_FIELD))
+		if ((activeBMTable->tmaps[Segments[trig->seg[i]].sides[trig->side[i]].tmap_num].flags & TMI_FORCE_FIELD))
 			break;
 
 	return (i<trig->num_links);
@@ -598,7 +598,7 @@ void check_trigger(segment *seg, short side, short objnum,int shot)
 
 //	mprintf(0,"T");
 
-	if ((objnum == Players[Player_num].objnum) || ((Objects[objnum].type == OBJ_ROBOT) && (Robot_info[Objects[objnum].id].companion)))
+	if ((objnum == Players[Player_num].objnum) || ((Objects[objnum].type == OBJ_ROBOT) && (activeBMTable->robots[Objects[objnum].id].companion)))
 	{
 
 		if ( Newdemo_state == ND_STATE_RECORDING )

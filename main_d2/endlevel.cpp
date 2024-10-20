@@ -138,7 +138,7 @@ extern int matt_find_connect_side(int seg0,int seg1);
 grs_bitmap *satellite_bitmap,*station_bitmap,*terrain_bitmap;	//!!*exit_bitmap,
 vms_vector satellite_pos,satellite_upvec;
 //!!grs_bitmap **exit_bitmap_list[1];
-int station_modelnum,exit_modelnum,destroyed_exit_modelnum;
+int station_modelnum;//,exit_modelnum,destroyed_exit_modelnum;
 
 vms_vector station_pos = {0xf8c4<<10,0x3c1c<<12,0x372<<10};
 
@@ -318,7 +318,7 @@ void start_endlevel_sequence()
 	//	Dematerialize Buddy!
 	for (i=0; i<=Highest_object_index; i++)
 		if (Objects[i].type == OBJ_ROBOT)
-			if (Robot_info[Objects[i].id].companion) {
+			if (activeBMTable->robots[Objects[i].id].companion) {
 				object_create_explosion(Objects[i].segnum, &Objects[i].pos, F1_0*7/2, VCLIP_POWERUP_DISAPPEARANCE );
 				Objects[i].flags |= OF_SHOULD_BE_DEAD;
 			}
@@ -996,7 +996,7 @@ void draw_exit_model()
 	vm_vec_scale_add(&model_pos,&mine_exit_point,&mine_exit_orient.fvec,i2f(f));
 	vm_vec_scale_add2(&model_pos,&mine_exit_orient.uvec,i2f(u));
 
-	draw_polygon_model(&model_pos,&mine_exit_orient,NULL,(mine_destroyed)?destroyed_exit_modelnum:exit_modelnum,0,f1_0,NULL,NULL);
+	draw_polygon_model(&model_pos,&mine_exit_orient,NULL,(mine_destroyed)?activeBMTable->destroyedExitModel:activeBMTable->exitModel,0,f1_0,NULL,NULL);
 
 }
 

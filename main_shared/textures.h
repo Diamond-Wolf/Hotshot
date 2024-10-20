@@ -16,5 +16,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "bm.h"
 #include "piggy.h"
 
+#ifdef BUILD_DESCENT1
 extern int NumTextures;
 extern bitmap_index Textures[MAX_TEXTURES];	// Array of all texture tmaps.
+#endif

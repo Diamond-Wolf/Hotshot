@@ -44,20 +44,22 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/newdemo.h"
 #include "main_shared/ai.h"
 
+#include "main_shared/bm.h"
+
 #ifdef EDITOR
 #include "2d/gr.h"	//	for powerup outline drawing
 #include "editor\editor.h"
 #endif
 
-int N_powerup_types = 0;
-powerup_type_info Powerup_info[MAX_POWERUP_TYPES];
+//int N_powerup_types = 0;
+//powerup_type_info Powerup_info[MAX_POWERUP_TYPES];
 
 //process this powerup for this frame
 void do_powerup_frame(object* obj)
 {
 	fix fudge;
 	vclip_info_t* vci = &obj->rtype.vclip_info;
-	vclip* vc = &Vclip[vci->vclip_num];
+	vclip* vc = &activeBMTable->vclips[vci->vclip_num];
 
 	fudge = (FrameTime * ((obj - Objects) & 3)) >> 4;
 
@@ -83,8 +85,8 @@ void do_powerup_frame(object* obj)
 	{
 		object_create_explosion(obj->segnum, &obj->pos, F1_0 * 7 / 2, VCLIP_POWERUP_DISAPPEARANCE);
 
-		if (Vclip[VCLIP_POWERUP_DISAPPEARANCE].sound_num > -1)
-			digi_link_sound_to_object(Vclip[VCLIP_POWERUP_DISAPPEARANCE].sound_num, obj - Objects, 0, F1_0);
+		if (activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num > -1)
+			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num, obj - Objects, 0, F1_0);
 	}
 }
 
@@ -119,7 +121,7 @@ void draw_powerup(object* obj)
 	blob_vertices[0].x = 0x80000;
 #endif
 
-	draw_object_blob(obj, Vclip[obj->rtype.vclip_info.vclip_num].frames[obj->rtype.vclip_info.framenum]);
+	draw_object_blob(obj, activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].frames[obj->rtype.vclip_info.framenum]);
 
 #ifdef EDITOR
 	if ((Function_mode == FMODE_EDITOR) && (Cur_object_index == obj - Objects))
@@ -305,9 +307,9 @@ int do_powerup(object* obj)
 		if (Players[Player_num].flags & PLAYER_FLAGS_BLUE_KEY)
 			break;
 #ifdef NETWORK
-		multi_send_play_sound(Powerup_info[obj->id].hit_sound, F1_0);
+		multi_send_play_sound(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 #endif
-		digi_play_sample(Powerup_info[obj->id].hit_sound, F1_0);
+		digi_play_sample(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 		Players[Player_num].flags |= PLAYER_FLAGS_BLUE_KEY;
 		powerup_basic(0, 0, 15, KEY_SCORE, "%s %s", TXT_BLUE, TXT_ACCESS_GRANTED);
 		if (Game_mode & GM_MULTI)
@@ -320,9 +322,9 @@ int do_powerup(object* obj)
 		if (Players[Player_num].flags & PLAYER_FLAGS_RED_KEY)
 			break;
 #ifdef NETWORK
-		multi_send_play_sound(Powerup_info[obj->id].hit_sound, F1_0);
+		multi_send_play_sound(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 #endif
-		digi_play_sample(Powerup_info[obj->id].hit_sound, F1_0);
+		digi_play_sample(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 		Players[Player_num].flags |= PLAYER_FLAGS_RED_KEY;
 		powerup_basic(15, 0, 0, KEY_SCORE, "%s %s", TXT_RED, TXT_ACCESS_GRANTED);
 		if (Game_mode & GM_MULTI)
@@ -335,9 +337,9 @@ int do_powerup(object* obj)
 		if (Players[Player_num].flags & PLAYER_FLAGS_GOLD_KEY)
 			break;
 #ifdef NETWORK
-		multi_send_play_sound(Powerup_info[obj->id].hit_sound, F1_0);
+		multi_send_play_sound(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 #endif
-		digi_play_sample(Powerup_info[obj->id].hit_sound, F1_0);
+		digi_play_sample(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 		Players[Player_num].flags |= PLAYER_FLAGS_GOLD_KEY;
 		powerup_basic(15, 15, 7, KEY_SCORE, "%s %s", TXT_YELLOW, TXT_ACCESS_GRANTED);
 		if (Game_mode & GM_MULTI)
@@ -585,9 +587,9 @@ int do_powerup(object* obj)
 		{
 			Players[Player_num].flags |= PLAYER_FLAGS_AMMO_RACK;
 #ifdef NETWORK
-			multi_send_play_sound(Powerup_info[obj->id].hit_sound, F1_0);
+			multi_send_play_sound(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 #endif
-			digi_play_sample(Powerup_info[obj->id].hit_sound, F1_0);
+			digi_play_sample(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 			powerup_basic(15, 0, 15, 0, "AMMO RACK!");
 			used = 1;
 		}
@@ -604,9 +606,9 @@ int do_powerup(object* obj)
 		{
 			Players[Player_num].flags |= PLAYER_FLAGS_AFTERBURNER;
 #ifdef NETWORK
-			multi_send_play_sound(Powerup_info[obj->id].hit_sound, F1_0);
+			multi_send_play_sound(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 #endif
-			digi_play_sample(Powerup_info[obj->id].hit_sound, F1_0);
+			digi_play_sample(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 			powerup_basic(15, 15, 15, 0, "AFTERBURNER!");
 			Afterburner_charge = f1_0;
 			used = 1;
@@ -625,9 +627,9 @@ int do_powerup(object* obj)
 			char msg[100];
 			Players[Player_num].flags |= PLAYER_FLAGS_HEADLIGHT;
 #ifdef NETWORK
-			multi_send_play_sound(Powerup_info[obj->id].hit_sound, F1_0);
+			multi_send_play_sound(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 #endif
-			digi_play_sample(Powerup_info[obj->id].hit_sound, F1_0);
+			digi_play_sample(activeBMTable->powerups[obj->id].hit_sound, F1_0);
 			snprintf(msg, 36, "HEADLIGHT BOOST! (Headlight is %s)", Headlight_active_default ? "ON" : "OFF");
 			powerup_basic(15, 0, 15, 0, msg);
 			if (Headlight_active_default)
@@ -689,12 +691,12 @@ int do_powerup(object* obj)
 	//is solved.  Note also the break statements above that are commented out
 	//!!	used=1;
 
-	if ((used || special_used) && Powerup_info[id].hit_sound > -1) {
+	if ((used || special_used) && activeBMTable->powerups[id].hit_sound > -1) {
 #ifdef NETWORK
 		if (Game_mode & GM_MULTI) // Added by Rob, take this out if it turns out to be not good for net games!
-			multi_send_play_sound(Powerup_info[id].hit_sound, F1_0);
+			multi_send_play_sound(activeBMTable->powerups[id].hit_sound, F1_0);
 #endif
-		digi_play_sample(Powerup_info[id].hit_sound, F1_0);
+		digi_play_sample(activeBMTable->powerups[id].hit_sound, F1_0);
 		detect_escort_goal_accomplished(obj - Objects);
 	}
 

@@ -49,14 +49,16 @@ typedef struct polymodel
 } polymodel;
 
 //array of pointers to polygon objects
+#ifdef BUILD_DESCENT1
 extern polymodel Polygon_models[];
+extern int N_polygon_models;
+#endif
 
 //switch to simpler model when the object has depth 
 //greater than this value times its radius.   
 extern int Simple_model_threshhold_scale;
 
 //how many polygon objects there are
-extern int N_polygon_models;
 
 //array of names of currently-loaded models
 extern char Pof_names[MAX_POLYGON_MODELS][13];

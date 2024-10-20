@@ -41,6 +41,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/effects.h"
 #include "main_shared/physics.h" 
 #include "misc/byteswap.h"
+#include "main_shared/bm.h"
 //
 // Code for controlling robots in multiplayer games
 //
@@ -102,7 +103,7 @@ multi_can_move_robot(int objnum, int agitation)
 	}
 #endif
 
-	else if ((Robot_info[Objects[objnum].id].boss_flag) && (Boss_dying == 1))
+	else if ((activeBMTable->robots[Objects[objnum].id].boss_flag) && (Boss_dying == 1))
 		return 0;
 
 	else if (Objects[objnum].ctype.ai_info.REMOTE_OWNER == Player_num) // Already my robot!
@@ -235,7 +236,7 @@ multi_add_controlled_robot(int objnum, int agitation)
 
 	// Try to add a new robot to the controlled list, return 1 if added, 0 if not.
 
-   if (Robot_info[Objects[objnum].id].boss_flag) // this is a boss, so make sure he gets a slot
+   if (activeBMTable->robots[Objects[objnum].id].boss_flag) // this is a boss, so make sure he gets a slot
 		agitation=(agitation*3)+Player_num;  
  
 	if (Objects[objnum].ctype.ai_info.REMOTE_SLOT_NUM > 0)
@@ -484,7 +485,7 @@ multi_send_robot_position(int objnum, int force)
 	if (Objects[objnum].ctype.ai_info.REMOTE_OWNER != Player_num)
 		return;
 
-//	Objects[objnum].phys_info.drag = Robot_info[Objects[objnum].id].drag; // Set drag to normal
+//	Objects[objnum].phys_info.drag = activeBMTable->robots[Objects[objnum].id].drag; // Set drag to normal
 
 	robot_last_send_time[Objects[objnum].ctype.ai_info.REMOTE_SLOT_NUM] = GameTime;
 
@@ -797,7 +798,7 @@ multi_do_robot_position(char *buf)
 	}
 
 	set_thrust_from_velocity(&Objects[botnum]); // Try to smooth out movement
-//	Objects[botnum].phys_info.drag = Robot_info[Objects[botnum].id].drag >> 4; // Set drag to low
+//	Objects[botnum].phys_info.drag = activeBMTable->robots[Objects[botnum].id].drag >> 4; // Set drag to low
 
 	extract_shortpos(&Objects[botnum], (shortpos *)(buf+loc));
 }
@@ -838,7 +839,7 @@ multi_do_robot_fire(char *buf)
 	{
 		calc_gun_point(&gun_point, &Objects[botnum], gun_num);
 	}
-	robptr = &Robot_info[Objects[botnum].id];
+	robptr = &activeBMTable->robots[Objects[botnum].id];
 	
 	if (gun_num == -1) 
 		Laser_create_new_easy( &fire, &gun_point, botnum, PROXIMITY_ID, 1);
@@ -900,20 +901,20 @@ multi_explode_robot_sub(int botnum, int killer,char isthief)
 		//multi_delete_controlled_robot(robot-Objects);
 	}
 
-   if (isthief || Robot_info[robot->id].thief)
+   if (isthief || activeBMTable->robots[robot->id].thief)
 	 drop_stolen_items(robot);
 
-	if (Robot_info[robot->id].boss_flag) {
+	if (activeBMTable->robots[robot->id].boss_flag) {
 		if (!Boss_dying)
 			start_boss_death_sequence(robot);	
 		else
 			return (0);
-	} else if (Robot_info[robot->id].death_roll) {
+	} else if (activeBMTable->robots[robot->id].death_roll) {
 		start_robot_death_sequence(robot);
 	} else {
 		if (robot->id == SPECIAL_REACTOR_ROBOT)
 			special_reactor_stuff();
-		if (Robot_info[robot->id].kamikaze)
+		if (activeBMTable->robots[robot->id].kamikaze)
 			explode_object(robot,1);	//	Kamikaze, explode right away, IN YOUR FACE!
 		else
 			explode_object(robot,STANDARD_EXPL_DELAY);
@@ -950,7 +951,7 @@ multi_do_robot_explode(char *buf)
 	rval = multi_explode_robot_sub(botnum, killer,thief);
 
 	if (rval && (killer == Players[Player_num].objnum))
-		add_points_to_score(Robot_info[Objects[botnum].id].score_value);
+		add_points_to_score(activeBMTable->robots[Objects[botnum].id].score_value);
 }
 
 extern fix EnergyToCreateOneRobot; // From fuelcen.c 
@@ -985,8 +986,8 @@ multi_do_create_robot(char *buf)
 	obj = object_create_explosion(robotcen->segnum, &cur_object_loc, i2f(10), VCLIP_MORPHING_ROBOT);
 	if (obj)
 		extract_orient_from_segment(&obj->orient, &Segments[robotcen->segnum]);
-	if (Vclip[VCLIP_MORPHING_ROBOT].sound_num > -1)
-		digi_link_sound_to_pos( Vclip[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, &cur_object_loc, 0, F1_0 );
+	if (activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num > -1)
+		digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, &cur_object_loc, 0, F1_0 );
 
 	// Set robot center flags, in case we become the master for the next one
 
@@ -1037,7 +1038,7 @@ multi_do_boss_actions(char *buf)
 
 	boss_obj = &Objects[boss_objnum];
 
-	if ((boss_obj->type != OBJ_ROBOT) || !(Robot_info[boss_obj->id].boss_flag))
+	if ((boss_obj->type != OBJ_ROBOT) || !(activeBMTable->robots[boss_obj->id].boss_flag))
 	{
 		Int3(); // Got boss actions for a robot who's not a boss?
 		return;
@@ -1071,7 +1072,7 @@ multi_do_boss_actions(char *buf)
 				vm_vec_sub(&boss_dir, &Objects[Players[pnum].objnum].pos, &boss_obj->pos);
 				vm_vector_2_matrix(&boss_obj->orient, &boss_dir, NULL, NULL);
 
-				digi_link_sound_to_pos( Vclip[VCLIP_MORPHING_ROBOT].sound_num, teleport_segnum, 0, &boss_obj->pos, 0 , F1_0);
+				digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, teleport_segnum, 0, &boss_obj->pos, 0 , F1_0);
 				digi_kill_sound_linked_to_object( boss_obj-Objects);
 				digi_link_sound_to_object2( SOUND_BOSS_SHARE_SEE, boss_obj-Objects, 1, F1_0, F1_0*512 );	//	F1_0*512 means play twice as loud
 				Ai_local_info[boss_obj-Objects].next_fire = 0;
@@ -1191,7 +1192,7 @@ multi_drop_robot_powerups(int objnum)
 		return;
 	}
 
-	robptr = &Robot_info[del_obj->id];
+	robptr = &activeBMTable->robots[del_obj->id];
 
 	Net_create_loc = 0;
 

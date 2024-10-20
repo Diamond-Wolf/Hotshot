@@ -146,5 +146,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //I think it would be nice to have a scrape sound... 
 //#define SOUND_PLAYER_SCRAPE_WALL						72
 
+#ifdef BUILD_DESCENT1
 extern uint8_t Sounds[MAX_SOUNDS];
 extern uint8_t AltSounds[MAX_SOUNDS];
+#endif

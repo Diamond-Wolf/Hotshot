@@ -39,6 +39,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/piggy.h"
 #include "stringtable.h"
 #include "main_shared/kconfig.h"
+#include "main_shared/bm.h"
 
 #define SOF_USED				1 		// Set if this sample is used
 #define SOF_PLAYING			2		// Set if this sample is playing on a channel
@@ -91,19 +92,19 @@ int digi_xlat_sound(int soundno)
 	if ( soundno < 0 ) return -1;
 
 	if ( digi_lomem )	{
-		soundno = AltSounds[soundno];
+		soundno = activeBMTable->altSounds[soundno];
 		if ( soundno == 255 ) return -1;
 	}
 
-	Assert(Sounds[soundno] != 255);	//if hit this, probably using undefined sound
+	Assert(activeBMTable->sounds[soundno] != 255);	//if hit this, probably using undefined sound
 
-	return Sounds[soundno];
+	return activeBMTable->sounds[soundno];
 }
 
 int digi_unxlat_sound(int soundno)
 {
 	int i;
-	uint8_t *table = (digi_lomem?AltSounds:Sounds);
+	auto& table = (digi_lomem?activeBMTable->altSounds:activeBMTable->sounds);
 
 	if ( soundno < 0 ) return -1;
 
@@ -348,7 +349,7 @@ int digi_link_sound_to_object3( int org_soundnum, short objnum, int forever, fix
 //	if ( max_volume > F1_0 ) max_volume = F1_0;
 
 	if (soundnum < 0 || soundnum == 255) return -1;
-	if (GameSounds[soundnum].data==NULL) 
+	if (activePiggyTable->gameSounds[soundnum].data==NULL) 
 	{
 		Int3();
 		return -1;
@@ -444,7 +445,7 @@ int digi_link_sound_to_pos2( int org_soundnum, short segnum, short sidenum, vms_
 //	if ( max_volume > F1_0 ) max_volume = F1_0;
 
 	if (soundnum < 0 || soundnum == 255) return -1;
-	if (GameSounds[soundnum].data==NULL) 
+	if (activePiggyTable->gameSounds[soundnum].data==NULL) 
 	{
 		Int3();
 		return -1;

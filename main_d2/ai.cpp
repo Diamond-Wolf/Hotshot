@@ -271,10 +271,10 @@ void make_nearby_robot_snipe(void)
 		int	objnum = Segments[bfs_list[i]].objects;
 		while (objnum != -1) {
 			object* objp = &Objects[objnum];
-			robot_info* robptr = &Robot_info[objp->id];
+			robot_info* robptr = &activeBMTable->robots[objp->id];
 
 			if ((objp->type == OBJ_ROBOT) && (objp->id != ROBOT_BRAIN)) {
-				if ((objp->ctype.ai_info.behavior != AIB_SNIPE) && (objp->ctype.ai_info.behavior != AIB_RUN_FROM) && !Robot_info[objp->id].boss_flag && !robptr->companion) {
+				if ((objp->ctype.ai_info.behavior != AIB_SNIPE) && (objp->ctype.ai_info.behavior != AIB_RUN_FROM) && !activeBMTable->robots[objp->id].boss_flag && !robptr->companion) {
 					objp->ctype.ai_info.behavior = AIB_SNIPE;
 					Ai_local_info[objnum].mode = AIM_SNIPE_ATTACK;
 					mprintf((0, "Making robot #%i go into snipe mode!\n", objnum));
@@ -326,7 +326,7 @@ void do_ai_frame(object* obj)
 		return;
 	}
 
-	robptr = &Robot_info[obj->id];
+	robptr = &activeBMTable->robots[obj->id];
 	Assert(robptr->always_0xabcd == 0xabcd);
 
 	if (do_any_robot_dying_frame(obj))
@@ -363,7 +363,7 @@ void do_ai_frame(object* obj)
 	}
 
 	Assert(obj->segnum != -1);
-	Assert(obj->id < N_robot_types);
+	Assert(obj->id < activeBMTable->robots.size());
 
 	obj_ref = objnum ^ FrameCount;
 
@@ -383,12 +383,12 @@ void do_ai_frame(object* obj)
 	previous_visibility = ailp->previous_visibility;	//	Must get this before we toast the master copy!
 
 	// -- (No robots have this behavior...)
-	// -- //	Deal with cloaking for robots which are cloaked except just before firing.
-	// -- if (robptr->cloak_type == RI_CLOAKED_EXCEPT_FIRING)
-	// -- 	if (ailp->next_fire < F1_0/2)
-	// -- 		aip->CLOAKED = 1;
-	// -- 	else
-	// -- 		aip->CLOAKED = 0;
+	//	Deal with cloaking for robots which are cloaked except just before firing.
+	if (robptr->cloak_type == RI_CLOAKED_EXCEPT_FIRING)
+		if (ailp->next_fire < F1_0/2)
+			aip->CLOAKED = 1;
+		else
+			aip->CLOAKED = 0;
 
 	//	If only awake because of a camera, make that the believed player position.
 	if ((aip->SUB_FLAGS & SUB_FLAGS_CAMERA_AWAKE) && (Ai_last_missile_camera != -1))
@@ -649,7 +649,7 @@ void do_ai_frame(object* obj)
 		object_animates = 0;		//	If we're not doing the animation, then should pretend it doesn't animate.
 	}
 
-	switch (Robot_info[obj->id].boss_flag) {
+	switch (activeBMTable->robots[obj->id].boss_flag) {
 	case 0:
 		break;
 
@@ -1267,7 +1267,7 @@ void do_ai_frame(object* obj)
 	//	If new state = fire, then set all gun states to fire.
 	if ((aip->GOAL_STATE == AIS_FIRE)) {
 		int	i, num_guns;
-		num_guns = Robot_info[obj->id].n_guns;
+		num_guns = activeBMTable->robots[obj->id].n_guns;
 		for (i = 0; i < num_guns; i++)
 			ailp->goal_state[i] = AIS_FIRE;
 	}
@@ -1363,7 +1363,7 @@ void do_ai_frame(object* obj)
 	// Switch to next gun for next fire.
 	if (player_visibility == 0) {
 		aip->CURRENT_GUN++;
-		if (aip->CURRENT_GUN >= Robot_info[obj->id].n_guns)
+		if (aip->CURRENT_GUN >= activeBMTable->robots[obj->id].n_guns)
 			if ((robptr->n_guns == 1) || (robptr->weapon_type2 == -1))	//	Two weapon types hack.
 				aip->CURRENT_GUN = 0;
 			else
@@ -1555,7 +1555,7 @@ void do_ai_frame_all(void)
 
 		for (i = 0; i <= Highest_object_index; i++)
 			if (Objects[i].type == OBJ_ROBOT)
-				if (Robot_info[Objects[i].id].boss_flag)
+				if (activeBMTable->robots[Objects[i].id].boss_flag)
 					do_boss_dying_frame(&Objects[i]);
 	}
 }

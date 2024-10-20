@@ -78,6 +78,8 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "main_shared/compbit.h"
 #include "misc/types.h"
 
+#define SANTA
+
 //#include "3dfx_des.h"
 
 #if defined(POLY_ACC)
@@ -851,6 +853,16 @@ Here:
 	}
 
 	mprintf((0, "\nDoing bm_init..."));
+	
+	if (!FindArg("-lowmem")) { //If enough memory, just init the tables now
+		d1Table.Init();
+		d2Table.Init();
+	} else { //Otherwise, ensure only one is loaded at a time
+		shouldAutoClearBMTable = true;
+	}
+
+	d2Table.SetActive();
+
 #ifdef EDITOR
 	bm_init_use_tbl();
 #else

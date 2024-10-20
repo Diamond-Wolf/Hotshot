@@ -230,7 +230,7 @@ int global_orientation = 0;
 void draw_object_blob(object* obj, bitmap_index bmi)
 {
 	int	orientation = 0;
-	grs_bitmap* bm = &GameBitmaps[bmi.index];
+	grs_bitmap* bm = &activePiggyTable->gameBitmaps[bmi.index];
 
 	if (obj->type == OBJ_FIREBALL)
 		orientation = (obj - Objects) & 7;
@@ -248,7 +248,7 @@ void draw_object_blob(object* obj, bitmap_index bmi)
 //draw an object that is a texture-mapped rod
 void draw_object_tmap_rod(object* obj, bitmap_index bitmapi, int lighted)
 {
-	grs_bitmap* bitmap = &GameBitmaps[bitmapi.index];
+	grs_bitmap* bitmap = &activePiggyTable->gameBitmaps[bitmapi.index];
 	fix light;
 
 	vms_vector delta, top_v, bot_v;
@@ -423,7 +423,7 @@ void draw_polygon_object(object* obj)
 
 	//make robots brighter according to robot glow field
 	if (obj->type == OBJ_ROBOT)
-		light += (Robot_info[obj->id].glow << 12);		//convert 4:4 to 16:16
+		light += (activeBMTable->robots[obj->id].glow << 12);		//convert 4:4 to 16:16
 
 	if (obj->type == OBJ_WEAPON)
 		if (obj->id == FLARE_ID)
@@ -467,7 +467,7 @@ void draw_polygon_object(object* obj)
 
 	if (obj->rtype.pobj_info.tmap_override != -1) 
 	{
-		polymodel* pm = &Polygon_models[obj->rtype.pobj_info.model_num];
+		polymodel* pm = &activeBMTable->models[obj->rtype.pobj_info.model_num];
 		bitmap_index bm_ptrs[12];
 
 		int i;
@@ -475,7 +475,8 @@ void draw_polygon_object(object* obj)
 		Assert(pm->n_textures <= 12);
 
 		for (i = 0; i < 12; i++)		//fill whole array, in case simple model needs more
-			bm_ptrs[i] = Textures[obj->rtype.pobj_info.tmap_override];
+			bm_ptrs[i] = activeBMTable->textures
+[obj->rtype.pobj_info.tmap_override];
 
 		draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, bm_ptrs);
 	}
@@ -485,7 +486,7 @@ void draw_polygon_object(object* obj)
 			draw_cloaked_object(obj, light, engine_glow_value, Players[obj->id].cloak_time, Players[obj->id].cloak_time + CLOAK_TIME_MAX);
 		else if ((obj->type == OBJ_ROBOT) && (obj->ctype.ai_info.CLOAKED)) 
 		{
-			if (Robot_info[obj->id].boss_flag)
+			if (activeBMTable->robots[obj->id].boss_flag)
 				draw_cloaked_object(obj, light, engine_glow_value, Boss_cloak_start_time, Boss_cloak_end_time);
 			else
 				draw_cloaked_object(obj, light, engine_glow_value, GameTime - F1_0 * 10, GameTime + F1_0 * 10);
@@ -507,11 +508,11 @@ void draw_polygon_object(object* obj)
 		}
 
 			draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
-			if (obj->type == OBJ_WEAPON && (Weapon_info[obj->id].model_num_inner > -1)) 
+			if (obj->type == OBJ_WEAPON && (activeBMTable->weapons[obj->id].model_num_inner > -1)) 
 			{
 				fix dist_to_eye = vm_vec_dist_quick(&Viewer->pos, &obj->pos);
 				if (dist_to_eye < Simple_model_threshhold_scale * F1_0 * 2)
-					draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], Weapon_info[obj->id].model_num_inner, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
+					draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], activeBMTable->weapons[obj->id].model_num_inner, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
 			}
 	}
 }
@@ -774,7 +775,7 @@ void init_player_object()
 	ConsoleObject->type = OBJ_PLAYER;
 	ConsoleObject->id = 0;					//no sub-types for player
 	ConsoleObject->signature = 0;			//player has zero, others start at 1
-	ConsoleObject->size = Polygon_models[Player_ship->model_num].rad;
+	ConsoleObject->size = activeBMTable->models[Player_ship->model_num].rad;
 	ConsoleObject->control_type = CT_SLEW;			//default is player slewing
 	ConsoleObject->movement_type = MT_PHYSICS;		//change this sometime
 	ConsoleObject->lifeleft = IMMORTAL_TIME;
@@ -1276,7 +1277,7 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 	if (obj->type == OBJ_WEAPON) 
 	{
 		Assert(obj->control_type == CT_WEAPON);
-		obj->mtype.phys_info.flags |= (Weapon_info[obj->id].persistent * PF_PERSISTENT);
+		obj->mtype.phys_info.flags |= (activeBMTable->weapons[obj->id].persistent * PF_PERSISTENT);
 		obj->ctype.laser_info.creation_time = GameTime;
 		obj->ctype.laser_info.last_hitobj = -1;
 		obj->ctype.laser_info.multiplier = F1_0;
@@ -1909,7 +1910,7 @@ void object_move_one(object* obj)
 
 	if (obj->lifeleft < 0) {		// We died of old age
 		obj->flags |= OF_SHOULD_BE_DEAD;
-		if (obj->type == OBJ_WEAPON && Weapon_info[obj->id].damage_radius)
+		if (obj->type == OBJ_WEAPON && activeBMTable->weapons[obj->id].damage_radius)
 			explode_badass_weapon(obj, &obj->pos);
 		else if (obj->type == OBJ_ROBOT)	//make robots explode
 			explode_object(obj, 0);
@@ -2009,7 +2010,7 @@ void object_move_one(object* obj)
 		Drop_afterburner_blob_flag = 0;
 	}
 
-	if ((obj->type == OBJ_WEAPON) && (Weapon_info[obj->id].afterburner_size)) {
+	if ((obj->type == OBJ_WEAPON) && (activeBMTable->weapons[obj->id].afterburner_size)) {
 		int	objnum = obj - Objects;
 		fix	vel = vm_vec_mag_quick(&obj->mtype.phys_info.velocity);
 		fix	delay, lifetime;
@@ -2028,7 +2029,7 @@ void object_move_one(object* obj)
 		}
 
 		if ((Last_afterburner_time[objnum] + delay < GameTime) || (Last_afterburner_time[objnum] > GameTime)) {
-			drop_afterburner_blobs(obj, 1, i2f(Weapon_info[obj->id].afterburner_size) / 16, lifetime);
+			drop_afterburner_blobs(obj, 1, i2f(activeBMTable->weapons[obj->id].afterburner_size) / 16, lifetime);
 			Last_afterburner_time[objnum] = GameTime;
 		}
 	}
@@ -2205,7 +2206,7 @@ void clear_transient_objects(int clear_all)
 	object* obj;
 
 	for (objnum = 0, obj = &Objects[0]; objnum <= Highest_object_index; objnum++, obj++)
-		if (((obj->type == OBJ_WEAPON) && !(Weapon_info[obj->id].flags & WIF_PLACABLE) && (clear_all || ((obj->id != PROXIMITY_ID) && (obj->id != SUPERPROX_ID)))) ||
+		if (((obj->type == OBJ_WEAPON) && !(activeBMTable->weapons[obj->id].flags & WIF_PLACABLE) && (clear_all || ((obj->id != PROXIMITY_ID) && (obj->id != SUPERPROX_ID)))) ||
 			obj->type == OBJ_FIREBALL ||
 			obj->type == OBJ_DEBRIS ||
 			obj->type == OBJ_DEBRIS ||
@@ -2291,14 +2292,14 @@ int drop_marker_object(vms_vector* pos, int segnum, vms_matrix* orient, int mark
 {
 	int objnum;
 
-	Assert(Marker_model_num != -1);
+	Assert(activeBMTable->markerModel != -1);
 
-	objnum = obj_create(OBJ_MARKER, marker_num, segnum, pos, orient, Polygon_models[Marker_model_num].rad, CT_NONE, MT_NONE, RT_POLYOBJ);
+	objnum = obj_create(OBJ_MARKER, marker_num, segnum, pos, orient, activeBMTable->models[activeBMTable->markerModel].rad, CT_NONE, MT_NONE, RT_POLYOBJ);
 
 	if (objnum >= 0) {
 		object* obj = &Objects[objnum];
 
-		obj->rtype.pobj_info.model_num = Marker_model_num;
+		obj->rtype.pobj_info.model_num = activeBMTable->markerModel;
 
 		vm_vec_copy_scale(&obj->mtype.spin_rate, &obj->orient.uvec, F1_0 / 2);
 

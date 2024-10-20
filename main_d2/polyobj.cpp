@@ -46,9 +46,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "3dfx_des.h"
 #endif
 
-polymodel Polygon_models[MAX_POLYGON_MODELS];	// = {&bot11,&bot17,&robot_s2,&robot_b2,&bot11,&bot17,&robot_s2,&robot_b2};
+//polymodel activeBMTable->models[MAX_POLYGON_MODELS];	// = {&bot11,&bot17,&robot_s2,&robot_b2,&bot11,&bot17,&robot_s2,&robot_b2};
 
-int N_polygon_models = 0;
+//int N_polygon_models = 0;
 
 #define MAX_POLYGON_VECS 1000
 g3s_point robot_points[MAX_POLYGON_VECS];
@@ -478,9 +478,9 @@ void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_an
 	int i;
 	//PA_DFX (int save_light);
 
-	Assert(model_num < N_polygon_models);
+	Assert(model_num < activeBMTable->models.size());
 
-	po = &Polygon_models[model_num];
+	po = &activeBMTable->models[model_num];
 
 	//check if should use simple model
 	if (po->simpler_model)					//must have a simpler model
@@ -495,7 +495,7 @@ void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_an
 			depth = g3_calc_point_depth(pos);		//gets 3d depth
 
 			while (po->simpler_model && depth > cnt++ * Simple_model_threshhold_scale * po->rad)
-				po = &Polygon_models[po->simpler_model - 1];
+				po = &activeBMTable->models[po->simpler_model - 1];
 		}
 
 	if (alt_textures)
@@ -503,7 +503,7 @@ void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_an
 		for (i = 0; i < po->n_textures; i++)
 		{
 			texture_list_index[i] = alt_textures[i];
-			texture_list[i] = &GameBitmaps[alt_textures[i].index];
+			texture_list[i] = &activePiggyTable->gameBitmaps[alt_textures[i].index];
 
 #ifdef _3DFX
 			texture_list[i]->bm_handle = texture_list_index[i].index;
@@ -514,8 +514,8 @@ void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_an
 	{
 		for (i = 0; i < po->n_textures; i++)
 		{
-			texture_list_index[i] = ObjBitmaps[ObjBitmapPtrs[po->first_texture + i]];
-			texture_list[i] = &GameBitmaps[ObjBitmaps[ObjBitmapPtrs[po->first_texture + i]].index];
+			texture_list_index[i] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[po->first_texture + i]];
+			texture_list[i] = &activePiggyTable->gameBitmaps[activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[po->first_texture + i]].index];
 
 #ifdef _3DFX
 			texture_list[i]->bm_handle = texture_list_index[i].index;
@@ -592,9 +592,9 @@ void free_polygon_models()
 {
 	int i;
 
-	for (i = 0; i < N_polygon_models; i++)
+	for (i = 0; i < activeBMTable->models.size(); i++)
 	{
-		free_model(&Polygon_models[i]);
+		free_model(&activeBMTable->models[i]);
 	}
 
 }
@@ -676,41 +676,46 @@ int load_polygon_model(char* filename, int n_textures, grs_bitmap*** textures)
 #define r NULL
 #endif
 
-	Assert(N_polygon_models < MAX_POLYGON_MODELS);
+	//Assert(N_polygon_models < MAX_POLYGON_MODELS);
 	Assert(n_textures < MAX_POLYOBJ_TEXTURES);
 
 	//	MK was real tired of those useless, slow mprintfs...
-	if (N_polygon_models > MAX_POLYGON_MODELS - 10)
-		mprintf((0, "Used %d/%d polygon model slots\n", N_polygon_models + 1, MAX_POLYGON_MODELS));
+	if (activeBMTable->models.size() > MAX_POLYGON_MODELS - 10)
+		mprintf((0, "Used %d/%d polygon model slots\n", activeBMTable->models.size() + 1, MAX_POLYGON_MODELS));
 
 	Assert(strlen(filename) <= 12);
-	strcpy(Pof_names[N_polygon_models], filename);
 
-	read_model_file(&Polygon_models[N_polygon_models], filename, r);
+	polymodel model;
 
-	polyobj_find_min_max(&Polygon_models[N_polygon_models]);
+	strcpy(Pof_names[activeBMTable->models.size()], filename);
 
-	g3_init_polygon_model(Polygon_models[N_polygon_models].model_data);
+	read_model_file(&model, filename, r);
+
+	polyobj_find_min_max(&model);
+
+	g3_init_polygon_model(model.model_data);
 
 	if (highest_texture_num + 1 != n_textures)
 		Error("Model <%s> references %d textures but specifies %d.", filename, highest_texture_num + 1, n_textures);
 
-	Polygon_models[N_polygon_models].n_textures = n_textures;
-	Polygon_models[N_polygon_models].first_texture = first_texture;
-	Polygon_models[N_polygon_models].simpler_model = 0;
+	model.n_textures = n_textures;
+	model.first_texture = first_texture;
+	model.simpler_model = 0;
 
-	//	Assert(polygon_models[N_polygon_models]!=NULL);
+	activeBMTable->models.push_back(std::move(model));
 
-	N_polygon_models++;
+	//	Assert(activeBMTable->models[N_polygon_models]!=NULL);
 
-	return N_polygon_models - 1;
+	//N_polygon_models++;
+
+	return activeBMTable->models.size() - 1;
 }
 
 
 void init_polygon_models()
 {
-	N_polygon_models = 0;
-	atexit((void (*)())free_polygon_models);
+	//N_polygon_models = 0;
+	//atexit((void (*)())free_polygon_models);
 }
 
 //compare against this size when figuring how far to place eye for picture
@@ -729,7 +734,7 @@ void draw_model_picture(int mn, vms_angvec * orient_angles)
 	grs_canvas* save_canv = grd_curcanv, * temp_canv;
 	int	save_light;
 
-	Assert(mn >= 0 && mn < N_polygon_models);
+	Assert(mn >= 0 && mn < activeBMTable->models.size());
 
 	temp_canv = gr_create_canvas(save_canv->cv_bitmap.bm_w, save_canv->cv_bitmap.bm_h);
 	gr_set_current_canvas(temp_canv);
@@ -738,8 +743,8 @@ void draw_model_picture(int mn, vms_angvec * orient_angles)
 	g3_start_frame();
 	g3_set_view_matrix(&temp_pos, &temp_orient, 0x9000);
 
-	if (Polygon_models[mn].rad != 0)
-		temp_pos.z = fixmuldiv(DEFAULT_VIEW_DIST, Polygon_models[mn].rad, BASE_MODEL_SIZE);
+	if (activeBMTable->models[mn].rad != 0)
+		temp_pos.z = fixmuldiv(DEFAULT_VIEW_DIST, activeBMTable->models[mn].rad, BASE_MODEL_SIZE);
 	else
 		temp_pos.z = DEFAULT_VIEW_DIST;
 

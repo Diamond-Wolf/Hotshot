@@ -31,6 +31,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/fireball.h"
 #include "main_shared/game.h"
 
+#include "main_shared/bm.h"
+
 #ifdef EDITOR
 #include "editor\editor.h"
 #endif
@@ -514,7 +516,7 @@ cpp_done1: ;
 //	into a new segment.  It is not necessarily bad, but it makes it hard to track down actual
 //	discontinuity problems.
 	if (objp->type == OBJ_ROBOT)
-		if (Robot_info[objp->id].companion)
+		if (activeBMTable->robots[objp->id].companion)
 			move_towards_outside(original_psegs, &l_num_points, objp, 0);
 
 #if PATH_VALIDATION
@@ -545,7 +547,7 @@ int polish_path(object *objp, point_seg *psegs, int num_points)
 		return num_points;
 
 	//	Prevent the buddy from polishing his path twice in one frame, which can cause him to get hung up.  Pretty ugly, huh?
-	if (Robot_info[objp->id].companion)
+	if (activeBMTable->robots[objp->id].companion)
 		if (FrameCount == Last_buddy_polish_path_frame)
 			return num_points;
 		else
@@ -1016,7 +1018,7 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 
 	vms_vector	goal_point, new_goal_point;
 	fix			dist_to_goal;
-	robot_info	*robptr = &Robot_info[objp->id];
+	robot_info	*robptr = &activeBMTable->robots[objp->id];
 	int			forced_break, original_dir, original_index;
 	fix			dist_to_player;
 	int			goal_seg;
@@ -1088,7 +1090,7 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 			move_object_to_goal(objp, &goal_point, goal_seg);
 			return;
 		} else {
-			robot_info	*robptr = &Robot_info[objp->id];
+			robot_info	*robptr = &activeBMTable->robots[objp->id];
 			fix	cur_speed = robptr->max_speed[Difficulty_level]/2;
 			fix	distance_travellable = fixmul(FrameTime, cur_speed);
 
@@ -1096,7 +1098,7 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 			//	Only move to goal if allowed to fly through the side.
 			//	Buddy-bot can create paths he can't fly, waiting for player.
 			// -- bah, this isn't good enough, buddy will fail to get through any door! if (WALL_IS_DOORWAY(&Segments]objp->segnum], connect_side) & WID_FLY_FLAG) {
-			if (!Robot_info[objp->id].companion && !Robot_info[objp->id].thief) {
+			if (!activeBMTable->robots[objp->id].companion && !activeBMTable->robots[objp->id].thief) {
 				if (distance_travellable >= dist_to_goal) {
 					move_object_to_goal(objp, &goal_point, goal_seg);
 				} else {
@@ -1339,7 +1341,7 @@ void ai_path_set_orient_and_vel(object *objp, vms_vector *goal_point, int player
 	vms_vector	norm_fvec;
 	fix			speed_scale;
 	fix			dot;
-	robot_info	*robptr = &Robot_info[objp->id];
+	robot_info	*robptr = &activeBMTable->robots[objp->id];
 	fix			max_speed;
 
 	//	If evading player, use highest difficulty level speed, plus something based on diff level
@@ -1536,7 +1538,7 @@ void attempt_to_resume_path(object *objp)
 
 	// mprintf((0, "Object %i trying to resume path at index %i\n", objp-Objects, aip->cur_path_index));
 
-	if ((aip->behavior == AIB_STATION) && (Robot_info[objp->id].companion != 1))
+	if ((aip->behavior == AIB_STATION) && (activeBMTable->robots[objp->id].companion != 1))
 		if (P_Rand() > 8192) {
 			ai_local			*ailp = &Ai_local_info[objp-Objects];
 
@@ -1710,7 +1712,7 @@ void player_path_set_orient_and_vel(object *objp, vms_vector *goal_point)
 	fix			dot;
 	fix			max_speed;
 
-	max_speed = Robot_info[objp->id].max_speed[Difficulty_level];
+	max_speed = activeBMTable->robots[objp->id].max_speed[Difficulty_level];
 
 	vm_vec_sub(&norm_vec_to_goal, goal_point, &cur_pos);
 	vm_vec_normalize_quick(&norm_vec_to_goal);

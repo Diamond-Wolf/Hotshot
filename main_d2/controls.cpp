@@ -37,6 +37,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/vclip.h"
 #include "main_shared/fireball.h"
 
+#include "main_shared/bm.h"
+
 //look at keyboard, mouse, joystick, CyberMan, whatever, and set 
 //physics vars rotvel, velocity
 
@@ -85,7 +87,7 @@ void read_flying_controls( object * obj )
 
 		Guided_missile[Player_num]->orient = tempm;
 
-		speed = Weapon_info[Guided_missile[Player_num]->id].speed[Difficulty_level];
+		speed = activeBMTable->weapons[Guided_missile[Player_num]->id].speed[Difficulty_level];
 
 		vm_vec_copy_scale(&Guided_missile[Player_num]->mtype.phys_info.velocity,&Guided_missile[Player_num]->orient.fvec,speed);
 #ifdef NETWORK

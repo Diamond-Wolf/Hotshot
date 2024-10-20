@@ -76,14 +76,14 @@ extern void newdemo_record_guided_start();
 
 void Laser_render(object *obj)
 {	
-	switch( Weapon_info[obj->id].render_type )	
+	switch( activeBMTable->weapons[obj->id].render_type )	
 	{
 	case WEAPON_RENDER_LASER:
 		Int3();	// Not supported anymore!
-					//Laser_draw_one(obj-Objects, Weapon_info[obj->id].bitmap );
+					//Laser_draw_one(obj-Objects, activeBMTable->weapons[obj->id].bitmap );
 		break;
 	case WEAPON_RENDER_BLOB:
-		draw_object_blob(obj, Weapon_info[obj->id].bitmap  );
+		draw_object_blob(obj, activeBMTable->weapons[obj->id].bitmap  );
 		break;
 	case WEAPON_RENDER_POLYMODEL:
 		break;
@@ -177,11 +177,11 @@ int create_weapon_object(int weapon_type,int segnum,vms_vector *position)
 	int objnum;
 	object *obj;
 
-	switch( Weapon_info[weapon_type].render_type )	
+	switch( activeBMTable->weapons[weapon_type].render_type )	
 	{
 		case WEAPON_RENDER_BLOB:
 			rtype = RT_LASER;			// Render as a laser even if blob (see render code above for explanation)
-			laser_radius = Weapon_info[weapon_type].blob_size;
+			laser_radius = activeBMTable->weapons[weapon_type].blob_size;
 			break;
 		case WEAPON_RENDER_POLYMODEL:
 			laser_radius = 0;	//	Filled in below.
@@ -196,7 +196,7 @@ int create_weapon_object(int weapon_type,int segnum,vms_vector *position)
 			break;
 		case WEAPON_RENDER_VCLIP:
 			rtype = RT_WEAPON_VCLIP;
-			laser_radius = Weapon_info[weapon_type].blob_size;
+			laser_radius = activeBMTable->weapons[weapon_type].blob_size;
 			break;
 		default:
 			Error( "Invalid weapon render type in Laser_create_new\n" );
@@ -209,20 +209,20 @@ int create_weapon_object(int weapon_type,int segnum,vms_vector *position)
 
 	obj = &Objects[objnum];
 
-	if (Weapon_info[weapon_type].render_type == WEAPON_RENDER_POLYMODEL) 
+	if (activeBMTable->weapons[weapon_type].render_type == WEAPON_RENDER_POLYMODEL) 
 	{
-		obj->rtype.pobj_info.model_num = Weapon_info[obj->id].model_num;
-		obj->size = fixdiv(Polygon_models[obj->rtype.pobj_info.model_num].rad,Weapon_info[obj->id].po_len_to_width_ratio);
+		obj->rtype.pobj_info.model_num = activeBMTable->weapons[obj->id].model_num;
+		obj->size = fixdiv(activeBMTable->models[obj->rtype.pobj_info.model_num].rad,activeBMTable->weapons[obj->id].po_len_to_width_ratio);
 	}
 
-	obj->mtype.phys_info.mass = Weapon_info[weapon_type].mass;
-	obj->mtype.phys_info.drag = Weapon_info[weapon_type].drag;
+	obj->mtype.phys_info.mass = activeBMTable->weapons[weapon_type].mass;
+	obj->mtype.phys_info.drag = activeBMTable->weapons[weapon_type].drag;
 	vm_vec_zero(&obj->mtype.phys_info.thrust);
 
-	if (Weapon_info[weapon_type].bounce==1)
+	if (activeBMTable->weapons[weapon_type].bounce==1)
 		obj->mtype.phys_info.flags |= PF_BOUNCE;
 
-	if (Weapon_info[weapon_type].bounce==2 || BounceCheat)
+	if (activeBMTable->weapons[weapon_type].bounce==2 || BounceCheat)
 		obj->mtype.phys_info.flags |= PF_BOUNCE+PF_BOUNCES_TWICE;
 
 	return objnum;
@@ -385,9 +385,9 @@ void create_omega_blobs(int firing_segnum, vms_vector *firing_pos, vms_vector *g
 			//	Only make the last one move fast, else multiple blobs might collide with target.
 			vm_vec_scale(&objp->mtype.phys_info.velocity, F1_0*4);
 
-			objp->size = Weapon_info[objp->id].blob_size;
+			objp->size = activeBMTable->weapons[objp->id].blob_size;
 
-			objp->shields = fixmul(OMEGA_DAMAGE_SCALE*FrameTime, Weapon_info[objp->id].strength[Difficulty_level]);
+			objp->shields = fixmul(OMEGA_DAMAGE_SCALE*FrameTime, activeBMTable->weapons[objp->id].strength[Difficulty_level]);
 	
 			objp->ctype.laser_info.parent_type			= parent_objp->type;
 			objp->ctype.laser_info.parent_signature	= parent_objp->signature;
@@ -401,7 +401,7 @@ void create_omega_blobs(int firing_segnum, vms_vector *firing_pos, vms_vector *g
 	//	Make last one move faster, but it's already moving at speed = F1_0*4.
 	if (last_created_objnum != -1) 
 	{
-		vm_vec_scale(&Objects[last_created_objnum].mtype.phys_info.velocity, Weapon_info[OMEGA_ID].speed[Difficulty_level]/4);
+		vm_vec_scale(&Objects[last_created_objnum].mtype.phys_info.velocity, activeBMTable->weapons[OMEGA_ID].speed[Difficulty_level]/4);
 		Objects[last_created_objnum].movement_type = MT_PHYSICS;
 	}
 
@@ -502,9 +502,9 @@ void do_omega_stuff(object *parent_objp, vms_vector *firing_pos, object *weapon_
 
 	//	Play sound.
 	if ( parent_objp == Viewer )
-		digi_play_sample( Weapon_info[weapon_objp->id].flash_sound, F1_0 );
+		digi_play_sample( activeBMTable->weapons[weapon_objp->id].flash_sound, F1_0 );
 	else
-		digi_link_sound_to_pos( Weapon_info[weapon_objp->id].flash_sound, weapon_objp->segnum, 0, &weapon_objp->pos, 0, F1_0 );
+		digi_link_sound_to_pos( activeBMTable->weapons[weapon_objp->id].flash_sound, weapon_objp->segnum, 0, &weapon_objp->pos, 0, F1_0 );
 
 	// -- if ((Last_omega_muzzle_flash_time + F1_0/4 < GameTime) || (Last_omega_muzzle_flash_time > GameTime)) {
 	// -- 	do_muzzle_stuff(firing_segnum, firing_pos);
@@ -562,9 +562,9 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 	fix volume;
 	fix laser_length=0;
 
-	Assert( weapon_type < N_weapon_types );
+	Assert( weapon_type < activeBMTable->weapons.size() );
 
-	if ( (weapon_type<0) || (weapon_type>=N_weapon_types) )
+	if ( (weapon_type<0) || (weapon_type>=activeBMTable->weapons.size()) )
 		weapon_type = 0;
 
 	//	Don't let homing blobs make muzzle flash.
@@ -591,8 +591,8 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 		if (( &Objects[parent] != Viewer ) && (Objects[parent].type != OBJ_WEAPON))	
 		{
 			// Muzzle flash		
-			if (Weapon_info[obj->id].flash_vclip > -1 )
-				object_create_muzzle_flash( obj->segnum, &obj->pos, Weapon_info[obj->id].flash_size, Weapon_info[obj->id].flash_vclip );
+			if (activeBMTable->weapons[obj->id].flash_vclip > -1 )
+				object_create_muzzle_flash( obj->segnum, &obj->pos, activeBMTable->weapons[obj->id].flash_size, activeBMTable->weapons[obj->id].flash_vclip );
 		}
 
 		do_omega_stuff(&Objects[parent], position, obj);
@@ -630,17 +630,17 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 	if ((weapon_type == PLAYER_SMART_HOMING_ID) || (weapon_type == SMART_MINE_HOMING_ID) || (weapon_type == ROBOT_SMART_HOMING_ID) || (weapon_type == ROBOT_SMART_MINE_HOMING_ID) || (weapon_type == EARTHSHAKER_MEGA_ID))
 		obj->mtype.phys_info.flags |= PF_BOUNCE;
 
-	if (Weapon_info[weapon_type].render_type == WEAPON_RENDER_POLYMODEL)
-		laser_length = Polygon_models[obj->rtype.pobj_info.model_num].rad * 2;
+	if (activeBMTable->weapons[weapon_type].render_type == WEAPON_RENDER_POLYMODEL)
+		laser_length = activeBMTable->models[obj->rtype.pobj_info.model_num].rad * 2;
 
 	if (weapon_type == FLARE_ID)
 		obj->mtype.phys_info.flags |= PF_STICK;		//this obj sticks to walls
 	
-	obj->shields = Weapon_info[obj->id].strength[Difficulty_level];
+	obj->shields = activeBMTable->weapons[obj->id].strength[Difficulty_level];
 	
 	// Fill in laser-specific data
 
-	obj->lifeleft							= Weapon_info[obj->id].lifetime;
+	obj->lifeleft							= activeBMTable->weapons[obj->id].lifetime;
 	obj->ctype.laser_info.parent_type		= Objects[parent].type;
 	obj->ctype.laser_info.parent_signature = Objects[parent].signature;
 	obj->ctype.laser_info.parent_num			= parent;
@@ -677,18 +677,18 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 
 	// Create orientation matrix so we can look from this pov
 	//	Homing missiles also need an orientation matrix so they know if they can make a turn.
-	if ((obj->render_type == RT_POLYOBJ) || (Weapon_info[obj->id].homing_flag))
+	if ((obj->render_type == RT_POLYOBJ) || (activeBMTable->weapons[obj->id].homing_flag))
 		vm_vector_2_matrix( &obj->orient,direction, &Objects[parent].orient.uvec ,NULL);
 
 	if (( &Objects[parent] != Viewer ) && (Objects[parent].type != OBJ_WEAPON))	
 	{
 		// Muzzle flash		
-		if (Weapon_info[obj->id].flash_vclip > -1 )
-			object_create_muzzle_flash( obj->segnum, &obj->pos, Weapon_info[obj->id].flash_size, Weapon_info[obj->id].flash_vclip );
+		if (activeBMTable->weapons[obj->id].flash_vclip > -1 )
+			object_create_muzzle_flash( obj->segnum, &obj->pos, activeBMTable->weapons[obj->id].flash_size, activeBMTable->weapons[obj->id].flash_vclip );
 	}
 
 	volume = F1_0;
-	if (Weapon_info[obj->id].flash_sound > -1 )
+	if (activeBMTable->weapons[obj->id].flash_sound > -1 )
 	{
 		if (make_sound)	
 		{
@@ -696,11 +696,11 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 			{
 				if (weapon_type == VULCAN_ID)	// Make your own vulcan gun  1/2 as loud.
 					volume = F1_0 / 2;
-				digi_play_sample( Weapon_info[obj->id].flash_sound, volume );
+				digi_play_sample( activeBMTable->weapons[obj->id].flash_sound, volume );
 			} 
 			else
 			{
-				digi_link_sound_to_pos( Weapon_info[obj->id].flash_sound, obj->segnum, 0, &obj->pos, 0, volume );
+				digi_link_sound_to_pos( activeBMTable->weapons[obj->id].flash_sound, obj->segnum, 0, &obj->pos, 0, volume );
 			}
 		}
 	}
@@ -709,7 +709,7 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 	// Move 1 frame, so that the end-tip of the laser is touching the gun barrel.
 	// This also jitters the laser a bit so that it doesn't alias.
 	//	Don't do for weapons created by weapons.
-	if ((Objects[parent].type == OBJ_PLAYER) && (Weapon_info[weapon_type].render_type != WEAPON_RENDER_NONE) && (weapon_type != FLARE_ID)) 
+	if ((Objects[parent].type == OBJ_PLAYER) && (activeBMTable->weapons[weapon_type].render_type != WEAPON_RENDER_NONE) && (weapon_type != FLARE_ID)) 
 	{
 		vms_vector	end_pos;
 		int			end_segnum;
@@ -739,13 +739,13 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 	} else
 		parent_speed = 0;
 
-	weapon_speed = Weapon_info[obj->id].speed[Difficulty_level];
-	if (Weapon_info[obj->id].speedvar != 128) 
+	weapon_speed = activeBMTable->weapons[obj->id].speed[Difficulty_level];
+	if (activeBMTable->weapons[obj->id].speedvar != 128) 
 	{
 		fix	randval;
 
 		//	Get a scale factor between speedvar% and 1.0.
-		randval = F1_0 - ((P_Rand() * Weapon_info[obj->id].speedvar) >> 6);
+		randval = F1_0 - ((P_Rand() * activeBMTable->weapons[obj->id].speedvar) >> 6);
 		weapon_speed = fixmul(weapon_speed, randval);
 	}
 
@@ -753,22 +753,22 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 	if ((obj->id == PLAYER_SMART_HOMING_ID) || (obj->id == SMART_MINE_HOMING_ID) || (obj->id == ROBOT_SMART_HOMING_ID) || (obj->id == ROBOT_SMART_MINE_HOMING_ID) || (obj->id == EARTHSHAKER_MEGA_ID))
 		weapon_speed /= 4;
 
-	if (Weapon_info[obj->id].thrust != 0)
+	if (activeBMTable->weapons[obj->id].thrust != 0)
 		weapon_speed /= 2;
 
 	vm_vec_copy_scale( &obj->mtype.phys_info.velocity, direction, weapon_speed + parent_speed );
 
 	//	Set thrust 
-	if (Weapon_info[weapon_type].thrust != 0) 
+	if (activeBMTable->weapons[weapon_type].thrust != 0) 
 	{
 		obj->mtype.phys_info.thrust = obj->mtype.phys_info.velocity;
-		vm_vec_scale(&obj->mtype.phys_info.thrust, fixdiv(Weapon_info[obj->id].thrust, weapon_speed+parent_speed));
+		vm_vec_scale(&obj->mtype.phys_info.thrust, fixdiv(activeBMTable->weapons[obj->id].thrust, weapon_speed+parent_speed));
 	}
 
 	if ((obj->type == OBJ_WEAPON) && (obj->id == FLARE_ID))
 		obj->lifeleft += (P_Rand()-16384) << 2;		//	add in -2..2 seconds
 
-	//	mprintf( 0, "Weapon speed = %.1f (%.1f)\n", f2fl(Weapon_info[obj->id].speed[Difficulty_level] + parent_speed), f2fl(parent_speed) );
+	//	mprintf( 0, "Weapon speed = %.1f (%.1f)\n", f2fl(activeBMTable->weapons[obj->id].speed[Difficulty_level] + parent_speed), f2fl(parent_speed) );
 
 	return objnum;
 }
@@ -870,7 +870,7 @@ int object_is_trackable(int track_goal, object *tracker, fix *dot)
 		if (objp->ctype.ai_info.CLOAKED)
 			return 0;
 		//	Your missiles don't track your escort.
-		if (Robot_info[objp->id].companion)
+		if (activeBMTable->robots[objp->id].companion)
 			if (tracker->ctype.laser_info.parent_type == OBJ_PLAYER)
 				return 0;
 	}
@@ -942,7 +942,7 @@ int find_homing_object(vms_vector *curpos, object *tracker)
 	int	best_objnum = -1;
 
 	//	Contact Mike: This is a bad and stupid thing.  Who called this routine with an illegal laser type??
-	Assert((Weapon_info[tracker->id].homing_flag) || (tracker->id == OMEGA_ID));
+	Assert((activeBMTable->weapons[tracker->id].homing_flag) || (tracker->id == OMEGA_ID));
 
 	//	Find an object to track based on game mode (eg, whether in network play) and who fired it.
 
@@ -1005,7 +1005,7 @@ int find_homing_object(vms_vector *curpos, object *tracker)
 						continue;
 
 					//	Your missiles don't track your escort.
-					if (Robot_info[curobjp->id].companion)
+					if (activeBMTable->robots[curobjp->id].companion)
 						if (tracker->ctype.laser_info.parent_type == OBJ_PLAYER)
 							continue;
 				}
@@ -1071,7 +1071,7 @@ int find_homing_object_complete(vms_vector *curpos, object *tracker, int track_o
 	fix	min_trackable_dot;
 
 	//	Contact Mike: This is a bad and stupid thing.  Who called this routine with an illegal laser type??
-	Assert((Weapon_info[tracker->id].homing_flag) || (tracker->id == OMEGA_ID));
+	Assert((activeBMTable->weapons[tracker->id].homing_flag) || (tracker->id == OMEGA_ID));
 
 	max_trackable_dist = MAX_TRACKABLE_DIST;
 	min_trackable_dot = MIN_TRACKABLE_DOT;
@@ -1121,7 +1121,7 @@ int find_homing_object_complete(vms_vector *curpos, object *tracker, int track_o
 				continue;
 
 			//	Your missiles don't track your escort.
-			if (Robot_info[curobjp->id].companion)
+			if (activeBMTable->robots[curobjp->id].companion)
 				if (tracker->ctype.laser_info.parent_type == OBJ_PLAYER)
 					continue;
 		}
@@ -1252,7 +1252,7 @@ void Laser_player_fire_spread_delay(object *obj, int laser_type, int gun_num, fi
 
 	//	If supposed to fire at a delayed time (delay_time), then move this point backwards.
 	if (delay_time)
-		vm_vec_scale_add2(&LaserPos, &obj->orient.fvec, -fixmul(delay_time, Weapon_info[laser_type].speed[Difficulty_level]));
+		vm_vec_scale_add2(&LaserPos, &obj->orient.fvec, -fixmul(delay_time, activeBMTable->weapons[laser_type].speed[Difficulty_level]));
 
 //	do_muzzle_stuff(obj, &Pos);
 
@@ -1346,7 +1346,7 @@ void Laser_player_fire_spread_delay(object *obj, int laser_type, int gun_num, fi
 	if ((obj == ConsoleObject) && ((Objects[objnum].id != PROXIMITY_ID) && (Objects[objnum].id != SUPERPROX_ID)))
 		Player_fired_laser_this_frame = objnum;
 
-	if (Weapon_info[laser_type].homing_flag) 
+	if (activeBMTable->weapons[laser_type].homing_flag) 
 	{
 		if (obj == ConsoleObject)
 		{
@@ -1384,7 +1384,7 @@ void Flare_create(object *obj)
 {
 	fix	energy_usage;
 
-	energy_usage = Weapon_info[FLARE_ID].energy_usage;
+	energy_usage = activeBMTable->weapons[FLARE_ID].energy_usage;
 
 	if (Difficulty_level < 2)
 		energy_usage = fixmul(energy_usage, i2f(Difficulty_level+2)/4);
@@ -1453,7 +1453,7 @@ void Laser_do_weapon_sequence(object *obj)
 	if (obj->lifeleft < 0 ) // We died of old age
 	{
 		obj->flags |= OF_SHOULD_BE_DEAD;
-		if ( Weapon_info[obj->id].damage_radius )
+		if ( activeBMTable->weapons[obj->id].damage_radius )
 			explode_badass_weapon(obj,&obj->pos);
 		return;
 	}
@@ -1461,7 +1461,7 @@ void Laser_do_weapon_sequence(object *obj)
 	//delete weapons that are not moving
 	if (	!((FrameCount ^ obj->signature) & 3) &&
 			(obj->id != FLARE_ID) &&
-			(Weapon_info[obj->id].speed[Difficulty_level] > 0) &&
+			(activeBMTable->weapons[obj->id].speed[Difficulty_level] > 0) &&
 			(vm_vec_mag_quick(&obj->mtype.phys_info.velocity) < F2_0)) {
 		obj_delete(obj-Objects);
 		return;
@@ -1470,7 +1470,7 @@ void Laser_do_weapon_sequence(object *obj)
 	if ( obj->id == FUSION_ID ) //always set fusion weapon to max vel
 	{		
 		vm_vec_normalize_quick(&obj->mtype.phys_info.velocity);
-		vm_vec_scale(&obj->mtype.phys_info.velocity, Weapon_info[obj->id].speed[Difficulty_level]);
+		vm_vec_scale(&obj->mtype.phys_info.velocity, activeBMTable->weapons[obj->id].speed[Difficulty_level]);
 	}
 
  	//	The Super Spreadfire (Helix) blobs travel in a sinusoidal path.  That is accomplished
@@ -1484,7 +1484,7 @@ void Laser_do_weapon_sequence(object *obj)
  
 		speed = vm_vec_mag_quick(&obj->mtype.phys_info.velocity);
  
- 		age = Weapon_info[obj->id].lifetime - obj->lifeleft;
+ 		age = activeBMTable->weapons[obj->id].lifetime - obj->lifeleft;
  
 		fix_fastsincos(age, &sinval, &cosval);
  
@@ -1505,7 +1505,7 @@ void Laser_do_weapon_sequence(object *obj)
 
 
 	//	For homing missiles, turn towards target. (unless it's the guided missile)
-	if (Weapon_info[obj->id].homing_flag && !(obj->id==GUIDEDMISS_ID && obj==Guided_missile[Objects[obj->ctype.laser_info.parent_num].id] && obj->signature==Guided_missile[Objects[obj->ctype.laser_info.parent_num].id]->signature)) 
+	if (activeBMTable->weapons[obj->id].homing_flag && !(obj->id==GUIDEDMISS_ID && obj==Guided_missile[Objects[obj->ctype.laser_info.parent_num].id] && obj->signature==Guided_missile[Objects[obj->ctype.laser_info.parent_num].id]->signature)) 
 	{
 		vms_vector		vector_to_object, temp_vec;
 		fix				dot=F1_0;
@@ -1547,7 +1547,7 @@ void Laser_do_weapon_sequence(object *obj)
 				vm_vec_normalize_quick(&vector_to_object);
 				temp_vec = obj->mtype.phys_info.velocity;
 				speed = vm_vec_normalize_quick(&temp_vec);
-				max_speed = Weapon_info[obj->id].speed[Difficulty_level];
+				max_speed = activeBMTable->weapons[obj->id].speed[Difficulty_level];
 				if (speed+F1_0 < max_speed) 
 				{
 					speed += fixmul(max_speed, FrameTime/2);
@@ -1559,7 +1559,7 @@ void Laser_do_weapon_sequence(object *obj)
 //mprintf((0, " dot=%5.2f ", f2fl(dot)));
 				vm_vec_add2(&temp_vec, &vector_to_object);
 				//	The boss' smart children track better...
-				if (Weapon_info[obj->id].render_type != WEAPON_RENDER_POLYMODEL)
+				if (activeBMTable->weapons[obj->id].render_type != WEAPON_RENDER_POLYMODEL)
 					vm_vec_add2(&temp_vec, &vector_to_object);
 				vm_vec_normalize_quick(&temp_vec);
 				obj->mtype.phys_info.velocity = temp_vec;
@@ -1578,7 +1578,7 @@ void Laser_do_weapon_sequence(object *obj)
 				}
 
 				//	Only polygon objects have visible orientation, so only they should turn.
-				if (Weapon_info[obj->id].render_type == WEAPON_RENDER_POLYMODEL)
+				if (activeBMTable->weapons[obj->id].render_type == WEAPON_RENDER_POLYMODEL)
 					homing_missile_turn_towards_velocity(obj, &temp_vec);		//	temp_vec is normalized velocity.
 			}
 		}
@@ -1591,25 +1591,25 @@ void Laser_do_weapon_sequence(object *obj)
 	if (CurrentLogicVersion >= LogicVer::FULL_1_0)
 	{
 		weapon_speed = vm_vec_mag_quick(&obj->mtype.phys_info.velocity);
-		if (weapon_speed > Weapon_info[obj->id].speed[Difficulty_level])
+		if (weapon_speed > activeBMTable->weapons[obj->id].speed[Difficulty_level])
 		{
 			//	Only slow down if not allowed to move.  Makes sense, huh?  Allows proxbombs to get moved by physics force. --MK, 2/13/96
-			if (Weapon_info[obj->id].speed[Difficulty_level]) 
+			if (activeBMTable->weapons[obj->id].speed[Difficulty_level]) 
 			{
 				fix	scale_factor;
 
-				scale_factor = fixdiv(Weapon_info[obj->id].speed[Difficulty_level], weapon_speed);
+				scale_factor = fixdiv(activeBMTable->weapons[obj->id].speed[Difficulty_level], weapon_speed);
 				vm_vec_scale(&obj->mtype.phys_info.velocity, scale_factor);
 			}
 		}
 	}
-	else if (Weapon_info[obj->id].thrust)
+	else if (activeBMTable->weapons[obj->id].thrust)
 	{
 		weapon_speed = vm_vec_mag_quick(&obj->mtype.phys_info.velocity);
-		if (weapon_speed > Weapon_info[obj->id].speed[Difficulty_level]) {
+		if (weapon_speed > activeBMTable->weapons[obj->id].speed[Difficulty_level]) {
 			fix	scale_factor;
 
-			scale_factor = fixdiv(Weapon_info[obj->id].speed[Difficulty_level], weapon_speed);
+			scale_factor = fixdiv(activeBMTable->weapons[obj->id].speed[Difficulty_level], weapon_speed);
 			vm_vec_scale(&obj->mtype.phys_info.velocity, scale_factor);
 		}
 	}
@@ -1640,7 +1640,7 @@ int do_laser_firing_player(void)
 		return 0;
 
 	weapon_index = Primary_weapon_to_weapon_info[Primary_weapon];
-	energy_used = Weapon_info[weapon_index].energy_usage;
+	energy_used = activeBMTable->weapons[weapon_index].energy_usage;
 	if (Primary_weapon == OMEGA_INDEX)
 		energy_used = 0;	//	Omega consumes energy when recharging, not when firing.
 
@@ -1652,7 +1652,7 @@ int do_laser_firing_player(void)
 		if (Game_mode & GM_MULTI)
 			energy_used *= 2;
 
-	ammo_used = Weapon_info[weapon_index].ammo_usage;
+	ammo_used = activeBMTable->weapons[weapon_index].ammo_usage;
 
 	addval = 2*FrameTime;
 	if (addval > F1_0)
@@ -1682,7 +1682,7 @@ if (Zbonkers)
 
 //mprintf(0, ".");
 			if (Laser_rapid_fire!=0xBADA55)
-				Next_laser_fire_time += Weapon_info[weapon_index].fire_wait;
+				Next_laser_fire_time += activeBMTable->weapons[weapon_index].fire_wait;
 			else
 				Next_laser_fire_time += F1_0/25;
 
@@ -1708,7 +1708,7 @@ if (Zbonkers)
 
 			rval += do_laser_firing(Players[Player_num].objnum, Primary_weapon, laser_level, flags, nfires);
 
-			plp->energy -= (energy_used * rval) / Weapon_info[weapon_index].fire_count;
+			plp->energy -= (energy_used * rval) / activeBMTable->weapons[weapon_index].fire_count;
 			if (plp->energy < 0)
 				plp->energy = 0;
 
@@ -1834,7 +1834,7 @@ int create_lightning_blobs(vms_vector* direction, vms_vector* start_pos, int sta
 
 		obj = &Objects[objnum];
 
-		digi_play_sample(Weapon_info[obj->id].flash_sound, F1_0);
+		digi_play_sample(activeBMTable->weapons[obj->id].flash_sound, F1_0);
 
 		vm_vec_scale(&obj->mtype.phys_info.velocity, F1_0 / 2);
 
@@ -2133,17 +2133,17 @@ void create_smart_children(object *objp, int num_smart_children)
 		Int3();	//	Hey, what kind of object is this!?
 
 	if (CurrentLogicVersion >= LogicVer::FULL_1_0 && objp->id == EARTHSHAKER_ID)
-		blast_nearby_glass(objp, Weapon_info[EARTHSHAKER_ID].strength[Difficulty_level]);
+		blast_nearby_glass(objp, activeBMTable->weapons[EARTHSHAKER_ID].strength[Difficulty_level]);
 
 // -- DEBUG --
 	if (CurrentDataVersion != DataVer::DEMO && ((objp->type == OBJ_WEAPON) && ((objp->id == SMART_ID) || (objp->id == SUPERPROX_ID) || (objp->id == ROBOT_SUPERPROX_ID) || (objp->id == EARTHSHAKER_ID))))
 	{
-		Assert(Weapon_info[objp->id].children != -1);
+		Assert(activeBMTable->weapons[objp->id].children != -1);
 	}
 // -- DEBUG --
 
 	if (((objp->type == OBJ_WEAPON) 
-		&& ((CurrentLogicVersion >= LogicVer::FULL_1_0 && Weapon_info[objp->id].children != -1) 
+		&& ((CurrentLogicVersion >= LogicVer::FULL_1_0 && activeBMTable->weapons[objp->id].children != -1) 
 			|| (CurrentLogicVersion == LogicVer::SHAREWARE && (objp->id == SMART_ID || objp->id == SUPERPROX_ID)))) //ew
 		|| (objp->type == OBJ_ROBOT)) 
 	{
@@ -2181,7 +2181,7 @@ void create_smart_children(object *objp, int num_smart_children)
 
 					//	Your shots won't track the buddy.
 					if (parent_type == OBJ_PLAYER && CurrentLogicVersion >= LogicVer::FULL_1_0)
-						if (Robot_info[curobjp->id].companion)
+						if (activeBMTable->robots[curobjp->id].companion)
 							continue;
 				}
 
@@ -2212,7 +2212,7 @@ void create_smart_children(object *objp, int num_smart_children)
 		{
 			if (objp->type == OBJ_WEAPON)
 			{
-				blob_id = Weapon_info[objp->id].children;
+				blob_id = activeBMTable->weapons[objp->id].children;
 				Assert(blob_id != -1);		//	Hmm, missing data in bitmaps.tbl.  Need "children=NN" parameter.
 			}
 			else
@@ -2318,7 +2318,7 @@ void do_missile_firing(int do_autoselect)
 	if (Guided_missile[Player_num] && Guided_missile[Player_num]->signature==Guided_missile_sig[Player_num]) 
 	{
 		release_guided_missile(Player_num);
-		Next_missile_fire_time = GameTime + Weapon_info[Secondary_weapon_to_weapon_info[Secondary_weapon]].fire_wait;
+		Next_missile_fire_time = GameTime + activeBMTable->weapons[Secondary_weapon_to_weapon_info[Secondary_weapon]].fire_wait;
 		return;
 	}
 
@@ -2330,7 +2330,7 @@ void do_missile_firing(int do_autoselect)
 		weapon_id = Secondary_weapon_to_weapon_info[Secondary_weapon];
 
 		if (Laser_rapid_fire!=0xBADA55)
-			Next_missile_fire_time = GameTime + Weapon_info[weapon_id].fire_wait;
+			Next_missile_fire_time = GameTime + activeBMTable->weapons[weapon_id].fire_wait;
 		else
 			Next_missile_fire_time = GameTime + F1_0/25;
 

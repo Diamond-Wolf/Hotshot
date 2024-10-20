@@ -76,20 +76,21 @@ void paging_touch_wall_effects( int tmap_num )
 {
 	int i;
 
-	for (i=0;i<Num_effects;i++)	{
-		if ( Effects[i].changing_wall_texture == tmap_num )	{
-			paging_touch_vclip( &Effects[i].vc );
+	for (i=0;i<activeBMTable->eclips.size();i++)	{
+		if ( activeBMTable->eclips[i].changing_wall_texture == tmap_num )	{
+			paging_touch_vclip( &activeBMTable->eclips[i].vc );
 
-			if (Effects[i].dest_bm_num > -1)
-				PIGGY_PAGE_IN( Textures[Effects[i].dest_bm_num] );	//use this bitmap when monitor destroyed
-			if ( Effects[i].dest_vclip > -1 )
-				paging_touch_vclip( &Vclip[Effects[i].dest_vclip] );		  //what vclip to play when exploding
+			if (activeBMTable->eclips[i].dest_bm_num > -1)
+				PIGGY_PAGE_IN( activeBMTable->textures
+[activeBMTable->eclips[i].dest_bm_num] );	//use this bitmap when monitor destroyed
+			if ( activeBMTable->eclips[i].dest_vclip > -1 )
+				paging_touch_vclip( &activeBMTable->vclips[activeBMTable->eclips[i].dest_vclip] );		  //what vclip to play when exploding
 
-			if ( Effects[i].dest_eclip > -1 )
-				paging_touch_vclip( &Effects[Effects[i].dest_eclip].vc ); //what eclip to play when exploding
+			if ( activeBMTable->eclips[i].dest_eclip > -1 )
+				paging_touch_vclip( &activeBMTable->eclips[activeBMTable->eclips[i].dest_eclip].vc ); //what eclip to play when exploding
 
-			if ( Effects[i].crit_clip > -1 )
-				paging_touch_vclip( &Effects[Effects[i].crit_clip].vc ); //what eclip to play when mine critical
+			if ( activeBMTable->eclips[i].crit_clip > -1 )
+				paging_touch_vclip( &activeBMTable->eclips[activeBMTable->eclips[i].crit_clip].vc ); //what eclip to play when mine critical
 		}
 
 	}
@@ -99,9 +100,9 @@ void paging_touch_object_effects( int tmap_num )
 {
 	int i;
 
-	for (i=0;i<Num_effects;i++)	{
-		if ( Effects[i].changing_object_texture == tmap_num )	{
-			paging_touch_vclip( &Effects[i].vc );
+	for (i=0;i<activeBMTable->eclips.size();i++)	{
+		if ( activeBMTable->eclips[i].changing_object_texture == tmap_num )	{
+			paging_touch_vclip( &activeBMTable->eclips[i].vc );
 		}
 	}
 }
@@ -110,11 +111,11 @@ void paging_touch_object_effects( int tmap_num )
 void paging_touch_model( int modelnum )
 {
 	int i;
-	polymodel *pm = &Polygon_models[modelnum];
+	polymodel *pm = &activeBMTable->models[modelnum];
 
 	for (i=0;i<pm->n_textures;i++)	{
-		PIGGY_PAGE_IN( ObjBitmaps[ObjBitmapPtrs[pm->first_texture+i]] );
-		paging_touch_object_effects( ObjBitmapPtrs[pm->first_texture+i] );
+		PIGGY_PAGE_IN( activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[pm->first_texture+i]] );
+		paging_touch_object_effects( activeBMTable->objectBitmapPointers[pm->first_texture+i] );
 		#ifdef PSX_BUILD_TOOLS
 		// cmp added
 		paging_touch_object_effects( pm->first_texture+i );
@@ -126,34 +127,34 @@ void paging_touch_weapon( int weapon_type )
 {
 	// Page in the robot's weapons.
 	
-	if ( (weapon_type < 0) || (weapon_type > N_weapon_types) ) return;
+	if ( (weapon_type < 0) || (weapon_type > activeBMTable->weapons.size()) ) return;
 
-	if ( Weapon_info[weapon_type].picture.index )	{
-		PIGGY_PAGE_IN( Weapon_info[weapon_type].picture );
+	if ( activeBMTable->weapons[weapon_type].picture.index )	{
+		PIGGY_PAGE_IN( activeBMTable->weapons[weapon_type].picture );
 	}		
 	
-	if ( Weapon_info[weapon_type].flash_vclip > -1 )
-		paging_touch_vclip(&Vclip[Weapon_info[weapon_type].flash_vclip]);
-	if ( Weapon_info[weapon_type].wall_hit_vclip > -1 )
-		paging_touch_vclip(&Vclip[Weapon_info[weapon_type].wall_hit_vclip]);
-	if ( Weapon_info[weapon_type].damage_radius )	{
+	if ( activeBMTable->weapons[weapon_type].flash_vclip > -1 )
+		paging_touch_vclip(&activeBMTable->vclips[activeBMTable->weapons[weapon_type].flash_vclip]);
+	if ( activeBMTable->weapons[weapon_type].wall_hit_vclip > -1 )
+		paging_touch_vclip(&activeBMTable->vclips[activeBMTable->weapons[weapon_type].wall_hit_vclip]);
+	if ( activeBMTable->weapons[weapon_type].damage_radius )	{
 		// Robot_hit_vclips are actually badass_vclips
-		if ( Weapon_info[weapon_type].robot_hit_vclip > -1 )
-			paging_touch_vclip(&Vclip[Weapon_info[weapon_type].robot_hit_vclip]);
+		if ( activeBMTable->weapons[weapon_type].robot_hit_vclip > -1 )
+			paging_touch_vclip(&activeBMTable->vclips[activeBMTable->weapons[weapon_type].robot_hit_vclip]);
 	}
 
-	switch( Weapon_info[weapon_type].render_type )	{
+	switch( activeBMTable->weapons[weapon_type].render_type )	{
 	case WEAPON_RENDER_VCLIP:
-		if ( Weapon_info[weapon_type].weapon_vclip > -1 )
-			paging_touch_vclip( &Vclip[Weapon_info[weapon_type].weapon_vclip] );
+		if ( activeBMTable->weapons[weapon_type].weapon_vclip > -1 )
+			paging_touch_vclip( &activeBMTable->vclips[activeBMTable->weapons[weapon_type].weapon_vclip] );
 		break;
 	case WEAPON_RENDER_NONE:
 		break;
 	case WEAPON_RENDER_POLYMODEL:
-		paging_touch_model( Weapon_info[weapon_type].model_num );
+		paging_touch_model( activeBMTable->weapons[weapon_type].model_num );
 		break;
 	case WEAPON_RENDER_BLOB:
-		PIGGY_PAGE_IN( Weapon_info[weapon_type].bitmap );
+		PIGGY_PAGE_IN( activeBMTable->weapons[weapon_type].bitmap );
 		break;
 	}
 }
@@ -169,21 +170,21 @@ void paging_touch_robot( int robot_index )
 	//mprintf((0, "Robot %d loading...", robot_index));
 
 	// Page in robot_index
-	paging_touch_model(Robot_info[robot_index].model_num);
-	if ( Robot_info[robot_index].exp1_vclip_num>-1 )
-		paging_touch_vclip(&Vclip[Robot_info[robot_index].exp1_vclip_num]);
-	if ( Robot_info[robot_index].exp2_vclip_num>-1 )
-		paging_touch_vclip(&Vclip[Robot_info[robot_index].exp2_vclip_num]);
+	paging_touch_model(activeBMTable->robots[robot_index].model_num);
+	if ( activeBMTable->robots[robot_index].exp1_vclip_num>-1 )
+		paging_touch_vclip(&activeBMTable->vclips[activeBMTable->robots[robot_index].exp1_vclip_num]);
+	if ( activeBMTable->robots[robot_index].exp2_vclip_num>-1 )
+		paging_touch_vclip(&activeBMTable->vclips[activeBMTable->robots[robot_index].exp2_vclip_num]);
 
 	// Page in his weapons
-	paging_touch_weapon( Robot_info[robot_index].weapon_type );
+	paging_touch_weapon( activeBMTable->robots[robot_index].weapon_type );
 
 	// A super-boss can gate in robots...
-	if ( Robot_info[robot_index].boss_flag==2 )	{
+	if ( activeBMTable->robots[robot_index].boss_flag==2 )	{
 		for (i=0; i<13; i++ )
 			paging_touch_robot(super_boss_gate_type_list[i]);
 
-		paging_touch_vclip( &Vclip[VCLIP_MORPHING_ROBOT] );
+		paging_touch_vclip( &activeBMTable->vclips[VCLIP_MORPHING_ROBOT] );
 	}
 }
 
@@ -198,7 +199,8 @@ void paging_touch_object( object * obj )
 
 		case RT_POLYOBJ:
 			if ( obj->rtype.pobj_info.tmap_override != -1 )
-				PIGGY_PAGE_IN( Textures[obj->rtype.pobj_info.tmap_override] );
+				PIGGY_PAGE_IN(activeBMTable->textures
+					[obj->rtype.pobj_info.tmap_override]);
 			else
 				paging_touch_model(obj->rtype.pobj_info.model_num);
 			break;
@@ -208,7 +210,7 @@ void paging_touch_object( object * obj )
 		//@@	#ifdef WINDOWS
 		//@@		paging_touch_vclip_w(&Vclip[obj->rtype.vclip_info.vclip_num]);
 		//@@	#else
-				paging_touch_vclip(&Vclip[obj->rtype.vclip_info.vclip_num]);
+				paging_touch_vclip(&activeBMTable->vclips[obj->rtype.vclip_info.vclip_num]);
 		//@@	#endif
 			}
 			break;
@@ -220,7 +222,7 @@ void paging_touch_object( object * obj )
 		case RT_WEAPON_VCLIP: break;
 
 		case RT_HOSTAGE: 
-			paging_touch_vclip(&Vclip[obj->rtype.vclip_info.vclip_num]);
+			paging_touch_vclip(&activeBMTable->vclips[obj->rtype.vclip_info.vclip_num]);
 			break;
 
 		case RT_LASER: break;
@@ -230,15 +232,15 @@ void paging_touch_object( object * obj )
 	case OBJ_PLAYER:	
 		v = get_explosion_vclip(obj, 0);
 		if ( v > -1 )
-			paging_touch_vclip(&Vclip[v]);
+			paging_touch_vclip(&activeBMTable->vclips[v]);
 		break;
 	case OBJ_ROBOT:
 		paging_touch_robot( obj->id );
 		break;
 	case OBJ_CNTRLCEN:
 		paging_touch_weapon( CONTROLCEN_WEAPON_NUM );
-		if (Dead_modelnums[obj->rtype.pobj_info.model_num] != -1)	{
-			paging_touch_model( Dead_modelnums[obj->rtype.pobj_info.model_num] );
+		if (activeBMTable->deadModels[obj->rtype.pobj_info.model_num] != -1)	{
+			paging_touch_model(activeBMTable->deadModels[obj->rtype.pobj_info.model_num]);
 		}
 		break;
 	}
@@ -260,13 +262,14 @@ void paging_touch_side( segment * segp, int sidenum )
 		texmerge_get_cached_bitmap( tmap1, tmap2 );
 		paging_touch_wall_effects( tmap2 & 0x3FFF );
 	} else	{
-		PIGGY_PAGE_IN( Textures[tmap1] );
+		PIGGY_PAGE_IN( activeBMTable->textures
+[tmap1] );
 	}
 
 	// PSX STUFF
 	#ifdef PSX_BUILD_TOOLS
 		// If there is water on the level, then force the water splash into memory
-		if(!(TmapInfo[tmap1].flags & TMI_VOLATILE) && (TmapInfo[tmap1].flags & TMI_WATER)) {
+		if(!(activeBMTable->tmaps[tmap1].flags & TMI_VOLATILE) && (activeBMTable->tmaps[tmap1].flags & TMI_WATER)) {
 			bitmap_index Splash;
 			Splash.index = 1098;
 			PIGGY_PAGE_IN(Splash);
@@ -288,7 +291,7 @@ void paging_touch_robot_maker( segment * segp )
 	segment2	*seg2p = &Segment2s[segp-Segments];
 
 	if ( seg2p->special == SEGMENT_IS_ROBOTMAKER )	{
-		paging_touch_vclip(&Vclip[VCLIP_MORPHING_ROBOT]);
+		paging_touch_vclip(&activeBMTable->vclips[VCLIP_MORPHING_ROBOT]);
 		if (RobotCenters[seg2p->matcen_num].robot_flags != 0) {
 			int	i;
 			uint32_t flags;
@@ -346,10 +349,11 @@ void paging_touch_walls()
 //		paging_draw_orb();
 		if ( Walls[i].clip_num > -1 )	
 		{
-			anim = &WallAnims[Walls[i].clip_num];
+			anim = &activeBMTable->wclips[Walls[i].clip_num];
 			for (j=0; j < anim->num_frames; j++ )	
 			{
-				PIGGY_PAGE_IN( Textures[anim->frames[j]] );
+				PIGGY_PAGE_IN( activeBMTable->textures
+[anim->frames[j]] );
 			}
 		}
 	}
@@ -377,28 +381,28 @@ void paging_touch_all()
 	}	
 	paging_touch_walls();
 
-	for ( s=0; s < N_powerup_types; s++ )	{
-		if ( Powerup_info[s].vclip_num > -1 )	
-			paging_touch_vclip(&Vclip[Powerup_info[s].vclip_num]);
+	for ( s=0; s < activeBMTable->powerups.size(); s++ )	{
+		if ( activeBMTable->powerups[s].vclip_num > -1 )	
+			paging_touch_vclip(&activeBMTable->vclips[activeBMTable->powerups[s].vclip_num]);
 	}
 
-	for ( s=0; s<N_weapon_types; s++ )	{
+	for ( s=0; s<activeBMTable->weapons.size(); s++ )	{
 		paging_touch_weapon(s);
 	}
 
-	for ( s=0; s < N_powerup_types; s++ )	{
-		if ( Powerup_info[s].vclip_num > -1 )	
-			paging_touch_vclip(&Vclip[Powerup_info[s].vclip_num]);
+	for ( s=0; s < activeBMTable->powerups.size(); s++ )	{
+		if ( activeBMTable->powerups[s].vclip_num > -1 )	
+			paging_touch_vclip(&activeBMTable->vclips[activeBMTable->powerups[s].vclip_num]);
 	}
 
 
 	for (s=0; s<MAX_GAUGE_BMS; s++ )	{
-		if ( Gauges[s].index )	{
-			PIGGY_PAGE_IN( Gauges[s] );
+		if ( activeBMTable->gauges[s].index )	{
+			PIGGY_PAGE_IN( activeBMTable->gauges[s] );
 		}
 	}
-	paging_touch_vclip( &Vclip[VCLIP_PLAYER_APPEARANCE] );
-	paging_touch_vclip( &Vclip[VCLIP_POWERUP_DISAPPEARANCE] );
+	paging_touch_vclip( &activeBMTable->vclips[VCLIP_PLAYER_APPEARANCE] );
+	paging_touch_vclip( &activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE] );
 
 
 #ifdef PSX_BUILD_TOOLS
@@ -413,7 +417,7 @@ void paging_touch_all()
 	{
 		char * p;
 		extern int Current_level_num;
-		extern ushort GameBitmapXlat[MAX_BITMAP_FILES];
+		//extern ushort GameBitmapXlat[MAX_BITMAP_FILES];
 		short Used[MAX_BITMAP_FILES];
 		FILE * fp;
 		char fname[128];
@@ -432,18 +436,24 @@ void paging_touch_all()
 			Used[i] = 0;
 		}
 		for (i=0; i<MAX_BITMAP_FILES;i++ )      {
-			Used[GameBitmapXlat[i]]++;
+			Used[activePiggyTable->gameBitmapXlat[i]]++;
 		}
 
 		//cmp added so that .damage bitmaps are included for paged-in lights of the current level
 		for (i=0; i<MAX_TEXTURES;i++) {
-			if(Textures[i].index > 0 && Textures[i].index < MAX_BITMAP_FILES && 
-				Used[Textures[i].index] > 0 &&
-				TmapInfo[i].destroyed > 0 && TmapInfo[i].destroyed < MAX_BITMAP_FILES) {
-				Used[Textures[TmapInfo[i].destroyed].index] += 1;
-				mprintf((0, "HERE %d ", Textures[TmapInfo[i].destroyed].index));
+			if(activeBMTable->textures
+[i].index > 0 && activeBMTable->textures
+[i].index < MAX_BITMAP_FILES && 
+				Used[activeBMTable->textures
+[i].index] > 0 &&
+				activeBMTable->tmaps[i].destroyed > 0 && activeBMTable->tmaps[i].destroyed < MAX_BITMAP_FILES) {
+				Used[activeBMTable->textures
+[activeBMTable->tmaps[i].destroyed].index] += 1;
+				mprintf((0, "HERE %d ", activeBMTable->textures
+[activeBMTable->tmaps[i].destroyed].index));
 
-				PIGGY_PAGE_IN(Textures[TmapInfo[i].destroyed]);
+				PIGGY_PAGE_IN(activeBMTable->textures
+[activeBMTable->tmaps[i].destroyed]);
 
 			}
 		}

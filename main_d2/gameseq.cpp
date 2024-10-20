@@ -241,7 +241,7 @@ void gameseq_init_network_players()
 			j++;
 		}
 
-		if ((Objects[i].type == OBJ_ROBOT) && (Robot_info[Objects[i].id].companion) && (Game_mode & GM_MULTI))
+		if ((Objects[i].type == OBJ_ROBOT) && (activeBMTable->robots[Objects[i].id].companion) && (Game_mode & GM_MULTI))
 			obj_delete(i);		//kill the buddy in netgames
 
 	}
@@ -605,8 +605,8 @@ void set_sound_sources()
 			int tm, ec, sn;
 
 			if (WALL_IS_DOORWAY(seg, sidenum) & WID_RENDER_FLAG)
-				if ((((tm = seg->sides[sidenum].tmap_num2) != 0) && ((ec = TmapInfo[tm & 0x3fff].eclip_num) != -1)) || ((ec = TmapInfo[seg->sides[sidenum].tmap_num].eclip_num) != -1))
-					if ((sn = Effects[ec].sound_num) != -1)
+				if ((((tm = seg->sides[sidenum].tmap_num2) != 0) && ((ec = activeBMTable->tmaps[tm & 0x3fff].eclip_num) != -1)) || ((ec = activeBMTable->tmaps[seg->sides[sidenum].tmap_num].eclip_num) != -1))
+					if ((sn = activeBMTable->eclips[ec].sound_num) != -1)
 					{
 						vms_vector pnt;
 						int csegnum = seg->children[sidenum];
@@ -669,8 +669,8 @@ void create_player_appearance_effect(object* player_obj)
 	{
 		effect_obj->orient = player_obj->orient;
 
-		if (Vclip[VCLIP_PLAYER_APPEARANCE].sound_num > -1)
-			digi_link_sound_to_object(Vclip[VCLIP_PLAYER_APPEARANCE].sound_num, effect_obj - Objects, 0, F1_0);
+		if (activeBMTable->vclips[VCLIP_PLAYER_APPEARANCE].sound_num > -1)
+			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_PLAYER_APPEARANCE].sound_num, effect_obj - Objects, 0, F1_0);
 	}
 }
 
@@ -901,7 +901,7 @@ void load_bitmap_replacements(char* level_name)
 			if (bmh.flags & BM_FLAG_RLE) temp_bitmap.bm_flags |= BM_FLAG_RLE;
 			if (bmh.flags & BM_FLAG_RLE_BIG) temp_bitmap.bm_flags |= BM_FLAG_RLE_BIG;
 
-			GameBitmaps[indices[i]] = temp_bitmap;
+			activePiggyTable->gameBitmaps[indices[i]] = temp_bitmap;
 		}
 
 		cfread(Bitmap_replacement_data, 1, bitmap_data_size, ifile);
@@ -943,7 +943,7 @@ void LoadLevel(int level_num, int page_in_textures)
 
 #if defined(POLY_ACC)
 	gr_palette_load(gr_palette);
-	show_boxed_message(TXT_LOADING);
+	show_boxed_message(TXT_LOADING
 #else
 	show_boxed_message(TXT_LOADING);
 	gr_palette_load(gr_palette);
@@ -2118,8 +2118,8 @@ void bash_to_shield(int i, const char* s)
 	mprintf((0, "Bashing %s object #%i to shield.\n", s, i));
 
 	Objects[i].id = POW_SHIELD_BOOST;
-	Objects[i].rtype.vclip_info.vclip_num = Powerup_info[Objects[i].id].vclip_num;
-	Objects[i].rtype.vclip_info.frametime = Vclip[Objects[i].rtype.vclip_info.vclip_num].frame_time;
+	Objects[i].rtype.vclip_info.vclip_num = activeBMTable->powerups[Objects[i].id].vclip_num;
+	Objects[i].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[i].rtype.vclip_info.vclip_num].frame_time;
 }
 #endif
 
@@ -2329,7 +2329,7 @@ done:
 }
 
 //	-----------------------------------------------------------------------------------------------------
-//	Initialize default parameters for one robot, copying from Robot_info to *objp.
+//	Initialize default parameters for one robot, copying from activeBMTable->robots to *objp.
 //	What about setting size!?  Where does that come from?
 void copy_defaults_to_robot(object* objp)
 {
@@ -2338,9 +2338,9 @@ void copy_defaults_to_robot(object* objp)
 
 	Assert(objp->type == OBJ_ROBOT);
 	objid = objp->id;
-	Assert(objid < N_robot_types);
+	Assert(objid < activeBMTable->robots.size());
 
-	robptr = &Robot_info[objid];
+	robptr = &activeBMTable->robots[objid];
 
 	//	Boost shield for Thief and Buddy based on level.
 	objp->shields = robptr->strength;

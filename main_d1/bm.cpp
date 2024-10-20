@@ -43,6 +43,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/fuelcen.h"
 #include "main_shared/endlevel.h"
 #include "main_shared/cntrlcen.h"
+#include "misc/hash.h"
 
 #ifdef EDITOR
 #define FIX_STARTS

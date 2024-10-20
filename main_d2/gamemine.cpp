@@ -402,9 +402,9 @@ int load_mine_data(CFILE *LoadFile)
 		// Remove all the file extensions in the textures list
 	
 		for (i=0;i<NumTextures;i++)	{
-			temptr = strchr(TmapInfo[i].filename, '.');
+			temptr = strchr(activeBMTable->tmaps[i].filename, '.');
 			if (temptr) *temptr = '\0';
-			hashtable_insert( &ht, TmapInfo[i].filename, i );
+			hashtable_insert( &ht, activeBMTable->tmaps[i].filename, i );
 		}
 	
 		// For every texture, search through the texture list
@@ -765,24 +765,64 @@ int load_mine_data_compiled(CFILE *LoadFile)
 
 		cfread(&bit_mask, sizeof(uint8_t), 1, LoadFile);
 
-		if (CurrentDataVersion == DataVer::DEMO)
-		{
-			read_special(segnum,bit_mask,LoadFile);
-			read_verts(segnum, LoadFile);
-			read_children(segnum, bit_mask, LoadFile);
+		if (currentGame == G_DESCENT_1) {
+			int bit;
+
+			for (bit = 0; bit < MAX_SIDES_PER_SEGMENT; bit++) 
+			{
+				if (bit_mask & (1 << bit))
+					Segments[segnum].children[bit] = cfile_read_short(LoadFile);
+				else
+					Segments[segnum].children[bit] = -1;
+			}
+
+			// Read short Segments[segnum].verts[MAX_VERTICES_PER_SEGMENT]
+			cfread(Segments[segnum].verts, sizeof(short), MAX_VERTICES_PER_SEGMENT, LoadFile);
+			Segments[segnum].objects = -1;
+
+			if (bit_mask & (1 << MAX_SIDES_PER_SEGMENT)) 
+			{
+				// Read uint8_t	Segments[segnum].special
+				Segments[segnum].special = cfile_read_byte(LoadFile);
+				// Read int8_t	Segments[segnum].matcen_num
+				Segments[segnum].matcen_num = cfile_read_byte(LoadFile);
+				// Read short	Segments[segnum].value
+				Segments[segnum].value = cfile_read_short(LoadFile);
+			}
+			else 
+			{
+				Segments[segnum].special = 0;
+				Segments[segnum].matcen_num = -1;
+				Segments[segnum].value = 0;
+			}
 
 			// Read fix	Segments[segnum].static_light (shift down 5 bits, write as short)
 			temp_ushort = cfile_read_short(LoadFile);
-			Segment2s[segnum].static_light = ((fix)temp_ushort) << 4;
-		}
-		else
-		{
-			read_children(segnum, bit_mask, LoadFile);
-			read_verts(segnum, LoadFile);
-			// --read_special(segnum,bit_mask,LoadFile);
-		}
+			Segments[segnum].static_light = ((fix)temp_ushort) << 4;
+			//cfread( &Segments[segnum].static_light, sizeof(fix), 1, LoadFile );
 
-		Segments[segnum].objects = -1;
+		} else {
+
+			if (CurrentDataVersion == DataVer::DEMO)
+			{
+				read_special(segnum,bit_mask,LoadFile);
+				read_verts(segnum, LoadFile);
+				read_children(segnum, bit_mask, LoadFile);
+
+				// Read fix	Segments[segnum].static_light (shift down 5 bits, write as short)
+				temp_ushort = cfile_read_short(LoadFile);
+				Segment2s[segnum].static_light = ((fix)temp_ushort) << 4;
+			}
+			else
+			{
+				read_children(segnum, bit_mask, LoadFile);
+				read_verts(segnum, LoadFile);
+				// --read_special(segnum,bit_mask,LoadFile);
+			}
+
+			Segments[segnum].objects = -1;
+
+		}
 	
 		// Read the walls as a 6 int8_t array
 		for (sidenum=0; sidenum<MAX_SIDES_PER_SEGMENT; sidenum++ )	
@@ -882,26 +922,32 @@ int load_mine_data_compiled(CFILE *LoadFile)
 
 	validate_segment_all();			// Fill in side type and normals.
 
-// MIKE!!!!! You should know better than this when the mac is involved!!!!!!
+	if (currentGame == G_DESCENT_1) {
+		for (i = 0; i < Num_segments; i++)
+			fuelcen_activate(&Segments[i], Segments[i].special);
 
-	if (CurrentDataVersion != DataVer::DEMO)
-	{
-		for (i = 0; i < Num_segments; i++)
+	} else {
+		// MIKE!!!!! You should know better than this when the mac is involved!!!!!!
+		if (CurrentDataVersion != DataVer::DEMO)
 		{
-			Segment2s[i].special = cfile_read_byte(LoadFile);
-			Segment2s[i].matcen_num = cfile_read_byte(LoadFile);
-			Segment2s[i].value = cfile_read_byte(LoadFile);
-			Segment2s[i].s2_flags = cfile_read_byte(LoadFile);
-			Segment2s[i].static_light = read_fix(LoadFile);
-			fuelcen_activate(&Segments[i], Segment2s[i].special);
+			for (i = 0; i < Num_segments; i++)
+			{
+				Segment2s[i].special = cfile_read_byte(LoadFile);
+				Segment2s[i].matcen_num = cfile_read_byte(LoadFile);
+				Segment2s[i].value = cfile_read_byte(LoadFile);
+				Segment2s[i].s2_flags = cfile_read_byte(LoadFile);
+				Segment2s[i].static_light = read_fix(LoadFile);
+				fuelcen_activate(&Segments[i], Segment2s[i].special);
+			}
 		}
-	}
-	else
-	{
-		for (i = 0; i < Num_segments; i++)
+		else
 		{
-			fuelcen_activate(&Segments[i], Segment2s[i].special);
+			for (i = 0; i < Num_segments; i++)
+			{
+				fuelcen_activate(&Segments[i], Segment2s[i].special);
+			}
 		}
+
 	}
 
 	reset_objects(1);		//one object, the player

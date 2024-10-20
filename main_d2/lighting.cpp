@@ -34,6 +34,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/fvi.h"
 #include "main_shared/robot.h"
 #include "main_shared/multi.h"
+#include "main_shared/bm.h"
 
 int	Do_dynamic_light = 1;
 //int	Use_fvi_lighting = 0;
@@ -363,9 +364,9 @@ fix compute_light_intensity(int objnum)
 				if (obj->id != 0xff)
 				{
 					if (obj->lifeleft < F1_0 * 4)
-						return fixmul(fixdiv(obj->lifeleft, Vclip[obj->id].play_time), Vclip[obj->id].light_value);
+						return fixmul(fixdiv(obj->lifeleft, activeBMTable->vclips[obj->id].play_time), activeBMTable->vclips[obj->id].light_value);
 					else
-						return Vclip[obj->id].light_value;
+						return activeBMTable->vclips[obj->id].light_value;
 				}
 			}
 		}
@@ -374,19 +375,19 @@ fix compute_light_intensity(int objnum)
 		if (obj->id != 0xff)
 		{
 			if (obj->lifeleft < F1_0 * 4)
-				return fixmul(fixdiv(obj->lifeleft, Vclip[obj->id].play_time), Vclip[obj->id].light_value);
+				return fixmul(fixdiv(obj->lifeleft, activeBMTable->vclips[obj->id].play_time), activeBMTable->vclips[obj->id].light_value);
 			else
-				return Vclip[obj->id].light_value;
+				return activeBMTable->vclips[obj->id].light_value;
 		}
 		else
 			return 0;
 		break;
 	case OBJ_ROBOT:
-		return F1_0 * Robot_info[obj->id].lightcast;
+		return F1_0 * activeBMTable->robots[obj->id].lightcast;
 		break;
 	case OBJ_WEAPON:
 	{
-		fix tval = Weapon_info[obj->id].light;
+		fix tval = activeBMTable->weapons[obj->id].light;
 		if (Game_mode & GM_MULTI)
 			if (obj->id == OMEGA_ID)
 				if (P_Rand() > 8192)
@@ -413,7 +414,7 @@ fix compute_light_intensity(int objnum)
 	}
 
 	case OBJ_POWERUP:
-		return Powerup_info[obj->id].light;
+		return activeBMTable->powerups[obj->id].light;
 		break;
 	case OBJ_DEBRIS:
 		return F1_0 / 4;

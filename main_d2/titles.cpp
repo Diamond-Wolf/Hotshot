@@ -78,6 +78,10 @@ char RobotPlaying = 0;
 
 #define	SHAREWARE_ENDING_FILENAME	"ending.tex"
 
+//D1
+char Ending_text_filename[13] = "endreg.tex";
+char Briefing_text_filename[13] = "briefing.tex";
+
 //	Can be set by -noscreens command line option.  Causes bypassing of all briefing screens.
 int	Skip_briefing_screens = 0;
 int	Briefing_foreground_colors[MAX_BRIEFING_COLORS], Briefing_background_colors[MAX_BRIEFING_COLORS];
@@ -351,7 +355,7 @@ void show_bitmap_frame(void)
 		{
 			bitmap_index bi;
 			bi = piggy_find_bitmap(Bitmap_name);
-			bitmap_ptr = &GameBitmaps[bi.index];
+			bitmap_ptr = &activePiggyTable->gameBitmaps[bi.index];
 			PIGGY_PAGE_IN(bi);
 		}
 
@@ -424,8 +428,8 @@ void show_spinning_robot_frame(int robot_num)
 
 		curcanv_save = grd_curcanv;
 		grd_curcanv = Robot_canv;
-		Assert(Robot_info[robot_num].model_num != -1);
-		draw_model_picture(Robot_info[robot_num].model_num, &Robot_angles);
+		Assert(activeBMTable->robots[robot_num].model_num != -1);
+		draw_model_picture(activeBMTable->robots[robot_num].model_num, &Robot_angles);
 		grd_curcanv = curcanv_save;
 	}
 }

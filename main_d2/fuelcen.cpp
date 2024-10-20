@@ -328,7 +328,7 @@ object* create_morph_robot(segment* segp, vms_vector* object_pos, int object_id)
 	Players[Player_num].num_robots_total++;
 
 	objnum = obj_create(OBJ_ROBOT, object_id, segp - Segments, object_pos,
-		&vmd_identity_matrix, Polygon_models[Robot_info[object_id].model_num].rad,
+		&vmd_identity_matrix, activeBMTable->models[activeBMTable->robots[object_id].model_num].rad,
 		CT_AI, MT_PHYSICS, RT_POLYOBJ);
 
 	if (objnum < 0) {
@@ -341,19 +341,19 @@ object* create_morph_robot(segment* segp, vms_vector* object_pos, int object_id)
 
 	//Set polygon-object-specific data 
 
-	obj->rtype.pobj_info.model_num = Robot_info[obj->id].model_num;
+	obj->rtype.pobj_info.model_num = activeBMTable->robots[obj->id].model_num;
 	obj->rtype.pobj_info.subobj_flags = 0;
 
 	//set Physics info
 
-	obj->mtype.phys_info.mass = Robot_info[obj->id].mass;
-	obj->mtype.phys_info.drag = Robot_info[obj->id].drag;
+	obj->mtype.phys_info.mass = activeBMTable->robots[obj->id].mass;
+	obj->mtype.phys_info.drag = activeBMTable->robots[obj->id].drag;
 
 	obj->mtype.phys_info.flags |= (PF_LEVELLING);
 
-	obj->shields = Robot_info[obj->id].strength;
+	obj->shields = activeBMTable->robots[obj->id].strength;
 
-	default_behavior = Robot_info[obj->id].behavior;
+	default_behavior = activeBMTable->robots[obj->id].behavior;
 
 	init_ai_object(obj - Objects, default_behavior, -1);		//	Note, -1 = segment this robot goes to to hide, should probably be something useful
 
@@ -513,9 +513,9 @@ void robotmaker_proc(FuelCenter* robotcen)
 			if (obj)
 				extract_orient_from_segment(&obj->orient, &Segments[robotcen->segnum]);
 
-			if (Vclip[VCLIP_MORPHING_ROBOT].sound_num > -1)
+			if (activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num > -1)
 			{
-				digi_link_sound_to_pos(Vclip[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, &cur_object_loc, 0, F1_0);
+				digi_link_sound_to_pos(activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, &cur_object_loc, 0, F1_0);
 			}
 			robotcen->Flag = 1;
 			robotcen->Timer = 0;
@@ -523,7 +523,7 @@ void robotmaker_proc(FuelCenter* robotcen)
 		}
 		break;
 	case 1:			// Wait until 1/2 second after VCLIP started.
-		if (robotcen->Timer > (Vclip[VCLIP_MORPHING_ROBOT].play_time / 2)) {
+		if (robotcen->Timer > (activeBMTable->vclips[VCLIP_MORPHING_ROBOT].play_time / 2)) {
 
 			robotcen->Capacity -= EnergyToCreateOneRobot;
 			robotcen->Flag = 0;

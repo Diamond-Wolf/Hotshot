@@ -63,6 +63,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/automap.h"
 #include "platform/posixstub.h"
 #include "main_shared/gamestat.h"
+#include "main_shared/piggy.h"
 
 //
 // Local macros and prototypes
@@ -2086,7 +2087,7 @@ multi_do_controlcen_fire(char* buf)
 	gun_num = buf[count];                                   count += 1;
 	objnum = (*(short*)(buf + count));         count += 2;
 
-	Laser_create_new_easy(&to_target, &Gun_pos[gun_num], objnum, CONTROLCEN_WEAPON_NUM, 1);
+	Laser_create_new_easy(&to_target, &activeBMTable->reactorGunPos[gun_num], objnum, CONTROLCEN_WEAPON_NUM, 1);
 }
 
 void
@@ -2340,13 +2341,13 @@ void multi_reset_object_texture(object* objp)
 	if (id == 0)
 		objp->rtype.pobj_info.alt_textures = 0;
 	else {
-		Assert(N_PLAYER_SHIP_TEXTURES == Polygon_models[objp->rtype.pobj_info.model_num].n_textures);
+		Assert(N_PLAYER_SHIP_TEXTURES == activeBMTable->models[objp->rtype.pobj_info.model_num].n_textures);
 
 		for (i = 0; i < N_PLAYER_SHIP_TEXTURES; i++)
-			multi_player_textures[id - 1][i] = ObjBitmaps[ObjBitmapPtrs[Polygon_models[objp->rtype.pobj_info.model_num].first_texture + i]];
+			multi_player_textures[id - 1][i] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[activeBMTable->models[objp->rtype.pobj_info.model_num].first_texture + i]];
 
-		multi_player_textures[id - 1][4] = ObjBitmaps[ObjBitmapPtrs[First_multi_bitmap_num + (id - 1) * 2]];
-		multi_player_textures[id - 1][5] = ObjBitmaps[ObjBitmapPtrs[First_multi_bitmap_num + (id - 1) * 2 + 1]];
+		multi_player_textures[id - 1][4] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[activeBMTable->firstMultiBitmapNum + (id - 1) * 2]];
+		multi_player_textures[id - 1][5] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[activeBMTable->firstMultiBitmapNum + (id - 1) * 2 + 1]];
 
 		objp->rtype.pobj_info.alt_textures = id;
 	}
@@ -3442,12 +3443,12 @@ void multi_prep_level(void)
 
 		if ((Objects[i].type == OBJ_HOSTAGE) && !(Game_mode & GM_MULTI_COOP))
 		{
-			objnum = obj_create(OBJ_POWERUP, POW_SHIELD_BOOST, Objects[i].segnum, &Objects[i].pos, &vmd_identity_matrix, Powerup_info[POW_SHIELD_BOOST].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+			objnum = obj_create(OBJ_POWERUP, POW_SHIELD_BOOST, Objects[i].segnum, &Objects[i].pos, &vmd_identity_matrix, activeBMTable->powerups[POW_SHIELD_BOOST].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
 			obj_delete(i);
 			if (objnum != -1)
 			{
-				Objects[objnum].rtype.vclip_info.vclip_num = Powerup_info[POW_SHIELD_BOOST].vclip_num;
-				Objects[objnum].rtype.vclip_info.frametime = Vclip[Objects[objnum].rtype.vclip_info.vclip_num].frame_time;
+				Objects[objnum].rtype.vclip_info.vclip_num = activeBMTable->powerups[POW_SHIELD_BOOST].vclip_num;
+				Objects[objnum].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[objnum].rtype.vclip_info.vclip_num].frame_time;
 				Objects[objnum].rtype.vclip_info.framenum = 0;
 				Objects[objnum].mtype.phys_info.drag = 512;     //1024;
 				Objects[objnum].mtype.phys_info.mass = F1_0;
@@ -3463,14 +3464,14 @@ void multi_prep_level(void)
 				if (ng && !Netgame.DoInvulnerability)
 				{
 					Objects[i].id = POW_SHIELD_BOOST;
-					Objects[i].rtype.vclip_info.vclip_num = Powerup_info[Objects[i].id].vclip_num;
-					Objects[i].rtype.vclip_info.frametime = Vclip[Objects[i].rtype.vclip_info.vclip_num].frame_time;
+					Objects[i].rtype.vclip_info.vclip_num = activeBMTable->powerups[Objects[i].id].vclip_num;
+					Objects[i].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[i].rtype.vclip_info.vclip_num].frame_time;
 				}
 				else
 				{
 					Objects[i].id = POW_INVULNERABILITY;
-					Objects[i].rtype.vclip_info.vclip_num = Powerup_info[Objects[i].id].vclip_num;
-					Objects[i].rtype.vclip_info.frametime = Vclip[Objects[i].rtype.vclip_info.vclip_num].frame_time;
+					Objects[i].rtype.vclip_info.vclip_num = activeBMTable->powerups[Objects[i].id].vclip_num;
+					Objects[i].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[i].rtype.vclip_info.vclip_num].frame_time;
 				}
 
 			}
@@ -3479,16 +3480,16 @@ void multi_prep_level(void)
 				if ((Objects[i].id >= POW_KEY_BLUE) && (Objects[i].id <= POW_KEY_GOLD))
 				{
 					Objects[i].id = POW_SHIELD_BOOST;
-					Objects[i].rtype.vclip_info.vclip_num = Powerup_info[Objects[i].id].vclip_num;
-					Objects[i].rtype.vclip_info.frametime = Vclip[Objects[i].rtype.vclip_info.vclip_num].frame_time;
+					Objects[i].rtype.vclip_info.vclip_num = activeBMTable->powerups[Objects[i].id].vclip_num;
+					Objects[i].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[i].rtype.vclip_info.vclip_num].frame_time;
 				}
 
 			if (Objects[i].id == POW_INVULNERABILITY) {
 				if (inv_count >= 3 || (ng && !Netgame.DoInvulnerability)) {
 					mprintf((0, "Bashing Invulnerability object #%i to shield.\n", i));
 					Objects[i].id = POW_SHIELD_BOOST;
-					Objects[i].rtype.vclip_info.vclip_num = Powerup_info[Objects[i].id].vclip_num;
-					Objects[i].rtype.vclip_info.frametime = Vclip[Objects[i].rtype.vclip_info.vclip_num].frame_time;
+					Objects[i].rtype.vclip_info.vclip_num = activeBMTable->powerups[Objects[i].id].vclip_num;
+					Objects[i].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[i].rtype.vclip_info.vclip_num].frame_time;
 				}
 				else
 					inv_count++;
@@ -3498,8 +3499,8 @@ void multi_prep_level(void)
 				if (cloak_count >= 3 || (ng && !Netgame.DoCloak)) {
 					mprintf((0, "Bashing Cloak object #%i to shield.\n", i));
 					Objects[i].id = POW_SHIELD_BOOST;
-					Objects[i].rtype.vclip_info.vclip_num = Powerup_info[Objects[i].id].vclip_num;
-					Objects[i].rtype.vclip_info.frametime = Vclip[Objects[i].rtype.vclip_info.vclip_num].frame_time;
+					Objects[i].rtype.vclip_info.vclip_num = activeBMTable->powerups[Objects[i].id].vclip_num;
+					Objects[i].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[i].rtype.vclip_info.vclip_num].frame_time;
 				}
 				else
 					cloak_count++;
@@ -3666,8 +3667,8 @@ int find_goal_texture(uint8_t t)
 {
 	int i;
 
-	for (i = 0; i < NumTextures; i++)
-		if (TmapInfo[i].flags & t)
+	for (i = 0; i < activeBMTable->tmaps.size(); i++)
+		if (activeBMTable->tmaps[i].flags & t)
 			return i;
 
 	Int3(); // Hey, there is no goal texture for this PIG!!!!
@@ -3686,8 +3687,8 @@ void bash_to_shield(int i, const char* s)
 	PowerupsInMine[type] = MaxPowerupsAllowed[type] = 0;
 
 	Objects[i].id = POW_SHIELD_BOOST;
-	Objects[i].rtype.vclip_info.vclip_num = Powerup_info[Objects[i].id].vclip_num;
-	Objects[i].rtype.vclip_info.frametime = Vclip[Objects[i].rtype.vclip_info.vclip_num].frame_time;
+	Objects[i].rtype.vclip_info.vclip_num = activeBMTable->powerups[Objects[i].id].vclip_num;
+	Objects[i].rtype.vclip_info.frametime = activeBMTable->vclips[Objects[i].rtype.vclip_info.vclip_num].frame_time;
 }
 
 void multi_set_robot_ai(void)
@@ -5167,12 +5168,12 @@ void multi_quick_sound_hack(int num)
 {
 	int length, i;
 	num = digi_xlat_sound(num);
-	length = GameSounds[num].length;
+	length = activePiggyTable->gameSounds[num].length;
 	ReversedSound.data = (uint8_t*)malloc(length);
 	ReversedSound.length = length;
 
 	for (i = 0; i < length; i++)
-		ReversedSound.data[i] = GameSounds[num].data[length - i - 1];
+		ReversedSound.data[i] = activePiggyTable->gameSounds[num].data[length - i - 1];
 
 	SoundHacked = 1;
 }
@@ -5249,7 +5250,8 @@ void init_hoard_data()
 	uint8_t palette[256 * 3];
 	CFILE* ifile;
 	int i, save_pos;
-	extern int Num_bitmap_files, Num_effects, Num_sound_files;
+	//extern int Num_bitmap_files, Num_effects, Num_sound_files;
+	//extern int Num_effects;
 
 	ifile = cfopen("hoard.ham", "rb");
 	if (ifile == NULL)
@@ -5266,54 +5268,67 @@ void init_hoard_data()
 	if (first_time) 
 	{
 		uint8_t* bitmap_data;
-		int bitmap_num = Num_bitmap_files;
+		int bitmap_num = activePiggyTable->bitmapFiles.size();
 
 		//Allocate memory for bitmaps
 		MALLOC(bitmap_data, uint8_t, n_orb_frames * orb_w * orb_h + n_goal_frames * 64 * 64);
 
 		//Create orb vclip
-		orb_vclip = Num_vclips++;
-		Assert(Num_vclips <= VCLIP_MAXNUM);
-		Vclip[orb_vclip].play_time = F1_0 / 2;
-		Vclip[orb_vclip].num_frames = n_orb_frames;
-		Vclip[orb_vclip].frame_time = Vclip[orb_vclip].play_time / Vclip[orb_vclip].num_frames;
-		Vclip[orb_vclip].flags = 0;
-		Vclip[orb_vclip].sound_num = -1;
-		Vclip[orb_vclip].light_value = F1_0;
+		//orb_vclip = Num_vclips++;
+		orb_vclip = activeBMTable->vclips.size();
+		//Assert(Num_vclips <= VCLIP_MAXNUM);
+		vclip clip;
+		clip.play_time = F1_0 / 2;
+		clip.num_frames = n_orb_frames;
+		clip.frame_time = activeBMTable->vclips[orb_vclip].play_time / activeBMTable->vclips[orb_vclip].num_frames;
+		clip.flags = 0;
+		clip.sound_num = -1;
+		clip.light_value = F1_0;
 		for (i = 0; i < n_orb_frames; i++) 
 		{
-			Vclip[orb_vclip].frames[i].index = bitmap_num;
-			init_bitmap(&GameBitmaps[bitmap_num], orb_w, orb_h, BM_FLAG_TRANSPARENT, bitmap_data);
+			clip.frames[i].index = bitmap_num;
+			init_bitmap(&activePiggyTable->gameBitmaps[bitmap_num], orb_w, orb_h, BM_FLAG_TRANSPARENT, bitmap_data);
 			bitmap_data += orb_w * orb_h;
 			bitmap_num++;
 			Assert(bitmap_num < MAX_BITMAP_FILES);
 		}
 
+		activeBMTable->vclips.push_back(std::move(clip));
+
+		if (activeBMTable->powerups.size() < POW_HOARD_ORB)
+			activeBMTable->powerups.resize(POW_HOARD_ORB);
+
 		//Create obj powerup
-		Powerup_info[POW_HOARD_ORB].vclip_num = orb_vclip;
-		Powerup_info[POW_HOARD_ORB].hit_sound = -1;	//Powerup_info[POW_SHIELD_BOOST].hit_sound;
-		Powerup_info[POW_HOARD_ORB].size = Powerup_info[POW_SHIELD_BOOST].size;
-		Powerup_info[POW_HOARD_ORB].light = Powerup_info[POW_SHIELD_BOOST].light;
+		activeBMTable->powerups[POW_HOARD_ORB].vclip_num = orb_vclip;
+		activeBMTable->powerups[POW_HOARD_ORB].hit_sound = -1;	//activeBMTable->powerups[POW_SHIELD_BOOST].hit_sound;
+		activeBMTable->powerups[POW_HOARD_ORB].size = activeBMTable->powerups[POW_SHIELD_BOOST].size;
+		activeBMTable->powerups[POW_HOARD_ORB].light = activeBMTable->powerups[POW_SHIELD_BOOST].light;
+
+		tmap_info tmap;
+
+		tmap = activeBMTable->tmaps[find_goal_texture(TMI_GOAL_BLUE)];
+		tmap.eclip_num = Hoard_goal_eclip;
+		tmap.flags = TMI_GOAL_HOARD;
+
+		activeBMTable->tmaps.push_back(std::move(tmap));
 
 		//Create orb goal wall effect
-		Hoard_goal_eclip = Num_effects++;
-		Assert(Num_effects < MAX_EFFECTS);
-		Effects[Hoard_goal_eclip] = Effects[94];		//copy from blue goal
-		Effects[Hoard_goal_eclip].changing_wall_texture = NumTextures;
-		Effects[Hoard_goal_eclip].vc.num_frames = n_goal_frames;
-
-		TmapInfo[NumTextures] = TmapInfo[find_goal_texture(TMI_GOAL_BLUE)];
-		TmapInfo[NumTextures].eclip_num = Hoard_goal_eclip;
-		TmapInfo[NumTextures].flags = TMI_GOAL_HOARD;
-		NumTextures++;
-		Assert(NumTextures < MAX_TEXTURES);
+		Hoard_goal_eclip = activeBMTable->eclips.size();
+		//Assert(Num_effects < MAX_EFFECTS);
+		eclip ec;
+		ec = activeBMTable->eclips[94];		//copy from blue goal
+		ec.changing_wall_texture = activeBMTable->tmaps.size() - 1;
+		ec.vc.num_frames = n_goal_frames;
+		activeBMTable->eclips.push_back(std::move(ec));
+		/*NumTextures++;
+		Assert(NumTextures < MAX_TEXTURES);*/
 		for (i = 0; i < n_goal_frames; i++) 
 		{
-			Effects[Hoard_goal_eclip].vc.frames[i].index = bitmap_num;
-			init_bitmap(&GameBitmaps[bitmap_num], 64, 64, 0, bitmap_data);
+			activeBMTable->eclips[Hoard_goal_eclip].vc.frames[i].index = bitmap_num;
+			init_bitmap(&activePiggyTable->gameBitmaps[bitmap_num], 64, 64, 0, bitmap_data);
 			bitmap_data += 64 * 64;
 			bitmap_num++;
-			Assert(bitmap_num < MAX_BITMAP_FILES);
+			//Assert(bitmap_num < MAX_BITMAP_FILES);
 		}
 	}
 
@@ -5321,7 +5336,7 @@ void init_hoard_data()
 	cfread(palette, 3, 256, ifile);
 	for (i = 0; i < n_orb_frames; i++) 
 	{
-		grs_bitmap* bm = &GameBitmaps[Vclip[orb_vclip].frames[i].index];
+		grs_bitmap* bm = &activePiggyTable->gameBitmaps[activeBMTable->vclips[orb_vclip].frames[i].index];
 		cfread(bm->bm_data, 1, orb_w * orb_h, ifile);
 		gr_remap_bitmap_good(bm, palette, 255, -1);
 	}
@@ -5331,7 +5346,7 @@ void init_hoard_data()
 	cfread(palette, 3, 256, ifile);
 	for (i = 0; i < n_goal_frames; i++)
 	{
-		grs_bitmap* bm = &GameBitmaps[Effects[Hoard_goal_eclip].vc.frames[i].index];
+		grs_bitmap* bm = &activePiggyTable->gameBitmaps[activeBMTable->eclips[Hoard_goal_eclip].vc.frames[i].index];
 		cfread(bm->bm_data, 1, 64 * 64, ifile);
 		gr_remap_bitmap_good(bm, palette, 255, -1);
 	}
@@ -5357,6 +5372,9 @@ void init_hoard_data()
 
 		//Load sounds for orb game
 
+		if (activeBMTable->sounds.size() < SOUND_YOU_GOT_ORB + 4)
+			activeBMTable->sounds.resize(SOUND_YOU_GOT_ORB + 4);
+
 		for (i = 0; i < 4; i++) 
 		{
 			int len;
@@ -5369,9 +5387,9 @@ void init_hoard_data()
 				len = cfile_read_int(ifile);		//get 22k len
 			}
 
-			GameSounds[Num_sound_files + i].length = len;
-			GameSounds[Num_sound_files + i].data = (uint8_t*)mem_malloc(len);
-			cfread(GameSounds[Num_sound_files + i].data, 1, len, ifile);
+			activePiggyTable->gameSounds[activePiggyTable->soundFiles.size() + i].length = len;
+			activePiggyTable->gameSounds[activePiggyTable->soundFiles.size() + i].data = (uint8_t*)mem_malloc(len);
+			cfread(activePiggyTable->gameSounds[activePiggyTable->soundFiles.size() + i].data, 1, len, ifile);
 
 			if (digi_sample_rate == SAMPLE_RATE_11K) 
 			{
@@ -5379,8 +5397,8 @@ void init_hoard_data()
 				cfseek(ifile, len, SEEK_CUR);		//skip over 22k sample
 			}
 
-			Sounds[SOUND_YOU_GOT_ORB + i] = Num_sound_files + i;
-			AltSounds[SOUND_YOU_GOT_ORB + i] = Sounds[SOUND_YOU_GOT_ORB + i];
+			activeBMTable->sounds[SOUND_YOU_GOT_ORB + i] = activePiggyTable->soundFiles.size() + i;
+			activeBMTable->altSounds[SOUND_YOU_GOT_ORB + i] = activeBMTable->sounds[SOUND_YOU_GOT_ORB + i];
 		}
 	}
 

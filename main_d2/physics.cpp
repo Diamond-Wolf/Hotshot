@@ -704,7 +704,7 @@ save_p1 = *fq.p1;
 
 					Assert(BounceCheat || !(obj->mtype.phys_info.flags & PF_STICK && obj->mtype.phys_info.flags & PF_BOUNCE));	//can't be bounce and stick
 
-					forcefield_bounce = (TmapInfo[Segments[WallHitSeg].sides[WallHitSide].tmap_num].flags & TMI_FORCE_FIELD);
+					forcefield_bounce = (activeBMTable->tmaps[Segments[WallHitSeg].sides[WallHitSide].tmap_num].flags & TMI_FORCE_FIELD);
 
 					if (!forcefield_bounce && (obj->mtype.phys_info.flags & PF_STICK)) {		//stop moving
 
@@ -1103,7 +1103,7 @@ void phys_apply_rot(object *obj,vms_vector *force_vec)
 			if (rate < F1_0/4)
 				rate = F1_0/4;
 			//	Changed by mk, 10/24/95, claw guys should not slow down when attacking!
-			if (!Robot_info[obj->id].thief && !Robot_info[obj->id].attack_type) {
+			if (!activeBMTable->robots[obj->id].thief && !activeBMTable->robots[obj->id].attack_type) {
 				if (obj->ctype.ai_info.SKIP_AI_COUNT * FrameTime < 3*F1_0/4) {
 					fix	tval = fixdiv(F1_0, 8*FrameTime);
 					int	addval;

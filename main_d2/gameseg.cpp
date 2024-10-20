@@ -1973,7 +1973,7 @@ void change_segment_light(int segnum,int sidenum,int dir)
 		side	*sidep = &segp->sides[sidenum];
 		fix	light_intensity;
 
-		light_intensity = TmapInfo[sidep->tmap_num].lighting + TmapInfo[sidep->tmap_num2 & 0x3fff].lighting;
+		light_intensity = activeBMTable->tmaps[sidep->tmap_num].lighting + activeBMTable->tmaps[sidep->tmap_num2 & 0x3fff].lighting;
 
 		light_intensity *= dir;
 
@@ -2184,7 +2184,7 @@ void set_ambient_sound_flags_common(int tmi_bit, int s2f_bit)
 		for (j=0; j<MAX_SIDES_PER_SEGMENT; j++) {
 			side	*sidep = &segp->sides[j];
 
-			if ((TmapInfo[sidep->tmap_num].flags & tmi_bit) || (TmapInfo[sidep->tmap_num2 & 0x3fff].flags & tmi_bit)) {
+			if ((activeBMTable->tmaps[sidep->tmap_num].flags & tmi_bit) || (activeBMTable->tmaps[sidep->tmap_num2 & 0x3fff].flags & tmi_bit)) {
 				if (!IS_CHILD(segp->children[j]) || (sidep->wall_num != -1)) {
 					seg2p->s2_flags |= s2f_bit;
 					marked_segs[i] = 1;		//	Say it's itself that it is close enough to to hear something.

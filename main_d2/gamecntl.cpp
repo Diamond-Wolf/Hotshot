@@ -452,7 +452,7 @@ void do_weapon_stuff(void)
 			Flare_create(ConsoleObject);
 
 	if (allowed_to_fire_missile())
-		Global_missile_firing_count += Weapon_info[Secondary_weapon_to_weapon_info[Secondary_weapon]].fire_count * (Controls.fire_secondary_state || Controls.fire_secondary_down_count);
+		Global_missile_firing_count += activeBMTable->weapons[Secondary_weapon_to_weapon_info[Secondary_weapon]].fire_count * (Controls.fire_secondary_state || Controls.fire_secondary_down_count);
 
 	if (Global_missile_firing_count)
 	{
@@ -1532,7 +1532,7 @@ void kill_all_robots(void)
 	for (i = 0; i <= Highest_object_index; i++)
 		if (Objects[i].type == OBJ_ROBOT)
 		{
-			if (!Robot_info[Objects[i].id].companion && !Robot_info[Objects[i].id].boss_flag)
+			if (!activeBMTable->robots[Objects[i].id].companion && !activeBMTable->robots[Objects[i].id].boss_flag)
 			{
 				dead_count++;
 				Objects[i].flags |= OF_EXPLODING | OF_SHOULD_BE_DEAD;
@@ -1550,7 +1550,7 @@ void kill_all_robots(void)
 	if (dead_count == 0)
 		for (i = 0; i <= Highest_object_index; i++)
 			if (Objects[i].type == OBJ_ROBOT)
-				if (Robot_info[Objects[i].id].companion)
+				if (activeBMTable->robots[Objects[i].id].companion)
 				{
 					Objects[i].flags |= OF_EXPLODING | OF_SHOULD_BE_DEAD;
 					HUD_init_message("Toasted the Buddy! *sniff*");
@@ -1629,7 +1629,7 @@ void kill_thief(void)
 	//	Kill thief.
 	for (i = 0; i <= Highest_object_index; i++)
 		if (Objects[i].type == OBJ_ROBOT)
-			if (Robot_info[Objects[i].id].thief)
+			if (activeBMTable->robots[Objects[i].id].thief)
 			{
 				Objects[i].flags |= OF_EXPLODING | OF_SHOULD_BE_DEAD;
 				HUD_init_message("Thief toasted!");
@@ -1643,7 +1643,7 @@ void kill_buddy(void)
 	//	Kill buddy.
 	for (i = 0; i <= Highest_object_index; i++)
 		if (Objects[i].type == OBJ_ROBOT)
-			if (Robot_info[Objects[i].id].companion)
+			if (activeBMTable->robots[Objects[i].id].companion)
 			{
 				Objects[i].flags |= OF_EXPLODING | OF_SHOULD_BE_DEAD;
 				HUD_init_message("Buddy toasted!");
@@ -1675,13 +1675,13 @@ void HandleTestKey(int key)
 		break;
 #endif
 
-	case KEY_BACKSP:
+	/*case KEY_BACKSP:
 	case KEY_CTRLED + KEY_BACKSP:
 	case KEY_ALTED + KEY_BACKSP:
 	case KEY_SHIFTED + KEY_BACKSP:
 	case KEY_SHIFTED + KEY_ALTED + KEY_BACKSP:
 	case KEY_CTRLED + KEY_ALTED + KEY_BACKSP:
-	case KEY_SHIFTED + KEY_CTRLED + KEY_BACKSP:
+	case KEY_SHIFTED + KEY_CTRLED + KEY_BACKSP:*/
 	case KEY_SHIFTED + KEY_CTRLED + KEY_ALTED + KEY_BACKSP:
 
 		Int3(); break;
@@ -2238,8 +2238,8 @@ void FinalCheats(int key)
 			HomingCheat = 1;
 			for (i = 0; i < 20; i++)
 			{
-				OldHomingState[i] = Weapon_info[i].homing_flag;
-				Weapon_info[i].homing_flag = 1;
+				OldHomingState[i] = activeBMTable->weapons[i].homing_flag;
+				activeBMTable->weapons[i].homing_flag = 1;
 			}
 			HUD_init_message("Homing weapons!");
 		}

@@ -173,8 +173,10 @@ extern int Num_open_doors;				// Number of open doors
 extern cloaking_wall CloakingWalls[];
 extern int Num_cloaking_walls;
 
+#ifdef BUILD_DESCENT1
 extern std::vector<wclip> WallAnims;
 extern int Num_wall_anims;
+#endif
 
 //extern int walls_bm_num[MAX_WALL_ANIMS];
 

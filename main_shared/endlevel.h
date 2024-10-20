@@ -38,7 +38,9 @@ extern int ext_expl_playing;
 //called for each level to load & setup the exit sequence
 void load_endlevel_data(int level_num);
 
+#ifdef BUILD_DESCENT1
 extern int exit_modelnum, destroyed_exit_modelnum;
+#endif
 
 void generate_starfield();
 void draw_stars();

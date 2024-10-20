@@ -2186,10 +2186,10 @@ void bm_read_powerup(int unused_flag)
 	}
 
 	// Initialize powerup array
-	Powerup_info[n].light = F1_0/3;		//	Default lighting value.
-	Powerup_info[n].vclip_num = -1;
-	Powerup_info[n].hit_sound = -1;
-	Powerup_info[n].size = DEFAULT_POWERUP_SIZE;
+	activeBMTable->powerups[n].light = F1_0/3;		//	Default lighting value.
+	activeBMTable->powerups[n].vclip_num = -1;
+	activeBMTable->powerups[n].hit_sound = -1;
+	activeBMTable->powerups[n].size = DEFAULT_POWERUP_SIZE;
 	Powerup_names[n][0] = 0;
 
 	// Process arguments
@@ -2202,17 +2202,17 @@ void bm_read_powerup(int unused_flag)
 			equal_ptr++;
 			// if we have john=cool, arg is 'john' and equal_ptr is 'cool'
 			if (!_stricmp( arg, "vclip_num" ))	{
-				Powerup_info[n].vclip_num = atoi(equal_ptr);
+				activeBMTable->powerups[n].vclip_num = atoi(equal_ptr);
 			} else if (!_stricmp( arg, "light" ))	{
-				Powerup_info[n].light = fl2f(atof(equal_ptr));
+				activeBMTable->powerups[n].light = fl2f(atof(equal_ptr));
 			} else if (!_stricmp( arg, "hit_sound" ))	{
-				Powerup_info[n].hit_sound = atoi(equal_ptr);
+				activeBMTable->powerups[n].hit_sound = atoi(equal_ptr);
 			} else if (!_stricmp( arg, "name" )) {
 				Assert(strlen(equal_ptr) < POWERUP_NAME_LENGTH);	//	Oops, name too long.
 				strcpy(Powerup_names[n], &equal_ptr[1]);
 				Powerup_names[n][strlen(Powerup_names[n])-1] = 0;
 			} else if (!_stricmp( arg, "size" ))	{
-				Powerup_info[n].size = fl2f(atof(equal_ptr));
+				activeBMTable->powerups[n].size = fl2f(atof(equal_ptr));
 			} else {
 				Int3();
 				mprintf( (1, "Invalid parameter, %s=%s in bitmaps.tbl\n", arg, equal_ptr ));
@@ -2539,10 +2539,10 @@ void write_powerup_info(FILE* fp, int inNumPowerupsToRead, int inOffset)
 
 	for (i = inOffset; i < (inNumPowerupsToRead + inOffset); i++)
 	{
-		file_write_int(fp, Powerup_info[i].vclip_num);
-		file_write_int(fp, Powerup_info[i].hit_sound);
-		file_write_int(fp, Powerup_info[i].size);
-		file_write_int(fp, Powerup_info[i].light);
+		file_write_int(fp, activeBMTable->powerups[i].vclip_num);
+		file_write_int(fp, activeBMTable->powerups[i].hit_sound);
+		file_write_int(fp, activeBMTable->powerups[i].size);
+		file_write_int(fp, activeBMTable->powerups[i].light);
 	}
 }
 
@@ -2716,7 +2716,7 @@ void bm_write_all(FILE *fp)
 	file_write_int(fp, N_powerup_types);
 	write_powerup_info(fp, N_powerup_types, 0);
 	
-	fprintf(tfile,"N_powerup_types = %d, Powerup_info array = %d\n",N_powerup_types,sizeof(Powerup_info)*N_powerup_types);
+	fprintf(tfile,"N_powerup_types = %d, activeBMTable->powerups array = %d\n",N_powerup_types,sizeof(activeBMTable->powerups)*N_powerup_types);
 
 	t = N_D2_POLYGON_MODELS;
 	file_write_int(fp, t);

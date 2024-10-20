@@ -101,15 +101,15 @@ void draw_robot_picture(int id, vms_angvec *orient_angles, int type)
 	switch (type)
 	{
 		case OL_HOSTAGE:
-			PIGGY_PAGE_IN(Vclip[Hostage_vclip_num[id]].frames[0]);
-			gr_bitmap(0,0,&GameBitmaps[Vclip[Hostage_vclip_num[id]].frames[0].index]);
+			PIGGY_PAGE_IN(activeBMTable->vclips[Hostage_vclip_num[id]].frames[0]);
+			gr_bitmap(0,0,&GameBitmaps[activeBMTable->vclips[Hostage_vclip_num[id]].frames[0].index]);
 			break;
 
 		case OL_POWERUP:
 			if ( Powerup_info[id].vclip_num > -1 )	
 			{
-				PIGGY_PAGE_IN(Vclip[Powerup_info[id].vclip_num].frames[0]);
-				gr_bitmap(0,0,&GameBitmaps[Vclip[Powerup_info[id].vclip_num].frames[0].index]);
+				PIGGY_PAGE_IN(activeBMTable->vclips[Powerup_info[id].vclip_num].frames[0]);
+				gr_bitmap(0,0,&GameBitmaps[activeBMTable->vclips[Powerup_info[id].vclip_num].frames[0].index]);
 			}
 			break;
 

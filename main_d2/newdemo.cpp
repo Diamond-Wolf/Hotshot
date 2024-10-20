@@ -489,22 +489,22 @@ void nd_read_object(object* obj)
 			obj->movement_type = MT_PHYSICS;
 		else
 			obj->movement_type = MT_NONE;
-		obj->size = Polygon_models[Robot_info[obj->id].model_num].rad;
-		obj->rtype.pobj_info.model_num = Robot_info[obj->id].model_num;
+		obj->size = activeBMTable->models[activeBMTable->robots[obj->id].model_num].rad;
+		obj->rtype.pobj_info.model_num = activeBMTable->robots[obj->id].model_num;
 		obj->rtype.pobj_info.subobj_flags = 0;
-		obj->ctype.ai_info.CLOAKED = (Robot_info[obj->id].cloak_type ? 1 : 0);
+		obj->ctype.ai_info.CLOAKED = (activeBMTable->robots[obj->id].cloak_type ? 1 : 0);
 		break;
 
 	case OBJ_POWERUP:
 		obj->control_type = CT_POWERUP;
 		nd_read_byte((int8_t*) &(obj->movement_type));		// might have physics movement
-		obj->size = Powerup_info[obj->id].size;
+		obj->size = activeBMTable->powerups[obj->id].size;
 		break;
 
 	case OBJ_PLAYER:
 		obj->control_type = CT_NONE;
 		obj->movement_type = MT_PHYSICS;
-		obj->size = Polygon_models[Player_ship->model_num].rad;
+		obj->size = activeBMTable->models[Player_ship->model_num].rad;
 		obj->rtype.pobj_info.model_num = Player_ship->model_num;
 		obj->rtype.pobj_info.subobj_flags = 0;
 		break;
@@ -512,7 +512,7 @@ void nd_read_object(object* obj)
 	case OBJ_CLUTTER:
 		obj->control_type = CT_NONE;
 		obj->movement_type = MT_NONE;
-		obj->size = Polygon_models[obj->id].rad;
+		obj->size = activeBMTable->models[obj->id].rad;
 		obj->rtype.pobj_info.model_num = obj->id;
 		obj->rtype.pobj_info.subobj_flags = 0;
 		break;
@@ -540,7 +540,7 @@ void nd_read_object(object* obj)
 
 	if (obj->type == OBJ_ROBOT)
 	{
-		if (Robot_info[obj->id].boss_flag)
+		if (activeBMTable->robots[obj->id].boss_flag)
 		{
 			int8_t cloaked;
 
@@ -637,7 +637,7 @@ void nd_read_object(object* obj)
 			for (i = 0; i < MAX_SUBMODELS; i++)
 				nd_read_angvec(&(obj->pobj_info.anim_angles[i]));
 #endif
-		for (i = 0; i < Polygon_models[obj->rtype.pobj_info.model_num].n_models; i++)
+		for (i = 0; i < activeBMTable->models[obj->rtype.pobj_info.model_num].n_models; i++)
 			nd_read_angvec(&obj->rtype.pobj_info.anim_angles[i]);
 
 		nd_read_int(&tmo);
@@ -724,7 +724,7 @@ void nd_write_object(object* obj)
 
 	if (obj->type == OBJ_ROBOT)
 	{
-		if (Robot_info[obj->id].boss_flag)
+		if (activeBMTable->robots[obj->id].boss_flag)
 		{
 			if ((GameTime > Boss_cloak_start_time) && (GameTime < Boss_cloak_end_time))
 				nd_write_byte(1);
@@ -807,7 +807,7 @@ void nd_write_object(object* obj)
 			for (i = 0; i < MAX_SUBMODELS; i++)
 				nd_write_angvec(&obj->pobj_info.anim_angles[i]);
 #endif
-		for (i = 0; i < Polygon_models[obj->rtype.pobj_info.model_num].n_models; i++)
+		for (i = 0; i < activeBMTable->models[obj->rtype.pobj_info.model_num].n_models; i++)
 			nd_write_angvec(&obj->rtype.pobj_info.anim_angles[i]);
 
 		nd_write_int(obj->rtype.pobj_info.tmap_override);
@@ -1595,14 +1595,14 @@ void newdemo_pop_ctrlcen_triggers()
 		csegp = &Segments[seg->children[side]];
 		cside = find_connect_side(seg, csegp);
 		anim_num = Walls[seg->sides[side].wall_num].clip_num;
-		n = WallAnims[anim_num].num_frames;
-		if (WallAnims[anim_num].flags & WCF_TMAP1) 
+		n = activeBMTable->wclips[anim_num].num_frames;
+		if (activeBMTable->wclips[anim_num].flags & WCF_TMAP1) 
 		{
-			seg->sides[side].tmap_num = csegp->sides[cside].tmap_num = WallAnims[anim_num].frames[n - 1];
+			seg->sides[side].tmap_num = csegp->sides[cside].tmap_num = activeBMTable->wclips[anim_num].frames[n - 1];
 		}
 		else 
 		{
-			seg->sides[side].tmap_num2 = csegp->sides[cside].tmap_num2 = WallAnims[anim_num].frames[n - 1];
+			seg->sides[side].tmap_num2 = csegp->sides[cside].tmap_num2 = activeBMTable->wclips[anim_num].frames[n - 1];
 		}
 	}
 }
@@ -1727,10 +1727,10 @@ int newdemo_read_frame_information()
 					player--;
 
 					for (i = 0; i < N_PLAYER_SHIP_TEXTURES; i++)
-						multi_player_textures[player][i] = ObjBitmaps[ObjBitmapPtrs[Polygon_models[obj->rtype.pobj_info.model_num].first_texture + i]];
+						multi_player_textures[player][i] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[activeBMTable->models[obj->rtype.pobj_info.model_num].first_texture + i]];
 
-					multi_player_textures[player][4] = ObjBitmaps[ObjBitmapPtrs[First_multi_bitmap_num + (player) * 2]];
-					multi_player_textures[player][5] = ObjBitmaps[ObjBitmapPtrs[First_multi_bitmap_num + (player) * 2 + 1]];
+					multi_player_textures[player][4] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[activeBMTable->firstMultiBitmapNum + (player) * 2]];
+					multi_player_textures[player][5] = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[activeBMTable->firstMultiBitmapNum + (player) * 2 + 1]];
 					obj->rtype.pobj_info.alt_textures = player + 1;
 #endif
 				}
@@ -2393,11 +2393,11 @@ int newdemo_read_frame_information()
 				cside = find_connect_side(segp, csegp);
 				anim_num = Walls[segp->sides[side].wall_num].clip_num;
 
-				if (WallAnims[anim_num].flags & WCF_TMAP1) {
-					segp->sides[side].tmap_num = csegp->sides[cside].tmap_num = WallAnims[anim_num].frames[0];
+				if (activeBMTable->wclips[anim_num].flags & WCF_TMAP1) {
+					segp->sides[side].tmap_num = csegp->sides[cside].tmap_num = activeBMTable->wclips[anim_num].frames[0];
 				}
 				else {
-					segp->sides[side].tmap_num2 = csegp->sides[cside].tmap_num2 = WallAnims[anim_num].frames[0];
+					segp->sides[side].tmap_num2 = csegp->sides[cside].tmap_num2 = activeBMTable->wclips[anim_num].frames[0];
 				}
 			}
 			break;

@@ -78,7 +78,7 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 
 	//now set explosion-specific data
 
-	obj->lifeleft = Vclip[vclip_type ].play_time;
+	obj->lifeleft = activeBMTable->vclips[vclip_type ].play_time;
 	obj->ctype.expl_info.spawn_time = -1;
 	obj->ctype.expl_info.delete_objnum = -1;
 	obj->ctype.expl_info.delete_time = -1;
@@ -135,10 +135,10 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 								phys_apply_force(obj0p,&vforce);
 
 								//	If not a boss, stun for 2 seconds at 32 force, 1 second at 16 force
-								if ((objp != NULL) && (!Robot_info[obj0p->id].boss_flag) && (Weapon_info[objp->id].flash)) 
+								if ((objp != NULL) && (!activeBMTable->robots[obj0p->id].boss_flag) && (activeBMTable->weapons[objp->id].flash)) 
 								{
 									ai_static	*aip = &obj0p->ctype.ai_info;
-									int			force_val = f2i(fixdiv(vm_vec_mag_quick(&vforce) * Weapon_info[objp->id].flash, FrameTime)/128) + 2;
+									int			force_val = f2i(fixdiv(vm_vec_mag_quick(&vforce) * activeBMTable->weapons[objp->id].flash, FrameTime)/128) + 2;
 
 									if (obj->ctype.ai_info.SKIP_AI_COUNT * FrameTime < F1_0) 
 									{
@@ -148,7 +148,7 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 										obj0p->mtype.phys_info.rotthrust.z = ((P_Rand() - 16384) * force_val)/16;
 										obj0p->mtype.phys_info.flags |= PF_USES_THRUST;
 
-										//@@if (Robot_info[obj0p->id].companion)
+										//@@if (activeBMTable->robots[obj0p->id].companion)
 										//@@	buddy_message("Daisy, Daisy, Give me...");
 									} else
 										aip->SKIP_AI_COUNT--;
@@ -165,16 +165,16 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 								}
 								if ( obj0p->shields >= 0 ) 
 								{
-									if (Robot_info[obj0p->id].boss_flag)
-										if (Boss_invulnerable_matter[Robot_info[obj0p->id].boss_flag-BOSS_D2])
+									if (activeBMTable->robots[obj0p->id].boss_flag)
+										if (Boss_invulnerable_matter[activeBMTable->robots[obj0p->id].boss_flag-BOSS_D2])
 											damage /= 4;
 
 									if (apply_damage_to_robot(obj0p, damage, parent))
 										if ((objp != NULL) && (parent == Players[Player_num].objnum))
-											add_points_to_score(Robot_info[obj0p->id].score_value);
+											add_points_to_score(activeBMTable->robots[obj0p->id].score_value);
 								}
 
-								if ((objp != NULL) && (Robot_info[obj0p->id].companion) && (!Weapon_info[objp->id].flash)) 
+								if ((objp != NULL) && (activeBMTable->robots[obj0p->id].companion) && (!activeBMTable->weapons[objp->id].flash)) 
 								{
 									int	i, count;
 									char	ouch_str[6*4 + 2];
@@ -204,11 +204,11 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 								vms_vector	vforce2;
 
 								//	Hack! Warning! Test code!
-								if ((objp != NULL) && Weapon_info[objp->id].flash && obj0p->id==Player_num) 
+								if ((objp != NULL) && activeBMTable->weapons[objp->id].flash && obj0p->id==Player_num) 
 								{
 									int	fe;
 
-									fe = std::min(F1_0*4, (int)(force*Weapon_info[objp->id].flash/32));	//	For four seconds or less
+									fe = std::min(F1_0*4, (int)(force*activeBMTable->weapons[objp->id].flash/32));	//	For four seconds or less
 
 									if (objp->ctype.laser_info.parent_signature == ConsoleObject->signature) 
 									{
@@ -281,8 +281,8 @@ object *object_create_badass_explosion(object *objp, short segnum, vms_vector * 
 		create_smart_children(objp, NUM_SMART_CHILDREN);
 
 // -- 	if (objp->type == OBJ_ROBOT)
-// -- 		if (Robot_info[objp->id].smart_blobs)
-// -- 			create_smart_children(objp, Robot_info[objp->id].smart_blobs);
+// -- 		if (activeBMTable->robots[objp->id].smart_blobs)
+// -- 			create_smart_children(objp, activeBMTable->robots[objp->id].smart_blobs);
 
 	return rval;
 }
@@ -291,7 +291,7 @@ object *object_create_badass_explosion(object *objp, short segnum, vms_vector * 
 //return the explosion object
 object *explode_badass_weapon(object *obj,vms_vector *pos)
 {
-	weapon_info *wi = &Weapon_info[obj->id];
+	weapon_info *wi = &activeBMTable->weapons[obj->id];
 
 	Assert(wi->damage_radius);
 
@@ -344,7 +344,7 @@ object *object_create_debris(object *parent, int subobj_num)
 	Assert((parent->type == OBJ_ROBOT) || (parent->type == OBJ_PLAYER)  );
 
 	objnum = obj_create(OBJ_DEBRIS,0,parent->segnum,&parent->pos,
-				&parent->orient,Polygon_models[parent->rtype.pobj_info.model_num].submodel_rads[subobj_num],
+				&parent->orient,activeBMTable->models[parent->rtype.pobj_info.model_num].submodel_rads[subobj_num],
 				CT_DEBRIS,MT_PHYSICS,RT_POLYOBJ);
 
 	if ((objnum < 0 ) && (Highest_object_index >= MAX_OBJECTS-1)) {
@@ -366,7 +366,7 @@ object *object_create_debris(object *parent, int subobj_num)
 
 	//Set physics data for this object
 
-	po = &Polygon_models[obj->rtype.pobj_info.model_num];
+	po = &activeBMTable->models[obj->rtype.pobj_info.model_num];
 
 	obj->mtype.phys_info.velocity.x = PRAND_MAX/2 - P_Rand();
 	obj->mtype.phys_info.velocity.y = PRAND_MAX/2 - P_Rand();
@@ -832,7 +832,7 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 					 return (-1);
 				}
 #endif
-				objnum = obj_create( type, id, segnum, &new_pos, &vmd_identity_matrix, Powerup_info[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+				objnum = obj_create( type, id, segnum, &new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
 
 				if (objnum < 0 ) 
 				{
@@ -860,8 +860,8 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 
 				obj->mtype.phys_info.flags = PF_BOUNCE;
 
-				obj->rtype.vclip_info.vclip_num = Powerup_info[obj->id].vclip_num;
-				obj->rtype.vclip_info.frametime = Vclip[obj->rtype.vclip_info.vclip_num].frame_time;
+				obj->rtype.vclip_info.vclip_num = activeBMTable->powerups[obj->id].vclip_num;
+				obj->rtype.vclip_info.frametime = activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].frame_time;
 				obj->rtype.vclip_info.framenum = 0;
 
 				switch (obj->id)
@@ -909,7 +909,7 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 //				new_pos.y += (P_Rand()-16384)*7;
 //				new_pos.z += (P_Rand()-16384)*6;
 
-				objnum = obj_create(OBJ_ROBOT, id, segnum, &new_pos, &vmd_identity_matrix, Polygon_models[Robot_info[id].model_num].rad, CT_AI, MT_PHYSICS, RT_POLYOBJ);
+				objnum = obj_create(OBJ_ROBOT, id, segnum, &new_pos, &vmd_identity_matrix, activeBMTable->models[activeBMTable->robots[id].model_num].rad, CT_AI, MT_PHYSICS, RT_POLYOBJ);
 
 				if ( objnum < 0 ) {
 					mprintf((1, "Can't create object in object_create_egg, robots.  Aborting.\n"));
@@ -926,24 +926,24 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 
 				obj = &Objects[objnum];
 
-				if (Robot_info[obj->id].flags & RIF_BIG_RADIUS && CurrentLogicVersion == LogicVer::SHAREWARE)
+				if (activeBMTable->robots[obj->id].flags & RIF_BIG_RADIUS && CurrentLogicVersion == LogicVer::SHAREWARE)
 					obj->size = (obj->size*3)/2;
 
 				//Set polygon-object-specific data 
 
-				obj->rtype.pobj_info.model_num = Robot_info[obj->id].model_num;
+				obj->rtype.pobj_info.model_num = activeBMTable->robots[obj->id].model_num;
 				obj->rtype.pobj_info.subobj_flags = 0;
 
 				//set Physics info
 		
 				obj->mtype.phys_info.velocity = new_velocity;
 
-				obj->mtype.phys_info.mass = Robot_info[obj->id].mass;
-				obj->mtype.phys_info.drag = Robot_info[obj->id].drag;
+				obj->mtype.phys_info.mass = activeBMTable->robots[obj->id].mass;
+				obj->mtype.phys_info.drag = activeBMTable->robots[obj->id].drag;
 
 				obj->mtype.phys_info.flags |= (PF_LEVELLING);
 
-				obj->shields = Robot_info[obj->id].strength;
+				obj->shields = activeBMTable->robots[obj->id].strength;
 
 				obj->ctype.ai_info.behavior = AIB_NORMAL;
 				Ai_local_info[obj-Objects].player_awareness_type = PA_WEAPON_ROBOT_COLLISION;
@@ -1046,10 +1046,10 @@ int get_explosion_vclip(object *obj,int stage)
 {
 	if (obj->type==OBJ_ROBOT) {
 
-		if (stage==0 && Robot_info[obj->id].exp1_vclip_num>-1)
-				return Robot_info[obj->id].exp1_vclip_num;
-		else if (stage==1 && Robot_info[obj->id].exp2_vclip_num>-1)
-				return Robot_info[obj->id].exp2_vclip_num;
+		if (stage==0 && activeBMTable->robots[obj->id].exp1_vclip_num>-1)
+				return activeBMTable->robots[obj->id].exp1_vclip_num;
+		else if (stage==1 && activeBMTable->robots[obj->id].exp2_vclip_num>-1)
+				return activeBMTable->robots[obj->id].exp2_vclip_num;
 
 	}
 	else if (obj->type==OBJ_PLAYER && Player_ship->expl_vclip_num>-1)
@@ -1063,13 +1063,13 @@ void explode_model(object *obj)
 {
 	Assert(obj->render_type == RT_POLYOBJ);
 
-	if (Dying_modelnums[obj->rtype.pobj_info.model_num] != -1)
-		obj->rtype.pobj_info.model_num = Dying_modelnums[obj->rtype.pobj_info.model_num];
+	if (activeBMTable->dyingModels[obj->rtype.pobj_info.model_num] != -1)
+		obj->rtype.pobj_info.model_num = activeBMTable->dyingModels[obj->rtype.pobj_info.model_num];
 
-	if (Polygon_models[obj->rtype.pobj_info.model_num].n_models > 1) {
+	if (activeBMTable->models[obj->rtype.pobj_info.model_num].n_models > 1) {
 		int i;
 
-		for (i=1;i<Polygon_models[obj->rtype.pobj_info.model_num].n_models;i++)
+		for (i=1;i<activeBMTable->models[obj->rtype.pobj_info.model_num].n_models;i++)
 			if (!(obj->type == OBJ_ROBOT && obj->id == 44 && i == 5)) 	//energy sucker energy part
 				object_create_debris(obj,i);
 
@@ -1081,8 +1081,8 @@ void explode_model(object *obj)
 //if the object has a destroyed model, switch to it.  Otherwise, delete it.
 void maybe_delete_object(object *del_obj)
 {
-	if (Dead_modelnums[del_obj->rtype.pobj_info.model_num] != -1) {
-		del_obj->rtype.pobj_info.model_num = Dead_modelnums[del_obj->rtype.pobj_info.model_num];
+	if (activeBMTable->deadModels[del_obj->rtype.pobj_info.model_num] != -1) {
+		del_obj->rtype.pobj_info.model_num = activeBMTable->deadModels[del_obj->rtype.pobj_info.model_num];
 		del_obj->flags |= OF_DESTROYED;
 	}
 	else {		//normal, multi-stage explosion
@@ -1211,8 +1211,8 @@ void do_explosion_sequence(object *obj)
 
 		vclip_num = get_explosion_vclip(del_obj,1);
 
-		if (del_obj->type == OBJ_ROBOT && Robot_info[del_obj->id].badass)
-			expl_obj = object_create_badass_explosion( NULL, del_obj->segnum, spawn_pos, fixmul(del_obj->size, EXPLOSION_SCALE), vclip_num, F1_0*Robot_info[del_obj->id].badass, i2f(4)*Robot_info[del_obj->id].badass, i2f(35)*Robot_info[del_obj->id].badass, -1 );
+		if (del_obj->type == OBJ_ROBOT && activeBMTable->robots[del_obj->id].badass)
+			expl_obj = object_create_badass_explosion( NULL, del_obj->segnum, spawn_pos, fixmul(del_obj->size, EXPLOSION_SCALE), vclip_num, F1_0*activeBMTable->robots[del_obj->id].badass, i2f(4)*activeBMTable->robots[del_obj->id].badass, i2f(35)*activeBMTable->robots[del_obj->id].badass, -1 );
 		else
 			expl_obj = object_create_explosion( del_obj->segnum, spawn_pos, fixmul(del_obj->size, EXPLOSION_SCALE), vclip_num );
 
@@ -1222,7 +1222,7 @@ void do_explosion_sequence(object *obj)
 				maybe_replace_powerup_with_energy(del_obj);
 			object_create_egg(del_obj);
 		} else if ((del_obj->type == OBJ_ROBOT) && !(Game_mode & GM_MULTI)) { // Multiplayer handled outside this code!!
-			robot_info	*robptr = &Robot_info[del_obj->id];
+			robot_info	*robptr = &activeBMTable->robots[del_obj->id];
 			if (robptr->contains_count) {
 				if (((P_Rand() * 16) >> 15) < robptr->contains_prob) {
 					del_obj->contains_count = ((P_Rand() * robptr->contains_count) >> 15) + 1;
@@ -1241,11 +1241,11 @@ void do_explosion_sequence(object *obj)
 			}
 		}
 
-		if ( Robot_info[del_obj->id].exp2_sound_num > -1 )
-			digi_link_sound_to_pos( Robot_info[del_obj->id].exp2_sound_num, del_obj->segnum, 0, spawn_pos, 0, F1_0 );
-			//PLAY_SOUND_3D( Robot_info[del_obj->id].exp2_sound_num, spawn_pos, del_obj->segnum  );
+		if ( activeBMTable->robots[del_obj->id].exp2_sound_num > -1 )
+			digi_link_sound_to_pos( activeBMTable->robots[del_obj->id].exp2_sound_num, del_obj->segnum, 0, spawn_pos, 0, F1_0 );
+			//PLAY_SOUND_3D( activeBMTable->robots[del_obj->id].exp2_sound_num, spawn_pos, del_obj->segnum  );
 
-		// mprintf( 0, "Spawned an explosion of type %d\n", Robot_info[del_obj->id].exp2_vclip_num );
+		// mprintf( 0, "Spawned an explosion of type %d\n", activeBMTable->robots[del_obj->id].exp2_vclip_num );
 
 		//mprintf( 0, "Object %d spawned.\n", obj-Objects );
 		//mprintf( 0, "Explosion at %d,%d,%d\n", obj->pos.x, obj->pos.y, obj->pos.z );
@@ -1358,7 +1358,7 @@ void do_exploding_wall_frame()
 				seg = &Segments[segnum];
 
 				a = Walls[seg->sides[sidenum].wall_num].clip_num;
-				n = WallAnims[a].num_frames;
+				n = activeBMTable->wclips[a].num_frames;
 
 				csegp = &Segments[seg->children[sidenum]];
 				cside = find_connect_side(seg, csegp);

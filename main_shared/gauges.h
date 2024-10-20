@@ -26,8 +26,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 # define MAX_GAUGE_BMS 80	//	increased from 56 to 80 by a very unhappy MK on 10/24/94.
 #endif
 
+#ifdef BUILD_DESCENT1
 extern bitmap_index Gauges[MAX_GAUGE_BMS];   // Array of all gauge bitmaps.
 extern bitmap_index Gauges_hires[MAX_GAUGE_BMS];   // hires gauges
+#endif
 
 //Flags for gauges/hud stuff
 extern uint8_t Reticle_on;

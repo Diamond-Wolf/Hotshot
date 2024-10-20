@@ -353,7 +353,7 @@ uint8_t * digi_lock_sound_data( int soundnum )
 		//if ( !i ) Error( "Error locking sound %d\n", soundnum );
 	}
 	digi_sound_locks[soundnum]++;
-	return GameSounds[soundnum].data;
+	return activePiggyTable->gameSounds[soundnum].data;
 }
 
 void digi_unlock_sound_data( int soundnum )
@@ -493,8 +493,8 @@ int digi_start_sound(short soundnum, fix volume, int pan, int looping, int loop_
 	
 	DigiSampleData.angle = pan;
 	DigiSampleData.volume = fixmuldiv(volume, digi_volume, F1_0);
-	DigiSampleData.data = GameSounds[soundnum].data;
-	DigiSampleData.length = GameSounds[soundnum].length;
+	DigiSampleData.data = activePiggyTable->gameSounds[soundnum].data;
+	DigiSampleData.length = activePiggyTable->gameSounds[soundnum].length;
 	if (looping)
 		DigiSampleData.loop = 1;
 
@@ -596,7 +596,7 @@ int digi_find_channel(int soundno)
 	if (digi_driver_board<1) return -1;
 
 	if (soundno < 0 ) return -1;
-	if (GameSounds[soundno].data==NULL) {
+	if (activePiggyTable->gameSounds[soundno].data==NULL) {
 		Int3();
 		return -1;
 	}

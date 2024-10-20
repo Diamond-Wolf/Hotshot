@@ -22,15 +22,22 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "laser.h"
 #include "weapon.h"
+#include "bm.h"
 
 //----------------- Variables for video clips -------------------
+#ifdef BUILD_DESCENT1
 int 					Num_vclips = 0;
 vclip 				Vclip[VCLIP_MAXNUM];		// General purpose vclips.
+#endif
 
 //draw an object which renders as a vclip
 void draw_vclip_object(object* obj, fix timeleft, int lighted, int vclip_num)
 {
 	int nf, bitmapnum;
+
+	#ifndef BUILD_DESCENT1
+	auto& Vclip = activeBMTable->vclips;
+	#endif
 
 	nf = Vclip[vclip_num].num_frames;
 
@@ -61,6 +68,11 @@ void draw_weapon_vclip(object* obj)
 	//mprintf( 0, "[Drawing obj %d type %d fireball size %x]\n", obj-Objects, Weapon_info[obj->id].weapon_vclip, obj->size );
 
 	Assert(obj->type == OBJ_WEAPON);
+
+	#ifndef BUILD_DESCENT1
+	auto& Weapon_info = activeBMTable->weapons;
+	auto& Vclip = activeBMTable->vclips;
+	#endif
 
 	vclip_num = Weapon_info[obj->id].weapon_vclip;
 

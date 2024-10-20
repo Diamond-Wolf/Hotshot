@@ -920,8 +920,8 @@ void network_process_monitor_vector(int vector)
 		for (j = 0; j < 6; j++)
 		{
 			if (((tm = seg->sides[j].tmap_num2) != 0) &&
-				((ec = TmapInfo[tm & 0x3fff].eclip_num) != -1) &&
-				((bm = Effects[ec].dest_bm_num) != -1))
+				((ec = activeBMTable->tmaps[tm & 0x3fff].eclip_num) != -1) &&
+				((bm = activeBMTable->eclips[ec].dest_bm_num) != -1))
 			{
 				if (vector & (1 << count))
 				{
@@ -947,15 +947,15 @@ int network_create_monitor_vector(void)
 	int vector = 0;
 	segment* seg;
 
-	for (i = 0; i < Num_effects; i++)
+	for (i = 0; i < activeBMTable->eclips.size(); i++)
 	{
-		if (Effects[i].dest_bm_num > 0)
+		if (activeBMTable->eclips[i].dest_bm_num > 0)
 		{
 			for (j = 0; j < num_blown_bitmaps; j++)
-				if (blown_bitmaps[j] == Effects[i].dest_bm_num)
+				if (blown_bitmaps[j] == activeBMTable->eclips[i].dest_bm_num)
 					break;
 			if (j == num_blown_bitmaps) {
-				blown_bitmaps[num_blown_bitmaps++] = Effects[i].dest_bm_num;
+				blown_bitmaps[num_blown_bitmaps++] = activeBMTable->eclips[i].dest_bm_num;
 				Assert(num_blown_bitmaps < NUM_BLOWN_BITMAPS);
 			}
 		}
@@ -972,8 +972,8 @@ int network_create_monitor_vector(void)
 		{
 			if ((tm = seg->sides[j].tmap_num2) != 0)
 			{
-				if (((ec = TmapInfo[tm & 0x3fff].eclip_num) != -1) &&
-					(Effects[ec].dest_bm_num != -1))
+				if (((ec = activeBMTable->tmaps[tm & 0x3fff].eclip_num) != -1) &&
+					(activeBMTable->eclips[ec].dest_bm_num != -1))
 				{
 					//      mprintf((0, "Monitor %d intact.\n", monitor_num));
 					monitor_num++;

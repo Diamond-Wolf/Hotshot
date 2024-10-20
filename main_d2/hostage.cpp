@@ -26,6 +26,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/vclip.h"
 #include "main_shared/newdemo.h"
 #include "stringtable.h"
+#include "main_shared/bm.h"
 
 
 //------------- Globaly used hostage variables --------------------------------------------------
@@ -37,7 +38,7 @@ int Hostage_vclip_num[MAX_HOSTAGE_TYPES];	//vclip num for each tpye of hostage
 //-------------- Renders a hostage ----------------------------------------------------------------
 void draw_hostage(object *obj)
 {
-	draw_object_tmap_rod(obj,Vclip[obj->rtype.vclip_info.vclip_num].frames[obj->rtype.vclip_info.framenum],1);
+	draw_object_tmap_rod(obj,activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].frames[obj->rtype.vclip_info.framenum],1);
 }
 
 //------------- Called once when a hostage is rescued ------------------------------------------

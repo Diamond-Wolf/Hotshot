@@ -78,9 +78,9 @@ typedef struct weapon_info
 // damage_force was a real mess.  Wasn't Difficulty_level based, and was being applied instead of weapon's actual strength.  Now use 2*strength instead. --MK, 01/19/95
 	bitmap_index	picture;				// a picture of the weapon for the cockpit
 	bitmap_index	hires_picture;		// a hires picture of the above
-	#ifdef BUILD_DESCENT1
-		int8_t dum1, dum2, dum3;
-	#endif
+	//#ifdef BUILD_DESCENT1
+	int8_t dum1, dum2, dum3;
+	//#endif
 } weapon_info;
 /*#else
 typedef struct weapon_info {
@@ -209,8 +209,11 @@ typedef struct weapon_info {
 
 #define	NUM_SMART_CHILDREN	6		//	Number of smart children created by default.
 
+#ifdef BUILD_DESCENT1
 extern weapon_info Weapon_info[];
 extern int N_weapon_types;
+#endif
+
 extern void do_weapon_select(int weapon_num, int secondary_flag);
 extern void show_weapon_status(void);
 

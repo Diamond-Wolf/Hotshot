@@ -52,11 +52,10 @@ typedef struct reactor
 
 #define MAX_REACTORS 7
 
-extern int Num_reactors;
+//extern int Num_reactors;
 
-extern reactor Reactors[MAX_REACTORS];
+//extern reactor Reactors[MAX_REACTORS];
 
-extern int	N_controlcen_guns;
 extern int	Control_center_been_hit;
 extern int	Control_center_player_been_seen;
 extern int	Control_center_next_fire_time;
@@ -65,7 +64,12 @@ extern int Dead_controlcen_object_num;
 
 extern vms_vector controlcen_gun_points[MAX_CONTROLCEN_GUNS];
 extern vms_vector controlcen_gun_dirs[MAX_CONTROLCEN_GUNS];
+
+#ifdef BUILD_DESCENT1
+extern int	N_controlcen_guns;
 extern vms_vector Gun_pos[MAX_CONTROLCEN_GUNS];
+extern vms_vector Gun_dir[MAX_CONTROLCEN_GUNS];
+#endif
 
 //D1: return the position & orientation of a gun on the control center object 
 extern void calc_controlcen_gun_point(vms_vector* gun_point, vms_vector* gun_dir, object* obj, int gun_num);

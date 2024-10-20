@@ -31,6 +31,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/newmenu.h"
 #include "main_shared/ai.h"
 #include "misc/args.h"
+#include "main_shared/bm.h"
 
 #include "misc/rand.h"
 
@@ -43,7 +44,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //uint8_t	Default_primary_ammo_level[MAX_PRIMARY_WEAPONS] = {255, 0, 255, 255, 255};
 //uint8_t	Default_secondary_ammo_level[MAX_SECONDARY_WEAPONS] = {3, 0, 0, 0, 0};
 
-//	Convert primary weapons to indices in Weapon_info array.
+//	Convert primary weapons to indices in activeBMTable->weapons array.
 uint8_t Primary_weapon_to_weapon_info[MAX_PRIMARY_WEAPONS] = { LASER_ID, VULCAN_ID, SPREADFIRE_ID, PLASMA_ID, FUSION_ID, SUPER_LASER_ID, GAUSS_ID, HELIX_ID, PHOENIX_ID, OMEGA_ID };
 uint8_t Secondary_weapon_to_weapon_info[MAX_SECONDARY_WEAPONS] = { CONCUSSION_ID, HOMING_ID, PROXIMITY_ID, SMART_ID, MEGA_ID, FLASH_ID, GUIDEDMISS_ID, SUPERPROX_ID, MERCURY_ID, EARTHSHAKER_ID };
 
@@ -59,8 +60,8 @@ uint8_t Primary_weapon_to_powerup[MAX_PRIMARY_WEAPONS] = { POW_LASER,POW_VULCAN_
 //for each Secondary weapon, what kind of powerup gives weapon
 uint8_t Secondary_weapon_to_powerup[MAX_SECONDARY_WEAPONS] = { POW_MISSILE_1,POW_HOMING_AMMO_1,POW_PROXIMITY_WEAPON,POW_SMARTBOMB_WEAPON,POW_MEGA_WEAPON,POW_SMISSILE1_1,POW_GUIDED_MISSILE_1,POW_SMART_MINE,POW_MERCURY_MISSILE_1,POW_EARTHSHAKER_MISSILE };
 
-weapon_info Weapon_info[MAX_WEAPON_TYPES];
-int	N_weapon_types = 0;
+//weapon_info Weapon_info[MAX_WEAPON_TYPES];
+//int	N_weapon_types = 0;
 int8_t	Primary_weapon, Secondary_weapon;
 
 // autoselect ordering
@@ -183,11 +184,11 @@ int player_has_weapon(int weapon_num, int secondary_flag)
 
 		// Special case: Gauss cannon uses vulcan ammo.		
 		if (weapon_num == GAUSS_INDEX) {
-			if (Weapon_info[weapon_index].ammo_usage <= Players[Player_num].primary_ammo[VULCAN_INDEX])
+			if (activeBMTable->weapons[weapon_index].ammo_usage <= Players[Player_num].primary_ammo[VULCAN_INDEX])
 				return_value |= HAS_AMMO_FLAG;
 		}
 		else
-			if (Weapon_info[weapon_index].ammo_usage <= Players[Player_num].primary_ammo[weapon_num])
+			if (activeBMTable->weapons[weapon_index].ammo_usage <= Players[Player_num].primary_ammo[weapon_num])
 				return_value |= HAS_AMMO_FLAG;
 
 		if (weapon_num == OMEGA_INDEX) {	// Hack: Make sure player has energy to omega
@@ -195,7 +196,7 @@ int player_has_weapon(int weapon_num, int secondary_flag)
 				return_value |= HAS_ENERGY_FLAG;
 		}
 		else
-			if (Weapon_info[weapon_index].energy_usage <= Players[Player_num].energy)
+			if (activeBMTable->weapons[weapon_index].energy_usage <= Players[Player_num].energy)
 				return_value |= HAS_ENERGY_FLAG;
 
 	}
@@ -205,10 +206,10 @@ int player_has_weapon(int weapon_num, int secondary_flag)
 		if (Players[Player_num].secondary_weapon_flags & (1 << weapon_num))
 			return_value |= HAS_WEAPON_FLAG;
 
-		if (Weapon_info[weapon_index].ammo_usage <= Players[Player_num].secondary_ammo[weapon_num])
+		if (activeBMTable->weapons[weapon_index].ammo_usage <= Players[Player_num].secondary_ammo[weapon_num])
 			return_value |= HAS_AMMO_FLAG;
 
-		if (Weapon_info[weapon_index].energy_usage <= Players[Player_num].energy)
+		if (activeBMTable->weapons[weapon_index].energy_usage <= Players[Player_num].energy)
 			return_value |= HAS_ENERGY_FLAG;
 	}
 
@@ -1024,7 +1025,7 @@ void process_super_mines_frame(void)
 			parent_num = Objects[i].ctype.laser_info.parent_num;
 
 			Super_mines_yes = 1;
-			if (Objects[i].lifeleft + F1_0 * 2 < Weapon_info[SUPERPROX_ID].lifetime)
+			if (Objects[i].lifeleft + F1_0 * 2 < activeBMTable->weapons[SUPERPROX_ID].lifetime)
 			{
 				vms_vector* bombpos;
 
@@ -1123,7 +1124,7 @@ int spit_powerup(object * spitter, int id, int seed)
 #endif
 	}
 
-	objnum = obj_create(OBJ_POWERUP, id, spitter->segnum, &new_pos, &vmd_identity_matrix, Powerup_info[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+	objnum = obj_create(OBJ_POWERUP, id, spitter->segnum, &new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
 
 	if (objnum < 0)
 	{
@@ -1140,8 +1141,8 @@ int spit_powerup(object * spitter, int id, int seed)
 
 	obj->mtype.phys_info.flags = PF_BOUNCE;
 
-	obj->rtype.vclip_info.vclip_num = Powerup_info[obj->id].vclip_num;
-	obj->rtype.vclip_info.frametime = Vclip[obj->rtype.vclip_info.vclip_num].frame_time;
+	obj->rtype.vclip_info.vclip_num = activeBMTable->powerups[obj->id].vclip_num;
+	obj->rtype.vclip_info.frametime = activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].frame_time;
 	obj->rtype.vclip_info.framenum = 0;
 
 	if (spitter == ConsoleObject)
