@@ -557,7 +557,7 @@ void DoGameOver()
 {
 	//	nm_messagebox( TXT_GAME_OVER, 1, TXT_OK, "" );
 
-	if (Current_mission_num == 0)
+	if (Current_mission_num == 1)
 		scores_maybe_add_player(0);
 
 	Function_mode = FMODE_MENU;
@@ -1595,7 +1595,7 @@ void DoEndGame(void)
 
 	key_flush();
 
-	if (Current_mission_num == 0 && !(Game_mode & GM_MULTI))		//only built-in mission, & not multi
+	if (Current_mission_num == 1 && !(Game_mode & GM_MULTI))		//only built-in mission, & not multi
 	{
 		int played = MOVIE_NOT_PLAYED;	//default is not played
 
@@ -1643,7 +1643,7 @@ void DoEndGame(void)
 #endif
 		DoEndLevelScoreGlitz(0);
 
-	if (Current_mission_num == 0 && !((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_COOP)))
+	if (Current_mission_num == 1 && !((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_COOP)))
 	{
 		WINDOS(
 			dd_gr_set_current_canvas(NULL),
@@ -2169,7 +2169,7 @@ void ShowLevelIntro(int level_num)
 			do_briefing_screens("brief2o.tex", 1);
 #endif
 
-		if (Current_mission_num == 0)
+		if (Current_mission_num == 1)
 		{
 			int movie = 0;
 

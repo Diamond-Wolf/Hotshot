@@ -258,7 +258,7 @@ if (size_check)
 	for (i=0; i<=Highest_object_index; i++)
 		if ((Objects[i].type == OBJ_ROBOT) && (activeBMTable->robots[Objects[i].id].boss_flag)) {
 			if (boss_objnum != -1)		//	There are two bosses in this mine!  i and boss_objnum!
-				Int3();			//do int3 here instead of assert so museum will work
+				;//Int3();			//do int3 here instead of assert so museum will work
 			boss_objnum = i;
 		}
 

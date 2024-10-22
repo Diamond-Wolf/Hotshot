@@ -75,7 +75,7 @@ extern int Saving_movie_frames;
 #define Saving_movie_frames 0
 #endif
 
-#define GET_COCKPIT_INDEX(CockpitMode) activeBMTable->cockpits[CockpitMode + (Current_display_mode ? (activeBMTable->cockpits.size() / 2) : 0)].index
+#define GET_COCKPIT_INDEX(CockpitMode) activeBMTable->cockpits[CockpitMode + ((Current_display_mode && currentGame == G_DESCENT_2) ? (activeBMTable->cockpits.size() / 2) : 0)].index
 
 // Returns the length of the first 'n' characters of a string.
 int string_width(char* s, int n)
@@ -273,7 +273,7 @@ void render_countdown_gauge()
 		if (CurrentDataVersion == DataVer::FULL)
 		{
 			//	On last level, we don't want a countdown.
-			if ((Current_mission_num == 0) && (Current_level_num == Last_level))
+			if ((Current_mission_num == 1) && (Current_level_num == Last_level))
 			{
 				if (!(Game_mode & GM_MULTI))
 					return;
@@ -1155,7 +1155,7 @@ void update_cockpits(int force_redraw)
 	case CM_REAR_VIEW:
 
 		gr_set_current_canvas(&VR_screen_pages);
-		PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + (Current_display_mode ? (activeBMTable->cockpits.size() / 2) : 0)]);
+		PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + ((Current_display_mode && currentGame == G_DESCENT_2) ? (activeBMTable->cockpits.size() / 2) : 0)]);
 
 		gr_ubitmapm(0, 0, &activePiggyTable->gameBitmaps[GET_COCKPIT_INDEX(Cockpit_mode)]);
 		break;
@@ -1170,7 +1170,7 @@ void update_cockpits(int force_redraw)
 
 		gr_set_current_canvas(&VR_screen_pages);
 
-		PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + (Current_display_mode ? (activeBMTable->cockpits.size() / 2) : 0)]);
+		PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + ((Current_display_mode && currentGame == G_DESCENT_2) ? (activeBMTable->cockpits.size() / 2) : 0)]);
 
 		gr_ubitmapm(0, max_window_h, &activePiggyTable->gameBitmaps[GET_COCKPIT_INDEX(Cockpit_mode)]);
 

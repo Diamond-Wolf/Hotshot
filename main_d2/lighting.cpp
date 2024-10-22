@@ -670,7 +670,7 @@ fix compute_object_light(object* obj, vms_vector* rotated_pnt)
 	}
 
 	//First, get static light for this segment
-	light = Segment2s[obj->segnum].static_light;
+	light = (currentGame == G_DESCENT_2 ? Segment2s[obj->segnum].static_light : Segments[obj->segnum].static_light);
 
 	//return light;
 	//Now, maybe return different value to smooth transitions
@@ -697,7 +697,7 @@ fix compute_object_light(object* obj, vms_vector* rotated_pnt)
 
 	//Next, add in headlight on this object
 
-	if (CurrentLogicVersion >= LogicVer::FULL_1_0)
+	if (currentGame == G_DESCENT_2 && CurrentLogicVersion >= LogicVer::FULL_1_0)
 		light += compute_headlight_light_on_object(obj);
 	else
 		light += compute_headlight_light(rotated_pnt, f1_0);

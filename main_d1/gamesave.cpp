@@ -1175,7 +1175,7 @@ int load_game_data(CFILE* LoadFile)
 	{
 		if (!cfseek(LoadFile, game_fileinfo.doors_offset, SEEK_SET)) 
 		{
-			mprintf((1, "load_game_data: active doors present"));
+			mprintf((1, "load_game_data: active doors present\n"));
 
 			if (game_fileinfo.doors_howmany > MAX_DOORS)
 				Error("Level contains over MAX_DOORS(%d) active doors.", MAX_DOORS);

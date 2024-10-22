@@ -162,6 +162,10 @@ grs_bitmap * texmerge_get_cached_bitmap( int tmap_bottom, int tmap_top )
 	auto& Textures = activeBMTable->textures;
 #endif
 
+	//printf("\ntmap data: %d (%d) %d / %d // %d %d / %d\n", tmap_top & 0x3FFF, tmap_top, tmap_bottom, Textures.size(), Textures[tmap_top&0x3FFF].index, Textures[tmap_bottom].index, GameBitmaps.size());
+	//Assert((tmap_top&0x3FFF) < Textures.size() && tmap_bottom < Textures.size());
+	//Assert(Textures[tmap_top&0x3FFF].index < GameBitmaps.size() && Textures[tmap_bottom].index < GameBitmaps.size());
+
 	bitmap_top = &GameBitmaps[Textures[tmap_top&0x3FFF].index];
 	bitmap_bottom = &GameBitmaps[Textures[tmap_bottom].index];
 	
@@ -223,6 +227,7 @@ grs_bitmap * texmerge_get_cached_bitmap( int tmap_bottom, int tmap_top )
 
 void merge_textures_new( int type, grs_bitmap * bottom_bmp, grs_bitmap * top_bmp, uint8_t * dest_data )
 {
+
 	uint8_t * top_data, *bottom_data;
 
 	if ( top_bmp->bm_flags & BM_FLAG_RLE )
@@ -238,7 +243,7 @@ void merge_textures_new( int type, grs_bitmap * bottom_bmp, grs_bitmap * top_bmp
 
 //	Assert( bottom_data != top_data );
 
-	// mprintf( 0, "Type=%d\n", type );
+	//printf("Type=%d\n", type );
 
 	switch( type )	{
 		case 0:

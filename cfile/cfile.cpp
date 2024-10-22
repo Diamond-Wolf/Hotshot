@@ -76,6 +76,15 @@ FILE* cfile_get_filehandle(const char* filename, const char* mode)
 	FILE* fp;
 	char temp[HOG_FILENAME_MAX * 2];
 
+	#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+	if (!_strnicmp(filename, "descent.hog", 11)) {
+			get_full_file_path(temp, "descent.hog", CHOCOLATE_SYSTEM_FILE_DIR);
+			//cfile_init_hogfile(HogFilename, HogFiles, &Num_hogfiles);
+			//Hogfile_initialized = 1;
+			return cfile_get_filehandle(temp, mode);
+	}
+	#endif
+
 	fp = fopen(filename, mode);
 
 #ifndef _WINDOWS

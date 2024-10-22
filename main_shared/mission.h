@@ -32,6 +32,7 @@ typedef struct mle {
 	char	mission_name[MISSION_NAME_LEN+1];
 	uint8_t	anarchy_only_flag;					//if true, mission is anarchy only
 	uint8_t	location;								//see defines below
+	uint8_t gameVersion;
 } mle;
 
 //values that describe where a mission is located
@@ -61,3 +62,5 @@ int load_mission(int mission_num);
 //loads the named mission if exists.
 //Returns true if mission loaded ok, else false.
 int load_mission_by_name(char *mission_name);
+
+void SwitchGame(uint8_t gameVersion);

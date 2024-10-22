@@ -544,7 +544,7 @@ int digi_start_sound(short soundnum, fix volume, int pan, int looping, int loop_
 		return -1;
 	}
 	plat_set_sound_position(sHandle, DigiSampleData.volume, DigiSampleData.angle);
-	plat_set_sound_data(sHandle, DigiSampleData.data, DigiSampleData.length, digi_sample_rate);
+	plat_set_sound_data(sHandle, DigiSampleData.data, DigiSampleData.length, (currentGame == G_DESCENT_2 ? digi_sample_rate : SAMPLE_RATE_11K));
 	if (looping)
 		plat_set_sound_loop_points(sHandle, loop_start, loop_end);
 	plat_start_sound(sHandle, DigiSampleData.loop);

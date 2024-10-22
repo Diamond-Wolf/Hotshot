@@ -643,7 +643,7 @@ void create_name_canv()
 	else
 		snprintf(name_level_left, 128, "Secret Level %i", -Current_level_num);
 
-	if (Current_mission_num == 0 && Current_level_num > 0)		//built-in mission
+	if (Current_mission_num == 1 && Current_level_num > 0)		//built-in mission
 		snprintf(name_level_right, 128, "%s %d: ", system_name[(Current_level_num - 1) / 4], ((Current_level_num - 1) % 4) + 1);
 	else
 		strncpy(name_level_right, " ", 128);

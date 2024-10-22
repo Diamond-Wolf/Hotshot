@@ -254,7 +254,7 @@ void paging_touch_side( segment * segp, int sidenum )
 
 	if (!(WALL_IS_DOORWAY(segp,sidenum) & WID_RENDER_FLAG))
 		return;
-	
+
 	tmap1 = segp->sides[sidenum].tmap_num;
 	paging_touch_wall_effects(tmap1);
 	tmap2 = segp->sides[sidenum].tmap_num2;
@@ -335,6 +335,7 @@ void paging_touch_segment(segment * segp)
 //		paging_draw_orb();
 		paging_touch_object( &Objects[objnum] );
 	}
+
 }
 
 
@@ -379,6 +380,7 @@ void paging_touch_all()
 	for (s=0; s<=Highest_segment_index; s++)	{
 		paging_touch_segment( &Segments[s] );
 	}	
+	
 	paging_touch_walls();
 
 	for ( s=0; s < activeBMTable->powerups.size(); s++ )	{

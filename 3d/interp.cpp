@@ -11,6 +11,7 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 #include <stddef.h>
+#include <stdio.h>
 
 #include "misc/error.h"
 #include "3d/3d.h"
@@ -18,6 +19,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "misc/byteswap.h"
 #include "2d/palette.h"
+#include "main_shared/inferno.h"
 
 #define OP_EOF				0	//eof
 #define OP_DEFPOINTS		1	//defpoints
@@ -100,12 +102,24 @@ int find_color_index(short color)
 	return n_interp_colors - 1;
 }
 
+int find_color_index_pal(int pal_entry) //Thanks Arne
+{
+	for (int i = 0; i < n_interp_colors; i++)
+		if (interp_color_table[i].pal_entry == pal_entry)
+			return i;
+	Assert(n_interp_colors < MAX_INTERP_COLORS);
+	interp_color_table[n_interp_colors].rgb15 = -1;
+	interp_color_table[n_interp_colors].pal_entry = pal_entry;
+	return n_interp_colors++;
+}
+
 void g3_remap_interp_colors()
 {
 	int i;
 	for (i = 0; i < n_interp_colors; i++)
 	{
-		interp_color_table[i].pal_entry = gr_find_closest_color_15bpp(interp_color_table[i].rgb15);
+		if (interp_color_table[i].rgb15 != -1)
+			interp_color_table[i].pal_entry = gr_find_closest_color_15bpp(interp_color_table[i].rgb15);
 	}
 }
 
@@ -220,6 +234,8 @@ dbool g3_draw_polygon_model(void* model_ptr, grs_bitmap** model_bitmaps, vms_ang
 
 	glow_num = -1;		//glow off by default
 
+	int loop = 0;
+
 	while (w(p) != OP_EOF)
 
 		switch (w(p)) 
@@ -255,20 +271,21 @@ dbool g3_draw_polygon_model(void* model_ptr, grs_bitmap** model_bitmaps, vms_ang
 			if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
 			{
 				int i;
-#ifdef BUILD_DESCENT2
-				drawindex = interp_color_table[w(p + 28)].pal_entry;
-				if (glow_num != -1)
-				{
-					light = glow_values[glow_num];
-					glow_num = -1;
-					//printf("light: %d\n", light);
-					//[ISB] there's code to try to vary brightness based on the glow value, but it seems to be unused and buggy.
-					if (light == -2)
-						drawindex = 255;
+				if (currentGame == G_DESCENT_2) {
+					drawindex = interp_color_table[w(p + 28)].pal_entry;
+					if (glow_num != -1)
+					{
+						light = glow_values[glow_num];
+						glow_num = -1;
+						//printf("light: %d\n", light);
+						//[ISB] there's code to try to vary brightness based on the glow value, but it seems to be unused and buggy.
+						if (light == -2)
+							drawindex = 255;
+					}
+				} else {
+					drawindex = interp_color_table[w(p+28)].pal_entry;
 				}
-#else
-				drawindex = w(p + 28);
-#endif
+
 				if (light != -3)
 				{
 					gr_setcolor(drawindex);
@@ -312,11 +329,10 @@ dbool g3_draw_polygon_model(void* model_ptr, grs_bitmap** model_bitmaps, vms_ang
 
 				uvl_list = (g3s_uvl*)(p + 30 + ((nv & ~1) + 1) * 2);
 
-				for (i = 0; i < nv; i++)
+				for (i = 0; i < nv; i++) {
 					uvl_list[i].l = light;
-
-				for (i = 0; i < nv; i++)
 					point_list[i] = Interp_point_list + wp(p + 30)[i];
+				}
 
 				g3_draw_tmap(nv, point_list, uvl_list, model_bitmaps[w(p + 28)]);
 			}
@@ -427,11 +443,10 @@ dbool g3_draw_morphing_model(void* model_ptr, grs_bitmap** model_bitmaps, vms_an
 			int nv = w(p + 2);
 			int i, ntris;
 
-#ifdef BUILD_DESCENT2
-			gr_setcolor(interp_color_table[w(p + 28)].pal_entry);
-#else
-			gr_setcolor(w(p + 28));
-#endif
+			if (currentGame == G_DESCENT_2)
+				gr_setcolor(interp_color_table[w(p + 28)].pal_entry);
+			else
+				gr_setcolor(w(p + 28));
 
 			for (i = 0; i < 2; i++)
 				point_list[i] = Interp_point_list + wp(p + 30)[i];
@@ -565,6 +580,8 @@ void init_model_sub(uint8_t* p)
 	Assert(++nest_count < 1000);
 #endif
 
+	int loop = 0;
+
 	while (w(p) != OP_EOF) 
 	{
 
@@ -590,14 +607,17 @@ void init_model_sub(uint8_t* p)
 			int nv = w(p + 2);
 
 			Assert(nv > 2);		//must have 3 or more points
-#ifdef BUILD_DESCENT2 //[ISB] just in case
-			if (uninit_flag)
-				*wp(p + 28) = (short)interp_color_table[w(p + 28)].rgb15;
-			else
-				*wp(p + 28) = (short)find_color_index(w(p + 28));
-#else
-			*wp(p + 28) = (short)gr_find_closest_color_15bpp(w(p + 28));
-#endif
+			if (currentGame == G_DESCENT_2) {//#ifdef BUILD_DESCENT2 //[ISB] just in case
+				if (uninit_flag)
+					*wp(p + 28) = (short)interp_color_table[w(p + 28)].rgb15;
+				else
+					*wp(p + 28) = (short)find_color_index(w(p + 28));
+			} else {
+				if (uninit_flag)
+					*wp(p + 28) = (short)interp_color_table[w(p + 28)].rgb15;
+				else
+					*wp(p + 28) = (short)find_color_index_pal(w(p + 28));
+			}
 			p += 30 + ((nv & ~1) + 1) * 2;
 			break;
 		}
@@ -635,6 +655,10 @@ void init_model_sub(uint8_t* p)
 		case OP_GLOW:
 			p += 4;
 			break;
+		
+		default:
+			Int3(); 
+			return;
 		}
 	}
 }

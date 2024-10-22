@@ -1151,7 +1151,7 @@ void fuelcen_check_for_hoard_goal(segment* segp)
 void read_matcen(matcen_info* center, FILE* fp)
 {
 	center->robot_flags[0] = file_read_int(fp);
-	center->robot_flags[1] = file_read_int(fp);
+	center->robot_flags[1] = (currentGame == G_DESCENT_2 ? file_read_int(fp) : 0);
 	center->hit_points = file_read_int(fp);
 	center->interval = file_read_int(fp);
 	center->segnum = file_read_short(fp);

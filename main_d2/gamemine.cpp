@@ -722,7 +722,167 @@ void read_special(int segnum, uint8_t bit_mask, CFILE* LoadFile)
 	}
 }
 
-int load_mine_data_compiled(CFILE *LoadFile)
+int LoadMineD1(CFILE* LoadFile)
+{
+	int		i, segnum, sidenum;
+	uint8_t		version;
+	short		temp_short;
+	uint16_t	temp_ushort;
+	uint8_t		bit_mask;
+
+	//	For compiled levels, textures map to themselves, prevent tmap_override always being gray,
+	//	bug which Matt and John refused to acknowledge, so here is Mike, fixing it.
+#ifdef EDITOR
+	for (i = 0; i < MAX_TEXTURES; i++)
+		tmap_xlate_table[i] = i;
+#endif
+
+	//	memset( Segments, 0, sizeof(segment)*MAX_SEGMENTS );
+	fuelcen_reset();
+
+	//=============================== Reading part ==============================
+	version = cfile_read_byte(LoadFile);						// 1 int8_t = compiled version
+	//if (version != COMPILED_MINE_VERSION)
+	//	Error("Got mine version %d when reading level file, expected %d.", version, COMPILED_MINE_VERSION);
+
+	Num_vertices = cfile_read_short(LoadFile);					// 2 bytes = Num_vertices
+	if (Num_vertices > MAX_VERTICES)
+		Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+
+	Num_segments = cfile_read_short(LoadFile);					// 2 bytes = Num_segments
+	if (Num_segments > MAX_SEGMENTS)
+		Error("Level contains more than MAX_SEGMENTS(%d) segments.", MAX_SEGMENTS);
+
+	for (i = 0; i < Num_vertices; i++)
+		read_vector(&(Vertices[i]), LoadFile);
+
+	for (segnum = 0; segnum < Num_segments; segnum++)
+	{
+		int	bit;
+
+#ifdef EDITOR
+		Segments[segnum].segnum = segnum;
+		Segments[segnum].group = 0;
+#endif
+
+		cfread(&bit_mask, sizeof(uint8_t), 1, LoadFile);
+
+		for (bit = 0; bit < MAX_SIDES_PER_SEGMENT; bit++) 
+		{
+			if (bit_mask & (1 << bit))
+				Segments[segnum].children[bit] = cfile_read_short(LoadFile);
+			else
+				Segments[segnum].children[bit] = -1;
+		}
+
+		// Read short Segments[segnum].verts[MAX_VERTICES_PER_SEGMENT]
+		cfread(Segments[segnum].verts, sizeof(short), MAX_VERTICES_PER_SEGMENT, LoadFile);
+		Segments[segnum].objects = -1;
+
+		if (bit_mask & (1 << MAX_SIDES_PER_SEGMENT)) 
+		{
+			// Read uint8_t	Segments[segnum].special
+			Segments[segnum].special = cfile_read_byte(LoadFile);
+			// Read int8_t	Segments[segnum].matcen_num
+			Segments[segnum].matcen_num = cfile_read_byte(LoadFile);
+			// Read short	Segments[segnum].value
+			Segments[segnum].value = cfile_read_short(LoadFile);
+		}
+		else 
+		{
+			Segments[segnum].special = 0;
+			Segments[segnum].matcen_num = -1;
+			Segments[segnum].value = 0;
+		}
+
+		// Read fix	Segments[segnum].static_light (shift down 5 bits, write as short)
+		temp_ushort = cfile_read_short(LoadFile);
+		Segments[segnum].static_light = ((fix)temp_ushort) << 4;
+		//cfread( &Segments[segnum].static_light, sizeof(fix), 1, LoadFile );
+
+		// Read the walls as a 6 int8_t array
+		for (sidenum = 0; sidenum < MAX_SIDES_PER_SEGMENT; sidenum++) 
+		{
+			Segments[segnum].sides[sidenum].pad = 0;
+		}
+
+		cfread(&bit_mask, sizeof(uint8_t), 1, LoadFile);
+		for (sidenum = 0; sidenum < MAX_SIDES_PER_SEGMENT; sidenum++)
+		{
+			uint8_t byte_wallnum;
+
+			if (bit_mask & (1 << sidenum)) 
+			{
+				cfread(&byte_wallnum, sizeof(uint8_t), 1, LoadFile);
+				if (byte_wallnum == 255)
+					Segments[segnum].sides[sidenum].wall_num = -1;
+				else
+					Segments[segnum].sides[sidenum].wall_num = byte_wallnum;
+			}
+			else
+				Segments[segnum].sides[sidenum].wall_num = -1;
+		}
+
+		for (sidenum = 0; sidenum < MAX_SIDES_PER_SEGMENT; sidenum++)
+		{
+			if ((Segments[segnum].children[sidenum] == -1) || (Segments[segnum].sides[sidenum].wall_num != -1)) 
+			{
+				// Read short Segments[segnum].sides[sidenum].tmap_num;
+				temp_ushort = cfile_read_short(LoadFile);
+
+				Segments[segnum].sides[sidenum].tmap_num = temp_ushort & 0x7fff;
+
+				if (!(temp_ushort & 0x8000))
+					Segments[segnum].sides[sidenum].tmap_num2 = 0;
+				else 
+				{
+					// Read short Segments[segnum].sides[sidenum].tmap_num2;
+					Segments[segnum].sides[sidenum].tmap_num2 = cfile_read_short(LoadFile);
+				}
+
+				// Read uvl Segments[segnum].sides[sidenum].uvls[4] (u,v>>5, write as short, l>>1 write as short)
+				for (i = 0; i < 4; i++) 
+				{
+					temp_short = cfile_read_short(LoadFile);
+					Segments[segnum].sides[sidenum].uvls[i].u = ((fix)temp_short) << 5;
+					temp_short = cfile_read_short(LoadFile);
+					Segments[segnum].sides[sidenum].uvls[i].v = ((fix)temp_short) << 5;
+					temp_ushort = cfile_read_short(LoadFile);
+					Segments[segnum].sides[sidenum].uvls[i].l = ((fix)temp_ushort) << 1;
+					//cfread( &Segments[segnum].sides[sidenum].uvls[i].l, sizeof(fix), 1, LoadFile );
+				}
+			}
+			else
+			{
+				Segments[segnum].sides[sidenum].tmap_num = 0;
+				Segments[segnum].sides[sidenum].tmap_num2 = 0;
+				for (i = 0; i < 4; i++) 
+				{
+					Segments[segnum].sides[sidenum].uvls[i].u = 0;
+					Segments[segnum].sides[sidenum].uvls[i].v = 0;
+					Segments[segnum].sides[sidenum].uvls[i].l = 0;
+				}
+			}
+		}
+	}
+
+	Highest_vertex_index = Num_vertices - 1;
+	Highest_segment_index = Num_segments - 1;
+
+	validate_segment_all();			// Fill in side type and normals.
+
+	// Activate fuelcentes
+	for (i = 0; i < Num_segments; i++)
+	{
+		fuelcen_activate(&Segments[i], Segments[i].special);
+	}
+
+	reset_objects(1);		//one object, the player
+
+	return 0;
+}
+
+int LoadMineD2(CFILE *LoadFile)
 {
 	int		i,segnum,sidenum;
 	uint8_t		version;
@@ -953,4 +1113,13 @@ int load_mine_data_compiled(CFILE *LoadFile)
 	reset_objects(1);		//one object, the player
 
 	return 0;
+}
+
+int load_mine_data_compiled(CFILE *LoadFile) {
+	if (currentGame == G_DESCENT_1)
+		return LoadMineD1(LoadFile);
+	else if (currentGame == G_DESCENT_2)
+		return LoadMineD2(LoadFile);
+	else
+		Int3();
 }

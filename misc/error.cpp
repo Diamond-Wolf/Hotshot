@@ -19,6 +19,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "platform/platform.h"
 
+#undef Int3
+
 #ifdef WIN32
 #include <Windows.h>
 #include <debugapi.h>
@@ -83,11 +85,12 @@ void _Assert(int expr, const char* expr_text, const char* filename, int linenum)
 void Int3()
 {
 #ifndef NDEBUG
-#ifdef WIN32
+	printf("Int3 tripped\n");
+# ifdef WIN32
 	DebugBreak();
-#else
+# else
 	raise(SIGTRAP);
-#endif
+# endif
 #endif
 }
 

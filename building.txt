@@ -6,16 +6,10 @@ Once you have all dependencies located, run Premake:
 
 premake5 <action> --sdl2-path=<SDL2 path> --openal-path=<OpenAL path> --fluidsynth-path=<FluidSynth path>
 
-Action is one of the actions specified at https://premake.github.io/docs/Using-Premake.
+Action is one of the actions specified at https://premake.github.io/docs/Using-Premake. Hotshot has been tested with gmake2 on Mac and vs2022 on Windows.
 Additional options are available:
- --build-editor builds the Miner editor (untested)
  --build-network builds network support (untested)
- --texmap=<map> changes the texmapper configuration according to the following values of <map>:
-	descent1 - build both games with Descent 1 texmapper
-	descent2 - build both games with Descent 2 texmapper
-	original - build both games with their original texmapper
-	swap     - build both games with the other game's texmapper
-
-After running Premake, navigate to the build directory. Run make to build both games in debug configuration. You can also specify config=release for an optimized release build, or independently make Hotshot-1 or Hotshot-2 to build just one game.
+ 
+After running Premake, navigate to the build directory. Run make to build both games in debug configuration. You can also specify config=release for an optimized release build.
 
 See platform_notes.txt for further info.

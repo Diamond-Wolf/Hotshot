@@ -15,7 +15,7 @@ macOS platform notes
 -------------------------------------------------------------------------------
 
 Unlike Chocolate Descent, Hotshot builds as a standalone executable rather than
-an app bundle.
+an app bundle. This may change in the future.
 
 The macOS port of Hotshot includes a granular directory structure
 based on the user's home directory.
@@ -29,13 +29,11 @@ Currently, multiplayer is untested, as there are build issues with it.
 In order to run the game with all the bells and whistles, place your resources
 in the following locations:
 
-~/Library/Application Support/Hotshot/Descent 1
-~/Library/Application Support/Hotshot/Descent 2
+~/Library/Application Support/Hotshot
 This is where your player files, saved games, high scores, and config files are
-generated for Descent 1 or Descent 2, respectively.
+generated.
 
-~/Library/Application Support/Hotshot/Descent 1/Data
-~/Library/Application Support/Hotshot/Descent 2/Data
+~/Library/Application Support/Hotshot/Data
 This is where the core game data goes.  For Descent 1, that's:
 descent.hog
 descent.pig
@@ -60,13 +58,11 @@ other-l.mvl
 robots-h.mvl
 water.pig
 
-~/Library/Application Support/Hotshot/Descent 1/Data/Demos
-~/Library/Application Support/Hotshot/Descent 2/Data/Demos
+~/Library/Application Support/Hotshot/Data/Demos
 This is where your recorded demo files should be placed.  These files have a
 ".dem" extension.  Some are included in the retail releases.
 
-~/Library/Application Support/Hotshot/Descent 1/Data/Missions
-~/Library/Application Support/Hotshot/Descent 2/Data/Missions
+~/Library/Application Support/Hotshot/Data/Missions
 This is where mission files should be placed.
 
 For Descent 1, this includes:
@@ -83,8 +79,7 @@ All .rdl files
 All .txt files
 All .hog files which are not descent2.hog
 
-~/Library/Application Support/Hotshot/Descent 1/Data/SoundFonts
-~/Library/Application Support/Hotshot/Descent 2/Data/SoundFonts
+~/Library/Application Support/Hotshot/Data/SoundFonts
 This location is where your .sf2 SoundFont files should be in order to have
 MIDI music in-game.  Once you put a .sf2 file here, you'll need to update
 your Hotshot config file (hotshot.cfg) with the filename.

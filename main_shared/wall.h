@@ -82,10 +82,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define DOOR_OPEN_TIME			i2f(2)		// How long takes to open
 #define DOOR_WAIT_TIME			i2f(5)		// How long before auto door closes
 
+#define MAX_CLIP_FRAMES_D1 20
+#define MAX_CLIP_FRAMES_D2 50
+
 #ifdef BUILD_DESCENT2
-# define MAX_CLIP_FRAMES			50
+# define MAX_CLIP_FRAMES MAX_CLIP_FRAMES_D2
 #else
-# define MAX_CLIP_FRAMES			20
+# define MAX_CLIP_FRAMES MAX_CLIP_FRAMES_D1
 #endif
 
 // WALL_IS_DOORWAY flags.

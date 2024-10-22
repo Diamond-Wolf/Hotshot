@@ -44,6 +44,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main_shared/endlevel.h"
 #include "main_shared/cntrlcen.h"
 #include "misc/byteswap.h"
+#include "main_shared/laser.h"
 
 //uint8_t Sounds[MAX_SOUNDS];
 //uint8_t AltSounds[MAX_SOUNDS];
@@ -86,6 +87,8 @@ bmtable d2Table;
 //bmtable::bmtable() {
 //	Init();
 //}
+
+#define READ_LIMIT(d1, d2) (currentGame == G_DESCENT_1 ? (d1) : (d2))
 
 void bmtable::Init(bool reinit) {
 
@@ -144,6 +147,7 @@ void read_tmap_info(CFILE *fp, int inNumTexturesToRead, int inOffset) {
 			tmap.lighting = cfile_read_fix(fp);
 			tmap.damage = cfile_read_fix(fp);
 			tmap.eclip_num = cfile_read_int(fp);
+			tmap.destroyed = -1;
 		} else {
 			tmap.flags = cfile_read_byte(fp);
 			tmap.pad[0] = cfile_read_byte(fp);
@@ -195,7 +199,7 @@ void read_effect_info(CFILE *fp, int inNumEffectsToRead, int inOffset)
 		activeBMTable->eclips[i].vc.frame_time = cfile_read_fix(fp);
 		activeBMTable->eclips[i].vc.flags = cfile_read_int(fp);
 		activeBMTable->eclips[i].vc.sound_num = cfile_read_short(fp);
-		for (j = 0; j < VCLIP_MAX_FRAMES; j++)
+		for (j = 0; j < VCLIP_MAX_FRAMES; j++) 
 			activeBMTable->eclips[i].vc.frames[j].index = cfile_read_short(fp);
 		activeBMTable->eclips[i].vc.light_value = cfile_read_fix(fp);
 		activeBMTable->eclips[i].time_left = cfile_read_fix(fp);
@@ -225,7 +229,7 @@ void read_wallanim_info(CFILE *fp, int inNumWallAnimsToRead, int inOffset)
 	{
 		activeBMTable->wclips[i].play_time = cfile_read_fix(fp);;
 		activeBMTable->wclips[i].num_frames = cfile_read_short(fp);;
-		for (j = 0; j < MAX_CLIP_FRAMES; j++)
+		for (j = 0; j < READ_LIMIT(MAX_CLIP_FRAMES_D1, MAX_CLIP_FRAMES_D2); j++)
 			activeBMTable->wclips[i].frames[j] = cfile_read_short(fp);
 		activeBMTable->wclips[i].open_sound = cfile_read_short(fp);
 		activeBMTable->wclips[i].close_sound = cfile_read_short(fp);
@@ -256,6 +260,7 @@ void ReadRobotD1(CFILE* fp, int inNumRobotsToRead, int inOffset) {
 		activeBMTable->robots[i].exp2_vclip_num = cfile_read_short(fp);
 		activeBMTable->robots[i].exp2_sound_num = cfile_read_short(fp);
 		activeBMTable->robots[i].weapon_type = cfile_read_short(fp);
+		activeBMTable->robots[i].weapon_type2 = -1;
 		activeBMTable->robots[i].contains_id = cfile_read_byte(fp);
 		activeBMTable->robots[i].contains_count = cfile_read_byte(fp);
 		activeBMTable->robots[i].contains_prob = cfile_read_byte(fp);
@@ -468,6 +473,11 @@ void ReadWeaponD1(CFILE *fp, int inNumWeaponsToRead, int inOffset)
 		activeBMTable->weapons[i].lifetime = cfile_read_fix(fp);
 		activeBMTable->weapons[i].damage_radius = cfile_read_fix(fp);
 		activeBMTable->weapons[i].picture.index = cfile_read_short(fp);		// bitmap_index is a short
+
+		activeBMTable->weapons[i].children = -1;
+		if (i == SMART_ID)
+			activeBMTable->weapons[i].children = PLAYER_SMART_HOMING_ID;
+
 	}
 }
 
@@ -573,7 +583,7 @@ void read_polygon_models(CFILE *fp, int inNumPolygonModelsToRead, int inOffset)
 {
 	int i, j;
 
-	if (inNumPolygonModelsToRead + inOffset > activeBMTable->models.size())
+	if (activeBMTable->models.size() < inNumPolygonModelsToRead + inOffset)
 		activeBMTable->models.resize(inNumPolygonModelsToRead + inOffset);
 
 	for (i = inOffset; i < (inNumPolygonModelsToRead + inOffset); i++)
@@ -784,8 +794,7 @@ void load_exit_models()
 // Read data from piggy.
 // This is called when the editor is OUT.  
 // If editor is in, bm_init_use_table() is called.
-int bm_init()
-{
+int bm_init() {
 	
 	if (shouldAutoClearBMTable) { //Destroy unused table to clear memory
 		if (activeBMTable == &d1Table)
@@ -798,7 +807,7 @@ int bm_init()
 
 	activeBMTable->Init(false);
 
-	init_polygon_models();
+	//init_polygon_models();
 	if (!piggy_init())				// This calls bm_read_all
 		Error("Cannot open pig and/or ham file");
 
@@ -810,21 +819,19 @@ int bm_init()
 	return 0;
 }
 
-#define READ_LIMIT(d1, d2) (currentGame == G_DESCENT_1 ? (d1) : (d2))
+void bm_read_all(CFILE* fp) {
 
-void bm_read_all(CFILE* fp)
-{
 	int i, t;
 
 	auto NumTextures = cfile_read_int(fp);
-	for (i = 0; i < NumTextures; i++)
+	for (i = 0; i < READ_LIMIT(MAX_TEXTURES_D1, NumTextures); i++)
 		activeBMTable->textures.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
-	read_tmap_info(fp, NumTextures, 0);
-
-	t = cfile_read_int(fp);
+	read_tmap_info(fp, READ_LIMIT(MAX_TEXTURES_D1, NumTextures), 0);
 
 	uint8_t sounds[MAX_SOUNDS];
 	uint8_t altSounds[MAX_SOUNDS];
+
+	t = READ_LIMIT(MAX_SOUNDS_D1, cfile_read_int(fp));
 
 	cfread(sounds, sizeof(uint8_t), t, fp);
 	cfread(altSounds, sizeof(uint8_t), t, fp);
@@ -854,7 +861,7 @@ void bm_read_all(CFILE* fp)
 	read_powerup_info(fp, READ_LIMIT(MAX_POWERUP_TYPES_D1, N_powerup_types), 0);
 
 	auto N_polygon_models = cfile_read_int(fp);
-	read_polygon_models(fp, READ_LIMIT(MAX_POLYGON_MODELS_D1, N_polygon_models), 0);
+	read_polygon_models(fp, N_polygon_models, 0);
 
 	for (i = 0; i < N_polygon_models; i++)
 	{
@@ -872,8 +879,11 @@ void bm_read_all(CFILE* fp)
 
 	if (currentGame == G_DESCENT_1) {
 
-		for (i = 0; i < MAX_GAUGE_BMS_D1; i++)
-			activeBMTable->gauges.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
+		for (i = 0; i < MAX_GAUGE_BMS_D1; i++) {
+			bitmap_index bi {(uint16_t)cfile_read_short(fp)};
+			activeBMTable->gauges.push_back(bi);
+			activeBMTable->hiresGauges.push_back(bi);
+		}
 
 		for (i = 0; i < MAX_POLYGON_MODELS_D1; i++)
 			activeBMTable->dyingModels.push_back(cfile_read_int(fp));
@@ -930,9 +940,11 @@ void bm_read_all(CFILE* fp)
 	
 	//if (Num_cockpits > N_COCKPIT_BITMAPS)
 	//	Error("Too many cockpits present in hamfile. Got %d, max %d.", Num_cockpits, N_COCKPIT_BITMAPS);
-	for (i = 0; i < READ_LIMIT(N_COCKPIT_BITMAPS, Num_cockpits); i++) {
+	for (i = 0; i < READ_LIMIT(N_COCKPIT_BITMAPS_D1, Num_cockpits); i++) {
 		activeBMTable->cockpits.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
 	}
+
+	printf("\n%d cockpits\n", Num_cockpits);
 
 	if (currentGame == G_DESCENT_1) {
 
@@ -943,14 +955,20 @@ void bm_read_all(CFILE* fp)
 		activeBMTable->altSounds.assign(altSounds, altSounds + MAX_SOUNDS_D1);
 
 		Num_total_object_types = cfile_read_int(fp); 
+
 		cfread(ObjType, sizeof(int8_t), MAX_OBJTYPE_D1, fp); //Is this actually used anywhere?
 		cfread(ObjId, sizeof(int8_t), MAX_OBJTYPE_D1, fp);
 		for (i = 0; i < MAX_OBJTYPE_D1; i++)
 			ObjStrength[i] = cfile_read_fix(fp);
 
+		for (i=0; i<Num_total_object_types; i++)
+			if (ObjType[i] == OL_CONTROL_CENTER)
+				activeBMTable->reactors[0].model_num = ObjId[i];
+
 		activeBMTable->firstMultiBitmapNum = cfile_read_int(fp);
 		auto N_controlcen_guns = cfile_read_int(fp);
-
+		activeBMTable->reactors[0].n_guns = N_controlcen_guns;
+		activeBMTable->reactorGunPos.resize(N_controlcen_guns);
 		for (i = 0; i < MAX_CONTROLCEN_GUNS_D1; i++) 
 		{
 			activeBMTable->reactorGunPos[i].x = cfile_read_fix(fp);

@@ -2639,7 +2639,7 @@ void sb_draw_shield_num(int shield)
 	gr_set_fontcolor(gr_getcolor(14, 14, 23), -1);
 
 	//erase old one
-	PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + (Current_display_mode ? (activeBMTable->cockpits.size() / 2) : 0)]);
+	PIGGY_PAGE_IN(activeBMTable->cockpits[Cockpit_mode + ((Current_display_mode && currentGame == G_DESCENT_2) ? (activeBMTable->cockpits.size() / 2) : 0)]);
 
 	//PA_DFX(pa_set_back_to_read());
 	gr_setcolor(gr_gpixel(&grd_curcanv->cv_bitmap, SB_SHIELD_NUM_X - 1, SB_SHIELD_NUM_Y - 1));

@@ -52,6 +52,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/byteswap.h"
 #include "platform/findfile.h"
 #include "main_shared/bm.h"
+#include "platform/platform.h"
 
 //#include "unarj.h" //[ISB] goddamnit
 
@@ -115,6 +116,7 @@ uint16_t GameBitmapXlat[MAX_BITMAP_FILES];*/
 int piggy_page_flushed = 0;
 
 #define DBM_FLAG_ABM            64
+#define DBM_FLAG_LARGE			128
 
 typedef struct DiskBitmapHeader
 {
@@ -129,7 +131,14 @@ typedef struct DiskBitmapHeader
 } DiskBitmapHeader;
 
 //[ISB]: The above structure size can vary from system to system, but the size on disk is constant. Calculate that instead. 
-#define BITMAP_HEADER_SIZE 18
+#define BITMAP_HEADER_SIZE_D1 17
+#define BITMAP_HEADER_SIZE_D2 18
+
+#ifdef BUILD_DESCENT1
+# define BITMAP_HEADER_SIZE BITMAP_HEADER_SIZE_D1
+#else
+# define BITMAP_HEADER_SIZE BITMAP_HEADER_SIZE_D2
+#endif
 
 typedef struct DiskSoundHeader
 {
@@ -190,12 +199,20 @@ void piggytable::Init() {
 }
 
 void piggytable::SetActive() {
+	//piggy_close();
 	activePiggyTable = this;
 }
 
 piggytable::~piggytable() {
+
 	hashtable_free(&bitmapNames);
 	hashtable_free(&soundNames);
+
+	if (file)
+	{
+		cfclose(file);
+	}
+
 }
 
 bitmap_index piggy_register_bitmap(grs_bitmap* bmp, const char* name, int in_file, uint8_t flag, int offset)
@@ -311,7 +328,7 @@ int piggy_find_sound(const char* name)
 	return i;
 }
 
-CFILE* Piggy_fp = NULL;
+//CFILE* Piggy_fp = NULL;
 
 #define FILENAME_LEN 13
 
@@ -319,15 +336,15 @@ char Current_pigfile[FILENAME_LEN] = "";
 
 void piggy_close_file()
 {
-	if (Piggy_fp)
+	/*if (activePiggyTable->file)
 	{
-		cfclose(Piggy_fp);
-		Piggy_fp = NULL;
+		cfclose(activePiggyTable->file);
+		activePiggyTable->file = NULL;
 		Current_pigfile[0] = 0;
-	}
+	}*/
 }
 
-int Pigfile_initialized = 0;
+//int Pigfile_initialized = 0;
 
 #define PIGFILE_ID              'GIPP'          //PPIG
 #define PIGFILE_VERSION         2
@@ -371,34 +388,37 @@ void piggy_init_pigfile(const char* filename)
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(name, filename, CHOCOLATE_SYSTEM_FILE_DIR);
-	Piggy_fp = cfopen(name, "rb");
+	activePiggyTable->file = cfopen(name, "rb");
 #else
-	Piggy_fp = cfopen(filename, "rb");
+	activePiggyTable->file = cfopen(filename, "rb");
 #endif
 
-	if (!Piggy_fp)
+	if (!activePiggyTable->file)
 	{
 #ifdef EDITOR
 		return;         //if editor, ok to not have pig, because we'll build one
 #else
-		//Piggy_fp = copy_pigfile_from_cd(filename); //[ISB] no
+		//activePiggyTable->file = copy_pigfile_from_cd(filename); //[ISB] no
 #endif
 	}
 
-	if (Piggy_fp) //make sure pig is valid type file & is up-to-date
+	if (activePiggyTable->file) //make sure pig is valid type file & is up-to-date
 	{
 		int pig_id, pig_version;
 
-		pig_id = cfile_read_int(Piggy_fp);
-		pig_version = cfile_read_int(Piggy_fp);
-		if (pig_id != PIGFILE_ID || pig_version != PIGFILE_VERSION)
+		pig_id = cfile_read_int(activePiggyTable->file);
+		pig_version = cfile_read_int(activePiggyTable->file);
+		if (pig_id > 0x10000 && pig_id < 0x100000 && pig_version > 100 && pig_version < 800) {
+			cfseek(activePiggyTable->file, pig_id, SEEK_SET);
+		}
+		else if (pig_id != PIGFILE_ID || pig_version != PIGFILE_VERSION)
 		{
-			cfclose(Piggy_fp);              //out of date pig
-			Piggy_fp = NULL;                        //..so pretend it's not here
+			cfclose(activePiggyTable->file);              //out of date pig
+			activePiggyTable->file = NULL;                        //..so pretend it's not here
 		}
 	}
 
-	if (!Piggy_fp)
+	if (!activePiggyTable->file)
 	{
 #ifdef EDITOR
 		return;         //if editor, ok to not have pig, because we'll build one
@@ -408,47 +428,52 @@ void piggy_init_pigfile(const char* filename)
 	}
 
 	strncpy(Current_pigfile, filename, sizeof(Current_pigfile));
-	N_bitmaps = cfile_read_int(Piggy_fp);
-	header_size = N_bitmaps * BITMAP_HEADER_SIZE;
-	data_start = header_size + cftell(Piggy_fp);
-	data_size = cfilelength(Piggy_fp) - data_start;
+	N_bitmaps = cfile_read_int(activePiggyTable->file);
+
+	int N_sounds = (currentGame == G_DESCENT_1 ? cfile_read_int(activePiggyTable->file) : 0);
+
+	header_size = N_bitmaps * (currentGame == G_DESCENT_1 ? BITMAP_HEADER_SIZE_D1 : BITMAP_HEADER_SIZE_D2);
+	data_start = header_size + cftell(activePiggyTable->file) + N_sounds * 20;
+	data_size = cfilelength(activePiggyTable->file) - data_start;
 	//Num_bitmap_files = 1;
 
-	for (i = 0; i < N_bitmaps; i++)
-	{
-		cfread(bmh.name, 8, 1, Piggy_fp);
-		bmh.dflags = cfile_read_byte(Piggy_fp);
-		bmh.width = cfile_read_byte(Piggy_fp);
-		bmh.height = cfile_read_byte(Piggy_fp);
-		bmh.wh_extra = cfile_read_byte(Piggy_fp);
-		bmh.flags = cfile_read_byte(Piggy_fp);
-		bmh.avg_color = cfile_read_byte(Piggy_fp);
-		bmh.offset = cfile_read_int(Piggy_fp);
+	if (currentGame != G_DESCENT_1) {
+		for (i = 0; i < N_bitmaps; i++)
+		{
+			cfread(bmh.name, 8, 1, activePiggyTable->file);
+			bmh.dflags = cfile_read_byte(activePiggyTable->file);
+			bmh.width = cfile_read_byte(activePiggyTable->file);
+			bmh.height = cfile_read_byte(activePiggyTable->file);
+			bmh.wh_extra = (currentGame == G_DESCENT_2 ? cfile_read_byte(activePiggyTable->file) : 0);
+			bmh.flags = cfile_read_byte(activePiggyTable->file);
+			bmh.avg_color = cfile_read_byte(activePiggyTable->file);
+			bmh.offset = cfile_read_int(activePiggyTable->file);
 
-		memcpy(temp_name_read, bmh.name, 8);
-		temp_name_read[8] = 0;
-		if (bmh.dflags & DBM_FLAG_ABM)
-			snprintf(temp_name, 16, "%s#%d", temp_name_read, bmh.dflags & 63);
-		else
-			strcpy(temp_name, temp_name_read);
-		memset(&temp_bitmap, 0, sizeof(grs_bitmap));
-		temp_bitmap.bm_w = temp_bitmap.bm_rowsize = bmh.width + ((short)(bmh.wh_extra & 0x0f) << 8);
-		temp_bitmap.bm_h = bmh.height + ((short)(bmh.wh_extra & 0xf0) << 4);
-		temp_bitmap.bm_flags = BM_FLAG_PAGED_OUT;
-		temp_bitmap.avg_color = bmh.avg_color;
-		temp_bitmap.bm_data = Piggy_bitmap_cache_data;
+			memcpy(temp_name_read, bmh.name, 8);
+			temp_name_read[8] = 0;
+			if (bmh.dflags & DBM_FLAG_ABM)
+				snprintf(temp_name, 16, "%s#%d", temp_name_read, bmh.dflags & 63);
+			else
+				strcpy(temp_name, temp_name_read);
+			memset(&temp_bitmap, 0, sizeof(grs_bitmap));
+			temp_bitmap.bm_w = temp_bitmap.bm_rowsize = bmh.width + ((short)(bmh.wh_extra & 0x0f) << 8);
+			temp_bitmap.bm_h = bmh.height + ((short)(bmh.wh_extra & 0xf0) << 4);
+			temp_bitmap.bm_flags = BM_FLAG_PAGED_OUT;
+			temp_bitmap.avg_color = bmh.avg_color;
+			temp_bitmap.bm_data = Piggy_bitmap_cache_data;
 
-		uint8_t flag = 0;
-		//GameBitmapFlags[i + 1] = 0;
-		if (bmh.flags & BM_FLAG_TRANSPARENT) flag |= BM_FLAG_TRANSPARENT;
-		if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) flag |= BM_FLAG_SUPER_TRANSPARENT;
-		if (bmh.flags & BM_FLAG_NO_LIGHTING) flag |= BM_FLAG_NO_LIGHTING;
-		if (bmh.flags & BM_FLAG_RLE) flag |= BM_FLAG_RLE;
-		if (bmh.flags & BM_FLAG_RLE_BIG) flag |= BM_FLAG_RLE_BIG;
+			uint8_t flag = 0;
+			//GameBitmapFlags[i + 1] = 0;
+			if (bmh.flags & BM_FLAG_TRANSPARENT) flag |= BM_FLAG_TRANSPARENT;
+			if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) flag |= BM_FLAG_SUPER_TRANSPARENT;
+			if (bmh.flags & BM_FLAG_NO_LIGHTING) flag |= BM_FLAG_NO_LIGHTING;
+			if (bmh.flags & BM_FLAG_RLE) flag |= BM_FLAG_RLE;
+			if (bmh.flags & BM_FLAG_RLE_BIG) flag |= BM_FLAG_RLE_BIG;
 
-		int offset = bmh.offset + data_start;
-		//Assert((i + 1) == Num_bitmap_files); 
-		piggy_register_bitmap(&temp_bitmap, temp_name, 1, flag, offset);
+			int offset = bmh.offset + data_start;
+			//Assert((i + 1) == Num_bitmap_files); 
+			piggy_register_bitmap(&temp_bitmap, temp_name, 1, flag, offset);
+		}
 	}
 
 #ifdef EDITOR
@@ -467,7 +492,7 @@ void piggy_init_pigfile(const char* filename)
 	//	load_exit_models();
 #endif
 
-	Pigfile_initialized = 1;
+	activePiggyTable->piggyInitialized = true;
 }
 
 #define FILENAME_LEN 13
@@ -501,13 +526,17 @@ void piggy_new_pigfile(const char* pigname)
 	if (_strnfcmp(Current_pigfile, pigname, sizeof(Current_pigfile)) == 0)
 		return;         //already have correct pig
 
-	if (!Pigfile_initialized) //have we ever opened a pigfile?
+	if (!activePiggyTable->piggyInitialized) //have we ever opened a pigfile?
 	{
 		piggy_init_pigfile(pigname);            //..no, so do initialization stuff
 		return;
 	}
-	else
-		piggy_close_file();             //close old pig if still open
+	else if (currentGame == G_DESCENT_1) {
+		printf("init new in d1");
+		return;
+	}
+
+	piggy_close_file();             //close old pig if still open
 
 	Piggy_bitmap_cache_next = 0;            //free up cache
 
@@ -515,51 +544,54 @@ void piggy_new_pigfile(const char* pigname)
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(name, pigname, CHOCOLATE_SYSTEM_FILE_DIR);
-	Piggy_fp = cfopen(name, "rb");
+	activePiggyTable->file = cfopen(name, "rb");
 #else
-	Piggy_fp = cfopen(pigname, "rb");
+	activePiggyTable->file = cfopen(pigname, "rb");
 #endif
 
 #ifndef EDITOR
-	//if (!Piggy_fp)
-	//	Piggy_fp = copy_pigfile_from_cd(pigname);
+	//if (!activePiggyTable->file)
+	//	activePiggyTable->file = copy_pigfile_from_cd(pigname);
 #endif
 
-	if (Piggy_fp) //make sure pig is valid type file & is up-to-date
+	if (activePiggyTable->file) //make sure pig is valid type file & is up-to-date
 	{
 		int pig_id, pig_version;
 
-		pig_id = cfile_read_int(Piggy_fp);
-		pig_version = cfile_read_int(Piggy_fp);
-		if (pig_id != PIGFILE_ID || pig_version != PIGFILE_VERSION)
-		{
-			cfclose(Piggy_fp);              //out of date pig
-			Piggy_fp = NULL;                        //..so pretend it's not here
+		cfseek(activePiggyTable->file, 0, SEEK_SET);
+
+		pig_id = cfile_read_int(activePiggyTable->file);
+		pig_version = cfile_read_int(activePiggyTable->file);
+		if (pig_id > 0x10000 && pig_id < 0x100000 && pig_version > 100 && pig_version < 800) {
+			cfseek(activePiggyTable->file, pig_id, SEEK_SET);
+		} else if (pig_id != PIGFILE_ID || pig_version != PIGFILE_VERSION) {
+			cfclose(activePiggyTable->file);              //out of date pig
+			activePiggyTable->file = NULL;                        //..so pretend it's not here
 		}
 	}
 
 #ifndef EDITOR
-	if (!Piggy_fp) Error("Piggy_fp not defined in piggy_new_pigfile.");
+	if (!activePiggyTable->file) Error("activePiggyTable->file not defined in piggy_new_pigfile.");
 #endif
 
-	if (Piggy_fp)
+	if (activePiggyTable->file)
 	{
 
-		N_bitmaps = cfile_read_int(Piggy_fp);
+		N_bitmaps = cfile_read_int(activePiggyTable->file);
 		header_size = N_bitmaps * BITMAP_HEADER_SIZE;
-		data_start = header_size + cftell(Piggy_fp);
-		data_size = cfilelength(Piggy_fp) - data_start;
+		data_start = header_size + cftell(activePiggyTable->file);
+		data_size = cfilelength(activePiggyTable->file) - data_start;
 
 		for (i = 1; i <= N_bitmaps; i++)
 		{
-			cfread(bmh.name, 8, 1, Piggy_fp);
-			bmh.dflags = cfile_read_byte(Piggy_fp);
-			bmh.width = cfile_read_byte(Piggy_fp);
-			bmh.height = cfile_read_byte(Piggy_fp);
-			bmh.wh_extra = cfile_read_byte(Piggy_fp);
-			bmh.flags = cfile_read_byte(Piggy_fp);
-			bmh.avg_color = cfile_read_byte(Piggy_fp);
-			bmh.offset = cfile_read_int(Piggy_fp);
+			cfread(bmh.name, 8, 1, activePiggyTable->file);
+			bmh.dflags = cfile_read_byte(activePiggyTable->file);
+			bmh.width = cfile_read_byte(activePiggyTable->file);
+			bmh.height = cfile_read_byte(activePiggyTable->file);
+			bmh.wh_extra = cfile_read_byte(activePiggyTable->file);
+			bmh.flags = cfile_read_byte(activePiggyTable->file);
+			bmh.avg_color = cfile_read_byte(activePiggyTable->file);
+			bmh.offset = cfile_read_int(activePiggyTable->file);
 
 			memcpy(temp_name_read, bmh.name, 8);
 			temp_name_read[8] = 0;
@@ -755,7 +787,7 @@ void piggy_new_pigfile(const char* pigname)
 
 uint8_t bogus_data[64 * 64];
 grs_bitmap bogus_bitmap;
-uint8_t bogus_bitmap_initialized = 0;
+//uint8_t bogus_bitmap_initialized = 0;
 digi_sound bogus_sound;
 
 extern void bm_read_all(CFILE* fp);
@@ -937,7 +969,241 @@ int read_sndfile()
 	return 1;
 }
 
-int piggy_init(void)
+int PiggyInitD1()
+{
+	int sbytes = 0;
+	char temp_name_read[16];
+	char temp_name[16];
+	grs_bitmap temp_bitmap;
+	digi_sound temp_sound;
+	DiskBitmapHeader bmh;
+	DiskSoundHeader sndh;
+	int header_size, N_bitmaps, N_sounds;
+	int i, size, length, x, y;
+	const char* filename;
+	int read_sounds = 1;
+	int Pigdata_start;
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
+#endif
+
+	//hashtable_init(&AllBitmapsNames, MAX_BITMAP_FILES);
+	//hashtable_init(&AllDigiSndNames, MAX_SOUND_FILES);
+	
+	if (FindArg("-nosound") || (digi_driver_board < 1)) 
+	{
+		read_sounds = 0;
+		mprintf((0, "Not loading sound data!!!!!\n"));
+	}
+
+	/*activePiggyTable->gameSounds.resize(MAX_SOUNDS_D1);
+	activePiggyTable->soundOffsets.resize(MAX_SOUNDS_D1);
+
+	for (i = 0; i < MAX_SOUNDS_D1; i++) 
+	{
+		activePiggyTable->gameSounds[i].length = 0;
+		activePiggyTable->gameSounds[i].data = NULL;
+		activePiggyTable->soundOffsets[i] = 0;
+	}*/
+
+	//activePiggyTable->gameBitmaps.resize(MAX_BITMAP_FILES_D1);
+	activePiggyTable->gameBitmapXlat.resize(MAX_BITMAP_FILES_D1);
+
+	for (i = 0; i < MAX_BITMAP_FILES_D1; i++) 
+	{
+		activePiggyTable->gameBitmapXlat[i] = i;
+		//activePiggyTable->gameBitmaps[i].bm_flags = BM_FLAG_PAGED_OUT;
+	}
+
+	if (!activePiggyTable->bogusInitialized) 
+	{
+		int i;
+		uint8_t c;
+		activePiggyTable->bogusInitialized = true;
+		memset(&bogus_bitmap, 0, sizeof(grs_bitmap));
+		bogus_bitmap.bm_w = bogus_bitmap.bm_h = bogus_bitmap.bm_rowsize = 64;
+		bogus_bitmap.bm_data = bogus_data;
+		c = gr_find_closest_color(0, 0, 63);
+		for (i = 0; i < 4096; i++) bogus_data[i] = c;
+		c = gr_find_closest_color(63, 0, 0);
+		// Make a big red X !
+		for (i = 0; i < 64; i++) 
+		{
+			bogus_data[i * 64 + i] = c;
+			bogus_data[i * 64 + (63 - i)] = c;
+		}
+		piggy_register_bitmap(&bogus_bitmap, "bogus", 1, BM_FLAG_PAGED_OUT, 0);
+		bogus_sound.length = 64 * 64;
+		bogus_sound.data = bogus_data;
+		activePiggyTable->gameBitmapOffsets[0] = 0;
+	}
+
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+	get_full_file_path(filename_full_path, "descent.pig", CHOCOLATE_SYSTEM_FILE_DIR);
+#else
+	filename = "DESCENT.PIG";
+#endif
+
+	if (FindArg("-bigpig"))
+		BigPig = 1;
+
+	if (FindArg("-lowmem"))
+		piggy_low_memory = 1;
+
+	if (FindArg("-nolowmem"))
+		piggy_low_memory = 0;
+
+	if (piggy_low_memory)
+		digi_lomem = 1;
+
+	if ((i = FindArg("-piggy"))) 
+	{
+		filename = Args[i + 1];
+		mprintf((0, "Using alternate pigfile, '%s'\n", filename));
+	}
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+	activePiggyTable->file = cfopen(filename_full_path, "rb");
+#else
+	activePiggyTable->file = cfopen(filename, "rb");
+#endif
+	if (activePiggyTable->file == NULL) return 0;
+
+	//cfread(&Pigdata_start, sizeof(int), 1, activePiggyTable->file);
+	Pigdata_start = cfile_read_int(activePiggyTable->file);
+#ifdef EDITOR
+	if (FindArg("-nobm"))
+#endif
+	{
+		bm_read_all(activePiggyTable->file);	// Note connection to above if!!!
+		uint16_t xlat[MAX_BITMAP_FILES];
+		cfread(xlat, sizeof(uint16_t) * MAX_BITMAP_FILES, 1, activePiggyTable->file);
+		activePiggyTable->gameBitmapXlat.assign(xlat, xlat + MAX_BITMAP_FILES);
+	}
+
+	cfseek(activePiggyTable->file, Pigdata_start, SEEK_SET);
+	size = cfilelength(activePiggyTable->file) - Pigdata_start;
+	length = size;
+	mprintf((0, "\nReading data (%d KB) ", size / 1024));
+
+	cfread(&N_bitmaps, sizeof(int), 1, activePiggyTable->file);
+	size -= sizeof(int);
+	cfread(&N_sounds, sizeof(int), 1, activePiggyTable->file);
+	size -= sizeof(int);
+
+	header_size = (N_bitmaps * BITMAP_HEADER_SIZE_D1) + (N_sounds * SOUND_HEADER_SIZE);
+
+	x = 60; y = 189;
+
+	gr_set_curfont(Gamefonts[GFONT_SMALL]);
+	gr_set_fontcolor(gr_find_closest_color_current(20, 20, 20), -1);
+	gr_printf(0x8000, y - 10, "%s...", TXT_LOADING_DATA);
+	plat_present_canvas(0);
+
+	printf("\n   D1: %d bitmaps to read\nStarting with %d bitmaps\n", N_bitmaps, activePiggyTable->gameBitmaps.size());
+
+	for (i = 0; i < N_bitmaps; i++) 
+	{
+		//cfread(&bmh, sizeof(DiskBitmapHeader), 1, activePiggyTable->file);
+		//size -= sizeof(DiskBitmapHeader);
+		//[ISB] fix platform bugs, hopefully
+		/*	char name[8];
+	uint8_t dflags;
+	uint8_t	width;
+	uint8_t height;
+	uint8_t flags;
+	uint8_t avg_color;
+	int offset;*/
+		cfread(&bmh.name[0], 8 * sizeof(char), 1, activePiggyTable->file);
+		bmh.dflags = cfile_read_byte(activePiggyTable->file);
+		bmh.width = cfile_read_byte(activePiggyTable->file);
+		bmh.height = cfile_read_byte(activePiggyTable->file);
+		bmh.flags = cfile_read_byte(activePiggyTable->file);
+		bmh.avg_color = cfile_read_byte(activePiggyTable->file);
+		bmh.offset = cfile_read_int(activePiggyTable->file);
+		memcpy(temp_name_read, bmh.name, 8);
+		temp_name_read[8] = 0;
+		if (bmh.dflags & DBM_FLAG_ABM)
+			snprintf(temp_name, 16, "%s#%d", temp_name_read, bmh.dflags & 63);
+		else
+			strncpy(temp_name, temp_name_read, 16);
+		memset(&temp_bitmap, 0, sizeof(grs_bitmap));
+		if (bmh.dflags & DBM_FLAG_LARGE)
+			temp_bitmap.bm_w = temp_bitmap.bm_rowsize = bmh.width + 256;
+		else
+			temp_bitmap.bm_w = temp_bitmap.bm_rowsize = bmh.width;
+		temp_bitmap.bm_h = bmh.height;
+		temp_bitmap.bm_flags = BM_FLAG_PAGED_OUT;
+		temp_bitmap.avg_color = bmh.avg_color;
+		temp_bitmap.bm_data = Piggy_bitmap_cache_data;
+
+		//activePiggyTable->gameBitmapFlags[i + 1] = 0;
+		uint8_t flags = 0;
+		if (bmh.flags & BM_FLAG_TRANSPARENT) flags |= BM_FLAG_TRANSPARENT;
+		if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) flags |= BM_FLAG_SUPER_TRANSPARENT;
+		if (bmh.flags & BM_FLAG_NO_LIGHTING) flags |= BM_FLAG_NO_LIGHTING;
+		if (bmh.flags & BM_FLAG_RLE) flags |= BM_FLAG_RLE;
+
+		int offset = bmh.offset + header_size + (sizeof(int) * 2) + Pigdata_start;
+		//Assert((i + 1) == Num_bitmap_files);
+		piggy_register_bitmap(&temp_bitmap, temp_name, 1, flags, offset);
+	}
+
+	printf("Finished with %d bitmaps\n", activePiggyTable->gameBitmaps.size());
+
+	for (i = 0; i < N_sounds; i++) 
+	{
+		//cfread(&sndh, sizeof(DiskSoundHeader), 1, activePiggyTable->file);
+		//[ISB] fix platform bugs, hopefully
+		cfread(&sndh.name, 8 * sizeof(char), 1, activePiggyTable->file);
+		sndh.length = cfile_read_int(activePiggyTable->file);
+		sndh.data_length = cfile_read_int(activePiggyTable->file);
+		sndh.offset = cfile_read_int(activePiggyTable->file);
+		//size -= sizeof(DiskSoundHeader);
+		temp_sound.length = sndh.length;
+		temp_sound.data = (uint8_t*)(sndh.offset + header_size + (sizeof(int) * 2) + Pigdata_start);
+		activePiggyTable->soundOffsets.push_back(sndh.offset + header_size + (sizeof(int) * 2) + Pigdata_start);
+		memcpy(temp_name_read, sndh.name, 8);
+		temp_name_read[8] = 0;
+		piggy_register_sound(&temp_sound, temp_name_read, 1);
+		sbytes += sndh.length;
+		//mprintf(( 0, "%d bytes of sound\n", sbytes ));
+	}
+
+	ClearPiggyCache();
+
+	SoundBits = (uint8_t*)malloc(sbytes + 16);
+	if (SoundBits == NULL)
+		Error("Not enough memory to load DESCENT.PIG sounds\n");
+
+#ifdef EDITOR
+	Piggy_bitmap_cache_size = size - header_size - sbytes + 16;
+	Assert(Piggy_bitmap_cache_size > 0);
+#else
+	Piggy_bitmap_cache_size = PIGGY_BUFFER_SIZE;
+#endif
+	BitmapBits = (uint8_t*)malloc(Piggy_bitmap_cache_size);
+	if (BitmapBits == NULL)
+		Error("Not enough memory to load DESCENT.PIG bitmaps\n");
+	Piggy_bitmap_cache_data = BitmapBits;
+	Piggy_bitmap_cache_next = 0;
+
+	mprintf((0, "\nBitmaps: %d KB   Sounds: %d KB\n", Piggy_bitmap_cache_size / 1024, sbytes / 1024));
+
+	atexit(piggy_close_file);
+
+	//	mprintf( (0, "<<<<Paging in all piggy bitmaps...>>>>>" ));
+	//	for (i=0; i < Num_bitmap_files; i++ )	{
+	//		bitmap_index bi;
+	//		bi.index = i;
+	//		PIGGY_PAGE_IN( bi );
+	//	}
+	//	mprintf( (0, "\n (USed %d / %d KB)\n", Piggy_bitmap_cache_next/1024, (size - header_size - sbytes + 16)/1024 ));
+	//	key_getch();
+
+	return 1;
+}
+
+int PiggyInitD2()
 {
 	int ham_ok = 0, snd_ok = 0;
 	int i;
@@ -953,11 +1219,11 @@ int piggy_init(void)
 		//GameBitmapXlat[i] = i;
 		activePiggyTable->gameBitmapXlat.push_back(i);*/
 
-	if (!bogus_bitmap_initialized)
+	if (!activePiggyTable->bogusInitialized)
 	{
 		int i;
 		uint8_t c;
-		bogus_bitmap_initialized = 1;
+		activePiggyTable->bogusInitialized = true;
 		memset(&bogus_bitmap, 0, sizeof(grs_bitmap));
 		bogus_bitmap.bm_w = bogus_bitmap.bm_h = bogus_bitmap.bm_rowsize = 64;
 		bogus_bitmap.bm_data = bogus_data;
@@ -1010,6 +1276,15 @@ int piggy_init(void)
 	return (ham_ok && snd_ok);               //read ok
 }
 
+int piggy_init() {
+	if (currentGame == G_DESCENT_1)
+		return PiggyInitD1();
+	else if (currentGame == G_DESCENT_2)
+		return PiggyInitD2();
+	else
+		Int3();
+}
+
 int piggy_is_needed(int soundnum)
 {
 	int i;
@@ -1024,9 +1299,36 @@ int piggy_is_needed(int soundnum)
 	return 0;
 }
 
+void ReadSoundsD1() {
+	uint8_t* ptr;
+	int i, sbytes;
 
-void piggy_read_sounds(void)
-{
+	ptr = SoundBits;
+	sbytes = 0;
+
+	for (i = 0; i < activePiggyTable->soundFiles.size(); i++)
+	{
+		digi_sound* snd = &activePiggyTable->gameSounds[i];
+		if (activePiggyTable->soundOffsets[i] > 0) 
+		{
+			if (piggy_is_needed(i)) 
+			{
+				cfseek(activePiggyTable->file, activePiggyTable->soundOffsets[i], SEEK_SET);
+
+				// Read in the sound data!!!
+				snd->data = ptr;
+				ptr += snd->length;
+				sbytes += snd->length;
+				cfread(snd->data, snd->length, 1, activePiggyTable->file);
+			}
+		}
+	}
+
+	mprintf((0, "\nActual Sound usage: %d KB\n", sbytes / 1024));
+
+}
+
+void ReadSoundsD2(void) {
 	CFILE* fp = NULL;
 	uint8_t* ptr;
 	int i, sbytes;
@@ -1092,6 +1394,14 @@ void piggy_read_sounds(void)
 
 }
 
+void piggy_read_sounds() {
+	if (currentGame == G_DESCENT_1)
+		ReadSoundsD1();
+	else if (currentGame == G_DESCENT_2)
+		ReadSoundsD2();
+	else
+		Int3();
+}
 
 extern int descent_critical_error;
 extern unsigned descent_critical_deverror;
@@ -1145,7 +1455,7 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 
 	ReDoIt:
 		descent_critical_error = 0;
-		cfseek(Piggy_fp, activePiggyTable->gameBitmapOffsets[i], SEEK_SET);
+		cfseek(activePiggyTable->file, activePiggyTable->gameBitmapOffsets[i], SEEK_SET);
 		if (descent_critical_error) {
 			piggy_critical_error();
 			goto ReDoIt;
@@ -1154,11 +1464,15 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 		bmp->bm_data = &Piggy_bitmap_cache_data[Piggy_bitmap_cache_next];
 		bmp->bm_flags = activePiggyTable->gameBitmapFlags[i];
 
+		//printf("\n SC %d %d %d", activePiggyTable->gameBitmaps.size(), activePiggyTable->gameBitmapFlags.size(), activePiggyTable->gameBitmapOffsets.size());
+
+		//printf("\n BMP: %hd %hd %hd %hd %hhu %hhu %hd / %hu %hhu", bmp->bm_x, bmp->bm_y, bmp->bm_w, bmp->bm_h, bmp->bm_type, bmp->bm_flags, bmp->bm_rowsize, bmp->bm_selector, bmp->avg_color);
+
 		if (bmp->bm_flags & BM_FLAG_RLE)
 		{
 			int zsize = 0;
 			descent_critical_error = 0;
-			zsize = cfile_read_int(Piggy_fp);
+			zsize = cfile_read_int(activePiggyTable->file);
 			if (descent_critical_error)
 			{
 				piggy_critical_error();
@@ -1169,6 +1483,7 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 			//Assert( Piggy_bitmap_cache_next+zsize < Piggy_bitmap_cache_size );      
 			if (Piggy_bitmap_cache_next + zsize >= Piggy_bitmap_cache_size)
 			{
+				printf("\n Oh no! %d %d %d\n", Piggy_bitmap_cache_next, zsize, Piggy_bitmap_cache_size);
 				Int3();
 				piggy_bitmap_page_out_all();
 				goto ReDoIt;
@@ -1176,7 +1491,7 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 			memcpy(&Piggy_bitmap_cache_data[Piggy_bitmap_cache_next], &zsize, sizeof(int));
 			Piggy_bitmap_cache_next += sizeof(int);
 			descent_critical_error = 0;
-			temp = cfread(&Piggy_bitmap_cache_data[Piggy_bitmap_cache_next], 1, zsize - 4, Piggy_fp);
+			temp = cfread(&Piggy_bitmap_cache_data[Piggy_bitmap_cache_next], 1, zsize - 4, activePiggyTable->file);
 			if (descent_critical_error)
 			{
 				piggy_critical_error();
@@ -1187,13 +1502,15 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 		else
 		{
 			// GET JOHN NOW IF YOU GET THIS ASSERT!!!
-			Assert(Piggy_bitmap_cache_next + (bmp->bm_h * bmp->bm_w) < Piggy_bitmap_cache_size);
+			//Assert(Piggy_bitmap_cache_next + (bmp->bm_h * bmp->bm_w) < Piggy_bitmap_cache_size);
 			if (Piggy_bitmap_cache_next + (bmp->bm_h * bmp->bm_w) >= Piggy_bitmap_cache_size) {
+				printf("\n Oh no! %d %d %d\n", Piggy_bitmap_cache_next, (bmp->bm_h * bmp->bm_w), Piggy_bitmap_cache_size);
+				Int3();
 				piggy_bitmap_page_out_all();
 				goto ReDoIt;
 			}
 			descent_critical_error = 0;
-			temp = cfread(&Piggy_bitmap_cache_data[Piggy_bitmap_cache_next], 1, bmp->bm_h * bmp->bm_w, Piggy_fp);
+			temp = cfread(&Piggy_bitmap_cache_data[Piggy_bitmap_cache_next], 1, bmp->bm_h * bmp->bm_w, activePiggyTable->file);
 			if (descent_critical_error) {
 				piggy_critical_error();
 				goto ReDoIt;
@@ -1535,15 +1852,23 @@ void piggy_dump_all()
 
 #endif
 
+void ClearPiggyCache() {
+	if (BitmapBits) {
+		mem_free(BitmapBits);
+		BitmapBits = NULL;
+	}
+
+	if (SoundBits) {
+		mem_free(SoundBits);
+		SoundBits = NULL;
+	}
+}
+
 void piggy_close()
 {
 	piggy_close_file();
 
-	if (BitmapBits)
-		mem_free(BitmapBits);
-
-	if (SoundBits)
-		mem_free(SoundBits);
+	ClearPiggyCache();
 
 }
 

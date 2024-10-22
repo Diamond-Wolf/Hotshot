@@ -378,14 +378,14 @@ void init_cockpit()
 		mem_free(Game_cockpit_copy_code);
 	Game_cockpit_copy_code  = NULL;
 
-	bitmap_index cbi = activeBMTable->cockpits[CM_STATUS_BAR+(Current_display_mode?(activeBMTable->cockpits.size()/2):0)];
+	bitmap_index cbi = activeBMTable->cockpits[CM_STATUS_BAR+((Current_display_mode && currentGame == G_DESCENT_2)?(activeBMTable->cockpits.size()/2):0)];
 
 	switch( Cockpit_mode )	
 	{
 	case CM_FULL_COCKPIT:
 	case CM_REAR_VIEW:		
 	{
-		bitmap_index cbi = activeBMTable->cockpits[Cockpit_mode+(Current_display_mode?(activeBMTable->cockpits.size()/2):0)];
+		bitmap_index cbi = activeBMTable->cockpits[Cockpit_mode+((Current_display_mode && currentGame == G_DESCENT_2)?(activeBMTable->cockpits.size()/2):0)];
 		grs_bitmap *bm = &activePiggyTable->gameBitmaps[cbi.index];
 
 		//PIGGY_PAGE_IN(cockpit_bitmap[Cockpit_mode+(Current_display_mode?(Num_cockpits/2):0)]);
@@ -643,7 +643,7 @@ int set_screen_mode(int sm)
 			if (VR_screen_flags & VRF_ALLOW_COCKPIT) 
 			{
 				if (Cockpit_mode == CM_STATUS_BAR) {
-					bitmap_index cbi = activeBMTable->cockpits[CM_STATUS_BAR+(Current_display_mode?(activeBMTable->cockpits.size()/2):0)];
+					bitmap_index cbi = activeBMTable->cockpits[CM_STATUS_BAR+((Current_display_mode && currentGame == G_DESCENT_2)?(activeBMTable->cockpits.size()/2):0)];
 		      		max_window_h = grd_curscreen->sc_h - activePiggyTable->gameBitmaps[cbi.index].bm_h;
 				}
 			}
@@ -2111,6 +2111,7 @@ extern int Level_shake_duration;
 //if water or fire level, make occasional sound
 void do_ambient_sounds()
 {
+
 	int has_water,has_lava;
 	int sound;
 
@@ -2268,7 +2269,9 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 
 		process_super_mines_frame();
 		do_seismic_stuff();
-		do_ambient_sounds();
+
+		if (currentGame != G_DESCENT_1)
+			do_ambient_sounds();
 
 		#ifndef NDEBUG
 		if (Speedtest_on)

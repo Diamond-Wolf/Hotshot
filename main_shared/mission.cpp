@@ -27,6 +27,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "inferno.h"
 #include "gameseq.h"
 #include "titles.h"
+#include "bm.h"
 
 #ifdef BUILD_DESCENT2
 # define SANTA
@@ -250,11 +251,11 @@ extern char CDROM_dir[];
 //#endif
 
 //returns 1 if file read ok, else 0
-int read_mission_file(char *filename,int count,int location)
+int read_mission_file(char *filename,int count,int location, uint8_t gameVersion)
 {
 //#ifdef BUILD_DESCENT2
-	if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
-		return 1;
+	//if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
+	//	return 1;
 //#endif
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
@@ -268,13 +269,13 @@ int read_mission_file(char *filename,int count,int location)
 			get_full_file_path(filename2, filename, CHOCOLATE_MISSIONS_DIR);
 			break;
 
-#ifdef BUILD_DESCENT2
+# ifdef BUILD_DESCENT2
 		case ML_CDROM:
 			//This isn't really implemented at this point
 			songs_stop_redbook();
 			Int3();
 			break;
-#endif
+# endif
 
 		default:
 			Int3();
@@ -351,7 +352,8 @@ int read_mission_file(char *filename,int count,int location)
 				*t=0;
 			t = p + strlen(p)-1;
 			while (isspace(*t)) t--;
-			strncpy(Mission_list[count].mission_name,p,MISSION_NAME_LEN);
+			snprintf(Mission_list[count].mission_name, 5, "(%hhd) ", gameVersion);
+			strncpy(Mission_list[count].mission_name + 4, p, MISSION_NAME_LEN - 4);
 		}
 		else
 		{
@@ -364,6 +366,8 @@ int read_mission_file(char *filename,int count,int location)
 		//get mission type 
 		if (p)
 			Mission_list[count].anarchy_only_flag = istok(p,"anarchy");
+
+		Mission_list[count].gameVersion = gameVersion;
 
 		cfclose(mfile);
 
@@ -384,21 +388,14 @@ int build_mission_list(int anarchy_mode)
 	int count=0,special_count=0;
 	FILEFINDSTRUCT find;
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	char search_name[CHOCOLATE_MAX_FILE_PATH_SIZE], temp_buf[CHOCOLATE_MAX_FILE_PATH_SIZE];
-	get_platform_localized_query_string(search_name, CHOCOLATE_MISSIONS_DIR, 
-# ifdef BUILD_DESCENT2
-	"*.mn2"
-# else
-	"*.msn"
-# endif
-	);
+	char search_name_d1[CHOCOLATE_MAX_FILE_PATH_SIZE];
+	char search_name_d2[CHOCOLATE_MAX_FILE_PATH_SIZE];
+	char temp_buf[CHOCOLATE_MAX_FILE_PATH_SIZE];
+	get_platform_localized_query_string(search_name_d1, CHOCOLATE_MISSIONS_DIR, "*.msn");
+	get_platform_localized_query_string(search_name_d2, CHOCOLATE_MISSIONS_DIR, "*.mn2");
 #else
-	char search_name[256] = MISSION_DIR 
-# ifdef BUILD_DESCENT2
-	"*.MN2";
-# else
-	"*.MSN";
-# endif
+	char search_name_d1[256] = MISSION_DIR "*.MSN";
+	char search_name_d2[256] = MISSION_DIR "*.MN2";
 #endif
 
 #ifdef BUILD_DESCENT2
@@ -426,29 +423,27 @@ int build_mission_list(int anarchy_mode)
 //@@		return num_missions;
 //@@	}
 
-#ifdef BUILD_DESCENT2
-	if (!read_mission_file(const_cast<char*>(BUILTIN_MISSION),0,ML_CURDIR))		//read built-in first
-		Error("Could not find required mission file <%s>",BUILTIN_MISSION);
-#else
+
+
 	strcpy(Mission_list[0].filename, "");		//no filename for builtin
-	strcpy(Mission_list[0].mission_name, "Descent: First Strike");
+	strcpy(Mission_list[0].mission_name, "(1) Descent: First Strike");
+	Mission_list[0].gameVersion = 1;
+	Mission_list[0].location = ML_CURDIR;
+	
 	count = 1;
-#endif
 
-	special_count = count=1;
+	if (!read_mission_file(const_cast<char*>(BUILTIN_MISSION), 1, ML_CURDIR, 2))		//read built-in first
+		Error("Could not find required mission file <%s>", BUILTIN_MISSION);
 
-	if( !FileFindFirst( search_name, &find ) )
+	special_count = count = 2;
+
+	if( !FileFindFirst( search_name_d1, &find ) )
 	{
 		do	
 		{
-//#ifdef BUILD_DESCENT2
-			if (currentGame == G_DESCENT_2 && _strfcmp(find.name,BUILTIN_MISSION)==0)
-				continue;		//skip the built-in
-//#endif
-
 
 			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
-			if (read_mission_file(find.name, count, ML_MISSIONDIR))
+			if (read_mission_file(find.name, count, ML_MISSIONDIR, 1))
 			{
 				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
 					count++;
@@ -458,7 +453,27 @@ int build_mission_list(int anarchy_mode)
 		FileFindClose();
 	}
 
+	if( !FileFindFirst( search_name_d2, &find ) )
+	{
+		do	
+		{
+			if (_strfcmp(find.name,BUILTIN_MISSION)==0)
+				continue;		//skip the built-in
+
+			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
+			if (read_mission_file(find.name, count, ML_MISSIONDIR, 2))
+			{
+				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
+					count++;
+			} 
+
+		} while( !FileFindNext( &find ) && count<MAX_MISSIONS);
+		FileFindClose();
+	}
+
+
 	//move vertigo to top of mission list
+	/*
 	if (currentGame == G_DESCENT_2) {
 		int i;
 
@@ -483,12 +498,13 @@ int build_mission_list(int anarchy_mode)
 			}
 		}
 	}
+	*/
 
 	if (count>special_count)
 		qsort(&Mission_list[special_count],count-special_count,sizeof(*Mission_list),
 				(int (*)( const void *, const void * ))ml_sort_func);
 
-	load_mission(0);			//set built-in mission as default
+	load_mission(1);			//set built-in mission as default
 	num_missions = count;
 
 	return count;
@@ -503,6 +519,8 @@ void init_extra_robot_movie(char *filename);
 //does not need to be called.  Returns true if mission loaded ok, else false.
 int load_mission(int mission_num)
 {
+	SwitchGame(Mission_list[mission_num].gameVersion);
+
 	CFILE *mfile;
 # if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char buf[CHOCOLATE_MAX_FILE_PATH_SIZE], temp_short_filename[CHOCOLATE_MAX_FILE_PATH_SIZE], *v;
@@ -515,6 +533,8 @@ int load_mission(int mission_num)
 	Current_mission_num = mission_num;
 
 	mprintf(( 0, "Loading mission %d\n", mission_num ));
+
+	printf("\nSwitched mode to game version %hhu\n", Mission_list[mission_num].gameVersion);
 
 	if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
 	{
@@ -576,7 +596,7 @@ int load_mission(int mission_num)
 	strcat(buf, (currentGame == G_DESCENT_1 ? ".MSN" : ".MN2"));
 #endif
 
-	if (currentGame == G_DESCENT_1 && mission_num == 0) 
+	if (mission_num == 0) 
 	{
 		int i;
 
@@ -595,7 +615,7 @@ int load_mission(int mission_num)
 
 		strcpy(Briefing_text_filename, D1_BIM_BRIEFING_FILE);
 		strcpy(Ending_text_filename, D1_BIM_ENDING_FILE);
-		cfile_use_alternate_hogfile(NULL);		//disable alternate
+		cfile_use_alternate_hogfile("descent.hog");		//disable alternate
 	} 
 	else
 	{
@@ -603,10 +623,11 @@ int load_mission(int mission_num)
 		if (mfile == NULL) 
 		{
 			Current_mission_num = -1;
+			printf("\nError opening mfile! %s\n", buf);
 			return 0;		//error!
 		}
 
-		if (mission_num != 0) //for non-builtin missions, load HOG
+		if (mission_num > 1) //for non-builtin missions, load HOG
 		{
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 			strcpy(buf + strlen(buf) - 4, ".hog");
@@ -633,7 +654,6 @@ int load_mission(int mission_num)
 			Briefing_text_filename[0] = 0;
 			Ending_text_filename[0] = 0;
 		}
-
 
 		while (mfgets(buf,80,mfile)) 
 		{
@@ -666,7 +686,6 @@ int load_mission(int mission_num)
 				cfile_use_alternate_hogfile(bufp);
 				mprintf((0, "Hog file override = [%s]\n", bufp));
 			}
-//#ifdef BUILD_DESCENT1
 			else if (currentGame == G_DESCENT_1 && istok(buf, "briefing")) 
 			{
 				if ((v = get_value(buf)) != NULL) 
@@ -685,7 +704,6 @@ int load_mission(int mission_num)
 						strcpy(Ending_text_filename, v);
 				}
 			}
-//#endif
 			else if (istok(buf,"num_levels")) 
 			{
 				if ((v=get_value(buf))!=NULL)
@@ -755,7 +773,6 @@ int load_mission(int mission_num)
 	Current_mission_filename = Mission_list[Current_mission_num].filename;
 	Current_mission_longname = Mission_list[Current_mission_num].mission_name;
 
-//#ifdef BUILD_DESCENT2
 	if (currentGame == G_DESCENT_2 && enhanced_mission) 
 	{
 		char t[50];
@@ -766,7 +783,6 @@ int load_mission(int mission_num)
 		strcat(t,"-l.mvl");
 		init_extra_robot_movie(t);
 	}
-//#endif
 
 	return 1;
 }
@@ -798,3 +814,28 @@ int load_mission_by_name(char *mission_name)
 
 #endif
 //#endif
+
+void SwitchGame(uint8_t gameVersion) {
+
+	switch (gameVersion) {
+
+		case 1:
+			currentGame = G_DESCENT_1;
+			d1Table.SetActive();
+			if (shouldAutoClearBMTable && !activeBMTable->initialized)
+				bm_init();
+			break;
+
+		case 2:
+			currentGame = G_DESCENT_2;
+			d2Table.SetActive();
+			if (shouldAutoClearBMTable && !activeBMTable->initialized)
+				bm_init();
+			break;
+
+		default:
+			Int3();
+
+	}
+
+}

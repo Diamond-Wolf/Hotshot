@@ -122,6 +122,7 @@ int load_palette(const char *name,int used_for_level,int no_change_screen)
 		//up in old palette.  If editor version, we must load the pig after
 		//the palette is loaded so we can remap new textures.
 		#ifndef EDITOR
+		printf("Piggy: %s\n", pigname);
 		piggy_new_pigfile(pigname);
 		#endif
 	}
@@ -132,7 +133,10 @@ int load_palette(const char *name,int used_for_level,int no_change_screen)
 
 		strncpy(last_palette_loaded,name,sizeof(last_palette_loaded));
 
-		gr_use_palette_table(name);
+		if (currentGame == G_DESCENT_1 && !strncmp(name, "descent.256", 11))
+			gr_use_palette_table("palette.256");
+		else
+			gr_use_palette_table(name);
 
 		if (Function_mode == FMODE_GAME && !no_change_screen)
 			gr_remap_bitmap_good( &grd_curscreen->sc_canvas.cv_bitmap, old_pal, -1, -1 );

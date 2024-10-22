@@ -111,6 +111,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MENU_JOIN_TCP_NETGAME                   27
 #define MENU_START_APPLETALK_NETGAME			28
 #define MENU_JOIN_APPLETALK_NETGAME				30
+#define MENU_SWITCH_GAME						31
 
 //ADD_ITEM("Start netgame...", MENU_START_NETGAME, -1 );
 //ADD_ITEM("Send net message...", MENU_SEND_NET_MESSAGE, -1 );
@@ -273,6 +274,7 @@ void create_main_menu(newmenu_item * m, int* menu_choice, int* callers_num_optio
 #endif
 	}
 	ADD_ITEM(const_cast<char*>("  Play song"), MENU_PLAY_SONG, -1);
+	ADD_ITEM(const_cast<char*>("  Switch Game"), MENU_SWITCH_GAME, -1);
 #endif
 
 	* callers_num_options = num_options;
@@ -417,25 +419,43 @@ void do_option(int select)
 
 		break;
 	}
+
+	case MENU_SWITCH_GAME:
+	{
+		if (currentGame == G_DESCENT_1) {
+			currentGame = G_DESCENT_2;
+			d2Table.SetActive();
+			cfile_use_alternate_hogfile(NULL);
+		} else {
+			currentGame = G_DESCENT_1;
+			d1Table.SetActive();
+			cfile_use_alternate_hogfile("descent.hog");
+		}
+
+		//bm_init();
+
+		break;
+	}
+
 #endif
 
 	case MENU_START_IPX_NETGAME:
 #ifdef NETWORK
-		load_mission(0);
+		load_mission(1);
 		network_start_game();
 #endif
 		break;
 
 	case MENU_JOIN_IPX_NETGAME:
 #ifdef NETWORK
-		load_mission(0);
+		load_mission(1);
 		network_join_game();
 #endif
 		break;
 
 	case MENU_START_SERIAL:
 #ifdef NETWORK
-		load_mission(0);
+		load_mission(1);
 		do_ip_address_menu();
 #endif
 		break;

@@ -1380,7 +1380,7 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 	//	Also invulnerable if his cheat for firing weapons is in effect.
 	if (activeBMTable->robots[robot->id].companion)
 		//		if ((Current_mission_num == 0 && Current_level_num == Last_level) || Buddy_dude_cheat)
-		if ((Current_mission_num == 0 && Current_level_num == Last_level))
+		if ((Current_mission_num == 1 && Current_level_num == Last_level))
 			return 0;
 
 	//	if (robot->control_type == CT_REMOTE)
@@ -1393,7 +1393,7 @@ int apply_damage_to_robot(object* robot, fix damage, int killer_objnum)
 
 	//	Do unspeakable hacks to make sure player doesn't die after killing boss.  Or before, sort of.
 	if (activeBMTable->robots[robot->id].boss_flag)
-		if ((Current_mission_num == 0) && Current_level_num == Last_level)
+		if ((Current_mission_num == 1) && Current_level_num == Last_level)
 			if (robot->shields < 0)
 			{
 				if (Game_mode & GM_MULTI)

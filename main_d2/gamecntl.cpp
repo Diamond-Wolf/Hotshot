@@ -2157,25 +2157,32 @@ void FinalCheats(int key)
 		HUD_init_message(TXT_WOWIE_ZOWIE);
 		do_cheat_penalty();
 
-		if (CurrentLogicVersion < LogicVer::FULL_1_1)
-		{
-			if (CurrentLogicVersion == LogicVer::FULL_1_0)
-				Players[Player_num].primary_weapon_flags &= ~HAS_FLAG(SUPER_LASER_INDEX);
+		if (currentGame == G_DESCENT_2) {
+			if (CurrentLogicVersion < LogicVer::FULL_1_1)
+			{
+				if (CurrentLogicVersion == LogicVer::FULL_1_0)
+					Players[Player_num].primary_weapon_flags &= ~HAS_FLAG(SUPER_LASER_INDEX);
 
-			Players[Player_num].primary_weapon_flags = ~((1 << PHOENIX_INDEX) | (1 << OMEGA_INDEX) | (1 << FUSION_INDEX));
-			Players[Player_num].secondary_weapon_flags = ~((1 << SMISSILE4_INDEX) | (1 << MEGA_INDEX) | (1 << SMISSILE5_INDEX));
-		}
-		else
-		{
-			Players[Player_num].primary_weapon_flags = 0xffff ^ HAS_FLAG(SUPER_LASER_INDEX);		//no super laser
-			Players[Player_num].secondary_weapon_flags = 0xffff;
+				Players[Player_num].primary_weapon_flags = ~((1 << PHOENIX_INDEX) | (1 << OMEGA_INDEX) | (1 << FUSION_INDEX));
+				Players[Player_num].secondary_weapon_flags = ~((1 << SMISSILE4_INDEX) | (1 << MEGA_INDEX) | (1 << SMISSILE5_INDEX));
+			}
+			else
+			{
+				Players[Player_num].primary_weapon_flags = 0xffff ^ HAS_FLAG(SUPER_LASER_INDEX);		//no super laser
+				Players[Player_num].secondary_weapon_flags = 0xffff;
+			}
+		} else {
+			Players[Player_num].primary_weapon_flags = 0x1f;
+			Players[Player_num].secondary_weapon_flags = 0x1f;
 		}
 
 		for (i = 0; i < MAX_PRIMARY_WEAPONS; i++)
-			Players[Player_num].primary_ammo[i] = Primary_ammo_max[i];
+			if (Players[Player_num].primary_weapon_flags & (1 << i))
+				Players[Player_num].primary_ammo[i] = Primary_ammo_max[i];
 
 		for (i = 0; i < MAX_SECONDARY_WEAPONS; i++)
-			Players[Player_num].secondary_ammo[i] = Secondary_ammo_max[i];
+			if (Players[Player_num].secondary_weapon_flags & (1 << i))	
+				Players[Player_num].secondary_ammo[i] = Secondary_ammo_max[i];
 
 		if (CurrentLogicVersion < LogicVer::FULL_1_1)
 		{
@@ -2191,7 +2198,7 @@ void FinalCheats(int key)
 			newdemo_record_laser_level(Players[Player_num].laser_level, MAX_LASER_LEVEL);
 
 		Players[Player_num].energy = MAX_ENERGY;
-		Players[Player_num].laser_level = MAX_SUPER_LASER_LEVEL;
+		Players[Player_num].laser_level = (currentGame == G_DESCENT_2 ? MAX_SUPER_LASER_LEVEL : MAX_LASER_LEVEL);
 		Players[Player_num].flags |= PLAYER_FLAGS_QUAD_LASERS;
 		update_laser_weapon_info();
 	}
@@ -2212,15 +2219,19 @@ void FinalCheats(int key)
 		HUD_init_message("%s %s!", TXT_INVULNERABILITY, (Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE) ? TXT_ON : TXT_OFF);
 		Players[Player_num].invulnerable_time = GameTime + i2f(1000);
 	}
-	if (!(strcmp(cryptstring, AccessoryCheat)))
+	if (!strcmp(cryptstring, AccessoryCheat))
 	{
-		do_cheat_penalty();
-		Players[Player_num].flags |= PLAYER_FLAGS_HEADLIGHT;
-		Players[Player_num].flags |= PLAYER_FLAGS_AFTERBURNER;
-		Players[Player_num].flags |= PLAYER_FLAGS_AMMO_RACK;
-		Players[Player_num].flags |= PLAYER_FLAGS_CONVERTER;
+		if (currentGame != G_DESCENT_1) {
+			do_cheat_penalty();
+			Players[Player_num].flags |= PLAYER_FLAGS_HEADLIGHT;
+			Players[Player_num].flags |= PLAYER_FLAGS_AFTERBURNER;
+			Players[Player_num].flags |= PLAYER_FLAGS_AMMO_RACK;
+			Players[Player_num].flags |= PLAYER_FLAGS_CONVERTER;
 
-		HUD_init_message("Accessories!!");
+			HUD_init_message("Accessories!!");
+		} else {
+			HUD_init_message("Wrong game, silly!");
+		}
 	}
 	if (!(strcmp(cryptstring, FullMapCheat)))
 	{

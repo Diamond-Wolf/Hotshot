@@ -2207,9 +2207,10 @@ void create_smart_children(object *objp, int num_smart_children)
 			}
 		}
 
-		//	Get type of weapon for child from parent.
-		if (CurrentLogicVersion >= LogicVer::FULL_1_0)
-		{
+		if (currentGame == G_DESCENT_1 && parent_type == OBJ_ROBOT) {
+			blob_id = ROBOT_SMART_HOMING_ID;
+		} else if (CurrentLogicVersion >= LogicVer::FULL_1_0) {
+			//	Get type of weapon for child from parent.
 			if (objp->type == OBJ_WEAPON)
 			{
 				blob_id = activeBMTable->weapons[objp->id].children;
@@ -2220,9 +2221,7 @@ void create_smart_children(object *objp, int num_smart_children)
 				Assert(objp->type == OBJ_ROBOT);
 				blob_id = ROBOT_SMART_HOMING_ID;
 			}
-		}
-		else
-		{
+		} else {
 			switch (objp->id)
 			{
 			case SUPERPROX_ID:

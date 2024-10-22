@@ -195,7 +195,7 @@ int start_endlevel_movie()
    int r;
 	uint8_t save_pal[768];
 
-	Assert(Current_mission_num == 0);		//only play movie for built-in mission
+	Assert(Current_mission_num == 1);		//only play movie for built-in mission
 
 	Assert(N_MOVIES >= Last_level);
 	Assert(N_MOVIES_SECRET >= -Last_secret_level);
@@ -306,7 +306,7 @@ void start_endlevel_sequence()
 
 	if (Newdemo_state == ND_STATE_PLAYBACK) // don't do this if in playback mode
 	{
-		if (Current_mission_num == 0)		//only play movie for built-in mission
+		if (Current_mission_num == 1)		//only play movie for built-in mission
 			start_endlevel_movie();
 		strcpy(last_palette_loaded,"");		//force palette load next time
 		return;
@@ -335,7 +335,7 @@ void start_endlevel_sequence()
 #endif
 	}
 
-	if (Current_mission_num == 0)//only play movie for built-in mission
+	if (Current_mission_num == 1)//only play movie for built-in mission
 	{		
 		//try playing movie.  If it plays, great. if not, do rendered ending
 		movie_played = MOVIE_NOT_PLAYED;

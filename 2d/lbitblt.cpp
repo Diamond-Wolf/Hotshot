@@ -2,6 +2,8 @@
 #include "2d/gr.h"
 #include "misc/types.h"
 
+#include <cstdio>
+
 void gr_merge_textures(uint8_t* lower, uint8_t* upper, uint8_t* dest)
 {
 	int x, y;
@@ -11,9 +13,8 @@ void gr_merge_textures(uint8_t* lower, uint8_t* upper, uint8_t* dest)
 		{
 			c = upper[64 * y + x];
 			if (c == 255)
-			c = lower[64 * y + x];
+				c = lower[64 * y + x];
 			*dest++ = c;
-	
 		}
 }
 
@@ -28,7 +29,6 @@ void gr_merge_textures_1(uint8_t* lower, uint8_t* upper, uint8_t* dest)
 			if (c == 255)
 				c = lower[64 * y + x];
 			*dest++ = c;
-
 		}
 }
 

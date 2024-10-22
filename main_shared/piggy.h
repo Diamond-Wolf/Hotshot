@@ -18,6 +18,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "digi.h"
 #include "sounds.h"
 #include "misc/hash.h"
+#include "cfile/cfile.h"
 
 #include "inferno.h"
 
@@ -40,8 +41,9 @@ typedef struct bitmap_index
 int piggy_init();
 void piggy_close();
 void piggy_dump_all();
+void ClearPiggyCache();
 #ifdef BUILD_DESCENT2
-bitmap_index piggy_register_bitmap( grs_bitmap * bmp, const char * name, int in_file, uint8_t flag, int offset );
+bitmap_index piggy_register_bitmap( grs_bitmap * bmp, const char * name, int in_file, uint8_t flag, int offset);
 #else
 bitmap_index piggy_register_bitmap( grs_bitmap * bmp, const char * name, int in_file);
 
@@ -77,11 +79,15 @@ void piggy_read_sound_data(digi_sound	*snd);
 
 void piggy_load_level_data();
 
+#define MAX_BITMAP_FILES_D1 1800
+#define MAX_BITMAP_FILES_D2 2620
+
 #ifdef BUILD_DESCENT2
-#define MAX_BITMAP_FILES	2620 // Upped for CD Enhanced
+#define MAX_BITMAP_FILES MAX_BITMAP_FILES_D2
 #else
-#define MAX_BITMAP_FILES	1800
+#define MAX_BITMAP_FILES MAX_BITMAP_FILES_D1
 #endif
+
 #define MAX_SOUND_FILES		MAX_SOUNDS
 
 #ifdef BUILD_DESCENT1
@@ -109,10 +115,13 @@ typedef struct SoundFile {
 #endif
 
 struct piggytable {
-	//int numBitmapFiles;
+	CFILE* file;
 	hashtable bitmapNames;
-	//int numSoundFiles;
 	hashtable soundNames;
+
+	bool bogusInitialized = false;
+	bool piggyInitialized = false;
+
 	std::vector<digi_sound> gameSounds;
 	std::vector<int> soundOffsets;
 	std::vector<grs_bitmap> gameBitmaps;

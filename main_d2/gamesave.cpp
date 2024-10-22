@@ -384,6 +384,11 @@ void verify_object(object* obj)
 		obj->render_type = RT_POLYOBJ;
 		obj->control_type = CT_CNTRLCEN;
 
+		if (currentGame == G_DESCENT_1) {
+			obj->rtype.pobj_info.model_num = activeBMTable->reactors[0].model_num;
+			obj->shields = -1;
+		}
+
 		//@@// Make model number is correct...	
 		//@@for (i=0; i<Num_total_object_types; i++ )	
 		//@@	if ( ObjType[i] == OL_CONTROL_CENTER )		{
@@ -819,6 +824,8 @@ void read_object(object* obj, CFILE* f, int version)
 		obj->rtype.vclip_info.vclip_num = read_int(f);
 		obj->rtype.vclip_info.frametime = read_fix(f);
 		obj->rtype.vclip_info.framenum = read_byte(f);
+		if (obj->rtype.vclip_info.vclip_num >= activeBMTable->vclips.size()) 
+			obj->rtype.vclip_info.vclip_num = 0;
 
 		break;
 
@@ -1062,7 +1069,354 @@ void handle_overflow_delta_light(CFILE* LoadFile, size_t overflow_amount)
 // If level != -1, it loads the filename with extension changed to .min
 // Otherwise it loads the appropriate level mine.
 // returns 0=everything ok, 1=old version, -1=error
-int load_game_data(CFILE* LoadFile)
+int LoadGameDataD1(CFILE* LoadFile)
+{
+	int i, j;
+	int start_offset;
+
+	start_offset = cftell(LoadFile);
+
+	//===================== READ FILE INFO ========================
+
+	// Set default values
+	game_fileinfo.level = -1;
+	game_fileinfo.player_offset = -1;
+	game_fileinfo.player_sizeof = sizeof(player);
+	game_fileinfo.object_offset = -1;
+	game_fileinfo.object_howmany = 0;
+	game_fileinfo.object_sizeof = sizeof(object);
+	game_fileinfo.walls_offset = -1;
+	game_fileinfo.walls_howmany = 0;
+	game_fileinfo.walls_sizeof = sizeof(wall);
+	game_fileinfo.doors_offset = -1;
+	game_fileinfo.doors_howmany = 0;
+	game_fileinfo.doors_sizeof = sizeof(active_door);
+	game_fileinfo.triggers_offset = -1;
+	game_fileinfo.triggers_howmany = 0;
+	game_fileinfo.triggers_sizeof = sizeof(trigger);
+	game_fileinfo.control_offset = -1;
+	game_fileinfo.control_howmany = 0;
+	game_fileinfo.control_sizeof = sizeof(control_center_triggers);
+	game_fileinfo.matcen_offset = -1;
+	game_fileinfo.matcen_howmany = 0;
+	game_fileinfo.matcen_sizeof = sizeof(matcen_info);
+
+	// Read in game_top_fileinfo to get size of saved fileinfo.
+
+	if (cfseek(LoadFile, start_offset, SEEK_SET))
+		Error("Error seeking in gamesave.c");
+
+	if (cfread(&game_top_fileinfo, sizeof(game_top_fileinfo), 1, LoadFile) != 1)
+		Error("Error reading game_top_fileinfo in gamesave.c");
+
+	// Check signature
+	if (game_top_fileinfo.fileinfo_signature != 0x6705)
+		return -1;
+
+	// Check version number
+	if (game_top_fileinfo.fileinfo_version < GAME_COMPATIBLE_VERSION)
+		return -1;
+
+	// Now, Read in the fileinfo
+	if (cfseek(LoadFile, start_offset, SEEK_SET))
+		Error("Error seeking to game_fileinfo in gamesave.c");
+
+	game_fileinfo.fileinfo_signature = cfile_read_short(LoadFile);
+
+	game_fileinfo.fileinfo_version = cfile_read_short(LoadFile);
+	game_fileinfo.fileinfo_sizeof = cfile_read_int(LoadFile);
+	for (i = 0; i < 15; i++)
+		game_fileinfo.mine_filename[i] = cfile_read_byte(LoadFile);
+	game_fileinfo.level = cfile_read_int(LoadFile);
+	game_fileinfo.player_offset = cfile_read_int(LoadFile);				// Player info
+	game_fileinfo.player_sizeof = cfile_read_int(LoadFile);
+	game_fileinfo.object_offset = cfile_read_int(LoadFile);				// Object info
+	game_fileinfo.object_howmany = cfile_read_int(LoadFile);
+	game_fileinfo.object_sizeof = cfile_read_int(LoadFile);
+	game_fileinfo.walls_offset = cfile_read_int(LoadFile);
+	game_fileinfo.walls_howmany = cfile_read_int(LoadFile);
+	game_fileinfo.walls_sizeof = cfile_read_int(LoadFile);
+	game_fileinfo.doors_offset = cfile_read_int(LoadFile);
+	game_fileinfo.doors_howmany = cfile_read_int(LoadFile);
+	game_fileinfo.doors_sizeof = cfile_read_int(LoadFile);
+	game_fileinfo.triggers_offset = cfile_read_int(LoadFile);
+	game_fileinfo.triggers_howmany = cfile_read_int(LoadFile);
+	game_fileinfo.triggers_sizeof = cfile_read_int(LoadFile);
+	game_fileinfo.links_offset = cfile_read_int(LoadFile);
+	game_fileinfo.links_howmany = cfile_read_int(LoadFile);
+	game_fileinfo.links_sizeof = cfile_read_int(LoadFile);
+	game_fileinfo.control_offset = cfile_read_int(LoadFile);
+	game_fileinfo.control_howmany = cfile_read_int(LoadFile);
+	game_fileinfo.control_sizeof = cfile_read_int(LoadFile);
+	game_fileinfo.matcen_offset = cfile_read_int(LoadFile);
+	game_fileinfo.matcen_howmany = cfile_read_int(LoadFile);
+	game_fileinfo.matcen_sizeof = cfile_read_int(LoadFile);
+
+	if (game_top_fileinfo.fileinfo_version >= 14) //load mine filename
+	{
+		cfile_get_string(&Current_level_name[0], LEVEL_NAME_LEN, LoadFile);
+	}
+	else
+		Current_level_name[0] = 0;
+
+	if (game_top_fileinfo.fileinfo_version >= 19) //load pof names
+	{
+		N_save_pof_names = (int)cfile_read_short(LoadFile);
+		if (N_save_pof_names > MAX_POLYGON_MODELS)
+		{
+			//Some levels seem to exceed these limits. Still need to read all of them or else the file pointer won't be at the right place. 
+			char* badLevelHack = (char*)malloc(N_save_pof_names * FILENAME_LEN * sizeof(char));
+
+			cfread(badLevelHack, N_save_pof_names, FILENAME_LEN, LoadFile);
+			memcpy(Save_pof_names, badLevelHack, MAX_POLYGON_MODELS * FILENAME_LEN * sizeof(char));
+
+			free(badLevelHack);
+		}
+		else
+		{
+			cfread(Save_pof_names, N_save_pof_names, FILENAME_LEN, LoadFile);
+		}
+	}
+
+	//===================== READ PLAYER INFO ==========================
+	Object_next_signature = 0;
+
+	//===================== READ OBJECT INFO ==========================
+
+	Gamesave_num_org_robots = 0;
+	Gamesave_num_players = 0;
+
+	if (game_fileinfo.object_offset > -1) 
+	{
+		if (cfseek(LoadFile, game_fileinfo.object_offset, SEEK_SET))
+			Error("Error seeking to object_offset in gamesave.c");
+
+		if (game_fileinfo.object_howmany > MAX_OBJECTS)
+			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);
+
+		for (i = 0; i < game_fileinfo.object_howmany; i++) 
+		{
+			read_object(&Objects[i], LoadFile, game_top_fileinfo.fileinfo_version);
+
+			Objects[i].signature = Object_next_signature++;
+			verify_object(&Objects[i]);
+		}
+	}
+
+	//===================== READ WALL INFO ============================
+	if (game_fileinfo.walls_offset > -1)
+	{
+		if (!cfseek(LoadFile, game_fileinfo.walls_offset, SEEK_SET)) 
+		{
+			if (game_fileinfo.walls_howmany >= MAX_WALLS)
+				Error("Level contains over MAX_WALLS(%d) walls.", MAX_WALLS);
+
+			for (i = 0; i < game_fileinfo.walls_howmany; i++) 
+			{
+				if (game_top_fileinfo.fileinfo_version >= 20) 
+					read_wall(&Walls[i], LoadFile->file);
+				else if (game_top_fileinfo.fileinfo_version >= 17)
+					read_v19_wall(&Walls[i], LoadFile);
+				else 
+					read_v16_wall(&Walls[i], LoadFile);
+			}
+		}
+	}
+	
+	//===================== READ DOOR INFO ============================
+	if (game_fileinfo.doors_offset > -1)
+	{
+		if (!cfseek(LoadFile, game_fileinfo.doors_offset, SEEK_SET)) 
+		{
+			mprintf((1, "load_game_data: active doors present\n"));
+
+			if (game_fileinfo.doors_howmany > MAX_DOORS)
+				Error("Level contains over MAX_DOORS(%d) active doors.", MAX_DOORS);
+
+			for (i = 0; i < game_fileinfo.doors_howmany; i++) 
+			{
+				if (game_top_fileinfo.fileinfo_version >= 20) 
+					read_active_door(&ActiveDoors[i], LoadFile->file);
+				else 
+					read_v19_active_door(&ActiveDoors[i], LoadFile);
+			}
+		}
+	}
+
+	//==================== READ TRIGGER INFO ==========================
+	if (game_fileinfo.triggers_offset > -1)
+	{
+		if (!cfseek(LoadFile, game_fileinfo.triggers_offset, SEEK_SET)) 
+		{
+			if (game_fileinfo.triggers_howmany > MAX_TRIGGERS)
+				Error("Level contains more than MAX_TRIGGERS(%d) triggers.", MAX_TRIGGERS);
+
+			for (i = 0; i < game_fileinfo.triggers_howmany; i++) 
+			{
+				Triggers[i].type = cfile_read_byte(LoadFile);
+				Triggers[i].flags = cfile_read_short(LoadFile);
+				Triggers[i].value = cfile_read_int(LoadFile);
+				Triggers[i].time = cfile_read_int(LoadFile);
+				Triggers[i].link_num = cfile_read_byte(LoadFile);
+				Triggers[i].num_links = cfile_read_short(LoadFile);
+				for (j = 0; j < MAX_WALLS_PER_LINK; j++)
+					Triggers[i].seg[j] = cfile_read_short(LoadFile);
+				for (j = 0; j < MAX_WALLS_PER_LINK; j++)
+					Triggers[i].side[j] = cfile_read_short(LoadFile);
+			}
+		}
+	}
+
+	//================ READ CONTROL CENTER TRIGGER INFO ===============
+	if (game_fileinfo.control_offset > -1)
+	{
+		if (!cfseek(LoadFile, game_fileinfo.control_offset, SEEK_SET)) 
+		{
+			for (i = 0; i < game_fileinfo.control_howmany; i++)
+				ControlCenterTriggers.num_links = read_short(LoadFile);
+			for (j = 0; j < MAX_CONTROLCEN_LINKS; j++)
+				ControlCenterTriggers.seg[j] = read_short(LoadFile);
+			for (j = 0; j < MAX_CONTROLCEN_LINKS; j++)
+				ControlCenterTriggers.side[j] = read_short(LoadFile);
+		}
+	}
+
+	/*
+	if (game_fileinfo.control_offset > -1)
+	{
+		if (!cfseek(LoadFile, game_fileinfo.control_offset, SEEK_SET)) 
+		{
+			for (i = 0; i < game_fileinfo.control_howmany; i++)
+				ControlCenterTriggers.num_links = read_short(LoadFile);
+			for (j = 0; j < MAX_CONTROLCEN_LINKS; j++)
+				ControlCenterTriggers.seg[j] = read_short(LoadFile);
+			for (j = 0; j < MAX_CONTROLCEN_LINKS; j++)
+				ControlCenterTriggers.side[j] = read_short(LoadFile);
+		}
+	}
+	*/
+
+	//================ READ MATERIALOGRIFIZATIONATORS INFO ===============
+	if (game_fileinfo.matcen_offset > -1)
+	{
+		int	j;
+
+		if (!cfseek(LoadFile, game_fileinfo.matcen_offset, SEEK_SET)) 
+		{
+			if (game_fileinfo.matcen_howmany > MAX_ROBOT_CENTERS)
+				Error("Level contains over MAX_ROBOT_CENTERS(%d) matcens.", MAX_ROBOT_CENTERS);
+
+			// mprintf((0, "Reading %i materialization centers.\n", game_fileinfo.matcen_howmany));
+			for (i = 0; i < game_fileinfo.matcen_howmany; i++) 
+			{
+				//Assert(sizeof(RobotCenters[i]) == game_fileinfo.matcen_sizeof);
+				//if (cfread(&RobotCenters[i], game_fileinfo.matcen_sizeof, 1, LoadFile) != 1)
+				//	Error("Error reading RobotCenters in gamesave.c", i);
+				read_matcen(&RobotCenters[i], LoadFile->file);
+				//	Set links in RobotCenters to Station array
+				for (j = 0; j <= Highest_segment_index; j++)
+					if (Segments[j].special == SEGMENT_IS_ROBOTMAKER)
+						if (Segments[j].matcen_num == i)
+							RobotCenters[i].fuelcen_num = Segments[j].value;
+
+				// mprintf((0, "   %i: flags = %08x\n", i, RobotCenters[i].robot_flags));
+			}
+		}
+	}
+
+
+	//========================= UPDATE VARIABLES ======================
+
+	reset_objects(game_fileinfo.object_howmany);
+
+	for (i = 0; i < MAX_OBJECTS; i++) 
+	{
+		Objects[i].next = Objects[i].prev = -1;
+		if (Objects[i].type != OBJ_NONE) 
+		{
+			int objsegnum = Objects[i].segnum;
+
+			if (objsegnum > Highest_segment_index)		//bogus object
+				Objects[i].type = OBJ_NONE;
+			else
+			{
+				Objects[i].segnum = -1;			//avoid Assert()
+				obj_link(i, objsegnum);
+			}
+		}
+	}
+
+	clear_transient_objects(1);		//1 means clear proximity bombs
+
+	// Make sure non-transparent doors are set correctly.
+	for (i = 0; i < Num_segments; i++)
+		for (j = 0; j < MAX_SIDES_PER_SEGMENT; j++) 
+		{
+			side* sidep = &Segments[i].sides[j];
+			if ((sidep->wall_num != -1) && (Walls[sidep->wall_num].clip_num != -1)) 
+			{
+				//mprintf((0, "Checking Wall %d\n", Segments[i].sides[j].wall_num));
+				if (activeBMTable->wclips[Walls[sidep->wall_num].clip_num].flags & WCF_TMAP1) 
+				{
+					//mprintf((0, "Fixing non-transparent door.\n"));
+					sidep->tmap_num = activeBMTable->wclips[Walls[sidep->wall_num].clip_num].frames[0];
+					sidep->tmap_num2 = 0;
+				}
+			}
+		}
+
+
+	Num_walls = game_fileinfo.walls_howmany;
+	reset_walls();
+
+	Num_open_doors = game_fileinfo.doors_howmany;
+	Num_triggers = game_fileinfo.triggers_howmany;
+
+	Num_robot_centers = game_fileinfo.matcen_howmany;
+
+	//fix old wall structs
+	if (game_top_fileinfo.fileinfo_version < 17) 
+	{
+		int segnum, sidenum, wallnum;
+
+		for (segnum = 0; segnum <= Highest_segment_index; segnum++)
+			for (sidenum = 0; sidenum < 6; sidenum++)
+				if ((wallnum = Segments[segnum].sides[sidenum].wall_num) != -1) 
+				{
+					Walls[wallnum].segnum = segnum;
+					Walls[wallnum].sidenum = sidenum;
+				}
+	}
+
+#ifndef NDEBUG
+	{
+		int	sidenum;
+		for (sidenum = 0; sidenum < 6; sidenum++) 
+		{
+			int	wallnum = Segments[Highest_segment_index].sides[sidenum].wall_num;
+			if (wallnum != -1)
+				if ((Walls[wallnum].segnum != Highest_segment_index) || (Walls[wallnum].sidenum != sidenum))
+					Int3();	//	Error.  Bogus walls in this segment.
+								// Consult Yuan or Mike.
+		}
+	}
+#endif
+
+	//create_local_segment_data();
+
+	fix_object_segs();
+
+#ifndef NDEBUG
+	dump_mine_info();
+#endif
+
+	if (game_top_fileinfo.fileinfo_version < GAME_VERSION)
+		return 1;		//means old version
+	else
+		return 0;
+}
+
+int LoadGameDataD2(CFILE* LoadFile)
 {
 	int i, j;
 	int start_offset;
@@ -1257,7 +1611,7 @@ int load_game_data(CFILE* LoadFile)
 					v19_wall w;
 
 					Assert(21 == game_fileinfo.walls_sizeof);
-					mprintf((1, "load_game_data: legacy v19 walls present"));
+					mprintf((1, "load_game_data: legacy v19 walls present\n"));
 					read_v19_wall(&Walls[i], LoadFile);
 				}
 				else 
@@ -1265,7 +1619,7 @@ int load_game_data(CFILE* LoadFile)
 					v16_wall w;
 
 					Assert(9 == game_fileinfo.walls_sizeof);
-					mprintf((1, "load_game_data: legacy v16 walls present"));
+					mprintf((1, "load_game_data: legacy v16 walls present\n"));
 					read_v16_wall(&Walls[i], LoadFile);
 				}
 			}
@@ -1278,7 +1632,7 @@ int load_game_data(CFILE* LoadFile)
 	{
 		if (!cfseek(LoadFile, game_fileinfo.doors_offset, SEEK_SET)) 
 		{
-			mprintf((1, "load_game_data: active doors present"));
+			mprintf((1, "load_game_data: active doors present\n"));
 
 			if (game_fileinfo.doors_howmany > MAX_DOORS)
 				Error("Level contains over MAX_DOORS(%d) active doors.", MAX_DOORS);
@@ -1329,7 +1683,7 @@ int load_game_data(CFILE* LoadFile)
 						v29_trigger trig29;
 						int t;
 
-						mprintf((1, "load_game_data: loading v29 trigger"));
+						mprintf((1, "load_game_data: loading v29 trigger\n"));
 
 						if (cfread(&trig29, game_fileinfo.triggers_sizeof, 1, LoadFile) != 1)
 							Error("Error reading Triggers[%d] in gamesave.c", i);
@@ -1345,10 +1699,11 @@ int load_game_data(CFILE* LoadFile)
 							trig.seg[t] = trig29.seg[t];
 							trig.side[t] = trig29.side[t];
 						}
+
 					}
 					else
 					{
-						mprintf((1, "load_game_data: loading v30 trigger"));
+						mprintf((1, "load_game_data: loading v30 trigger\n"));
 						if (cfread(&trig, game_fileinfo.triggers_sizeof, 1, LoadFile) != 1)
 							Error("Error reading Triggers[%d] in gamesave.c", i);
 					}
@@ -1383,7 +1738,9 @@ int load_game_data(CFILE* LoadFile)
 					else if (trig.flags & TRIGGER_ILLUSORY_WALL)
 						type = TT_ILLUSORY_WALL;
 					else
-						Int3();
+						;//Int3();
+
+					printf("Done trigger flagging\n");
 
 					Triggers[i].type = type;
 					Triggers[i].flags = 0;
@@ -1710,6 +2067,14 @@ int load_game_data(CFILE* LoadFile)
 		return 0;
 }
 
+int load_game_data(CFILE* LoadFile) {
+	if (currentGame == G_DESCENT_1)
+		return LoadGameDataD1(LoadFile);
+	else if (currentGame == G_DESCENT_2)
+		return LoadGameDataD2(LoadFile);
+	else
+		Int3();
+}
 
 int check_segment_connections(void);
 
@@ -1823,6 +2188,8 @@ int load_level(char* filename_passed)
 
 	Assert(sig == 'PLVL');
 
+	printf(" Level version %d\n", version);
+
 	if (version >= 8) //read dummy data
 	{			
 #ifdef SANTA
@@ -1874,7 +2241,9 @@ int load_level(char* filename_passed)
 	else
 		Num_flickering_lights = 0;
 
-	if (version <= 1 || Current_level_palette[0] == 0)
+	if (currentGame == G_DESCENT_1)
+		strcpy(Current_level_palette, "descent.256");
+	else if (version <= 1 || Current_level_palette[0] == 0)
 		strcpy(Current_level_palette, "groupa.256");
 
 	if (version < 6) 
