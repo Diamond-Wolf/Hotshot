@@ -47,11 +47,17 @@ hogfile HogFiles[MAX_HOGFILES];
 char Hogfile_initialized = 0;
 int Num_hogfiles = 0;
 
+hogfile D1HogFiles[MAX_HOGFILES];
+bool d1HogInitialized = 0;
+int numD1Hogfiles = 0;
+
 hogfile AltHogFiles[MAX_HOGFILES];
 char AltHogfile_initialized = 0;
 int AltNum_hogfiles = 0;
+
 char HogFilename[HOG_FILENAME_MAX];
 char AltHogFilename[HOG_FILENAME_MAX];
+char d1HogFilename[HOG_FILENAME_MAX];
 
 char AltHogDir[HOG_FILENAME_MAX];
 char AltHogdir_initialized = 0;
@@ -183,6 +189,20 @@ int cfile_init(const char* hogname)
 		return 0;	//not loaded!
 }
 
+int cfile_init_d1(const char* hogname)
+{
+	Assert(d1HogInitialized == 0);
+
+	if (cfile_init_hogfile(hogname, D1HogFiles, &numD1Hogfiles))
+	{
+		strcpy(d1HogFilename, hogname);
+		d1HogInitialized = 1;
+		return 1;
+	}
+	else
+		return 0;	//not loaded!
+}
+
 FILE* cfile_find_libfile(const char* name, int* length)
 {
 	FILE* fp;
@@ -229,6 +249,19 @@ FILE* cfile_find_libfile(const char* name, int* length)
 			return fp;
 		}
 	}
+
+	for (i = 0; i < numD1Hogfiles; i++)
+	{
+		if (!_stricmp(D1HogFiles[i].name, name))
+		{
+			fp = cfile_get_filehandle(d1HogFilename, "rb");
+			if (fp == NULL) return NULL;
+			fseek(fp, D1HogFiles[i].offset, SEEK_SET);
+			*length = D1HogFiles[i].length;
+			return fp;
+		}
+	}
+
 	return NULL;
 }
 

@@ -550,6 +550,10 @@ int D_DescentMain(int argc, const char** argv)
 		}
 	}
 
+	if (!cfile_init_d1("descent.hog")) {
+		Error("Could not find required file descent.hog");
+	}
+
 	load_text(num_text_strings);
 
 	//print out the banner title
