@@ -604,8 +604,14 @@ void set_sound_sources()
 		{
 			int tm, ec, sn;
 
+			short tmap_num1 = seg->sides[sidenum].tmap_num;
+			short tmap_num2 = seg->sides[sidenum].tmap_num2 & 0x3fff;
+
+			if (tmap_num1 >= activeBMTable->tmaps.size() || tmap_num2 >= activeBMTable->tmaps.size())
+				continue;
+
 			if (WALL_IS_DOORWAY(seg, sidenum) & WID_RENDER_FLAG)
-				if ((((tm = seg->sides[sidenum].tmap_num2) != 0) && ((ec = activeBMTable->tmaps[tm & 0x3fff].eclip_num) != -1)) || ((ec = activeBMTable->tmaps[seg->sides[sidenum].tmap_num].eclip_num) != -1))
+				if ((((tm = tmap_num2) != 0) && ((ec = activeBMTable->tmaps[tm & 0x3fff].eclip_num) != -1)) || ((ec = activeBMTable->tmaps[tmap_num1].eclip_num) != -1))
 					if ((sn = activeBMTable->eclips[ec].sound_num) != -1)
 					{
 						vms_vector pnt;

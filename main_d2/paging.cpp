@@ -256,14 +256,16 @@ void paging_touch_side( segment * segp, int sidenum )
 		return;
 
 	tmap1 = segp->sides[sidenum].tmap_num;
+	if (tmap1 >= activeBMTable->textures.size())
+		return;
+
 	paging_touch_wall_effects(tmap1);
 	tmap2 = segp->sides[sidenum].tmap_num2;
 	if (tmap2 != 0)	{
 		texmerge_get_cached_bitmap( tmap1, tmap2 );
 		paging_touch_wall_effects( tmap2 & 0x3FFF );
 	} else	{
-		PIGGY_PAGE_IN( activeBMTable->textures
-[tmap1] );
+		PIGGY_PAGE_IN( activeBMTable->textures[tmap1] );
 	}
 
 	// PSX STUFF

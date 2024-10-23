@@ -166,8 +166,15 @@ grs_bitmap * texmerge_get_cached_bitmap( int tmap_bottom, int tmap_top )
 	//Assert((tmap_top&0x3FFF) < Textures.size() && tmap_bottom < Textures.size());
 	//Assert(Textures[tmap_top&0x3FFF].index < GameBitmaps.size() && Textures[tmap_bottom].index < GameBitmaps.size());
 
-	bitmap_top = &GameBitmaps[Textures[tmap_top&0x3FFF].index];
-	bitmap_bottom = &GameBitmaps[Textures[tmap_bottom].index];
+	if ((tmap_top & 0x3fff) >= Textures.size())
+		bitmap_top = &GameBitmaps[0]; //bogus
+	else
+		bitmap_top = &GameBitmaps[Textures[tmap_top&0x3FFF].index];
+
+	if (tmap_bottom >= Textures.size())
+		bitmap_bottom = &GameBitmaps[0];
+	else
+		bitmap_bottom = &GameBitmaps[Textures[tmap_bottom].index];
 	
 	orient = ((tmap_top&0xC000)>>14) & 3;
 
@@ -194,14 +201,19 @@ grs_bitmap * texmerge_get_cached_bitmap( int tmap_bottom, int tmap_top )
 	// Make sure the bitmaps are paged in...
 	piggy_page_flushed = 0;
 
-	PIGGY_PAGE_IN(Textures[tmap_top&0x3FFF]);
-	PIGGY_PAGE_IN(Textures[tmap_bottom]);
+	if ((tmap_top & 0x3fff) < Textures.size())
+		PIGGY_PAGE_IN(Textures[tmap_top&0x3FFF]);
+	if (tmap_bottom < Textures.size())
+		PIGGY_PAGE_IN(Textures[tmap_bottom]);
+
 	if (piggy_page_flushed)	
 	{
 		// If cache got flushed, re-read 'em.
 		piggy_page_flushed = 0;
-		PIGGY_PAGE_IN(Textures[tmap_top&0x3FFF]);
-		PIGGY_PAGE_IN(Textures[tmap_bottom]);
+		if ((tmap_top & 0x3fff) < Textures.size())
+			PIGGY_PAGE_IN(Textures[tmap_top&0x3FFF]);
+		if (tmap_bottom < Textures.size())
+			PIGGY_PAGE_IN(Textures[tmap_bottom]);
 	}
 	Assert( piggy_page_flushed == 0 );
 

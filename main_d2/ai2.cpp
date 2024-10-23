@@ -2006,7 +2006,7 @@ int create_gated_robot( int segnum, int object_id, vms_vector *pos)
 //Add some rows for D1 bosses until AI merge
 int	Spew_bots[NUM_D2_BOSSES + 2][MAX_SPEW_BOT] = {
 	{-1, -1, -1},
-	{9, 11, 16},
+	{8, 9, 11},
 	{38, 40, -1},
 	{37, -1, -1},
 	{43, 57, -1},
@@ -2018,7 +2018,7 @@ int	Spew_bots[NUM_D2_BOSSES + 2][MAX_SPEW_BOT] = {
 	{72, 60, 73} 
 };
 
-int	Max_spew_bots[NUM_D2_BOSSES] = {2, 1, 2, 3, 3, 3,  3, 3};
+int	Max_spew_bots[NUM_D2_BOSSES + 2] = {0, 3, 2, 1, 2, 3, 3, 3,  3, 3};
 
 //	----------------------------------------------------------------------------------------------------------
 //	objp points at a boss.  He was presumably just hit and he's supposed to create a bot at the hit location *pos.
@@ -2027,9 +2027,14 @@ int boss_spew_robot(object *objp, vms_vector *pos)
 	int		objnum, segnum;
 	int		boss_index;
 
-	boss_index = activeBMTable->robots[objp->id].boss_flag - BOSS_D2;
+	int8_t bossFlag = activeBMTable->robots[objp->id].boss_flag;
 
-	Assert((boss_index >= 0) && (boss_index < NUM_D2_BOSSES));
+	if (bossFlag < BOSS_D2)
+		boss_index = bossFlag - 1;
+	else
+		boss_index = bossFlag - BOSS_D2 + 2;
+
+	Assert((boss_index >= 0) && (boss_index < NUM_D2_BOSSES + 2));
 
 	segnum = find_point_seg(pos, objp->segnum);
 	if (segnum == -1)
@@ -2309,12 +2314,12 @@ void do_boss_stuff(object *objp, int player_visibility)
 
 	//Assert((boss_id >= BOSS_D2) && (boss_id < BOSS_D2 + NUM_D2_BOSSES));
 
-	mprintf((0, "\nBoss ID: %d", boss_id));
+	//mprintf((0, "\nBoss ID: %d", boss_id));
 
 	if (boss_id >= BOSS_D2)
-		boss_index = boss_id - BOSS_D2 + 3;
+		boss_index = boss_id - BOSS_D2 + 2;
 	else
-		boss_index = boss_id;
+		boss_index = boss_id - 1;
 
 #ifndef NDEBUG
 	if (objp->shields != Prev_boss_shields)

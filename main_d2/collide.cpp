@@ -523,24 +523,31 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 {
 	int tm, tmf, ec, db;
 
+	auto parent_num = blower->ctype.laser_info.parent_num;
+
 	//	If this wall has a trigger and the blower-upper is not the player or the buddy, abort!
-	if (currentGame == G_DESCENT_2 && blower->ctype.laser_info.parent_num >= 0 && blower->ctype.laser_info.parent_num < Objects.size()) {
-		int	ok_to_blow = 0;
+	if (currentGame == G_DESCENT_2 && parent_num >= 0 && parent_num < Objects.size()) {
+		auto objid = Objects[parent_num].id;
+		if (objid < activeBMTable->robots.size()) {
 
-		if (blower->ctype.laser_info.parent_type == OBJ_ROBOT)
-			if (activeBMTable->robots[Objects[blower->ctype.laser_info.parent_num].id].companion)
-				ok_to_blow = 1;
+			int	ok_to_blow = 0;
 
-		if (!(ok_to_blow || (blower->ctype.laser_info.parent_type == OBJ_PLAYER))) {
-			int	trigger_num, wall_num;
+			if (blower->ctype.laser_info.parent_type == OBJ_ROBOT)
+				if (activeBMTable->robots[objid].companion)
+					ok_to_blow = 1;
 
-			wall_num = seg->sides[side].wall_num;
-			if (wall_num != -1) {
-				trigger_num = Walls[wall_num].trigger;
+			if (!(ok_to_blow || (blower->ctype.laser_info.parent_type == OBJ_PLAYER))) {
+				int	trigger_num, wall_num;
 
-				if (trigger_num != -1)
-					return 0;
+				wall_num = seg->sides[side].wall_num;
+				if (wall_num != -1) {
+					trigger_num = Walls[wall_num].trigger;
+
+					if (trigger_num != -1)
+						return 0;
+				}
 			}
+
 		}
 	}
 
@@ -1514,9 +1521,14 @@ int do_boss_weapon_collision(object* robot, object* weapon, vms_vector* collisio
 
 	damage_flag = 1;
 
-	d2_boss_index = activeBMTable->robots[robot->id].boss_flag - BOSS_D2;
+	int boss_id = activeBMTable->robots[robot->id].boss_flag;
 
-	Assert((d2_boss_index >= 0) && (d2_boss_index < NUM_D2_BOSSES));
+	if (boss_id < BOSS_D2)
+		d2_boss_index = boss_id - 1;
+	else
+		d2_boss_index = boss_id - BOSS_D2 + 2;
+
+	Assert((d2_boss_index >= 0) && (d2_boss_index < NUM_D2_BOSSES + 2));
 
 	//	See if should spew a bot.
 	if (weapon->ctype.laser_info.parent_type == OBJ_PLAYER)
@@ -1624,10 +1636,10 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 
 	if (activeBMTable->robots[robot->id].boss_flag) {
 		Boss_hit_time = GameTime;
-		if (activeBMTable->robots[robot->id].boss_flag >= BOSS_D2) {
+		//if (activeBMTable->robots[robot->id].boss_flag >= BOSS_D2) {
 			damage_flag = do_boss_weapon_collision(robot, weapon, collision_point);
 			boss_invul_flag = !damage_flag;
-		}
+		//}
 	}
 
 	//	Put in at request of Jasen (and Adam) because the Buddy-Bot gets in their way.
