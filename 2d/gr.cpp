@@ -172,11 +172,7 @@ int gr_set_mode(int mode)
 	grd_curscreen->sc_canvas.cv_bitmap.bm_data = gr_video_memory;
 	memset(grd_curscreen->sc_canvas.cv_bitmap.bm_data, 0, r * h * NUMSCREENS * sizeof(unsigned char));
 
-#ifndef BUILD_DESCENT2
-	gr_set_current_canvas(NULL);
-#else
 	gr_set_current_canvas(&grd_curscreen->sc_canvas);
-#endif
 
 	//gr_enable_default_palette_loading();
 

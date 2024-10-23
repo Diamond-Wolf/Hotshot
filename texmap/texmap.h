@@ -27,10 +27,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //[ISB] Uncomment for dithering of lighting. Slow since it's perspective only ATM. 
 //#define TEXMAP_DITHER
 
-#ifdef BUILD_DESCENT2
 //variables for clipping the texture-mapper to screen region
 extern int Window_clip_left, Window_clip_bot, Window_clip_right, Window_clip_top;
-#endif
 
  // -------------------------------------------------------------------------------------------------------
 //extern fix compute_lighting_value(g3s_point * vertptr); //[ISB] not used?

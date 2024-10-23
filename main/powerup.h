@@ -74,11 +74,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	POW_FLAG_BLUE				46
 #define	POW_FLAG_RED				47
 
-#ifdef BUILD_DESCENT2
-# define	VULCAN_AMMO_MAX				(392*4)
-#else
-# define	VULCAN_AMMO_MAX				(392*2)
-#endif
+#define	VULCAN_AMMO_MAX				(392*4)
 
 #define	VULCAN_WEAPON_AMMO_AMOUNT	196
 #define	VULCAN_AMMO_AMOUNT			(49*2)
@@ -88,11 +84,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_POWERUP_TYPES_D1 29
 #define MAX_POWERUP_TYPES_D2 50
 
-#ifdef BUILD_DESCENT2
-# define MAX_POWERUP_TYPES MAX_POWERUP_TYPES_D2
-#else
-# define MAX_POWERUP_TYPES MAX_POWERUP_TYPES_D1
-#endif
+#define MAX_POWERUP_TYPES MAX_POWERUP_TYPES_D2
 
 #define	POWERUP_NAME_LENGTH	16		//	Length of a robot or powerup name.
 extern char	Powerup_names[MAX_POWERUP_TYPES][POWERUP_NAME_LENGTH];
@@ -106,11 +98,6 @@ typedef struct powerup_type_info
 	fix	size;			//3d size of longest dimension
 	fix	light;		//	amount of light cast by this powerup, set in bitmaps.tbl
 } powerup_type_info;
-
-#ifdef BUILD_DESCENT1
-extern int N_powerup_types;
-extern powerup_type_info Powerup_info[MAX_POWERUP_TYPES];
-#endif
 
 void draw_powerup(object *obj);
 

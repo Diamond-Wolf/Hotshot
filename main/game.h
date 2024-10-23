@@ -147,25 +147,7 @@ extern int PaletteRedAdd, PaletteGreenAdd, PaletteBlueAdd;
 
 #define	MAX_PALETTE_ADD	30
 
-#ifdef BUILD_DESCENT2
 extern void PALETTE_FLASH_ADD(int dr, int dg, int db);
-#else
-# define PALETTE_FLASH_ADD(_dr,_dg,_db) 						\
-	do {																	\
-		if ((PaletteRedAdd+=(_dr)) > MAX_PALETTE_ADD)		\
-			PaletteRedAdd = MAX_PALETTE_ADD;						\
-		if ((PaletteGreenAdd+=(_dg)) > MAX_PALETTE_ADD)		\
-			PaletteGreenAdd = MAX_PALETTE_ADD;					\
-		if ((PaletteBlueAdd+=(_db)) > MAX_PALETTE_ADD)		\
-			PaletteBlueAdd = MAX_PALETTE_ADD;					\
-		if (PaletteRedAdd < -MAX_PALETTE_ADD)					\
-			PaletteRedAdd = -MAX_PALETTE_ADD;					\
-		if (PaletteGreenAdd < -MAX_PALETTE_ADD)				\
-			PaletteGreenAdd = -MAX_PALETTE_ADD;					\
-		if (PaletteBlueAdd < -MAX_PALETTE_ADD)					\
-			PaletteBlueAdd = -MAX_PALETTE_ADD;					\
-	} while (0)
-#endif
 
 //sets the rgb values for palette flash
 #define PALETTE_FLASH_SET(_r,_g,_b) PaletteRedAdd=(_r), PaletteGreenAdd=(_g), PaletteBlueAdd=(_b)

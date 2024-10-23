@@ -18,11 +18,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_EFFECTS_D1 60
 #define MAX_EFFECTS_D2 110
 
-#ifdef BUILD_DESCENT2
-#define MAX_EFFECTS 110
-#else
-#define MAX_EFFECTS 60
-#endif
+#define MAX_EFFECTS MAX_EFFECTS_D2
 
 //flags for eclips.  If no flags are set, always plays
 
@@ -46,11 +42,6 @@ typedef struct eclip
 	int			sound_num;		//what sound this makes
 	int			segnum,sidenum;	//what seg & side, for one-shot clips
 } eclip;
-
-#ifdef BUILD_DESCENT1
-extern int Num_effects;
-extern eclip Effects[MAX_EFFECTS];
-#endif
 
 // Set up special effects.
 extern void init_special_effects(); 

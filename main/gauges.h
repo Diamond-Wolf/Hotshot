@@ -23,16 +23,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_GAUGE_BMS_D1 80
 #define MAX_GAUGE_BMS_D2 100
 
-#ifdef BUILD_DESCENT2
-# define MAX_GAUGE_BMS MAX_GAUGE_BMS_D2
-#else
-# define MAX_GAUGE_BMS MAX_GAUGE_BMS_D1
-#endif
-
-#ifdef BUILD_DESCENT1
-extern bitmap_index Gauges[MAX_GAUGE_BMS];   // Array of all gauge bitmaps.
-extern bitmap_index Gauges_hires[MAX_GAUGE_BMS];   // hires gauges
-#endif
+#define MAX_GAUGE_BMS MAX_GAUGE_BMS_D2
 
 //Flags for gauges/hud stuff
 extern uint8_t Reticle_on;
@@ -54,11 +45,7 @@ extern void HUD_clear_messages();
 
 // Call to flash a message on the HUD.  Returns true if message drawn.
 //  (message might not be drawn if previous message was same)
-#ifdef BUILD_DESCENT2
 extern int HUD_init_message(const char * format, ... );
-#else
-extern void HUD_init_message(const char * format, ... );
-#endif
 
 #define gauge_message HUD_init_message
 

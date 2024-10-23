@@ -19,11 +19,6 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "multi.h"
 
 // The default socket to use.
-/*#ifdef BUILD_DESCENT2
-#define IPX_DEFAULT_SOCKET 0x5130		// 0x869d
-#else
-#define IPX_DEFAULT_SOCKET 0x5100		// 0x869d
-#endif*/
 
 #define IPX_DEFAULT_SOCKET 0x5200
 

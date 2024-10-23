@@ -141,16 +141,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_SOUNDS_D1 250
 #define MAX_SOUNDS_D2 254 //bad to have sound 255!
 
-#ifdef BUILD_DESCENT2
-# define MAX_SOUNDS MAX_SOUNDS_D2
-#else
-# define MAX_SOUNDS MAX_SOUNDS_D1
-#endif
+#define MAX_SOUNDS MAX_SOUNDS_D2
 
 //I think it would be nice to have a scrape sound... 
 //#define SOUND_PLAYER_SCRAPE_WALL						72
-
-#ifdef BUILD_DESCENT1
-extern uint8_t Sounds[MAX_SOUNDS];
-extern uint8_t AltSounds[MAX_SOUNDS];
-#endif

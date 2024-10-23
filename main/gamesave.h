@@ -16,11 +16,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	NUM_SHAREWARE_LEVELS	7
 #define	NUM_REGISTERED_LEVELS	23
 
-#ifdef BUILD_DESCENT1
-extern char* Shareware_level_names[NUM_SHAREWARE_LEVELS];
-extern char* Registered_level_names[NUM_REGISTERED_LEVELS];
-#endif
-
 void LoadGame(void);
 void SaveGame(void);
 int get_level_name(void);

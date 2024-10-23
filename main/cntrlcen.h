@@ -27,22 +27,14 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_CONTROLCEN_GUNS_D1		4
 #define MAX_CONTROLCEN_GUNS_D2		8
 
-#ifdef BUILD_DESCENT2
-# define MAX_CONTROLCEN_GUNS MAX_CONTROLCEN_GUNS_D2
-#else
-# define MAX_CONTROLCEN_GUNS MAX_CONTROLCEN_GUNS_D1
-#endif
+#define MAX_CONTROLCEN_GUNS MAX_CONTROLCEN_GUNS_D2
 
-#ifdef BUILD_DESCENT2 //D1 defines it elsewhere
 typedef struct control_center_triggers
 {
 	short		num_links;
 	short 		seg[MAX_CONTROLCEN_LINKS];
 	short		side[MAX_CONTROLCEN_LINKS];
 } control_center_triggers;
-#else
-struct control_center_triggers;
-#endif
 
 extern control_center_triggers ControlCenterTriggers;
 
@@ -69,12 +61,6 @@ extern int Dead_controlcen_object_num;
 extern vms_vector controlcen_gun_points[MAX_CONTROLCEN_GUNS];
 extern vms_vector controlcen_gun_dirs[MAX_CONTROLCEN_GUNS];
 
-#ifdef BUILD_DESCENT1
-extern int	N_controlcen_guns;
-extern vms_vector Gun_pos[MAX_CONTROLCEN_GUNS];
-extern vms_vector Gun_dir[MAX_CONTROLCEN_GUNS];
-#endif
-
 //D1: return the position & orientation of a gun on the control center object 
 extern void calc_controlcen_gun_point(vms_vector* gun_point, vms_vector* gun_dir, object* obj, int gun_num);
 
@@ -95,11 +81,7 @@ extern int Control_center_destroyed,Countdown_seconds_left;
 extern int Base_control_center_explosion_time;		//how long to blow up on insane
 extern int Reactor_strength;
 
-#ifdef BUILD_DESCENT2
-
 #include <stdio.h>
 
 void read_reactor_triggers(control_center_triggers* trigger, FILE* fp);
 void write_reactor_triggers(control_center_triggers* trigger, FILE* fp);
-
-#endif

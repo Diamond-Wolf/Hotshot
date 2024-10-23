@@ -135,14 +135,8 @@ typedef struct segment2
 #define SEGMENT_IS_ROBOTMAKER		4
 #define SEGMENT_IS_GOAL_BLUE		5
 #define SEGMENT_IS_GOAL_RED		6
-#ifdef BUILD_DESCENT2
-# define MAX_CENTER_TYPES			7
-#endif
 
-#ifdef COMPACT_SEGS
-extern void get_side_normal(segment *sp, int sidenum, int normal_num, vms_vector * vm );
-extern void get_side_normals(segment *sp, int sidenum, vms_vector * vm1, vms_vector *vm2 );
-#endif
+#define MAX_CENTER_TYPES			7
 
 //	Local segment data.
 //	This is stuff specific to a segment that does not need to get written to disk.

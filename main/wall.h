@@ -29,15 +29,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_DOORS_D2		90
 
 //#include "vclip.h"
-#ifdef BUILD_DESCENT2 
-# define MAX_WALLS MAX_WALLS_D2	// Maximum number of walls
-# define MAX_WALL_ANIMS MAX_WALL_ANIMS_D2	// Maximum different types of doors
-# define MAX_DOORS MAX_DOORS_D2	// Maximum number of open doors
-#else
-# define MAX_WALLS MAX_WALLS_D1	// Maximum number of walls
-# define MAX_WALL_ANIMS MAX_WALL_ANIMS_D1	// Maximum different types of doors
-# define MAX_DOORS MAX_DOORS_D1	// Maximum number of open doors
-#endif
+#define MAX_WALLS MAX_WALLS_D2	// Maximum number of walls
+#define MAX_WALL_ANIMS MAX_WALL_ANIMS_D2	// Maximum different types of doors
+#define MAX_DOORS MAX_DOORS_D2	// Maximum number of open doors
 
 // Various wall types.
 #define WALL_NORMAL				0  	// Normal wall
@@ -85,11 +79,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_CLIP_FRAMES_D1 20
 #define MAX_CLIP_FRAMES_D2 50
 
-#ifdef BUILD_DESCENT2
-# define MAX_CLIP_FRAMES MAX_CLIP_FRAMES_D2
-#else
-# define MAX_CLIP_FRAMES MAX_CLIP_FRAMES_D1
-#endif
+#define MAX_CLIP_FRAMES MAX_CLIP_FRAMES_D2
 
 // WALL_IS_DOORWAY flags.
 #define WID_FLY_FLAG					1
@@ -184,11 +174,6 @@ extern int Num_open_doors;				// Number of open doors
 extern cloaking_wall CloakingWalls[];
 extern int Num_cloaking_walls;
 
-#ifdef BUILD_DESCENT1
-extern std::vector<wclip> WallAnims;
-extern int Num_wall_anims;
-#endif
-
 //extern int walls_bm_num[MAX_WALL_ANIMS];
 
 // Initializes all walls (i.e. no special walls.)
@@ -251,11 +236,9 @@ extern void wall_set_tmap_num(segment *seg,int side,segment *csegp,int cside,int
 // Remove any flares from a wall
 void kill_stuck_objects(int wallnum);
 
-#ifdef BUILD_DESCENT2
 //start wall open <-> closed transitions
 void start_wall_cloak(segment *seg, int side);
 void start_wall_decloak(segment *seg, int side);
-#endif
 
 #include <stdio.h>
 
@@ -268,7 +251,5 @@ void write_wall(wall* nwall, FILE* fp);
 void write_active_door(active_door* door, FILE* fp);
 void write_trigger(trigger* trig, FILE* fp);
 
-#ifdef BUILD_DESCENT2
 void P_ReadCloakingWall(cloaking_wall* wall, FILE* fp);
 void P_WriteCloakingWall(cloaking_wall* wall, FILE* fp);
-#endif

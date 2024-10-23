@@ -33,11 +33,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_TEXTURES_D1 800
 #define MAX_TEXTURES_D2 1200
 
-#ifdef BUILD_DESCENT2
-# define MAX_TEXTURES		MAX_TEXTURES_D2
-#else
-# define MAX_TEXTURES		MAX_TEXTURES_D1
-#endif
+#define MAX_TEXTURES		MAX_TEXTURES_D2
 
 #define BM_MAX_ARGS			10
 
@@ -66,19 +62,7 @@ extern int Num_object_types;
 #define N_COCKPIT_BITMAPS_D1 4
 #define N_COCKPIT_BITMAPS_D2 6
 
-#ifdef BUILD_DESCENT2
-# define N_COCKPIT_BITMAPS N_COCKPIT_BITMAPS_D2
-#else
-# define N_COCKPIT_BITMAPS N_COCKPIT_BITMAPS_D1
-#endif
-
-#ifdef BUILD_DESCENT1
-extern int Num_cockpits;
-extern bitmap_index cockpit_bitmap[N_COCKPIT_BITMAPS];
-
-extern int Num_tmaps;
-extern tmap_info TmapInfo[MAX_TEXTURES];
-#endif
+#define N_COCKPIT_BITMAPS N_COCKPIT_BITMAPS_D2
 
 #ifdef EDITOR
 extern int TmapList[MAX_TEXTURES];
@@ -86,10 +70,6 @@ void bm_write_all(FILE* fp); //[ISB] for piggy.cpp
 #endif
 
 //for each model, a model number for dying & dead variants, or -1 if none
-#ifdef BUILD_DESCENT1
-extern int Dying_modelnums[];
-extern int Dead_modelnums[];
-#endif
 
 //the model number of the marker object
 //extern int Marker_model_num;
@@ -113,11 +93,7 @@ void init_textures();
 #define MAX_OBJTYPE_D1 100
 #define MAX_OBJTYPE_D2 140
 
-#ifdef BUILD_DESCENT2
-# define	MAX_OBJTYPE			MAX_OBJTYPE_D2
-#else
-# define	MAX_OBJTYPE			MAX_OBJTYPE_D1
-#endif
+#define	MAX_OBJTYPE			MAX_OBJTYPE_D2
 
 extern int Num_total_object_types;		//	Total number of object types, including robots, hostages, powerups, control centers, faces
 extern int8_t	ObjType[MAX_OBJTYPE];		// Type of an object, such as Robot, eg if ObjType[11] == OL_ROBOT, then object #11 is a robot
@@ -127,17 +103,7 @@ extern fix	ObjStrength[MAX_OBJTYPE];	// initial strength of each object
 #define MAX_OBJ_BITMAPS_D1 210
 #define MAX_OBJ_BITMAPS_D2 600
 
-#ifdef BUILD_DESCENT2
-# define MAX_OBJ_BITMAPS MAX_OBJ_BITMAPS_D2
-#else
-# define MAX_OBJ_BITMAPS MAX_OBJ_BITMAPS_D1
-#endif
-
-#ifdef BUILD_DESCENT1
-extern bitmap_index ObjBitmaps[MAX_OBJ_BITMAPS];
-extern uint16_t ObjBitmapPtrs[MAX_OBJ_BITMAPS];
-extern int First_multi_bitmap_num;
-#endif
+#define MAX_OBJ_BITMAPS MAX_OBJ_BITMAPS_D2
 
 inline bool shouldAutoClearBMTable = false;
 

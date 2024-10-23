@@ -14,8 +14,4 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 //if filename passed is NULL, show normal credits
-#ifdef BUILD_DESCENT2
 void credits_show(char *credits_filename);
-#else
-void credits_show();
-#endif

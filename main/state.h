@@ -13,15 +13,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#ifdef BUILD_DESCENT2
 int state_save_all(int between_levels, int secret_save, char *filename_override);
 int state_restore_all(int in_game, int secret_restore, char *filename_override);
 int state_restore_all_sub(char *filename, int multi, int secret_restore);
-#else
-int state_save_all(int between_levels);
-int state_restore_all(int in_game);
-int state_restore_all_sub(char *filename, int multi);
-#endif
 
 int state_save_all_sub(char *filename, char *desc, int between_levels);
 

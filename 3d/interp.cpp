@@ -607,7 +607,7 @@ void init_model_sub(uint8_t* p)
 			int nv = w(p + 2);
 
 			Assert(nv > 2);		//must have 3 or more points
-			if (currentGame == G_DESCENT_2) {//#ifdef BUILD_DESCENT2 //[ISB] just in case
+			if (currentGame == G_DESCENT_2) { //[ISB] just in case
 				if (uninit_flag)
 					*wp(p + 28) = (short)interp_color_table[w(p + 28)].rgb15;
 				else

@@ -60,10 +60,6 @@ extern grs_bitmap * rle_get_id_sub( grs_bitmap * bmp );
 uint texmerge_get_unique_id( grs_bitmap * bmp )
 {
 
-#ifdef BUILD_DESCENT2
-	auto& GameBitmaps = activePiggyTable->gameBitmaps;
-#endif
-
     int i,n;
     uint tmp;
     grs_bitmap * tmpbmp;
@@ -71,18 +67,18 @@ uint texmerge_get_unique_id( grs_bitmap * bmp )
     for (i=0; i<num_cache_entries; i++ )    {
         if ( (Cache[i].last_frame_used > -1) && (Cache[i].bitmap == bmp) )  {
             tmp = (uint)Cache[i].orient<<30;
-            tmp |= ((uint)(Cache[i].top_bmp - GameBitmaps))<<16;
-            tmp |= (uint)(Cache[i].bottom_bmp - GameBitmaps);
+            tmp |= ((uint)(Cache[i].top_bmp - activePiggyTable->gameBitmaps.data()))<<16;
+            tmp |= (uint)(Cache[i].bottom_bmp - activePiggyTable->gameBitmaps.data());
             return tmp;
         }
     }
     // Check in rle cache
     tmpbmp = rle_get_id_sub( bmp );
     if ( tmpbmp )   {
-        return (uint)(tmpbmp-GameBitmaps);
+        return (uint)(tmpbmp - activePiggyTable->gameBitmaps.data());
     }
     // Must be a normal bitmap
-     return (uint)(bmp-GameBitmaps);
+     return (uint)(bmp - activePiggyTable->gameBitmaps.data());
 }
 #endif
 
@@ -157,24 +153,19 @@ grs_bitmap * texmerge_get_cached_bitmap( int tmap_bottom, int tmap_top )
 //		info_printed = 0;
 //	}
 
-#ifndef BUILD_DESCENT1
-	auto& GameBitmaps = activePiggyTable->gameBitmaps;
-	auto& Textures = activeBMTable->textures;
-#endif
-
 	//printf("\ntmap data: %d (%d) %d / %d // %d %d / %d\n", tmap_top & 0x3FFF, tmap_top, tmap_bottom, Textures.size(), Textures[tmap_top&0x3FFF].index, Textures[tmap_bottom].index, GameBitmaps.size());
 	//Assert((tmap_top&0x3FFF) < Textures.size() && tmap_bottom < Textures.size());
 	//Assert(Textures[tmap_top&0x3FFF].index < GameBitmaps.size() && Textures[tmap_bottom].index < GameBitmaps.size());
 
-	if ((tmap_top & 0x3fff) >= Textures.size())
-		bitmap_top = &GameBitmaps[0]; //bogus
+	if ((tmap_top & 0x3fff) >= activeBMTable->textures.size())
+		bitmap_top = &activePiggyTable->gameBitmaps[0]; //bogus
 	else
-		bitmap_top = &GameBitmaps[Textures[tmap_top&0x3FFF].index];
+		bitmap_top = &activePiggyTable->gameBitmaps[activeBMTable->textures[tmap_top&0x3FFF].index];
 
-	if (tmap_bottom >= Textures.size())
-		bitmap_bottom = &GameBitmaps[0];
+	if (tmap_bottom >= activeBMTable->textures.size())
+		bitmap_bottom = &activePiggyTable->gameBitmaps[0];
 	else
-		bitmap_bottom = &GameBitmaps[Textures[tmap_bottom].index];
+		bitmap_bottom = &activePiggyTable->gameBitmaps[activeBMTable->textures[tmap_bottom].index];
 	
 	orient = ((tmap_top&0xC000)>>14) & 3;
 
@@ -201,19 +192,19 @@ grs_bitmap * texmerge_get_cached_bitmap( int tmap_bottom, int tmap_top )
 	// Make sure the bitmaps are paged in...
 	piggy_page_flushed = 0;
 
-	if ((tmap_top & 0x3fff) < Textures.size())
-		PIGGY_PAGE_IN(Textures[tmap_top&0x3FFF]);
-	if (tmap_bottom < Textures.size())
-		PIGGY_PAGE_IN(Textures[tmap_bottom]);
+	if ((tmap_top & 0x3fff) < activeBMTable->textures.size())
+		PIGGY_PAGE_IN(activeBMTable->textures[tmap_top&0x3FFF]);
+	if (tmap_bottom < activeBMTable->textures.size())
+		PIGGY_PAGE_IN(activeBMTable->textures[tmap_bottom]);
 
 	if (piggy_page_flushed)	
 	{
 		// If cache got flushed, re-read 'em.
 		piggy_page_flushed = 0;
-		if ((tmap_top & 0x3fff) < Textures.size())
-			PIGGY_PAGE_IN(Textures[tmap_top&0x3FFF]);
-		if (tmap_bottom < Textures.size())
-			PIGGY_PAGE_IN(Textures[tmap_bottom]);
+		if ((tmap_top & 0x3fff) < activeBMTable->textures.size())
+			PIGGY_PAGE_IN(activeBMTable->textures[tmap_top&0x3FFF]);
+		if (tmap_bottom < activeBMTable->textures.size())
+			PIGGY_PAGE_IN(activeBMTable->textures[tmap_bottom]);
 	}
 	Assert( piggy_page_flushed == 0 );
 

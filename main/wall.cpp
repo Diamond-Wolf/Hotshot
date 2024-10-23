@@ -52,15 +52,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 wall Walls[MAX_WALLS];					// Master walls array
 int Num_walls = 0;							// Number of walls
 
-#ifdef BUILD_DESCENT1
-std::vector<wclip> WallAnims(MAX_WALL_ANIMS);		// Wall animations
-int Num_wall_anims;
-#else
-# define WallAnims activeBMTable->wclips
-# define Num_wall_anims activeBMTable->wclips.size()
-#endif
-//--unused-- int walls_bm_num[MAX_WALL_ANIMS];
-
 //door Doors[MAX_DOORS];					//	Master doors array
 
 active_door ActiveDoors[MAX_DOORS];
@@ -100,19 +91,14 @@ void kill_stuck_objects(int wallnum);
 int check_transparency(segment* seg, int side)
 {
 
-	#ifndef BUILD_DESCENT1
-	auto& GameBitmaps = activePiggyTable->gameBitmaps;
-	auto& Textures = activeBMTable->textures;
-	#endif
-
 	if ((seg->sides[side].tmap_num2 & 0x3FFF) == 0) {
-		if (GameBitmaps[Textures[seg->sides[side].tmap_num].index].bm_flags & BM_FLAG_TRANSPARENT)
+		if (activePiggyTable->gameBitmaps[activeBMTable->textures[seg->sides[side].tmap_num].index].bm_flags & BM_FLAG_TRANSPARENT)
 			return 1;
 		else
 			return 0;
 	}
 
-	if (GameBitmaps[Textures[seg->sides[side].tmap_num2 & 0x3FFF].index].bm_flags & BM_FLAG_SUPER_TRANSPARENT)
+	if (activePiggyTable->gameBitmaps[activeBMTable->textures[seg->sides[side].tmap_num2 & 0x3FFF].index].bm_flags & BM_FLAG_SUPER_TRANSPARENT)
 		return 1;
 	else
 		return 0;
@@ -251,7 +237,7 @@ void wall_reset(segment* seg, int side)
 //set the tmap_num or tmap_num2 field for a wall/door
 void wall_set_tmap_num(segment* seg, int side, segment* csegp, int cside, int anim_num, int frame_num)
 {
-	wclip* anim = &WallAnims[anim_num];
+	wclip* anim = &activeBMTable->wclips[anim_num];
 	int tmap = anim->frames[frame_num];
 
 	if (Newdemo_state == ND_STATE_PLAYBACK) return;
@@ -290,16 +276,12 @@ void blast_blastable_wall(segment* seg, int side)
 	kill_stuck_objects(csegp->sides[Connectside].wall_num);
 
 	//if this is an exploding wall, explode it
-	if (WallAnims[Walls[seg->sides[side].wall_num].clip_num].flags & WCF_EXPLODES) {
+	if (activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].flags & WCF_EXPLODES) {
 		explode_wall(seg - Segments, side);
-#if BUILD_DESCENT1
-		Walls[seg->sides[side].wall_num].flags |= WALL_BLASTED;
-		Walls[csegp->sides[Connectside].wall_num].flags |= WALL_BLASTED;
-#endif
 	} else {
 		//if not exploding, set final frame, and make door passable
 		a = Walls[seg->sides[side].wall_num].clip_num;
-		n = WallAnims[a].num_frames;
+		n = activeBMTable->wclips[a].num_frames;
 		wall_set_tmap_num(seg, side, csegp, Connectside, a, n - 1);
 		Walls[seg->sides[side].wall_num].flags |= WALL_BLASTED;
 		Walls[csegp->sides[Connectside].wall_num].flags |= WALL_BLASTED;
@@ -348,7 +330,7 @@ void wall_damage(segment* seg, int side, fix damage)
 		Walls[csegp->sides[Connectside].wall_num].hps -= damage;
 
 		a = Walls[seg->sides[side].wall_num].clip_num;
-		n = WallAnims[a].num_frames;
+		n = activeBMTable->wclips[a].num_frames;
 
 		if (Walls[seg->sides[side].wall_num].hps < WALL_HPS * 1 / n) {
 			blast_blastable_wall(seg, side);
@@ -406,7 +388,7 @@ void wall_open_door(segment* seg, int side)
 		Assert(i < Num_open_doors);				//didn't find door!
 		Assert(d != NULL); // Get John!
 
-		d->time = WallAnims[w->clip_num].play_time - d->time;
+		d->time = activeBMTable->wclips[w->clip_num].play_time - d->time;
 
 		if (d->time < 0)
 			d->time = 0;
@@ -472,13 +454,12 @@ void wall_open_door(segment* seg, int side)
 		// NOTE THE LINK TO ABOVE!!!!
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
-		if (WallAnims[w->clip_num].open_sound > -1)
-			digi_link_sound_to_pos(WallAnims[w->clip_num].open_sound, seg - Segments, side, &cp, 0, F1_0);
+		if (activeBMTable->wclips[w->clip_num].open_sound > -1)
+			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments, side, &cp, 0, F1_0);
 
 	}
 }
 
-#ifdef BUILD_DESCENT2
 //-----------------------------------------------------------------
 // start the transition from closed -> open wall
 void start_wall_cloak(segment* seg, int side)
@@ -642,7 +623,6 @@ void start_wall_decloak(segment* seg, int side)
 		d->back_ls[i] = csegp->sides[Connectside].uvls[i].l;
 	}
 }
-#endif
 
 //-----------------------------------------------------------------
 // This function closes the specified door and restores the closed
@@ -763,7 +743,7 @@ void wall_close_door(segment* seg, int side)
 		Assert(i < Num_open_doors);				//didn't find door!
 		Assert(d != NULL); // Get John!
 
-		d->time = WallAnims[w->clip_num].play_time - d->time;
+		d->time = activeBMTable->wclips[w->clip_num].play_time - d->time;
 
 		if (d->time < 0)
 			d->time = 0;
@@ -807,8 +787,8 @@ void wall_close_door(segment* seg, int side)
 		// NOTE THE LINK TO ABOVE!!!!
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
-		if (WallAnims[w->clip_num].open_sound > -1)
-			digi_link_sound_to_pos(WallAnims[w->clip_num].open_sound, seg - Segments, side, &cp, 0, F1_0);
+		if (activeBMTable->wclips[w->clip_num].open_sound > -1)
+			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments, side, &cp, 0, F1_0);
 
 	}
 }
@@ -848,8 +828,8 @@ void do_door_open(int door_num)
 		d->time += FrameTime;
 
 		time_elapsed = d->time;
-		n = WallAnims[w->clip_num].num_frames;
-		time_total = WallAnims[w->clip_num].play_time;
+		n = activeBMTable->wclips[w->clip_num].num_frames;
+		time_total = activeBMTable->wclips[w->clip_num].play_time;
 
 		one_frame = time_total / n;
 
@@ -943,15 +923,15 @@ void do_door_close(int door_num)
 				if (d->time == 0) {		//first time
 					vms_vector cp;
 					compute_center_point_on_side(&cp, seg, side);
-					if (WallAnims[w->clip_num].close_sound > -1)
-						digi_link_sound_to_pos(WallAnims[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments, side, &cp, 0, F1_0);
+					if (activeBMTable->wclips[w->clip_num].close_sound > -1)
+						digi_link_sound_to_pos(activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments, side, &cp, 0, F1_0);
 				}
 
 		d->time += FrameTime;
 
 		time_elapsed = d->time;
-		n = WallAnims[w->clip_num].num_frames;
-		time_total = WallAnims[w->clip_num].play_time;
+		n = activeBMTable->wclips[w->clip_num].num_frames;
+		time_total = activeBMTable->wclips[w->clip_num].play_time;
 
 		one_frame = time_total / n;
 
@@ -1057,9 +1037,7 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 
 	if (w->type == WALL_BLASTABLE) 
 	{
-#ifdef BUILD_DESCENT2
-		if (CurrentLogicVersion == LogicVer::SHAREWARE || obj->ctype.laser_info.parent_type == OBJ_PLAYER)
-#endif
+		if (currentGame == G_DESCENT_1 || CurrentLogicVersion == LogicVer::SHAREWARE || obj->ctype.laser_info.parent_type == OBJ_PLAYER)
 			wall_damage(seg, side, damage);
 		return WHP_BLASTABLE;
 	}
@@ -1175,7 +1153,6 @@ void reset_walls()
 	}
 }
 
-#ifdef BUILD_DESCENT2
 void do_cloaking_wall_frame(int cloaking_wall_num)
 {
 	cloaking_wall* d;
@@ -1283,7 +1260,6 @@ void do_decloaking_wall_frame(int cloaking_wall_num)
 		newdemo_record_cloaking_wall(d->front_wallnum, d->back_wallnum, wfront->type, wfront->state, wfront->cloak_value, Segments[wfront->segnum].sides[wfront->sidenum].uvls[0].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[1].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[2].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[3].l);
 
 }
-#endif
 
 void wall_frame_process()
 {
@@ -1326,7 +1302,6 @@ void wall_frame_process()
 		}
 	}
 
-#ifdef BUILD_DESCENT2
 	for (i = 0; i < Num_cloaking_walls; i++) {
 		cloaking_wall* d;
 		wall* w;
@@ -1341,7 +1316,6 @@ void wall_frame_process()
 		else
 			printf("Cloak state: %d\n", w->state);//Int3();	//unexpected wall state
 	}
-#endif
 }
 
 int	Num_stuck_objects = 0;
@@ -1401,9 +1375,7 @@ void remove_obsolete_stuck_objects(void)
 
 }
 
-#ifdef BUILD_DESCENT2
 extern void flush_fcd_cache(void);
-#endif
 
 //	----------------------------------------------------------------------------------------------------
 //	Door with wall index wallnum is opening, kill all objects stuck in it.
@@ -1431,9 +1403,7 @@ void kill_stuck_objects(int wallnum)
 			Num_stuck_objects++;
 		}
 	//	Ok, this is awful, but we need to do things whenever a door opens/closes/disappears, etc.
-	#ifdef BUILD_DESCENT2
 	flush_fcd_cache();
-	#endif
 
 }
 
@@ -1496,8 +1466,7 @@ void clear_stuck_objects(void)
 }
 
 // -----------------------------------------------------------------------------------
-#ifndef BUILD_DESCENT1
-# define	MAX_BLAST_GLASS_DEPTH	5
+#define	MAX_BLAST_GLASS_DEPTH	5
 
 void bng_process_segment(object * objp, fix damage, segment * segp, int depth, int8_t * visited)
 {
@@ -1507,10 +1476,6 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 		return;
 
 	depth++;
-
-	#ifndef BUILD_DESCENT1
-	auto& Effects = activeBMTable->eclips;
-	#endif
 
 	for (sidenum = 0; sidenum < MAX_SIDES_PER_SEGMENT; sidenum++) {
 		int			tm;
@@ -1523,7 +1488,7 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 
 			tm &= 0x3fff;			//tm without flags
 
-			if ((((ec = activeBMTable->tmaps[tm].eclip_num) != -1) && ((db = Effects[ec].dest_bm_num) != -1 && !(Effects[ec].flags & EF_ONE_SHOT))) || (ec == -1 && (activeBMTable->tmaps[tm].destroyed != -1))) {
+			if ((((ec = activeBMTable->tmaps[tm].eclip_num) != -1) && ((db = activeBMTable->eclips[ec].dest_bm_num) != -1 && !(activeBMTable->eclips[ec].flags & EF_ONE_SHOT))) || (ec == -1 && (activeBMTable->tmaps[tm].destroyed != -1))) {
 				compute_center_point_on_side(&pnt, segp, sidenum);
 				dist = vm_vec_dist_quick(&pnt, &objp->pos);
 				if (dist < damage / 2) {
@@ -1565,8 +1530,6 @@ void blast_nearby_glass(object* objp, fix damage)
 	visited[objp->segnum] = 1;
 	bng_process_segment(objp, damage, cursegp, 0, visited);
 }
-
-#endif
 
 #include "cfile/cfile.h"
 
@@ -1645,35 +1608,3 @@ void P_WriteCloakingWall(cloaking_wall* wall, FILE* fp)
 		file_write_int(fp, wall->back_ls[i]);
 	file_write_int(fp, wall->time);
 }
-
-#ifdef BUILD_DESCENT1
-void read_trigger(trigger* trig, FILE* fp)
-{
-	int j;
-	trig->type = file_read_byte(fp);
-	trig->flags = file_read_short(fp);
-	trig->value = file_read_int(fp);
-	trig->time = file_read_int(fp);
-	trig->link_num = file_read_byte(fp);
-	trig->num_links = file_read_short(fp);
-	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
-		trig->seg[j] = file_read_short(fp);
-	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
-		trig->side[j] = file_read_short(fp);
-}
-
-void write_trigger(trigger* trig, FILE* fp)
-{
-	int j;
-	file_write_byte(fp, trig->type);
-	file_write_short(fp, trig->flags);
-	file_write_int(fp, trig->value);
-	file_write_int(fp, trig->time);
-	file_write_byte(fp, trig->link_num);
-	file_write_short(fp, trig->num_links);
-	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
-		file_write_short(fp, trig->seg[j]);
-	for (j = 0; j < MAX_WALLS_PER_LINK; j++)
-		file_write_short(fp, trig->side[j]);
-}
-#endif

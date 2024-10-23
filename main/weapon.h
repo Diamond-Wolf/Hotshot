@@ -21,7 +21,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //weapon info flags
 #define WIF_PLACABLE		1		//can be placed by level designer
 
-//#ifdef BUILD_DESCENT2
 typedef struct weapon_info 
 {
 	int8_t	render_type;				// How to draw 0=laser, 1=blob, 2=object
@@ -78,57 +77,8 @@ typedef struct weapon_info
 // damage_force was a real mess.  Wasn't Difficulty_level based, and was being applied instead of weapon's actual strength.  Now use 2*strength instead. --MK, 01/19/95
 	bitmap_index	picture;				// a picture of the weapon for the cockpit
 	bitmap_index	hires_picture;		// a hires picture of the above
-	//#ifdef BUILD_DESCENT1
 	int8_t dum1, dum2, dum3;
-	//#endif
 } weapon_info;
-/*#else
-typedef struct weapon_info {
-	int8_t	render_type;				// How to draw 0=laser, 1=blob, 2=object
-	int8_t	model_num;					// Model num if rendertype==2.
-	int8_t	model_num_inner;			// Model num of inner part if rendertype==2.
-	int8_t	persistent;					//	0 = dies when it hits something, 1 = continues (eg, fusion cannon)
-
-	int8_t	flash_vclip;				// What vclip to use for muzzle flash
-	short	flash_sound;				// What sound to play when fired
-	int8_t	robot_hit_vclip;			// What vclip for impact with robot
-	short	robot_hit_sound;			// What sound for impact with robot
-
-	int8_t	wall_hit_vclip;			// What vclip for impact with wall
-	short	wall_hit_sound;			// What sound for impact with wall
-	int8_t	fire_count;					//	Number of bursts fired from EACH GUN per firing.  For weapons which fire from both sides, 3*fire_count shots will be fired.
-	int8_t	ammo_usage;					//	How many units of ammunition it uses.
-
-	int8_t	weapon_vclip;				//	Vclip to render for the weapon, itself.
-	int8_t	destroyable;				//	If !0, this weapon can be destroyed by another weapon.
-	int8_t	matter;						//	Flag: set if this object is matter (as opposed to energy)
-	int8_t	bounce;						//	Flag: set if this object bounces off walls
-
-	int8_t	homing_flag;				//	Set if this weapon can home in on a target.
-	int8_t	dum1, dum2, dum3;
-
-	fix	energy_usage;				//	How much fuel is consumed to fire this weapon.
-	fix	fire_wait;					//	Time until this weapon can be fired again.
-
-	bitmap_index bitmap;				// Pointer to bitmap if rendertype==0 or 1.
-
-	fix	blob_size;					// Size of blob if blob type
-	fix	flash_size;					// How big to draw the flash
-	fix	impact_size;				// How big of an impact
-	fix	strength[NDL];				// How much damage it can inflict
-	fix	speed[NDL];					// How fast it can move, difficulty level based.
-	fix	mass;							// How much mass it has
-	fix	drag;							// How much drag it has
-	fix	thrust;						//	How much thrust it has
-	fix	po_len_to_width_ratio;	// For polyobjects, the ratio of len/width. (10 maybe?)
-	fix	light;						//	Amount of light this weapon casts.
-	fix	lifetime;					//	Lifetime in seconds of this weapon.
-	fix	damage_radius;				//	Radius of damage caused by weapon, used for missiles (not lasers) to apply to damage to things it did not hit
-//-- unused--	fix	damage_force;				//	Force of damage caused by weapon, used for missiles (not lasers) to apply to damage to things it did not hit
-// damage_force was a real mess.  Wasn't Difficulty_level based, and was being applied instead of weapon's actual strength.  Now use 2*strength instead. --MK, 01/19/95
-	bitmap_index	picture;				// a picture of the weapon for the cockpit
-} weapon_info;
-#endif*/
 
 #define	REARM_TIME					(F1_0)
 
@@ -142,11 +92,7 @@ typedef struct weapon_info {
 #define MAX_WEAPON_TYPES_D1 30
 #define MAX_WEAPON_TYPES_D2 70
 
-#ifdef BUILD_DESCENT2
-# define MAX_WEAPON_TYPES MAX_WEAPON_TYPES_D2
-#else
-# define MAX_WEAPON_TYPES MAX_WEAPON_TYPES_D1
-#endif
+#define MAX_WEAPON_TYPES MAX_WEAPON_TYPES_D2
 
 #define WEAPON_RENDER_NONE			-1
 #define WEAPON_RENDER_LASER		0
@@ -154,11 +100,10 @@ typedef struct weapon_info {
 #define WEAPON_RENDER_POLYMODEL	2
 #define WEAPON_RENDER_VCLIP		3
 
-#ifdef BUILD_DESCENT2
-# define NUM_WEAPONS			10
-#else
-# define NUM_WEAPONS			5
-#endif
+#define NUM_WEAPONS_D1	5
+#define NUM_WEAPONS_D2	10
+
+#define NUM_WEAPONS		NUM_WEAPONS_D2
 
 #define	MAX_PRIMARY_WEAPONS		NUM_WEAPONS
 #define	MAX_SECONDARY_WEAPONS	NUM_WEAPONS
@@ -211,11 +156,6 @@ typedef struct weapon_info {
 #define	VULCAN_AMMO_SCALE		0xcc163	//(0x198300/2)		//multiply ammo by this before displaying
 
 #define	NUM_SMART_CHILDREN	6		//	Number of smart children created by default.
-
-#ifdef BUILD_DESCENT1
-extern weapon_info Weapon_info[];
-extern int N_weapon_types;
-#endif
 
 extern void do_weapon_select(int weapon_num, int secondary_flag);
 extern void show_weapon_status(void);

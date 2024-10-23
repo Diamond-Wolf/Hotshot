@@ -351,21 +351,6 @@ int parse_body(FFILE* ifile, int32_t len, iff_bitmap_header* bmheader)
 #endif
 
 		}
-
-#ifndef BUILD_DESCENT2
-	if (bmheader->masking == mskHasMask && p == data_end && ifile->position == end_pos - 2)		//I don't know why...
-		ifile->position++;		//...but if I do this it works
-
-	if (p == data_end && ifile->position == end_pos - 1)		//must be a pad byte
-		//ignore = cfgetc(ifile);		//get pad byte
-		ifile->position++;
-	else
-		if (ifile->position != end_pos || p != data_end) 
-		{
-			//			debug("IFF Error: p=%x, data_end=%x, cnt=%d\n",p,data_end,cnt);
-			return IFF_CORRUPT;
-		}
-#else
 	if (p != data_end)				//if we don't have the whole bitmap...
 		return IFF_CORRUPT;		//...the give an error
 
@@ -375,7 +360,6 @@ int parse_body(FFILE* ifile, int32_t len, iff_bitmap_header* bmheader)
 	//we got the while bitmap, and that's what really counts.
 
 	ifile->position = end_pos;
-#endif
 
 	if (ignore) ignore++;   // haha, suppress the evil warning message
 

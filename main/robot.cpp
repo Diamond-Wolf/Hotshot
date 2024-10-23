@@ -22,69 +22,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "bm.h"
 
-#ifdef BUILD_DESCENT1
-int	N_robot_types = 0;
-int	N_robot_joints = 0;
-#endif
-
-//	Robot stuff
-//robot_info Robot_info[MAX_ROBOT_TYPES];
-
-//Big array of joint positions.  All robots index into this array
-
 #define deg(a) ((int) (a) * 32768 / 180)
-
-//test data for one robot
-#ifdef BUILD_DESCENT1
-jointpos Robot_joints[MAX_ROBOT_JOINTS] = {
-
-//gun 0
-					{2,{deg(-30),0,0}},		//rest (2 joints)
-					{3,{deg(-40),0,0}},
-
-					{2,{deg(0),0,0}},			//alert
-					{3,{deg(0),0,0}},
-		
-					{2,{deg(0),0,0}},			//fire
-					{3,{deg(0),0,0}},
-		
-					{2,{deg(50),0,0}},		//recoil
-					{3,{deg(-50),0,0}},
-		
-					{2,{deg(10),0,deg(70)}},		//flinch
-					{3,{deg(0),deg(20),0}},
-		
-//gun 1
-					{4,{deg(-30),0,0}},		//rest (2 joints)
-					{5,{deg(-40),0,0}},
-
-					{4,{deg(0),0,0}},			//alert
-					{5,{deg(0),0,0}},
-		
-					{4,{deg(0),0,0}},			//fire
-					{5,{deg(0),0,0}},
-		
-					{4,{deg(50),0,0}},		//recoil
-					{5,{deg(-50),0,0}},
-		
-					{4,{deg(20),0,deg(-50)}},	//flinch
-					{5,{deg(0),0,deg(20)}},
-		
-//rest of body (the head)
-
-					{1,{deg(70),0,0}},		//rest (1 joint, head)
-
-					{1,{deg(0),0,0}},			//alert
-		
-					{1,{deg(0),0,0}},			//fire
-		
-					{1,{deg(0),0,0}},			//recoil
-
-					{1,{deg(-20),deg(15),0}},			//flinch
-
-
-};
-#endif
 
 //given an object and a gun number, return position in 3-space of gun
 //fills in gun_point

@@ -26,13 +26,7 @@ int multi_can_move_robot(int objnum, int agitation);
 void multi_send_robot_position(int objnum, int fired);
 void multi_send_robot_fire(int objnum, int gun_num, vms_vector *fire);
 void multi_send_claim_robot(int objnum);
-
-#ifdef BUILD_DESCENT2
 void multi_send_robot_explode(int,int,char); // [DW] Why no names, but only on the functions that changed from D1?
-#else
-void multi_send_robot_explode(int,int); // [DW] Why no names, but only on the functions that changed from D1?
-#endif
-
 void multi_send_create_robot(int robotcen, int objnum, int type);
 void multi_send_boss_actions(int bossobjnum, int action, int secondary, int objnum);
 int multi_send_robot_frame(int sent);
@@ -46,11 +40,7 @@ void multi_do_create_robot(char* buf);
 void multi_do_boss_actions(char* buf);
 void multi_do_create_robot_powerups(char* buf);
 
-#ifdef BUILD_DESCENT2
 int multi_explode_robot_sub(int botnum, int killer,char);
-#else
-int multi_explode_robot_sub(int botnum, int killer);
-#endif
 
 void multi_drop_robot_powerups(int objnum);
 void multi_dump_robots(void);

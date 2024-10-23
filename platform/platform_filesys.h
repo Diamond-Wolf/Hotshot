@@ -29,13 +29,8 @@ static const char PLATFORM_PATH_SEPARATOR = '/';
 #define CHOCOLATE_MAX_FILE_PATH_SIZE PATH_MAX
 #endif
 
-#if defined(BUILD_DESCENT1)
-static const char* CHOCOLATE_DESCENT_VERSION_STRING = "Descent 1";
-static const unsigned int CHOCOLATE_DESCENT_VERSION = 1;
-#elif defined(BUILD_DESCENT2)
 static const char* CHOCOLATE_DESCENT_VERSION_STRING = "Descent 2";
 static const unsigned int CHOCOLATE_DESCENT_VERSION = 2;
-#endif
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define CHOCOLATE_CONFIG_DIR ""

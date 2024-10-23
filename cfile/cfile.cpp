@@ -223,21 +223,6 @@ FILE* cfile_find_libfile(const char* name, int* length)
 		}
 	}
 
-#ifndef BUILD_DESCENT2 //must call cfile_init in Descent 2. Descent 1 can run without a hogfile if you really wanted. 
-	if (!Hogfile_initialized) 
-	{
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-		get_full_file_path(HogFilename, "descent.hog", CHOCOLATE_SYSTEM_FILE_DIR);
-		cfile_init_hogfile(HogFilename, HogFiles, &Num_hogfiles);
-		Hogfile_initialized = 1;
-#else
-		cfile_init_hogfile("descent.hog", HogFiles, &Num_hogfiles);
-		strcpy(HogFilename, "descent.hog");
-		Hogfile_initialized = 1;
-#endif
-	}
-#endif
-
 	for (i = 0; i < Num_hogfiles; i++) 
 	{
 		if (!_stricmp(HogFiles[i].name, name))

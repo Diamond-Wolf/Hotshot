@@ -25,13 +25,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define INITIAL_ENERGY 	i2f(100)		//100% energy to start
 #define INITIAL_SHIELDS	i2f(100)		//100% shields to start
 
-#ifdef BUILD_DESCENT2
-# define MAX_ENERGY			i2f(200)		//go up to 200
-# define MAX_SHIELDS		i2f(200)
-#else
-# define MAX_ENERGY			INITIAL_ENERGY	// [DW] When D1 said "max", they didn't actually mean it
-# define MAX_SHIELDS		INITIAL_SHIELDS
-#endif
+#define MAX_ENERGY		i2f(200)		//go up to 200
+#define MAX_SHIELDS		i2f(200)
 
 #define INITIAL_LIVES					3			//start off with 3 lives
 
@@ -197,11 +192,7 @@ typedef struct player_ship
 extern int N_players;								// Number of players ( >1 means a net game, eh?)
 extern int Player_num;								// The player number who is on the console.
 
-#ifdef BUILD_DESCENT2
 extern player Players[MAX_PLAYERS+4];                             // Misc player info
-#else
-extern player Players[MAX_PLAYERS];
-#endif
 
 extern player_ship *Player_ship;
 

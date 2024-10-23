@@ -24,37 +24,27 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "weapon.h"
 #include "bm.h"
 
-//----------------- Variables for video clips -------------------
-#ifdef BUILD_DESCENT1
-int 					Num_vclips = 0;
-vclip 				Vclip[VCLIP_MAXNUM];		// General purpose vclips.
-#endif
-
 //draw an object which renders as a vclip
 void draw_vclip_object(object* obj, fix timeleft, int lighted, int vclip_num)
 {
 	int nf, bitmapnum;
 
-	#ifndef BUILD_DESCENT1
-	auto& Vclip = activeBMTable->vclips;
-	#endif
+	nf = activeBMTable->vclips[vclip_num].num_frames;
 
-	nf = Vclip[vclip_num].num_frames;
+	bitmapnum = (nf - f2i(fixdiv((nf - 1) * timeleft, activeBMTable->vclips[vclip_num].play_time))) - 1;
 
-	bitmapnum = (nf - f2i(fixdiv((nf - 1) * timeleft, Vclip[vclip_num].play_time))) - 1;
-
-	if (bitmapnum >= Vclip[vclip_num].num_frames)
-		bitmapnum = Vclip[vclip_num].num_frames - 1;
+	if (bitmapnum >= activeBMTable->vclips[vclip_num].num_frames)
+		bitmapnum = activeBMTable->vclips[vclip_num].num_frames - 1;
 
 	if (bitmapnum >= 0)
 	{
-		if (Vclip[vclip_num].flags & VF_ROD)
-			draw_object_tmap_rod(obj, Vclip[vclip_num].frames[bitmapnum], lighted);
+		if (activeBMTable->vclips[vclip_num].flags & VF_ROD)
+			draw_object_tmap_rod(obj, activeBMTable->vclips[vclip_num].frames[bitmapnum], lighted);
 		else
 		{
 			Assert(lighted == 0);		//blob cannot now be lighted
 
-			draw_object_blob(obj, Vclip[vclip_num].frames[bitmapnum]);
+			draw_object_blob(obj, activeBMTable->vclips[vclip_num].frames[bitmapnum]);
 		}
 	}
 
@@ -69,15 +59,10 @@ void draw_weapon_vclip(object* obj)
 
 	Assert(obj->type == OBJ_WEAPON);
 
-	#ifndef BUILD_DESCENT1
-	auto& Weapon_info = activeBMTable->weapons;
-	auto& Vclip = activeBMTable->vclips;
-	#endif
-
-	vclip_num = Weapon_info[obj->id].weapon_vclip;
+	vclip_num = activeBMTable->weapons[obj->id].weapon_vclip;
 
 	modtime = obj->lifeleft;
-	play_time = Vclip[vclip_num].play_time;
+	play_time = activeBMTable->vclips[vclip_num].play_time;
 
 	//	Special values for modtime were causing enormous slowdown for omega blobs.
 	if (modtime == IMMORTAL_TIME)

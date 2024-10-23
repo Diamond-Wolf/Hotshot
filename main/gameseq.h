@@ -22,12 +22,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define SUPER_SHOCKWAVE		3
 
 #if defined(SHAREWARE)
+# define Last_level		3			//the number of the very last level for shareware
 # define Last_secret_level	0 			// No secret levels!
-# if defined BUILD_DESCENT2
-#  define Last_level		3			//the number of the very last level for shareware
-# else
-#  define Last_level        7
-# endif
 #elif defined(D2_OEM)
 # define Last_level			8			// 8 levels for Diamond/S3 version
 # define Last_secret_level	-2			// 2 secret levels
@@ -64,20 +60,11 @@ int RegisterPlayerSub(int allow_abort_flag);
 void StartNewGame(int start_level);
 
 //starts the next level
-#ifdef BUILD_DESCENT2
 void StartNewLevel(int level_num, int secret_flag);
-#else
-void StartNewLevel(int level_num);
-#endif
-
 void StartLevel(int random_flag);
 
 // Actually does the work to start new level
-#ifdef BUILD_DESCENT2
 void StartNewLevelSub(int level_num, int page_in_textures, int secret_flag);
-#else
-void StartNewLevelSub(int level_num, int page_in_textures);
-#endif
 
 void InitPlayerObject();				//make sure player's object set up
 void init_player_stats_game();		//clear all stats
@@ -94,11 +81,7 @@ void DoPlayerDead();
 
 //load a level off disk. level numbers start at 1.  
 //Secret levels are -1,-2,-3
-#ifdef BUILD_DESCENT2
 void LoadLevel(int level_num,int page_in_textures);
-#else
-void LoadLevel(int level_num);
-#endif
 
 extern void gameseq_remove_unused_players();
 
@@ -113,11 +96,7 @@ extern int add_player_to_high_scores(player *pp);
 extern void input_name ( int place );
 extern int reset_high_scores();
 
-#ifdef BUILD_DESCENT2
 extern void init_player_stats_level(int secret_flag);
-#else
-extern void init_player_stats_level();
-#endif
 
 void open_message_window(void);
 void close_message_window(void);

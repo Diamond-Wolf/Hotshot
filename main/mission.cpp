@@ -29,9 +29,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "titles.h"
 #include "bm.h"
 
-#ifdef BUILD_DESCENT2
-# define SANTA
-#endif
+#define SANTA
 
 mle Mission_list[MAX_MISSIONS];
 
@@ -59,12 +57,6 @@ char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
 #define D1_BIM_LAST_SECRET_LEVEL	-3
 #define D1_BIM_BRIEFING_FILE		"briefing.tex"
 #define D1_BIM_ENDING_FILE			"endreg.tex"
-
-#ifdef BUILD_DESCENT1
-DataVer CurrentDataVersion = DataVer::FULL;
-# define bm_read_extra_robots(fname, type)
-# define init_extra_robot_movie(fname)
-#endif
 
 #ifdef SHAREWARE
 
@@ -245,18 +237,12 @@ int ml_sort_func(mle *e0,mle *e1)
 
 extern int HoardEquipped();
 
-//#ifdef BUILD_DESCENT2
 extern char CDROM_dir[];
 #define BUILTIN_MISSION "d2.mn2"
-//#endif
 
 //returns 1 if file read ok, else 0
 int read_mission_file(char *filename,int count,int location, uint8_t gameVersion)
 {
-//#ifdef BUILD_DESCENT2
-	//if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
-	//	return 1;
-//#endif
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char filename2[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -269,13 +255,11 @@ int read_mission_file(char *filename,int count,int location, uint8_t gameVersion
 			get_full_file_path(filename2, filename, CHOCOLATE_MISSIONS_DIR);
 			break;
 
-# ifdef BUILD_DESCENT2
 		case ML_CDROM:
 			//This isn't really implemented at this point
 			songs_stop_redbook();
 			Int3();
 			break;
-# endif
 
 		default:
 			Int3();
@@ -293,12 +277,10 @@ int read_mission_file(char *filename,int count,int location, uint8_t gameVersion
 			strcpy(filename2,MISSION_DIR);	
 			break;
 
-#ifdef BUILD_DESCENT2
 		case ML_CDROM:			
 			songs_stop_redbook();		//so we can read from the CD
 			strcpy(filename2,CDROM_dir);		
 			break;
-#endif
 
 		default:					
 			Int3();		//fall through
@@ -398,7 +380,6 @@ int build_mission_list(int anarchy_mode)
 	char search_name_d2[256] = MISSION_DIR "*.MN2";
 #endif
 
-#ifdef BUILD_DESCENT2
 	if (CurrentDataVersion == DataVer::DEMO)
 	{
 		strcpy(Mission_list[0].filename, SHAREWARE_MISSION_FILENAME);
@@ -407,7 +388,6 @@ int build_mission_list(int anarchy_mode)
 
 		return load_mission(0);
 	}
-#endif
 
 	//now search for levels on disk
 
@@ -569,12 +549,10 @@ int load_mission(int mission_num)
 			get_full_file_path(buf, temp_short_filename, CHOCOLATE_MISSIONS_DIR);
 			break;
 
-# ifdef BUILD_DESCENT2
 		case ML_CDROM:
 			//This isn't really implemented at this point
 			Int3();
 			break;
-# endif
 
 		default:
 			Int3();
@@ -586,9 +564,7 @@ int load_mission(int mission_num)
 #else
 	switch (Mission_list[mission_num].location) {
 		case ML_MISSIONDIR:	strcpy(buf,MISSION_DIR);	break;
-#ifdef BUILD_DESCENT2
 		case ML_CDROM:			strcpy(buf,CDROM_dir);		break;
-#endif
 		default:					Int3();							//fall through
 		case ML_CURDIR:		strcpy(buf,"");				break;
 	}
@@ -793,7 +769,6 @@ int load_mission_by_name(char *mission_name)
 {
 	int n,i;
 
-//#ifdef BUILD_DESCENT2
 	if (currentGame == G_DESCENT_2 && CurrentDataVersion == DataVer::DEMO)
 	{
 		if (strcmp(mission_name, SHAREWARE_MISSION_FILENAME))
@@ -801,7 +776,6 @@ int load_mission_by_name(char *mission_name)
 		else
 			return load_mission(0);
 	}
-//#endif
 
 	n = build_mission_list(1);
 

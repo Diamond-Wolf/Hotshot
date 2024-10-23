@@ -19,15 +19,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define ET_MULTI_SECOND	2		//second part of multi-part explosion
 
 //data for exploding walls (such as hostage door)
-#ifdef BUILD_DESCENT2
 typedef struct expl_wall 
 {
 	int segnum,sidenum;
 	fix time;
 } expl_wall;
-#else
-struct expl_wall;
-#endif
 
 #define MAX_EXPLODING_WALLS 			10
 
@@ -42,11 +38,7 @@ object *object_create_badass_explosion(object *objp, short segnum,
 
 //blows up a badass weapon, creating the badass explosion
 //return the explosion object
-//#ifdef BUILD_DESCENT2
 object *explode_badass_weapon(object *obj,vms_vector *pos);
-/*#else
-object *explode_badass_weapon(object *obj);
-#endif*/
 
 //blows up the player with a badass explosion
 //return the explosion object

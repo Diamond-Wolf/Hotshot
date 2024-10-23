@@ -72,18 +72,7 @@ void fuelcen_damage(segment *segp, fix AmountOfDamage );
 // Called to repair an object
 int refuel_do_repair_effect( object * obj, int first_time, int repair_seg );
 
-#ifdef BUILD_DESCENT1
-# define MAX_NUM_FUELCENS			50
-
-# define SEGMENT_IS_NOTHING			0
-# define SEGMENT_IS_FUELCEN			1
-# define SEGMENT_IS_REPAIRCEN		2
-# define SEGMENT_IS_CONTROLCEN		3
-# define SEGMENT_IS_ROBOTMAKER		4
-# define MAX_CENTER_TYPES			5
-#else
-# define MAX_NUM_FUELCENS			70
-#endif
+#define MAX_NUM_FUELCENS			70
 
 extern char Special_names[MAX_CENTER_TYPES][11];
 
@@ -95,15 +84,6 @@ void check_start_repair_center(object *obj);
 
 //if repairing, cut it short
 void abort_repair_center();
-
-#ifdef BUILD_DESCENT1
-typedef struct control_center_triggers {
-	short		num_links;
-	short 	seg[MAX_WALLS_PER_LINK];
-	short		side[MAX_WALLS_PER_LINK];
-} control_center_triggers;
-extern control_center_triggers ControlCenterTriggers;
-#endif
 
 // An array of pointers to segments with fuel centers.
 typedef struct FuelCenter 
@@ -130,11 +110,7 @@ extern int Num_robot_centers;
 
 typedef struct matcen_info
 {
-#ifdef BUILD_DESCENT2
 	int			robot_flags[2];	// Up to 64 different robots
-#else
-	int			robot_flags;
-#endif
 	fix			hit_points;			// How hard it is to destroy this particular matcen
 	fix			interval;			// Interval between materialogrifizations
 	short			segnum;				// Segment this is attached to.
@@ -143,11 +119,6 @@ typedef struct matcen_info
 
 extern matcen_info RobotCenters[MAX_ROBOT_CENTERS];
 
-#ifdef BUILD_DESCENT1
-extern int Fuelcen_control_center_dead_modelnum;
-extern fix Fuelcen_control_center_strength;
-extern int Fuelcen_seconds_left;
-#endif
 
 extern int Fuelcen_control_center_destroyed;
 
@@ -171,13 +142,8 @@ void read_fuelcen(FuelCenter* center, FILE* fp);
 void write_matcen(matcen_info* center, FILE* fp);
 void write_fuelcen(FuelCenter* center, FILE* fp);
 
-#if defined(NETWORK) && defined(BUILD_DESCENT2)
+#if defined(NETWORK)
 void fuelcen_check_for_hoard_goal(segment* segp);
-#endif
-
-#ifdef BUILD_DESCENT1
-void read_reactor_triggers(control_center_triggers* trigger, FILE* fp);
-void write_reactor_triggers(control_center_triggers* trigger, FILE* fp);
 #endif
 
 //[ISB] til this was renamed in descent 2

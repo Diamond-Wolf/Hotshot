@@ -130,38 +130,15 @@ typedef struct robot_info
 #define MAX_ROBOT_TYPES_D1 30
 #define MAX_ROBOT_TYPES_D2 85
 
-#ifdef BUILD_DESCENT2
 # define MAX_ROBOT_TYPES MAX_ROBOT_TYPES_D2
-#else
-# define MAX_ROBOT_TYPES MAX_ROBOT_TYPES_D1
-#endif
 
 #define	ROBOT_NAME_LENGTH	16
 extern char	Robot_names[MAX_ROBOT_TYPES][ROBOT_NAME_LENGTH];
 
-#ifdef BUILD_DESCENT1
-//the array of robots types
-extern robot_info Robot_info[];			// Robot info for AI system, loaded from bitmaps.tbl.
-
-//how many kinds of robots
-extern int N_robot_types;		// Number of robot types.  We used to assume this was the same as N_polygon_models.
-#endif
-
-//test data for one robot
-
 #define MAX_ROBOT_JOINTS_D1 600
 #define MAX_ROBOT_JOINTS_D2 1600
 
-#ifdef BUILD_DESCENT2
-# define MAX_ROBOT_JOINTS MAX_ROBOT_JOINTS_D2
-#else
-# define MAX_ROBOT_JOINTS MAX_ROBOT_JOINTS_D1
-#endif
-
-#ifdef BUILD_DESCENT1
-extern jointpos Robot_joints[MAX_ROBOT_JOINTS];
-extern int	N_robot_joints;
-#endif
+#define MAX_ROBOT_JOINTS MAX_ROBOT_JOINTS_D2
 
 //given an object and a gun number, return position in 3-space of gun
 //fills in gun_point

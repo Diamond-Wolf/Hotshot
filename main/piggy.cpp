@@ -134,11 +134,7 @@ typedef struct DiskBitmapHeader
 #define BITMAP_HEADER_SIZE_D1 17
 #define BITMAP_HEADER_SIZE_D2 18
 
-#ifdef BUILD_DESCENT1
-# define BITMAP_HEADER_SIZE BITMAP_HEADER_SIZE_D1
-#else
-# define BITMAP_HEADER_SIZE BITMAP_HEADER_SIZE_D2
-#endif
+#define BITMAP_HEADER_SIZE BITMAP_HEADER_SIZE_D2
 
 typedef struct DiskSoundHeader
 {
@@ -283,24 +279,22 @@ bitmap_index piggy_find_bitmap(char* name)
 
 	bmp.index = 0;
 
-	auto& aliases = activePiggyTable->aliases;
-
 	if ((t = strchr(name, '#')) != NULL)
 		*t = 0;
 
-	for (i = 0; i < aliases.size(); i++)
-		if (_strfcmp(name, aliases[i].alias_name) == 0)
+	for (i = 0; i < activePiggyTable->aliases.size(); i++)
+		if (_strfcmp(name, activePiggyTable->aliases[i].alias_name) == 0)
 		{
 			if (t) //extra stuff for ABMs
 			{
 				static char temp[FILENAME_LEN];
-				_splitpath(aliases[i].file_name, NULL, NULL, temp, NULL);
+				_splitpath(activePiggyTable->aliases[i].file_name, NULL, NULL, temp, NULL);
 				name = temp;
 				strcat(name, "#");
 				strcat(name, t + 1);
 			}
 			else
-				name = aliases[i].file_name;
+				name = activePiggyTable->aliases[i].file_name;
 			break;
 		}
 

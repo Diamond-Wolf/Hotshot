@@ -23,11 +23,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_POLYGON_MODELS_D1 85
 #define MAX_POLYGON_MODELS_D2 200
 
-#ifdef BUILD_DESCENT2
-# define MAX_POLYGON_MODELS MAX_POLYGON_MODELS_D2
-#else
-# define MAX_POLYGON_MODELS MAX_POLYGON_MODELS_D1
-#endif
+#define MAX_POLYGON_MODELS MAX_POLYGON_MODELS_D2
 
 //used to describe a polygon model
 typedef struct polymodel 
@@ -50,12 +46,6 @@ typedef struct polymodel
 	uint8_t		simpler_model;		//alternate model with less detail (0 if none, model_num+1 else)
 //	vms_vector min,max;
 } polymodel;
-
-//array of pointers to polygon objects
-#ifdef BUILD_DESCENT1
-extern polymodel Polygon_models[];
-extern int N_polygon_models;
-#endif
 
 //switch to simpler model when the object has depth 
 //greater than this value times its radius.   
@@ -85,11 +75,7 @@ void draw_model_picture(int mn,vms_angvec *orient_angles);
 #define MAX_POLYOBJ_TEXTURES_D1 50
 #define MAX_POLYOBJ_TEXTURES_D2 100
 
-#ifdef BUILD_DESCENT2
-# define MAX_POLYOBJ_TEXTURES MAX_POLYOBJ_TEXTURES_D2
-#else
-# define MAX_POLYOBJ_TEXTURES MAX_POLYOBJ_TEXTURES_D1
-#endif
+#define MAX_POLYOBJ_TEXTURES MAX_POLYOBJ_TEXTURES_D2
 
 extern grs_bitmap *texture_list[MAX_POLYOBJ_TEXTURES];
 extern bitmap_index texture_list_index[MAX_POLYOBJ_TEXTURES];

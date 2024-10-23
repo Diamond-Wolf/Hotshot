@@ -39,11 +39,7 @@ extern void collide_player_and_nasty_robot(object* player, object* robot, vms_ve
 extern void net_destroy_controlcen(object* controlcen);
 extern void collide_player_and_powerup(object* player, object* powerup, vms_vector* collision_point);
 
-#ifdef BUILD_DESCENT2
 extern int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower, int force_blowup_flag);
-#else
-extern int check_effect_blowup(segment* seg, int side, vms_vector* pnt);
-#endif
 
 extern void apply_damage_to_controlcen(object* controlcen, fix damage, short who);
 extern void bump_one_object(object* obj0, vms_vector* hit_dir, fix damage);

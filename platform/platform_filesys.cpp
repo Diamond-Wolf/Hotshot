@@ -107,35 +107,6 @@ void validate_required_files()
 	memset(missing_file_list, 0, 2048);
 	memset(missing_file_location_list, 0, (20 * CHOCOLATE_MAX_FILE_PATH_SIZE) + 20);
 
-#if defined(BUILD_DESCENT1)
-	get_full_file_path(temp_buf, "descent.hog", CHOCOLATE_SYSTEM_FILE_DIR);
-
-	fp = fopen(temp_buf, "rb");
-	if (!fp)
-	{
-		strncat(missing_file_list, "descent.hog\n", 12);
-		strncat(missing_file_location_list, temp_buf, CHOCOLATE_MAX_FILE_PATH_SIZE);
-		strncat(missing_file_location_list, "\n", 1);
-	}
-	else
-	{
-		fclose(fp);
-	}
-
-	get_full_file_path(temp_buf, "descent.pig", CHOCOLATE_SYSTEM_FILE_DIR);
-
-	fp = fopen(temp_buf, "rb");
-	if (!fp)
-	{
-		strncat(missing_file_list, "descent.pig\n", 12);
-		strncat(missing_file_location_list, temp_buf, CHOCOLATE_MAX_FILE_PATH_SIZE);
-		strncat(missing_file_location_list, "\n", 1);
-	}
-	else
-	{
-		fclose(fp);
-	}
-#elif defined(BUILD_DESCENT2)
 	get_full_file_path(temp_buf, "alien1.pig", CHOCOLATE_SYSTEM_FILE_DIR);
 
 	fp = fopen(temp_buf, "rb");
@@ -387,7 +358,6 @@ void validate_required_files()
 	{
 		fclose(fp);
 	}
-#endif
 
 	if(strlen(missing_file_list) > 0)
 	{

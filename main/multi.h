@@ -24,18 +24,10 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 // What version of the multiplayer protocol is this?
 
-#ifdef BUILD_DESCENT2
-# ifdef SHAREWARE
-#  define MULTI_PROTO_VERSION	3
-# else
-#  define MULTI_PROTO_VERSION	4
-# endif
+#ifdef SHAREWARE
+# define MULTI_PROTO_VERSION	3
 #else
-# ifdef SHAREWARE
-#  define MULTI_PROTO_VERSION	1
-# else
-#  define MULTI_PROTO_VERSION	3
-# endif
+# define MULTI_PROTO_VERSION	4
 #endif
 
 // Protocol versions:
@@ -119,15 +111,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MULTI_DROP_ORB						 62
 #define MULTI_PLAY_BY_PLAY					 63
 
-#ifdef BUILD_DESCENT2
-# define MULTI_MAX_TYPE 63
-#else
-# ifndef SHAREWARE
-#  define MULTI_MAX_TYPE			36
-# else
-#  define MULTI_MAX_TYPE			22
-# endif
-#endif
+#define MULTI_MAX_TYPE 63
 
 #define MAX_NET_CREATE_OBJECTS 40
 
@@ -170,13 +154,7 @@ void multi_send_netplayer_stats_request(uint8_t player_num);
 void multi_send_drop_weapon (int objnum,int seed);
 void multi_send_drop_marker (int player,vms_vector position,char messagenum,char text[]);
 void multi_send_guided_info (object *miss,char);
-
-#if 1 //#ifdef BUILD_DESCENT2
 void multi_send_door_open(int segnum, int side,uint8_t flag);
-#else
-void multi_send_door_open(int segnum, int side);
-#endif
-
 void multi_endlevel_score(void);
 void multi_prep_level(void);
 int multi_endlevel(int *secret);
@@ -278,18 +256,12 @@ typedef struct netplayer_info
 {
 	char callsign[CALLSIGN_LEN+1];
 
-	#ifdef BUILD_DESCENT2
-	union 
-	{
-		struct 
-		{
+	union {
+		struct {
 			char		node[4];
 		} ipx;
 	} network;
-	#else
-	char node[4];
-	#endif
-
+	
 	uint8_t version_major;
 	uint8_t version_minor;
 	enum comp_type computer_type;
@@ -418,10 +390,6 @@ typedef struct netgame_info
    uint8_t             player_flags[MAX_PLAYERS];
 	short					PacketsPerSec;
 	uint8_t					ShortPackets;
-
-#ifdef BUILD_DESCENT1
-	netplayer_info      players[MAX_PLAYERS];
-#endif
 	
 } netgame_info;
 

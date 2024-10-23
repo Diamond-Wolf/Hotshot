@@ -22,15 +22,10 @@ extern int	Skip_briefing_screens;
 extern char Briefing_text_filename[13];
 extern char Ending_text_filename[13];
 
-#ifdef BUILD_DESCENT2
 extern int show_title_screen( const char * filename, int allow_keys, int from_hog_only );
 extern int show_briefing_screen(const char* filename, int allow_keys); 
 extern void show_title_flick(const char* name, int allow_keys);
 extern void do_briefing_screens(const char *filename,int level_num);
-#else
-extern void do_briefing_screens(int level_num);
-extern int show_title_screen(const char* filename, int allow_keys);
-#endif
 
 extern void do_end_game(void);
 extern char* get_briefing_screen(int level_num);

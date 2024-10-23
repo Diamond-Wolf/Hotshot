@@ -55,33 +55,19 @@ int piggy_init();
 void piggy_close();
 void piggy_dump_all();
 void ClearPiggyCache();
-#ifdef BUILD_DESCENT2
 bitmap_index piggy_register_bitmap( grs_bitmap * bmp, const char * name, int in_file, uint8_t flag, int offset);
-#else
-bitmap_index piggy_register_bitmap( grs_bitmap * bmp, const char * name, int in_file);
-
-#endif
 int piggy_register_sound( digi_sound * snd, const char * name, int in_file );
 bitmap_index piggy_find_bitmap( char * name );
 int piggy_find_sound(const char * name );
 
 extern int Pigfile_initialized;
 
-#ifdef BUILD_DESCENT1
-#define PIGGY_PAGE_IN(bmp) 							\
-do { 																\
-	if ( GameBitmaps[(bmp).index].bm_flags & BM_FLAG_PAGED_OUT )	{	\
-		piggy_bitmap_page_in( bmp ); 						\
-	}																\
-} while(0)
-#else
 #define PIGGY_PAGE_IN(bmp) \
 do { \
 	if ( activePiggyTable->gameBitmaps[(bmp).index].bm_flags & BM_FLAG_PAGED_OUT )	{	\
 		piggy_bitmap_page_in( bmp ); 						\
 	}		\
 } while(0)
-#endif
 
 extern void piggy_bitmap_page_in( bitmap_index bmp );
 extern void piggy_bitmap_page_out_all();
@@ -95,18 +81,9 @@ void piggy_load_level_data();
 #define MAX_BITMAP_FILES_D1 1800
 #define MAX_BITMAP_FILES_D2 2620
 
-#ifdef BUILD_DESCENT2
 #define MAX_BITMAP_FILES MAX_BITMAP_FILES_D2
-#else
-#define MAX_BITMAP_FILES MAX_BITMAP_FILES_D1
-#endif
 
 #define MAX_SOUND_FILES		MAX_SOUNDS
-
-#ifdef BUILD_DESCENT1
-extern digi_sound GameSounds[MAX_SOUND_FILES];
-extern grs_bitmap GameBitmaps[MAX_BITMAP_FILES];
-#endif
 
 void piggy_read_sounds();
 
@@ -114,10 +91,6 @@ void piggy_read_sounds();
 //returns the size of all the bitmap data
 void piggy_new_pigfile(const char *pigname);
 
-#ifdef BUILD_DESCENT1
-struct BitmapFile;
-struct SoundFile;
-#else
 typedef struct BitmapFile {
 	char                    name[15];
 } BitmapFile;
@@ -125,7 +98,6 @@ typedef struct BitmapFile {
 typedef struct SoundFile {
 	char                    name[15];
 } SoundFile;
-#endif
 
 struct piggytable {
 	CFILE* file;

@@ -13,10 +13,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
-#ifdef BUILD_DESCENT2
-# include "settings.h"	//include personal settings
-#endif
-
+#include "settings.h"	//include personal settings
 #include "misc/types.h"
 
 enum Game {
@@ -24,12 +21,7 @@ enum Game {
 	G_DESCENT_2
 };
 
-inline Game currentGame =
-#ifdef BUILD_DESCENT1
-	G_DESCENT_1;
-#else
-	G_DESCENT_2;
-#endif
+inline Game currentGame = G_DESCENT_2;
 
 //the maximum length of a filename
 #define FILENAME_LEN 13

@@ -15,11 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/types.h"
 
-#ifdef BUILD_DESCENT2
-# define MINE_VERSION					20	// Current version expected
-#else
-# define MINE_VERSION					17	// Current version expected
-#endif
+#define MINE_VERSION					20	// Current version expected
 
 #define COMPATIBLE_VERSION 		16 // Oldest version that can safely be loaded.
 

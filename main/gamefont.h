@@ -21,13 +21,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //We are interleaving low & high resolution fonts, so to access a font
 //you say fontnum+flag where flag is 0 for lowres, 1 for hires
 
-#ifdef BUILD_DESCENT2
-# define FONT_INTERLEAVE    2
+#define FONT_INTERLEAVE    2
 extern int FontHires;
-#else
-# define FONT_INTERLEAVE    1
-# define FontHires          0
-#endif
 
 #define MAX_FONTS           (5 * FONT_INTERLEAVE)
 
