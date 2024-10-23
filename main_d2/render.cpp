@@ -1510,7 +1510,7 @@ void render_frame(fix eye_offset, int window_num)
 #ifdef NEWDEMO
 	if (Newdemo_state == ND_STATE_RECORDING && eye_offset >= 0)
 	{
-		//	mprintf ((0,"Objnum=%d objtype=%d objid=%d\n",Viewer-Objects,Viewer->type,Viewer->id));	
+		//	mprintf ((0,"Objnum=%d objtype=%d objid=%d\n",Viewer-Objects.data(),Viewer->type,Viewer->id));	
 		if (RenderingType == 0)
 			newdemo_record_start_frame(FrameCount, FrameTime);
 		if (RenderingType != 255)
@@ -2032,7 +2032,7 @@ void render_mine(int start_seg_num, fix eye_offset, int window_num)
 							(Objects[ObjNumber].lifeleft == Laser_max_time) && 	//  and its in it's first frame
 							(Hack_nlasers < MAX_HACKED_LASERS) && 									//  and we have space for it
 							(Objects[ObjNumber].laser_info.parent_num > -1) &&					//  and it has a parent
-							((Viewer - Objects) == Objects[ObjNumber].laser_info.parent_num)	//  and it's parent is the viewer
+							((Viewer - Objects.data()) == Objects[ObjNumber].laser_info.parent_num)	//  and it's parent is the viewer
 							) {
 							Hack_laser_list[Hack_nlasers++] = ObjNumber;								//then make it draw after everything else.
 							//mprintf( (0, "O%d ", ObjNumber ));

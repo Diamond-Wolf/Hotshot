@@ -107,7 +107,8 @@ static short free_obj_list[MAX_OBJECTS];
 object	Object_minus_one;
 #endif
 
-object Objects[MAX_OBJECTS];
+//object Objects[MAX_OBJECTS];
+std::vector<object> Objects;
 int num_objects = 0;
 int Highest_object_index = 0;
 int Highest_ever_object_index = 0;
@@ -157,7 +158,7 @@ void object_goto_next_viewer()
 {
 	int i, start_obj = 0;
 
-	start_obj = Viewer - Objects;		//get viewer object number
+	start_obj = Viewer - Objects.data();		//get viewer object number
 
 	for (i = 0; i <= Highest_object_index; i++)
 	{
@@ -178,7 +179,7 @@ void object_goto_prev_viewer()
 {
 	int i, start_obj = 0;
 
-	start_obj = Viewer - Objects;		//get viewer object number
+	start_obj = Viewer - Objects.data();		//get viewer object number
 
 	for (i = 0; i <= Highest_object_index; i++)
 	{
@@ -233,7 +234,7 @@ void draw_object_blob(object* obj, bitmap_index bmi)
 	grs_bitmap* bm = &activePiggyTable->gameBitmaps[bmi.index];
 
 	if (obj->type == OBJ_FIREBALL)
-		orientation = (obj - Objects) & 7;
+		orientation = (obj - Objects.data()) & 7;
 
 	orientation = global_orientation; //[ISB] k
 
@@ -501,7 +502,7 @@ void draw_polygon_object(object* obj)
 #endif
 
 			//	Snipers get bright when they fire.
-			if (Ai_local_info[obj - Objects].next_fire < F1_0 / 8) 
+			if (Ai_local_info[obj - Objects.data()].next_fire < F1_0 / 8) 
 			{
 				if (obj->ctype.ai_info.behavior == AIB_SNIPE)
 					light = 2 * light + F1_0;
@@ -578,7 +579,7 @@ void create_small_fireball_on_object(object* objp, fix size_scale, int sound_fla
 			if (objp->type == OBJ_ROBOT)
 				vol *= 2;
 			else if (sound_flag)
-				digi_link_sound_to_object(SOUND_EXPLODING_WALL, objp - Objects, 0, vol);
+				digi_link_sound_to_object(SOUND_EXPLODING_WALL, objp - Objects.data(), 0, vol);
 		}
 	}
 }
@@ -624,7 +625,7 @@ void render_object(object* obj)
 	if (obj->type == OBJ_NONE)
 	{
 #ifndef NDEBUG
-		mprintf((1, "ERROR!!!! Bogus obj %d in seg %d is rendering!\n", obj - Objects, obj->segnum));
+		mprintf((1, "ERROR!!!! Bogus obj %d in seg %d is rendering!\n", obj - Objects.data(), obj->segnum));
 		Int3();
 #endif
 		return;
@@ -660,10 +661,10 @@ void render_object(object* obj)
 	if (obj->render_type != RT_NONE)
 		if (Newdemo_state == ND_STATE_RECORDING) 
 		{
-			if (!WasRecorded[obj - Objects])
+			if (!WasRecorded[obj - Objects.data()])
 			{
 				newdemo_record_render_object(obj);
-				WasRecorded[obj - Objects] = 1;
+				WasRecorded[obj - Objects.data()] = 1;
 			}
 		}
 #endif
@@ -791,6 +792,8 @@ void init_objects()
 
 	collide_init();
 
+	Objects.resize(MAX_OBJECTS);
+
 	for (i = 0; i < MAX_OBJECTS; i++) 
 	{
 		free_obj_list[i] = i;
@@ -804,7 +807,7 @@ void init_objects()
 	ConsoleObject = Viewer = &Objects[0];
 
 	init_player_object();
-	obj_link(ConsoleObject - Objects, 0);	//put in the world in segment 0
+	obj_link(ConsoleObject - Objects.data(), 0);	//put in the world in segment 0
 
 	num_objects = 1;						//just the player
 	Highest_object_index = 0;
@@ -1416,7 +1419,7 @@ void dead_player_end(void)
 
 	Player_is_dead = 0;
 	Player_exploded = 0;
-	obj_delete(Dead_player_camera - Objects);
+	obj_delete(Dead_player_camera - Objects.data());
 	Dead_player_camera = NULL;
 	select_cockpit(Cockpit_mode_save);
 	Cockpit_mode_save = -1;
@@ -1471,7 +1474,7 @@ void set_camera_pos(vms_vector* camera_pos, object* objp)
 			fq.p1 = &local_p1;
 			fq.startseg = objp->segnum;
 			fq.rad = 0;
-			fq.thisobjnum = objp - Objects;
+			fq.thisobjnum = objp - Objects.data();
 			fq.ignore_obj_list = NULL;
 			fq.flags = 0;
 			find_vector_intersection(&fq, &hit_data);
@@ -1670,7 +1673,7 @@ void start_player_death_sequence(object* player)
 		HUD_clear_messages();
 
 	Killed_in_frame = FrameCount;
-	Killed_objnum = player - Objects;
+	Killed_objnum = player - Objects.data();
 	Death_sequence_aborted = 0;
 
 #ifdef NETWORK
@@ -1740,16 +1743,17 @@ void obj_delete_all_that_should_be_dead()
 	int		local_dead_player_object = -1;
 
 	// Move all objects
-	objp = Objects;
+	//objp = Objects;
 
 	for (i = 0; i <= Highest_object_index; i++) {
+		objp = &Objects[i];
 		if ((objp->type != OBJ_NONE) && (objp->flags & OF_SHOULD_BE_DEAD)) {
 			Assert(!(objp->type == OBJ_FIREBALL && objp->ctype.expl_info.delete_time != -1));
 			if (objp->type == OBJ_PLAYER) {
 				if (objp->id == Player_num) {
 					if (local_dead_player_object == -1) {
 						start_player_death_sequence(objp);
-						local_dead_player_object = objp - Objects;
+						local_dead_player_object = objp - Objects.data();
 					}
 					else
 						Int3();	//	Contact Mike: Illegal, killed player twice in this frame!
@@ -1761,7 +1765,7 @@ void obj_delete_all_that_should_be_dead()
 				obj_delete(i);
 			}
 		}
-		objp++;
+		//objp++;
 	}
 }
 
@@ -1858,7 +1862,7 @@ void object_move_one(object* obj)
 	case CT_NONE: break;
 	case CT_FLYING:
 #if !defined(NDEBUG) && !defined(NMONO)
-		if (print_object_info > 1) mprintf((0, "Moving player object #%d\n", obj - Objects));
+		if (print_object_info > 1) mprintf((0, "Moving player object #%d\n", obj - Objects.data()));
 #endif
 		read_flying_controls(obj);
 		break;
@@ -1871,7 +1875,7 @@ void object_move_one(object* obj)
 		//NOTE LINK TO CT_MORPH ABOVE!!!
 		if (Game_suspended & SUSP_ROBOTS) return;
 #if !defined(NDEBUG) && !defined(NMONO)
-		if (print_object_info > 1) mprintf((0, "AI: Moving robot object #%d\n", obj - Objects));
+		if (print_object_info > 1) mprintf((0, "AI: Moving robot object #%d\n", obj - Objects.data()));
 #endif
 		do_ai_frame(obj);
 		break;
@@ -1903,7 +1907,7 @@ void object_move_one(object* obj)
 	case CT_REMOTE: break;		//movement is handled in com_process_input
 	case CT_CNTRLCEN: do_controlcen_frame(obj); break;
 	default:
-		Error("Unknown control type %d in object %i, sig/type/id = %i/%i/%i", obj->control_type, obj - Objects, obj->signature, obj->type, obj->id);
+		Error("Unknown control type %d in object %i, sig/type/id = %i/%i/%i", obj->control_type, obj - Objects.data(), obj->signature, obj->type, obj->id);
 		break;
 
 	}
@@ -1939,7 +1943,7 @@ void object_move_one(object* obj)
 			for (i = 0; i < n_phys_segs - 1; i++) {
 				connect_side = find_connect_side(&Segments[phys_seglist[i + 1]], &Segments[phys_seglist[i]]);
 				if (connect_side != -1)
-					check_trigger(&Segments[phys_seglist[i]], connect_side, obj - Objects, 0);
+					check_trigger(&Segments[phys_seglist[i]], connect_side, obj - Objects.data(), 0);
 #ifndef NDEBUG
 				else {	// segments are not directly connected, so do binary subdivision until you find connected segments.
 					mprintf((1, "UNCONNECTED SEGMENTS %d,%d\n", phys_seglist[i + 1], phys_seglist[i]));
@@ -1968,7 +1972,7 @@ void object_move_one(object* obj)
 							int sound = (type == 1) ? SOUND_LAVAFALL_HISS : SOUND_SHIP_IN_WATERFALL;
 							under_lavafall = 1;
 							if (!lavafall_hiss_playing[obj->id]) {
-								digi_link_sound_to_object3(sound, obj - Objects, 1, F1_0, i2f(256), -1, -1);
+								digi_link_sound_to_object3(sound, obj - Objects.data(), 1, F1_0, i2f(256), -1, -1);
 								lavafall_hiss_playing[obj->id] = 1;
 							}
 						}
@@ -1976,7 +1980,7 @@ void object_move_one(object* obj)
 			}
 
 			if (!under_lavafall && lavafall_hiss_playing[obj->id]) {
-				digi_kill_sound_linked_to_object(obj - Objects);
+				digi_kill_sound_linked_to_object(obj - Objects.data());
 				lavafall_hiss_playing[obj->id] = 0;
 			}
 		}
@@ -2011,7 +2015,7 @@ void object_move_one(object* obj)
 	}
 
 	if ((obj->type == OBJ_WEAPON) && (activeBMTable->weapons[obj->id].afterburner_size)) {
-		int	objnum = obj - Objects;
+		int	objnum = obj - Objects.data();
 		fix	vel = vm_vec_mag_quick(&obj->mtype.phys_info.velocity);
 		fix	delay, lifetime;
 
@@ -2064,14 +2068,15 @@ void object_move_all()
 		ConsoleObject->mtype.phys_info.flags &= ~PF_LEVELLING;
 
 	// Move all objects
-	objp = Objects;
+	//objp = Objects;
 
 #ifndef DEMO_ONLY
 	for (i = 0; i <= Highest_object_index; i++) {
+		objp = &Objects[i];
 		if ((objp->type != OBJ_NONE) && (!(objp->flags & OF_SHOULD_BE_DEAD))) {
 			object_move_one(objp);
 		}
-		objp++;
+		//objp++;
 	}
 #else
 	i = 0;	//kill warning
@@ -2176,7 +2181,7 @@ int update_object_seg(object* obj)
 		return 0;
 
 	if (newseg != obj->segnum)
-		obj_relink(obj - Objects, newseg);
+		obj_relink(obj - Objects.data(), newseg);
 
 	return 1;
 }
@@ -2238,15 +2243,15 @@ void obj_attach(object* parent, object* sub)
 	sub->ctype.expl_info.next_attach = parent->attached_obj;
 
 	if (sub->ctype.expl_info.next_attach != -1)
-		Objects[sub->ctype.expl_info.next_attach].ctype.expl_info.prev_attach = sub - Objects;
+		Objects[sub->ctype.expl_info.next_attach].ctype.expl_info.prev_attach = sub - Objects.data();
 
-	parent->attached_obj = sub - Objects;
+	parent->attached_obj = sub - Objects.data();
 
-	sub->ctype.expl_info.attach_parent = parent - Objects;
+	sub->ctype.expl_info.attach_parent = parent - Objects.data();
 	sub->flags |= OF_ATTACHED;
 
-	Assert(sub->ctype.expl_info.next_attach != sub - Objects);
-	Assert(sub->ctype.expl_info.prev_attach != sub - Objects);
+	Assert(sub->ctype.expl_info.next_attach != sub - Objects.data());
+	Assert(sub->ctype.expl_info.prev_attach != sub - Objects.data());
 }
 
 //dettaches one object
@@ -2262,16 +2267,16 @@ void obj_detach_one(object* sub)
 	}
 
 	if (sub->ctype.expl_info.next_attach != -1) {
-		Assert(Objects[sub->ctype.expl_info.next_attach].ctype.expl_info.prev_attach = sub - Objects);
+		Assert(Objects[sub->ctype.expl_info.next_attach].ctype.expl_info.prev_attach = sub - Objects.data());
 		Objects[sub->ctype.expl_info.next_attach].ctype.expl_info.prev_attach = sub->ctype.expl_info.prev_attach;
 	}
 
 	if (sub->ctype.expl_info.prev_attach != -1) {
-		Assert(Objects[sub->ctype.expl_info.prev_attach].ctype.expl_info.next_attach = sub - Objects);
+		Assert(Objects[sub->ctype.expl_info.prev_attach].ctype.expl_info.next_attach = sub - Objects.data());
 		Objects[sub->ctype.expl_info.prev_attach].ctype.expl_info.next_attach = sub->ctype.expl_info.next_attach;
 	}
 	else {
-		Assert(Objects[sub->ctype.expl_info.attach_parent].attached_obj = sub - Objects);
+		Assert(Objects[sub->ctype.expl_info.attach_parent].attached_obj = sub - Objects.data());
 		Objects[sub->ctype.expl_info.attach_parent].attached_obj = sub->ctype.expl_info.next_attach;
 	}
 
@@ -2325,7 +2330,7 @@ void wake_up_rendered_objects(object* viewer, int window_num)
 		return;
 	}
 
-	Ai_last_missile_camera = viewer - Objects;
+	Ai_last_missile_camera = viewer - Objects.data();
 
 	for (i = 0; i < Window_rendered_data[window_num].num_objects; i++) 
 	{

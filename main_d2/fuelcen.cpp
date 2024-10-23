@@ -353,9 +353,13 @@ object* create_morph_robot(segment* segp, vms_vector* object_pos, int object_id)
 
 	obj->shields = activeBMTable->robots[obj->id].strength;
 
-	default_behavior = activeBMTable->robots[obj->id].behavior;
+	if (currentGame == G_DESCENT_1) {
+		default_behavior = (obj->id == 10 ? AIB_RUN_FROM : AIB_NORMAL);
+	} else {
+		default_behavior = activeBMTable->robots[obj->id].behavior;
+	}
 
-	init_ai_object(obj - Objects, default_behavior, -1);		//	Note, -1 = segment this robot goes to to hide, should probably be something useful
+	init_ai_object(obj - Objects.data(), default_behavior, -1);		//	Note, -1 = segment this robot goes to to hide, should probably be something useful
 
 	create_n_segment_path(obj, 6, -1);		//	Create a 6 segment path from creation point.
 
@@ -566,7 +570,7 @@ void robotmaker_proc(FuelCenter* robotcen)
 #ifndef SHAREWARE
 #ifdef NETWORK
 					if (Game_mode & GM_MULTI)
-						multi_send_create_robot(robotcen - Station, obj - Objects, type);
+						multi_send_create_robot(robotcen - Station, obj - Objects.data(), type);
 #endif
 #endif
 					obj->matcen_creator = robotcen - Station | 0x80;

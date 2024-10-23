@@ -128,13 +128,17 @@ void apply_light(fix obj_intensity, int obj_seg, vms_vector* obj_pos, int n_rend
 {
 	int	vv;
 
+	uint8_t objtype = -1;
+	if (objnum >= 0 && objnum < Objects.size())
+		objtype = Objects[objnum].type;
+
 	if (obj_intensity)
 	{
 		fix	obji_64 = obj_intensity * 64;
 
 		// for pretty dim sources, only process vertices in object's own segment.
 		//	12/04/95, MK, markers only cast light in own segment.
-		if ((abs(obji_64) <= F1_0 * 8) || (Objects[objnum].type == OBJ_MARKER))
+		if ((abs(obji_64) <= F1_0 * 8) || (objtype == OBJ_MARKER))
 		{
 			short* vp = Segments[obj_seg].verts;
 
@@ -166,7 +170,7 @@ void apply_light(fix obj_intensity, int obj_seg, vms_vector* obj_pos, int n_rend
 
 			if (CurrentLogicVersion >= LogicVer::FULL_1_0)
 			{
-				if (Objects[objnum].type == OBJ_PLAYER)
+				if (objtype == OBJ_PLAYER)
 					if (Players[Objects[objnum].id].flags & PLAYER_FLAGS_HEADLIGHT_ON)
 					{
 						headlight_shift = 3;
@@ -520,7 +524,7 @@ void set_dynamic_light(void)
 
 			if (obj_intensity)
 			{
-				apply_light(obj_intensity, obj->segnum, objpos, n_render_vertices, render_vertices, obj - Objects);
+				apply_light(obj_intensity, obj->segnum, objpos, n_render_vertices, render_vertices, obj - Objects.data());
 				new_lighting_objects[objnum] = 1;
 			}
 
@@ -661,7 +665,7 @@ fix compute_object_light(object* obj, vms_vector* rotated_pnt)
 {
 	fix light;
 	g3s_point objpnt;
-	int objnum = obj - Objects;
+	int objnum = obj - Objects.data();
 
 	if (!rotated_pnt)
 	{

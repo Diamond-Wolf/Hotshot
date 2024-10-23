@@ -910,7 +910,7 @@ void move_player_2_segment(segment *seg,int side)
 	vm_vec_sub2(&vp,&ConsoleObject->pos);
 	vm_vector_2_matrix(&ConsoleObject->orient,&vp,NULL,NULL);
 
-	obj_relink( ConsoleObject-Objects, SEG_PTR_2_NUM(seg) );
+	obj_relink( ConsoleObject-Objects.data(), SEG_PTR_2_NUM(seg) );
 
 }
 
@@ -1695,7 +1695,7 @@ void game_setup(void)
 
 	#ifdef EDITOR
 		if (Segments[ConsoleObject->segnum].segnum == -1)      //segment no longer exists
-			obj_relink( ConsoleObject-Objects, SEG_PTR_2_NUM(Cursegp) );
+			obj_relink( ConsoleObject-Objects.data(), SEG_PTR_2_NUM(Cursegp) );
 
 		if (!check_obj_seg(ConsoleObject))
 			move_player_2_segment(Cursegp,Curside);
@@ -2491,6 +2491,9 @@ void compute_slide_segs(void)
 		for (sidenum=0;sidenum<6;sidenum++) 
 		{
 			int tmn = Segments[segnum].sides[sidenum].tmap_num;
+			if (tmn >= activeBMTable->tmaps.size())
+				continue;
+
 			if (activeBMTable->tmaps[tmn].slide_u != 0 || activeBMTable->tmaps[tmn].slide_v != 0)
 				Slide_segs[segnum] |= 1 << sidenum;
 		}

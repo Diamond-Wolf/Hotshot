@@ -171,6 +171,9 @@ int player_has_weapon(int weapon_num, int secondary_flag)
 	int	return_value = 0;
 	int	weapon_index;
 
+	if (currentGame == G_DESCENT_1 && weapon_num > 5)
+		return false;
+
 	//	Hack! If energy goes negative, you can't fire a weapon that doesn't require energy.
 	//	But energy should not go negative (but it does), so find out why it does!
 	if (Players[Player_num].energy < 0)

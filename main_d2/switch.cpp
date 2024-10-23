@@ -494,7 +494,8 @@ int check_trigger_sub(int trigger_num, int pnum,int shot)
 
 			digi_stop_all();		//kill the sounds
 
-			digi_play_sample(SOUND_SECRET_EXIT, F1_0);
+			if (currentGame != G_DESCENT_1)
+				digi_play_sample(SOUND_SECRET_EXIT, F1_0);
 			mprintf((0, "Exiting to secret level\n"));
 
 			gr_palette_fade_out(gr_palette, 32, 0);

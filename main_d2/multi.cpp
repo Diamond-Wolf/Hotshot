@@ -1544,7 +1544,7 @@ multi_do_fire(char* buf)
 	//  mprintf((0,"multi_do_fire, weapon = %d\n",weapon));
 
 	if (weapon == FLARE_ADJUST)
-		Laser_player_fire(Objects + Players[pnum].objnum, FLARE_ID, 6, 1, 0);
+		Laser_player_fire(&Objects[Players[pnum].objnum], FLARE_ID, 6, 1, 0);
 	else if (weapon >= MISSILE_ADJUST) {
 		int weapon_id, weapon_gun;
 
@@ -1558,7 +1558,7 @@ multi_do_fire(char* buf)
 			Multi_is_guided = 1;
 		}
 
-		Laser_player_fire(Objects + Players[pnum].objnum, weapon_id, weapon_gun, 1, 0);
+		Laser_player_fire(&Objects[Players[pnum].objnum], weapon_id, weapon_gun, 1, 0);
 	}
 	else {
 		fix save_charge = Fusion_charge;
@@ -1734,7 +1734,7 @@ multi_do_player_explode(char* buf)
 
 	multi_adjust_remote_cap(pnum);
 
-	objp = Objects + Players[pnum].objnum;
+	objp = &Objects[Players[pnum].objnum];
 
 	//      objp->phys_info.velocity = *(vms_vector *)(buf+16); // 12 bytes
 	//      objp->pos = *(vms_vector *)(buf+28);                // 12 bytes
@@ -1848,7 +1848,7 @@ void multi_do_controlcen_destroy(char* buf)
 			HUD_init_message(TXT_CONTROL_DESTROYED);
 
 		if (objnum != -1)
-			net_destroy_controlcen(Objects + objnum);
+			net_destroy_controlcen(&Objects[objnum]);
 		else
 			net_destroy_controlcen(NULL);
 	}
@@ -2359,8 +2359,8 @@ void multi_reset_player_object(object* objp)
 
 	//Init physics for a non-console player
 
-	Assert(objp >= Objects);
-	Assert(objp <= Objects + Highest_object_index);
+	//Assert(objp >= Objects);
+	//Assert(objp <= Objects + Highest_object_index);
 	Assert((objp->type == OBJ_PLAYER) || (objp->type == OBJ_GHOST));
 
 	vm_vec_zero(&objp->mtype.phys_info.velocity);
@@ -2994,7 +2994,7 @@ multi_send_position(int objnum)
 
 	multibuf[count++] = (char)MULTI_POSITION;
 #ifndef MACINTOSH
-	create_shortpos((shortpos*)(multibuf + count), Objects + objnum);
+	create_shortpos((shortpos*)(multibuf + count), &Objects[objnum]);
 	count += sizeof(shortpos);
 #else
 	create_shortpos(&sp, Objects + objnum, 1);
@@ -3720,8 +3720,9 @@ int multi_delete_extra_objects()
 	// This function also prints the total number of available multiplayer
 	// positions in this level, even though this should always be 8 or more!
 
-	objp = Objects;
+	//objp = Objects;
 	for (i = 0; i <= Highest_object_index; i++) {
+		objp = &Objects[i];
 		if ((objp->type == OBJ_PLAYER) || (objp->type == OBJ_GHOST))
 			nnp++;
 		else if ((objp->type == OBJ_ROBOT) && (Game_mode & GM_MULTI_ROBOTS))
@@ -3733,7 +3734,7 @@ int multi_delete_extra_objects()
 					object_create_egg(objp);
 			obj_delete(i);
 		}
-		objp++;
+		//objp++;
 	}
 
 	return nnp;
@@ -4089,7 +4090,7 @@ void multi_do_guided(char* buf)
 	}
 
 
-	if (Guided_missile[pnum] - Objects<0 || Guided_missile[pnum] - Objects > Highest_object_index)
+	if (Guided_missile[pnum] - Objects.data() <0 || Guided_missile[pnum] - Objects.data() > Highest_object_index)
 	{
 		Int3();  // Get Jason immediately!
 		return;
@@ -5055,7 +5056,7 @@ void multi_do_start_trigger(char* buf)
 }
 
 extern int GetMyNetRanking();
-extern char* RankStrings[];
+extern const char* RankStrings[];
 
 void multi_send_ranking()
 {

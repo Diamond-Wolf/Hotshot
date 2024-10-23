@@ -274,7 +274,7 @@ void create_main_menu(newmenu_item * m, int* menu_choice, int* callers_num_optio
 #endif
 	}
 	ADD_ITEM(const_cast<char*>("  Play song"), MENU_PLAY_SONG, -1);
-	ADD_ITEM(const_cast<char*>("  Switch Game"), MENU_SWITCH_GAME, -1);
+	//ADD_ITEM(const_cast<char*>("  Switch Game"), MENU_SWITCH_GAME, -1);
 #endif
 
 	* callers_num_options = num_options;
@@ -1392,13 +1392,13 @@ void do_chocolate_midi_menu()
 
 	do
 	{
-		m[0].type = NM_TYPE_TEXT; m[0].text = "Preferred general MIDI device";
-		m[1].type = NM_TYPE_RADIO; m[1].text = "None"; m[1].group = 0; m[1].value = PreferredGenDevice == GenDevices::NullDevice;
-		m[2].type = NM_TYPE_RADIO; m[2].text = "FluidSynth (if available)"; m[2].group = 0; m[2].value = PreferredGenDevice == GenDevices::FluidSynthDevice;
-		m[3].type = NM_TYPE_TEXT; m[3].text = "Soundfont path";
+		m[0].type = NM_TYPE_TEXT; m[0].text = const_cast<char*>("Preferred general MIDI device");
+		m[1].type = NM_TYPE_RADIO; m[1].text = const_cast<char*>("None"); m[1].group = 0; m[1].value = PreferredGenDevice == GenDevices::NullDevice;
+		m[2].type = NM_TYPE_RADIO; m[2].text = const_cast<char*>("FluidSynth (if available)"); m[2].group = 0; m[2].value = PreferredGenDevice == GenDevices::FluidSynthDevice;
+		m[3].type = NM_TYPE_TEXT; m[3].text = const_cast<char*>("Soundfont path");
 		m[4].type = NM_TYPE_INPUT; m[4].text = SoundFontFilename; m[4].text_len = _MAX_PATH - 1;
-		m[5].type = NM_TYPE_RADIO; m[5].text = "MS/Native MIDI (if available)"; m[5].group = 0; m[5].value = PreferredGenDevice == GenDevices::MMEDevice;
-		m[6].type = NM_TYPE_MENU; m[6].text = "Select MME device";
+		m[5].type = NM_TYPE_RADIO; m[5].text = const_cast<char*>("MS/Native MIDI (if available)"); m[5].group = 0; m[5].value = PreferredGenDevice == GenDevices::MMEDevice;
+		m[6].type = NM_TYPE_MENU; m[6].text = const_cast<char*>("Select MME device");
 
 		i = newmenu_do1(NULL, "MIDI Options", 7, m, nullptr, i);
 
@@ -1460,15 +1460,15 @@ void do_chocolate_menu()
 
 	do
 	{
-		m[0].type = NM_TYPE_TEXT; m[0].text = "Window size";
+		m[0].type = NM_TYPE_TEXT; m[0].text = const_cast<char*>("Window size");
 		m[1].type = NM_TYPE_INPUT; m[1].text = res_string; m[1].text_len = 63;
-		m[2].type = NM_TYPE_CHECK; m[2].text = "Fullscreen"; m[2].value = Fullscreen;
-		m[3].type = NM_TYPE_CHECK; m[3].text = "Integer scaling"; m[3].value = BestFit;
-		m[4].type = NM_TYPE_RADIO; m[4].text = "Disable VSync"; m[4].group = 0; m[4].value = SwapInterval == 0;
-		m[5].type = NM_TYPE_RADIO; m[5].text = "Enable VSync"; m[5].group = 0; m[5].value = SwapInterval == 1;
-		m[6].type = NM_TYPE_RADIO; m[6].text = "Enable smart VSync"; m[6].group = 0; m[6].value = SwapInterval == 2;
-		m[7].type = NM_TYPE_MENU; m[7].text = "MIDI settings";
-		m[8].type = NM_TYPE_CHECK; m[8].text = "Use CMD key combos"; m[8].value = CommandKeyCombos;
+		m[2].type = NM_TYPE_CHECK; m[2].text = const_cast<char*>("Fullscreen"); m[2].value = Fullscreen;
+		m[3].type = NM_TYPE_CHECK; m[3].text = const_cast<char*>("Integer scaling"); m[3].value = BestFit;
+		m[4].type = NM_TYPE_RADIO; m[4].text = const_cast<char*>("Disable VSync"); m[4].group = 0; m[4].value = SwapInterval == 0;
+		m[5].type = NM_TYPE_RADIO; m[5].text = const_cast<char*>("Enable VSync"); m[5].group = 0; m[5].value = SwapInterval == 1;
+		m[6].type = NM_TYPE_RADIO; m[6].text = const_cast<char*>("Enable smart VSync"); m[6].group = 0; m[6].value = SwapInterval == 2;
+		m[7].type = NM_TYPE_MENU; m[7].text = const_cast<char*>("MIDI settings");
+		m[8].type = NM_TYPE_CHECK; m[8].text = const_cast<char*>("Use CMD key combos"); m[8].value = CommandKeyCombos;
 
 		i = newmenu_do1(NULL, "Chocolate Options", 9, m, nullptr, i);
 

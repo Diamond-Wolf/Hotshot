@@ -218,7 +218,7 @@ sequence_packet My_Seq;
 char WantPlayersInfo = 0;
 char WaitingForPlayerInfo = 0;
 
-char* RankStrings[] = { "(unpatched) ","Cadet ","Ensign ","Lieutenant ","Lt.Commander ",
+const char* RankStrings[] = { "(unpatched) ","Cadet ","Ensign ","Lieutenant ","Lt.Commander ",
 								"Commander ","Captain ","Vice Admiral ","Admiral ","Demigod " };
 
 extern obj_position Player_init[MAX_PLAYERS];
@@ -2344,7 +2344,7 @@ void network_read_object_packet(char* data)
 				obj->next = obj->prev = obj->segnum = -1;
 				obj->attached_obj = -1;
 				if (segnum > -1)
-					obj_link(obj - Objects, segnum);
+					obj_link(obj - Objects.data(), segnum);
 				if (obj_owner == my_pnum)
 					map_objnum_local_to_local(objnum);
 				else if (obj_owner != -1)
@@ -2620,24 +2620,24 @@ int network_get_game_params(char* game_name, int* mode, int* game_flags, int* le
 	m[opt].type = NM_TYPE_RADIO; m[opt].text = TXT_TEAM_ANARCHY; m[opt].value = 0; m[opt].group = 0; opt_team_anarchy = opt; opt++;
 	m[opt].type = NM_TYPE_RADIO; m[opt].text = TXT_ANARCHY_W_ROBOTS; m[opt].value = 0; m[opt].group = 0; opt++;
 	m[opt].type = NM_TYPE_RADIO; m[opt].text = TXT_COOPERATIVE; m[opt].value = 0; m[opt].group = 0; opt_coop = opt; opt++;
-	m[opt].type = NM_TYPE_RADIO; m[opt].text = "Capture the flag"; m[opt].value = 0; m[opt].group = 0; opt_capture = opt; opt++;
+	m[opt].type = NM_TYPE_RADIO; m[opt].text = const_cast<char*>("Capture the flag"); m[opt].value = 0; m[opt].group = 0; opt_capture = opt; opt++;
 
 	if (HoardEquipped())
 	{
-		m[opt].type = NM_TYPE_RADIO; m[opt].text = "Hoard"; m[opt].value = 0; m[opt].group = 0; opt++;
-		m[opt].type = NM_TYPE_RADIO; m[opt].text = "Team Hoard"; m[opt].value = 0; m[opt].group = 0; opt_team_hoard = opt; opt++;
-		m[opt].type = NM_TYPE_TEXT; m[opt].text = ""; opt++;
+		m[opt].type = NM_TYPE_RADIO; m[opt].text = const_cast<char*>("Hoard"); m[opt].value = 0; m[opt].group = 0; opt++;
+		m[opt].type = NM_TYPE_RADIO; m[opt].text = const_cast<char*>("Team Hoard"); m[opt].value = 0; m[opt].group = 0; opt_team_hoard = opt; opt++;
+		m[opt].type = NM_TYPE_TEXT; m[opt].text = const_cast<char*>(""); opt++;
 	}
 	else
 	{
-		m[opt].type = NM_TYPE_TEXT; m[opt].text = ""; opt++;
+		m[opt].type = NM_TYPE_TEXT; m[opt].text = const_cast<char*>(""); opt++;
 	}
 
-	m[opt].type = NM_TYPE_RADIO; m[opt].text = "Open game"; m[opt].group = 1; m[opt].value = 0; opt++;
+	m[opt].type = NM_TYPE_RADIO; m[opt].text = const_cast<char*>("Open game"); m[opt].group = 1; m[opt].value = 0; opt++;
 	opt_closed = opt;
 	m[opt].type = NM_TYPE_RADIO; m[opt].text = TXT_CLOSED_GAME; m[opt].group = 1; m[opt].value = 0; opt++;
 	opt_refuse = opt;
-	m[opt].type = NM_TYPE_RADIO; m[opt].text = "Restricted Game              "; m[opt].group = 1; m[opt].value = Netgame.RefusePlayers; opt++;
+	m[opt].type = NM_TYPE_RADIO; m[opt].text = const_cast<char*>("Restricted Game              "); m[opt].group = 1; m[opt].value = Netgame.RefusePlayers; opt++;
 
 	//      m[opt].type = NM_TYPE_CHECK; m[opt].text = TXT_SHOW_IDS; m[opt].value=0; opt++;
 
@@ -2648,7 +2648,7 @@ int network_get_game_params(char* game_name, int* mode, int* game_flags, int* le
 	last_maxnet = MaxNumNetPlayers - 2;
 
 	opt_moreopts = opt;
-	m[opt].type = NM_TYPE_MENU;  m[opt].text = "More options..."; opt++;
+	m[opt].type = NM_TYPE_MENU;  m[opt].text = const_cast<char*>("More options..."); opt++;
 
 	Assert(opt <= 20);
 
@@ -3025,7 +3025,7 @@ menu:
 			m[opt].type = NM_TYPE_MENU; m[opt].text = NetPlayers.players[i].callsign; pnums[opt] = i; opt++;
 		}
 	}
-	m[opt].type = NM_TYPE_TEXT; m[opt].text = ""; opt++;
+	m[opt].type = NM_TYPE_TEXT; m[opt].text = const_cast<char*>(""); opt++;
 	m[opt].type = NM_TYPE_MENU; m[opt].text = TXT_ACCEPT; opt++;
 
 	Assert(opt <= MAX_PLAYERS + 4);
@@ -3270,7 +3270,7 @@ void restart_net_searching(newmenu_item* m)
 	Network_games_changed = 1;
 }
 
-char* ModeLetters[] = { "ANRCHY","TEAM","ROBO","COOP","FLAG","HOARD","TMHOARD" };
+const char* ModeLetters[] = { "ANRCHY","TEAM","ROBO","COOP","FLAG","HOARD","TMHOARD" };
 
 int NumActiveNetgames = 0;
 
@@ -3990,7 +3990,7 @@ int network_wait_for_all_info(int choice)
 
 	newmenu_item m[2];
 
-	m[0].type = NM_TYPE_TEXT; m[0].text = "Press Escape to cancel";
+	m[0].type = NM_TYPE_TEXT; m[0].text = const_cast<char*>("Press Escape to cancel");
 
 	WaitAllChoice = choice;
 	StartWaitAllTime = timer_get_approx_seconds();
@@ -4360,7 +4360,7 @@ void network_do_frame(int force, int listen)
 
 			if (Netgame.ShortPackets)
 			{
-				create_shortpos(&ShortSyncPack.thepos, Objects + objnum);
+				create_shortpos(&ShortSyncPack.thepos, &Objects[objnum]);
 				ShortSyncPack.type = PID_PDATA;
 				ShortSyncPack.playernum = Player_num;
 				ShortSyncPack.obj_render_type = Objects[objnum].render_type;
@@ -4755,36 +4755,36 @@ void network_set_power(void)
 	newmenu_item m[40];
 
 	opt_primary = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Laser upgrade"; m[opt].value = Netgame.DoLaserUpgrade; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Super lasers"; m[opt].value = Netgame.DoSuperLaser; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Quad Lasers"; m[opt].value = Netgame.DoQuadLasers; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Vulcan cannon"; m[opt].value = Netgame.DoVulcan; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Spreadfire cannon"; m[opt].value = Netgame.DoSpread; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Plasma cannon"; m[opt].value = Netgame.DoPlasma; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Fusion cannon"; m[opt].value = Netgame.DoFusions; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Gauss cannon"; m[opt].value = Netgame.DoGauss; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Helix cannon"; m[opt].value = Netgame.DoHelix; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Phoenix cannon"; m[opt].value = Netgame.DoPhoenix; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Omega cannon"; m[opt].value = Netgame.DoOmega; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Laser upgrade"); m[opt].value = Netgame.DoLaserUpgrade; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Super lasers"); m[opt].value = Netgame.DoSuperLaser; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Quad Lasers"); m[opt].value = Netgame.DoQuadLasers; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Vulcan cannon"); m[opt].value = Netgame.DoVulcan; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Spreadfire cannon"); m[opt].value = Netgame.DoSpread; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Plasma cannon"); m[opt].value = Netgame.DoPlasma; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Fusion cannon"); m[opt].value = Netgame.DoFusions; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Gauss cannon"); m[opt].value = Netgame.DoGauss; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Helix cannon"); m[opt].value = Netgame.DoHelix; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Phoenix cannon"); m[opt].value = Netgame.DoPhoenix; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Omega cannon"); m[opt].value = Netgame.DoOmega; opt++;
 
 	opt_second = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Homing Missiles"; m[opt].value = Netgame.DoHoming; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Proximity Bombs"; m[opt].value = Netgame.DoProximity; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Smart Missiles"; m[opt].value = Netgame.DoSmarts; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Mega Missiles"; m[opt].value = Netgame.DoMegas; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Flash Missiles"; m[opt].value = Netgame.DoFlash; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Guided Missiles"; m[opt].value = Netgame.DoGuided; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Smart Mines"; m[opt].value = Netgame.DoSmartMine; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Mercury Missiles"; m[opt].value = Netgame.DoMercury; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "EarthShaker Missiles"; m[opt].value = Netgame.DoEarthShaker; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Homing Missiles"); m[opt].value = Netgame.DoHoming; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Proximity Bombs"); m[opt].value = Netgame.DoProximity; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Smart Missiles"); m[opt].value = Netgame.DoSmarts; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Mega Missiles"); m[opt].value = Netgame.DoMegas; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Flash Missiles"); m[opt].value = Netgame.DoFlash; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Guided Missiles"); m[opt].value = Netgame.DoGuided; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Smart Mines"); m[opt].value = Netgame.DoSmartMine; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Mercury Missiles"); m[opt].value = Netgame.DoMercury; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("EarthShaker Missiles"); m[opt].value = Netgame.DoEarthShaker; opt++;
 
 	opt_power = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Invulnerability"; m[opt].value = Netgame.DoInvulnerability; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Cloaking"; m[opt].value = Netgame.DoCloak; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Afterburners"; m[opt].value = Netgame.DoAfterburner; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Ammo rack"; m[opt].value = Netgame.DoAmmoRack; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Energy Converter"; m[opt].value = Netgame.DoConverter; opt++;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Headlight"; m[opt].value = Netgame.DoHeadlight; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Invulnerability"); m[opt].value = Netgame.DoInvulnerability; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Cloaking"); m[opt].value = Netgame.DoCloak; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Afterburners"); m[opt].value = Netgame.DoAfterburner; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Ammo rack"); m[opt].value = Netgame.DoAmmoRack; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Energy Converter"); m[opt].value = Netgame.DoConverter; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Headlight"); m[opt].value = Netgame.DoHeadlight; opt++;
 
 	choice = newmenu_do(NULL, "Objects to allow", opt, m, NULL);
 
@@ -4871,33 +4871,33 @@ void network_more_game_options()
 	m[opt].type = NM_TYPE_SLIDER; m[opt].value = Netgame.KillGoal; m[opt].text = KillText; m[opt].min_value = 0; m[opt].max_value = 10; opt++;
 
 	opt_start_invul = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Invulnerable when reappearing"; m[opt].value = Netgame.invul; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Invulnerable when reappearing"); m[opt].value = Netgame.invul; opt++;
 
 	opt_marker_view = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Allow camera views from Markers"; m[opt].value = Netgame.Allow_marker_view; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Allow camera views from Markers"); m[opt].value = Netgame.Allow_marker_view; opt++;
 	opt_light = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Indestructible lights"; m[opt].value = Netgame.AlwaysLighting; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Indestructible lights"); m[opt].value = Netgame.AlwaysLighting; opt++;
 
 	opt_bright = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Bright player ships"; m[opt].value = Netgame.BrightPlayers; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Bright player ships"); m[opt].value = Netgame.BrightPlayers; opt++;
 
 	opt_show_names = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Show enemy names on HUD"; m[opt].value = Netgame.ShowAllNames; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Show enemy names on HUD"); m[opt].value = Netgame.ShowAllNames; opt++;
 
 	opt_show_on_map = opt;
 	m[opt].type = NM_TYPE_CHECK; m[opt].text = TXT_SHOW_ON_MAP; m[opt].value = (Netgame.game_flags & NETGAME_FLAG_SHOW_MAP); opt_show_on_map = opt; opt++;
 
 	opt_short_packets = opt;
-	m[opt].type = NM_TYPE_CHECK; m[opt].text = "Short packets"; m[opt].value = Netgame.ShortPackets; opt++;
+	m[opt].type = NM_TYPE_CHECK; m[opt].text = const_cast<char*>("Short packets"); m[opt].value = Netgame.ShortPackets; opt++;
 
 	opt_setpower = opt;
-	m[opt].type = NM_TYPE_MENU;  m[opt].text = "Set Objects allowed..."; opt++;
+	m[opt].type = NM_TYPE_MENU;  m[opt].text = const_cast<char*>("Set Objects allowed..."); opt++;
 
-	m[opt].type = NM_TYPE_TEXT; m[opt].text = "Network socket"; opt++;
+	m[opt].type = NM_TYPE_TEXT; m[opt].text = const_cast<char*>("Network socket"); opt++;
 	opt_socket = opt;
 	m[opt].type = NM_TYPE_INPUT; m[opt].text = socket_string; m[opt].text_len = 4; opt++;
 	
-	m[opt].type = NM_TYPE_TEXT; m[opt].text = "Packets per second (2 - 20)"; opt++;
+	m[opt].type = NM_TYPE_TEXT; m[opt].text = const_cast<char*>("Packets per second (2 - 20)"); opt++;
 	opt_packets = opt;
 	m[opt].type = NM_TYPE_INPUT; m[opt].text = packstring; m[opt].text_len = 2; opt++;
 

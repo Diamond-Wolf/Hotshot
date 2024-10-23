@@ -43,14 +43,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #define	NUM_D2_BOSSES	8
 
-extern uint8_t	Boss_teleports[NUM_D2_BOSSES];		// Set int8_t if this boss can teleport
-extern uint8_t	Boss_spew_more[NUM_D2_BOSSES];		// Set int8_t if this boss can teleport
+// +2 until AI merge
+extern uint8_t	Boss_teleports[NUM_D2_BOSSES + 2];		// Set int8_t if this boss can teleport
+extern uint8_t	Boss_spew_more[NUM_D2_BOSSES + 2];		// Set int8_t if this boss can teleport
 //extern uint8_t	Boss_cloaks[NUM_D2_BOSSES];		// Set int8_t if this boss can cloak
-extern uint8_t	Boss_spews_bots_energy[NUM_D2_BOSSES];		//	Set int8_t if boss spews bots when hit by energy weapon.
-extern uint8_t	Boss_spews_bots_matter[NUM_D2_BOSSES];		//	Set int8_t if boss spews bots when hit by matter weapon.
-extern uint8_t	Boss_invulnerable_energy[NUM_D2_BOSSES];		//	Set int8_t if boss is invulnerable to energy weapons.
-extern uint8_t	Boss_invulnerable_matter[NUM_D2_BOSSES];		//	Set int8_t if boss is invulnerable to matter weapons.
-extern uint8_t	Boss_invulnerable_spot[NUM_D2_BOSSES];		//	Set int8_t if boss is invulnerable in all but a certain spot.  (Dot product fvec|vec_to_collision < BOSS_INVULNERABLE_DOT)
+extern uint8_t	Boss_spews_bots_energy[NUM_D2_BOSSES + 2];		//	Set int8_t if boss spews bots when hit by energy weapon.
+extern uint8_t	Boss_spews_bots_matter[NUM_D2_BOSSES + 2];		//	Set int8_t if boss spews bots when hit by matter weapon.
+extern uint8_t	Boss_invulnerable_energy[NUM_D2_BOSSES + 2];		//	Set int8_t if boss is invulnerable to energy weapons.
+extern uint8_t	Boss_invulnerable_matter[NUM_D2_BOSSES + 2];		//	Set int8_t if boss is invulnerable to matter weapons.
+extern uint8_t	Boss_invulnerable_spot[NUM_D2_BOSSES + 2];		//	Set int8_t if boss is invulnerable in all but a certain spot.  (Dot product fvec|vec_to_collision < BOSS_INVULNERABLE_DOT)
 
 extern fix Boss_cloak_start_time, Boss_cloak_end_time;
 extern	int	Boss_hit_this_frame;

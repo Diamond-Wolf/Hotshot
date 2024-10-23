@@ -682,7 +682,7 @@ extern int network_who_is_master(), network_how_many_connected(), GetMyNetRankin
 extern int TotalMissedPackets, TotalPacketsGot;
 extern char Pauseable_menu;
 const char* NetworkModeNames[] = { "Anarchy","Team Anarchy","Robo Anarchy","Cooperative","Capture the Flag","Hoard","Team Hoard","Unknown" };
-extern char* RankStrings[];
+extern const char* RankStrings[];
 extern int PhallicLimit, PhallicMan;
 
 void do_show_netgame_help()
@@ -691,7 +691,7 @@ void do_show_netgame_help()
 	newmenu_item m[30];
 	char mtext[30][50];
 	int i, num = 0, pl, eff;
-	char* eff_strings[] = { "trashing","really hurting","seriously effecting","hurting",
+	const char* eff_strings[] = { "trashing","really hurting","seriously effecting","hurting",
 								"effecting","tarnishing" };
 
 	for (i = 0; i < 30; i++)
@@ -1596,7 +1596,7 @@ void kill_and_so_forth(void)
 				if (Walls[j].trigger == i)
 				{
 					compute_segment_center(&ConsoleObject->pos, &Segments[Walls[j].segnum]);
-					obj_relink(ConsoleObject - Objects, Walls[j].segnum);
+					obj_relink(ConsoleObject - Objects.data(), Walls[j].segnum);
 					goto kasf_done;
 				}
 			}
@@ -2380,7 +2380,7 @@ void speedtest_frame(void)
 	compute_segment_center(&Viewer->pos, &Segments[Speedtest_segnum]);
 	Viewer->pos.x += 0x10;		Viewer->pos.y -= 0x10;		Viewer->pos.z += 0x17;
 
-	obj_relink(Viewer - Objects, Speedtest_segnum);
+	obj_relink(Viewer - Objects.data(), Speedtest_segnum);
 	compute_center_point_on_side(&center_point, &Segments[Speedtest_segnum], Speedtest_sidenum);
 	vm_vec_normalized_dir_quick(&view_dir, &center_point, &Viewer->pos);
 	vm_vector_2_matrix(&Viewer->orient, &view_dir, NULL, NULL);

@@ -148,6 +148,8 @@ void read_tmap_info(CFILE *fp, int inNumTexturesToRead, int inOffset) {
 			tmap.damage = cfile_read_fix(fp);
 			tmap.eclip_num = cfile_read_int(fp);
 			tmap.destroyed = -1;
+			tmap.slide_u = 0;
+			tmap.slide_v = 0;
 		} else {
 			tmap.flags = cfile_read_byte(fp);
 			tmap.pad[0] = cfile_read_byte(fp);
@@ -305,6 +307,14 @@ void ReadRobotD1(CFILE* fp, int inNumRobotsToRead, int inOffset) {
 		}
 
 		activeBMTable->robots[i].always_0xabcd = cfile_read_int(fp);
+
+		activeBMTable->robots[i].behavior = AIB_NORMAL;
+
+		if (activeBMTable->robots[i].boss_flag) {
+			activeBMTable->robots[i].deathroll_sound = SOUND_BOSS_SHARE_DIE;
+			activeBMTable->robots[i].see_sound = SOUND_BOSS_SHARE_SEE;
+			activeBMTable->robots[i].attack_sound = SOUND_BOSS_SHARE_ATTACK;
+		}
 	}
 }
 
@@ -825,7 +835,7 @@ void bm_read_all(CFILE* fp) {
 
 	auto NumTextures = cfile_read_int(fp);
 	for (i = 0; i < READ_LIMIT(MAX_TEXTURES_D1, NumTextures); i++)
-		activeBMTable->textures.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
+		activeBMTable->textures.push_back(BITMAP_INDEX(cfile_read_short(fp)));
 	read_tmap_info(fp, READ_LIMIT(MAX_TEXTURES_D1, NumTextures), 0);
 
 	uint8_t sounds[MAX_SOUNDS];
@@ -891,7 +901,7 @@ void bm_read_all(CFILE* fp) {
 			activeBMTable->deadModels.push_back(cfile_read_int(fp));
 
 		for (i = 0; i < MAX_OBJ_BITMAPS_D1; i++)
-			activeBMTable->objectBitmaps.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
+			activeBMTable->objectBitmaps.push_back(BITMAP_INDEX(cfile_read_short(fp)));
 		for (i = 0; i < MAX_OBJ_BITMAPS_D1; i++)
 			activeBMTable->objectBitmapPointers.push_back((uint16_t)cfile_read_short(fp));
 
@@ -908,11 +918,11 @@ void bm_read_all(CFILE* fp) {
 		//	Error("Too many gauges present in hamfile. Got %d, max %d.", t, MAX_GAUGE_BMS);
 		for (i = 0; i < t; i++)
 		{
-			activeBMTable->gauges.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
+			activeBMTable->gauges.push_back(BITMAP_INDEX(cfile_read_short(fp)));
 		}
 		for (i = 0; i < t; i++)
 		{
-			activeBMTable->hiresGauges.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
+			activeBMTable->hiresGauges.push_back(BITMAP_INDEX(cfile_read_short(fp)));
 		}
 
 		t = cfile_read_int(fp);
@@ -925,7 +935,7 @@ void bm_read_all(CFILE* fp) {
 	#endif
 		for (i = 0; i < t; i++)
 		{
-			activeBMTable->objectBitmaps.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
+			activeBMTable->objectBitmaps.push_back(BITMAP_INDEX(cfile_read_short(fp)));
 		}
 		for (i = 0; i < t; i++)
 		{
@@ -941,7 +951,7 @@ void bm_read_all(CFILE* fp) {
 	//if (Num_cockpits > N_COCKPIT_BITMAPS)
 	//	Error("Too many cockpits present in hamfile. Got %d, max %d.", Num_cockpits, N_COCKPIT_BITMAPS);
 	for (i = 0; i < READ_LIMIT(N_COCKPIT_BITMAPS_D1, Num_cockpits); i++) {
-		activeBMTable->cockpits.push_back((bitmap_index){(uint16_t)cfile_read_short(fp)});
+		activeBMTable->cockpits.push_back(BITMAP_INDEX(cfile_read_short(fp)));
 	}
 
 	printf("\n%d cockpits\n", Num_cockpits);
@@ -961,6 +971,10 @@ void bm_read_all(CFILE* fp) {
 		for (i = 0; i < MAX_OBJTYPE_D1; i++)
 			ObjStrength[i] = cfile_read_fix(fp);
 
+		if (activeBMTable->reactors.size() < 1) {
+			activeBMTable->reactors.resize(1);
+		}
+
 		for (i=0; i<Num_total_object_types; i++)
 			if (ObjType[i] == OL_CONTROL_CENTER)
 				activeBMTable->reactors[0].model_num = ObjId[i];
@@ -969,6 +983,10 @@ void bm_read_all(CFILE* fp) {
 		auto N_controlcen_guns = cfile_read_int(fp);
 		activeBMTable->reactors[0].n_guns = N_controlcen_guns;
 		activeBMTable->reactorGunPos.resize(N_controlcen_guns);
+
+		activeBMTable->reactorGunPos.resize(MAX_CONTROLCEN_GUNS_D1);
+		activeBMTable->reactorGunDirs.resize(MAX_CONTROLCEN_GUNS_D1);
+		
 		for (i = 0; i < MAX_CONTROLCEN_GUNS_D1; i++) 
 		{
 			activeBMTable->reactorGunPos[i].x = cfile_read_fix(fp);

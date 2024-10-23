@@ -1063,6 +1063,38 @@ void handle_overflow_delta_light(CFILE* LoadFile, size_t overflow_amount)
 	}
 }
 
+int8_t ConvertTrigger(short v29Flags) {
+
+	mprintf((1, "Converting trigger %x\n", v29Flags));
+
+	if (v29Flags & TRIGGER_CONTROL_DOORS)
+		return TT_OPEN_DOOR;
+	else if (v29Flags & TRIGGER_SHIELD_DAMAGE)
+		return -1;// Int3();
+	else if (v29Flags & TRIGGER_ENERGY_DRAIN)
+		return -1;// Int3();
+	else if (v29Flags & TRIGGER_EXIT)
+		return TT_EXIT;
+	else if (v29Flags & TRIGGER_MATCEN)
+		return TT_MATCEN;
+	else if (v29Flags & TRIGGER_ILLUSION_OFF)
+		return TT_ILLUSION_OFF;
+	else if (v29Flags & TRIGGER_SECRET_EXIT)
+		return TT_SECRET_EXIT;
+	else if (v29Flags & TRIGGER_ILLUSION_ON)
+		return TT_ILLUSION_ON;
+	else if (v29Flags & TRIGGER_UNLOCK_DOORS)
+		return TT_UNLOCK_DOOR;
+	else if (v29Flags & TRIGGER_OPEN_WALL)
+		return TT_OPEN_WALL;
+	else if (v29Flags & TRIGGER_CLOSE_WALL)
+		return TT_CLOSE_WALL;
+	else if (v29Flags & TRIGGER_ILLUSORY_WALL)
+		return TT_ILLUSORY_WALL;
+	else
+		return -1;
+}
+
 // -----------------------------------------------------------------------------
 // Load game 
 // Loads all the relevant data for a level.
@@ -1071,6 +1103,9 @@ void handle_overflow_delta_light(CFILE* LoadFile, size_t overflow_amount)
 // returns 0=everything ok, 1=old version, -1=error
 int LoadGameDataD1(CFILE* LoadFile)
 {
+
+	mprintf((1, "\nLoading D1 game data\n"));
+
 	int i, j;
 	int start_offset;
 
@@ -1253,8 +1288,11 @@ int LoadGameDataD1(CFILE* LoadFile)
 
 			for (i = 0; i < game_fileinfo.triggers_howmany; i++) 
 			{
-				Triggers[i].type = cfile_read_byte(LoadFile);
-				Triggers[i].flags = cfile_read_short(LoadFile);
+				int8_t type1 = cfile_read_byte(LoadFile);
+				short flags1 = cfile_read_short(LoadFile);
+
+				Triggers[i].type = ConvertTrigger(flags1);
+				Triggers[i].flags = 0;
 				Triggers[i].value = cfile_read_int(LoadFile);
 				Triggers[i].time = cfile_read_int(LoadFile);
 				Triggers[i].link_num = cfile_read_byte(LoadFile);
@@ -1418,6 +1456,8 @@ int LoadGameDataD1(CFILE* LoadFile)
 
 int LoadGameDataD2(CFILE* LoadFile)
 {
+	mprintf((1, "\nLoading D2 game data\n"));
+
 	int i, j;
 	int start_offset;
 
@@ -1738,7 +1778,7 @@ int LoadGameDataD2(CFILE* LoadFile)
 					else if (trig.flags & TRIGGER_ILLUSORY_WALL)
 						type = TT_ILLUSORY_WALL;
 					else
-						;//Int3();
+						Int3();
 
 					printf("Done trigger flagging\n");
 
@@ -2246,6 +2286,8 @@ int load_level(char* filename_passed)
 	else if (version <= 1 || Current_level_palette[0] == 0)
 		strcpy(Current_level_palette, "groupa.256");
 
+	printf("Current palette: %s\n", Current_level_palette);
+
 	if (version < 6) 
 	{
 		Secret_return_segment = 0;
@@ -2286,6 +2328,8 @@ int load_level(char* filename_passed)
 		return 2;
 	}
 
+	printf("Preparing to load_game_data\n");
+
 	cfseek(LoadFile, gamedata_offset, SEEK_SET);
 	game_err = load_game_data(LoadFile);
 
@@ -2298,6 +2342,9 @@ int load_level(char* filename_passed)
 	//======================== CLOSE FILE =============================
 
 	cfclose(LoadFile);
+
+	if (activePiggyTable->gameBitmaps.size() == 1) //only bogus initialized
+		load_palette(Current_level_palette, 1, 1);
 
 	if (CurrentDataVersion != DataVer::DEMO)
 		set_ambient_sound_flags();

@@ -388,7 +388,7 @@ void init_player_stats_level(int secret_flag)
 	Players[Player_num].hostages_total += Players[Player_num].hostages_level;
 	Players[Player_num].hostages_on_board = 0;
 
-	if (!secret_flag)
+	if (!secret_flag && currentGame != G_DESCENT_1)
 	{
 		init_ammo_and_energy();
 
@@ -652,7 +652,7 @@ void create_player_appearance_effect(object* player_obj)
 
 #ifndef NDEBUG
 	{
-		int objnum = player_obj - Objects;
+		int objnum = player_obj - Objects.data();
 		if ((objnum < 0) || (objnum > Highest_object_index))
 			Int3(); // See Rob, trying to track down weird network bug
 	}
@@ -670,7 +670,7 @@ void create_player_appearance_effect(object* player_obj)
 		effect_obj->orient = player_obj->orient;
 
 		if (activeBMTable->vclips[VCLIP_PLAYER_APPEARANCE].sound_num > -1)
-			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_PLAYER_APPEARANCE].sound_num, effect_obj - Objects, 0, F1_0);
+			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_PLAYER_APPEARANCE].sound_num, effect_obj - Objects.data(), 0, F1_0);
 	}
 }
 
@@ -1028,6 +1028,9 @@ void StartNewGame(int start_level)
 	Function_mode = FMODE_GAME;
 
 	Next_level_num = 0;
+
+	Objects.clear();
+	Objects.resize(MAX_OBJECTS);
 
 	InitPlayerObject();				//make sure player's object set up
 
@@ -2321,7 +2324,7 @@ void InitPlayerPosition(int random_flag)
 
 		// -- mprintf((0, "Re-starting in location %d of %d.\n", NewPlayer+1, NumNetPlayerPositions));
 
-	obj_relink(ConsoleObject - Objects, Player_init[NewPlayer].segnum);
+	obj_relink(ConsoleObject - Objects.data(), Player_init[NewPlayer].segnum);
 
 done:
 	reset_player_object();

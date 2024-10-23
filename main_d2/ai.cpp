@@ -91,13 +91,13 @@ int8_t				Boss_dying, Boss_dying_sound_playing, unused123, unused234;
 
 // -- uint8_t	Boss_cloaks[NUM_D2_BOSSES] = 					{1,1,1,1,1,1};		// Set int8_t if this boss can cloak
 
-uint8_t	Boss_teleports[NUM_D2_BOSSES] = { 1,1,1,1,1,1, 1,1 };		// Set int8_t if this boss can teleport
-uint8_t	Boss_spew_more[NUM_D2_BOSSES] = { 0,1,0,0,0,0, 0,0 };		//	If set, 50% of time, spew two bots.
-uint8_t	Boss_spews_bots_energy[NUM_D2_BOSSES] = { 1,1,0,1,0,1, 1,1 };		//	Set int8_t if boss spews bots when hit by energy weapon.
-uint8_t	Boss_spews_bots_matter[NUM_D2_BOSSES] = { 0,0,1,1,1,1, 0,1 };		//	Set int8_t if boss spews bots when hit by matter weapon.
-uint8_t	Boss_invulnerable_energy[NUM_D2_BOSSES] = { 0,0,1,1,0,0, 0,0 };		//	Set int8_t if boss is invulnerable to energy weapons.
-uint8_t	Boss_invulnerable_matter[NUM_D2_BOSSES] = { 0,0,0,0,1,1, 1,0 };		//	Set int8_t if boss is invulnerable to matter weapons.
-uint8_t	Boss_invulnerable_spot[NUM_D2_BOSSES] = { 0,0,0,0,0,1, 0,1 };		//	Set int8_t if boss is invulnerable in all but a certain spot.  (Dot product fvec|vec_to_collision < BOSS_INVULNERABLE_DOT)
+uint8_t	Boss_teleports[NUM_D2_BOSSES + 2] = { 1, 1, 1,1,1,1,1,1, 1,1 };		// Set int8_t if this boss can teleport
+uint8_t	Boss_spew_more[NUM_D2_BOSSES + 2] = { 0, 1, 0,1,0,0,0,0, 0,0 };		//	If set, 50% of time, spew two bots.
+uint8_t	Boss_spews_bots_energy[NUM_D2_BOSSES + 2] = { 0, 1, 1,1,0,1,0,1, 1,1 };		//	Set int8_t if boss spews bots when hit by energy weapon.
+uint8_t	Boss_spews_bots_matter[NUM_D2_BOSSES + 2] = { 0, 1, 0,0,1,1,1,1, 0,1 };		//	Set int8_t if boss spews bots when hit by matter weapon.
+uint8_t	Boss_invulnerable_energy[NUM_D2_BOSSES + 2] = { 0, 0, 0,0,1,1,0,0, 0,0 };		//	Set int8_t if boss is invulnerable to energy weapons.
+uint8_t	Boss_invulnerable_matter[NUM_D2_BOSSES + 2] = { 0, 0, 0,0,0,0,1,1, 1,0 };		//	Set int8_t if boss is invulnerable to matter weapons.
+uint8_t	Boss_invulnerable_spot[NUM_D2_BOSSES + 2] = { 0, 0, 0,0,0,0,0,1, 0,1 };		//	Set int8_t if boss is invulnerable in all but a certain spot.  (Dot product fvec|vec_to_collision < BOSS_INVULNERABLE_DOT)
 
 int				ai_evaded = 0;
 
@@ -271,9 +271,14 @@ void make_nearby_robot_snipe(void)
 		int	objnum = Segments[bfs_list[i]].objects;
 		while (objnum != -1) {
 			object* objp = &Objects[objnum];
+			if (objp->type != OBJ_ROBOT) {
+				objnum = objp->next;
+				continue;
+			}
+
 			robot_info* robptr = &activeBMTable->robots[objp->id];
 
-			if ((objp->type == OBJ_ROBOT) && (objp->id != ROBOT_BRAIN)) {
+			if (objp->id != ROBOT_BRAIN) {
 				if ((objp->ctype.ai_info.behavior != AIB_SNIPE) && (objp->ctype.ai_info.behavior != AIB_RUN_FROM) && !activeBMTable->robots[objp->id].boss_flag && !robptr->companion) {
 					objp->ctype.ai_info.behavior = AIB_SNIPE;
 					Ai_local_info[objnum].mode = AIM_SNIPE_ATTACK;
@@ -296,7 +301,7 @@ int	Robots_kill_robots_cheat = 0;
 // --------------------------------------------------------------------------------------------------------------------
 void do_ai_frame(object* obj)
 {
-	int			objnum = obj - Objects;
+	int			objnum = obj - Objects.data();
 	ai_static* aip = &obj->ctype.ai_info;
 	ai_local* ailp = &Ai_local_info[objnum];
 	fix			dist_to_player;
@@ -349,12 +354,12 @@ void do_ai_frame(object* obj)
 		return;
 
 	if (Break_on_object != -1)
-		if ((obj - Objects) == Break_on_object)
+		if ((obj - Objects.data()) == Break_on_object)
 			Int3();	//	Contact Mike: This is a debug break
 #endif
 
-	// mprintf((0, "Object %i: behavior = %02x, mode = %i, awareness = %i, time = %7.3f\n", obj-Objects, aip->behavior, ailp->mode, ailp->player_awareness_type, f2fl(ailp->player_awareness_time)));
-	// mprintf((0, "Object %i: behavior = %02x, mode = %i, awareness = %i, cur=%i, goal=%i\n", obj-Objects, aip->behavior, ailp->mode, ailp->player_awareness_type, aip->CURRENT_STATE, aip->GOAL_STATE));
+	// mprintf((0, "Object %i: behavior = %02x, mode = %i, awareness = %i, time = %7.3f\n", obj-Objects.data(), aip->behavior, ailp->mode, ailp->player_awareness_type, f2fl(ailp->player_awareness_time)));
+	// mprintf((0, "Object %i: behavior = %02x, mode = %i, awareness = %i, cur=%i, goal=%i\n", obj-Objects.data(), aip->behavior, ailp->mode, ailp->player_awareness_type, aip->CURRENT_STATE, aip->GOAL_STATE));
 
 //	Assert((aip->behavior >= MIN_BEHAVIOR) && (aip->behavior <= MAX_BEHAVIOR));
 	if (!((aip->behavior >= MIN_BEHAVIOR) && (aip->behavior <= MAX_BEHAVIOR))) {
@@ -509,7 +514,7 @@ void do_ai_frame(object* obj)
 					attempt_to_resume_path(obj);
 				break;
 			case AIM_FOLLOW_PATH:
-				// mprintf((0, "Object %i following path got %i retries in frame %i\n", obj-Objects, ailp->consecutive_retries, FrameCount));
+				// mprintf((0, "Object %i following path got %i retries in frame %i\n", obj-Objects.data(), ailp->consecutive_retries, FrameCount));
 				if (Game_mode & GM_MULTI) {
 					ailp->mode = AIM_STILL;
 				}
@@ -525,7 +530,7 @@ void do_ai_frame(object* obj)
 				ailp->mode = AIM_RUN_FROM_OBJECT;
 				break;
 			case AIM_BEHIND:
-				mprintf((0, "Hiding robot (%i) collided much.\n", obj - Objects));
+				mprintf((0, "Hiding robot (%i) collided much.\n", obj - Objects.data()));
 				move_towards_segment_center(obj);
 				obj->mtype.phys_info.velocity.x = 0;
 				obj->mtype.phys_info.velocity.y = 0;
@@ -615,7 +620,7 @@ void do_ai_frame(object* obj)
 		rval = P_Rand();
 		sval = (dist_to_player * (Difficulty_level + 1)) / 64;
 
-		// -- mprintf((0, "Object #%3i: dist = %7.3f, rval = %8x, sval = %8x", obj-Objects, f2fl(dist_to_player), rval, sval));
+		// -- mprintf((0, "Object #%3i: dist = %7.3f, rval = %8x, sval = %8x", obj-Objects.data(), f2fl(dist_to_player), rval, sval));
 		if ((fixmul(rval, sval) < FrameTime) || (Players[Player_num].flags & PLAYER_FLAGS_HEADLIGHT_ON)) {
 			ailp->player_awareness_type = PA_PLAYER_COLLISION;
 			ailp->player_awareness_time = F1_0 * 3;
@@ -640,7 +645,7 @@ void do_ai_frame(object* obj)
 		object_animates = do_silly_animation(obj);
 		if (object_animates)
 			ai_frame_animation(obj);
-		//mprintf((0, "Object %i: goal=%i, current=%i\n", obj-Objects, obj->ctype.ai_info.GOAL_STATE, obj->ctype.ai_info.CURRENT_STATE));
+		//mprintf((0, "Object %i: goal=%i, current=%i\n", obj-Objects.data(), obj->ctype.ai_info.GOAL_STATE, obj->ctype.ai_info.CURRENT_STATE));
 	}
 	else {
 		//	If Object is supposed to animate, but we don't let it animate due to distance, then
@@ -655,8 +660,8 @@ void do_ai_frame(object* obj)
 
 	case 1:
 	case 2:
-		mprintf((1, "Warning: D1 boss detected.  Not supported!\n"));
-		break;
+		//mprintf((1, "Warning: D1 boss detected.  Not supported!\n"));
+		//break;
 
 	default: {
 		int	pv;
@@ -813,7 +818,7 @@ void do_ai_frame(object* obj)
 				; // mprintf((0, "Not Firing at player because dot = %7.3f, dist = %7.3f\n", f2fl(vm_vec_dot(&ConsoleObject->orient.fvec, &vec_to_player)), f2fl(dist_to_player)));
 
 			if (do_stuff) {
-				Laser_create_new_easy(&obj->orient.fvec, &obj->pos, obj - Objects, FLARE_ID, 1);
+				Laser_create_new_easy(&obj->orient.fvec, &obj->pos, obj - Objects.data(), FLARE_ID, 1);
 				ailp->next_fire = F1_0 / 2;
 				if (!Buddy_allowed_to_talk && CurrentLogicVersion > LogicVer::SHAREWARE)	//	If buddy not talking, make him fire flares less often.
 					ailp->next_fire += P_Rand() * 4;
@@ -838,7 +843,7 @@ void do_ai_frame(object* obj)
 
 			if (do_stuff) {
 				//	@mk, 05/08/95: Firing flare from center of object, this is dumb...
-				Laser_create_new_easy(&obj->orient.fvec, &obj->pos, obj - Objects, FLARE_ID, 1);
+				Laser_create_new_easy(&obj->orient.fvec, &obj->pos, obj - Objects.data(), FLARE_ID, 1);
 				ailp->next_fire = F1_0 / 2;
 				if (Stolen_item_index == 0 && CurrentLogicVersion > LogicVer::SHAREWARE)		//	If never stolen an item, fire flares less often (bad: Stolen_item_index wraps, but big deal)
 					ailp->next_fire += P_Rand() * 4;
@@ -885,7 +890,7 @@ void do_ai_frame(object* obj)
 			if (player_visibility) {
 				if (P_Rand() < FrameTime * player_visibility) {
 					if (dist_to_player / 256 < P_Rand() * player_visibility) {
-						// mprintf((0, "Object %i searching for player.\n", obj-Objects));
+						// mprintf((0, "Object %i searching for player.\n", obj-Objects.data()));
 						aip->GOAL_STATE = AIS_SRCH;
 						aip->CURRENT_STATE = AIS_SRCH;
 					}
@@ -974,9 +979,9 @@ void do_ai_frame(object* obj)
 			vm_vec_add(&fire_pos, &obj->pos, &fire_vec);
 
 			if (aip->SUB_FLAGS & SUB_FLAGS_SPROX)
-				Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects, ROBOT_SUPERPROX_ID, 1);
+				Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects.data(), ROBOT_SUPERPROX_ID, 1);
 			else
-				Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects, PROXIMITY_ID, 1);
+				Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects.data(), PROXIMITY_ID, 1);
 
 			ailp->next_fire = (F1_0 / 2) * (NDL + 5 - Difficulty_level);		//	Drop a proximity bomb every 5 seconds.
 
@@ -984,11 +989,11 @@ void do_ai_frame(object* obj)
 #ifdef NETWORK
 			if (Game_mode & GM_MULTI)
 			{
-				ai_multi_send_robot_position(obj - Objects, -1);
+				ai_multi_send_robot_position(obj - Objects.data(), -1);
 				if (aip->SUB_FLAGS & SUB_FLAGS_SPROX)
-					multi_send_robot_fire(obj - Objects, -2, &fire_vec);
+					multi_send_robot_fire(obj - Objects.data(), -2, &fire_vec);
 				else
-					multi_send_robot_fire(obj - Objects, -1, &fire_vec);
+					multi_send_robot_fire(obj - Objects.data(), -1, &fire_vec);
 			}
 #endif	
 #endif
@@ -1217,7 +1222,7 @@ void do_ai_frame(object* obj)
 		break;
 
 	default:
-		mprintf((0, "Unknown mode = %i in robot %i, behavior = %i\n", ailp->mode, obj - Objects, aip->behavior));
+		mprintf((0, "Unknown mode = %i in robot %i, behavior = %i\n", ailp->mode, obj - Objects.data(), aip->behavior));
 		ailp->mode = AIM_CHASE_OBJECT;
 		break;
 	}		// end:	switch (ailp->mode) {

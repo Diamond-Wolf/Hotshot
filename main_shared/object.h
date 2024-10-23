@@ -292,7 +292,8 @@ extern int Object_next_signature;		// The next signature for the next newly crea
 extern uint8_t CollisionResult[MAX_OBJECT_TYPES][MAX_OBJECT_TYPES];
 // ie CollisionResult[a][b]==  what happens to a when it collides with b
 
-extern object Objects[];
+//extern object Objects[];
+extern std::vector<object> Objects;
 extern int Highest_object_index;		//highest objnum
 
 extern char *robot_names[];			//name of each robot

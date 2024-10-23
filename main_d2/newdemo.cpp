@@ -258,9 +258,10 @@ int newdemo_find_object(int signature)
 {
 	int i;
 	object* objp;
-	objp = Objects;
-	for (i = 0; i <= Highest_object_index; i++, objp++)
+	//objp = Objects;
+	for (i = 0; i <= Highest_object_index; i++)
 	{
+		objp = &Objects[i];
 		if ((objp->type != OBJ_NONE) && (objp->signature == signature))
 			return i;
 	}
@@ -940,7 +941,7 @@ void newdemo_record_start_frame(int frame_number, fix frame_time)
 
 void newdemo_record_render_object(object* obj)
 {
-	if (ViewWasRecorded[obj - Objects])
+	if (ViewWasRecorded[obj - Objects.data()])
 		return;
 
 	//	if (obj==&Objects[Players[Player_num].objnum] && !Player_is_dead)
@@ -957,14 +958,14 @@ extern uint8_t RenderingType;
 void newdemo_record_viewer_object(object* obj)
 {
 
-	if (ViewWasRecorded[obj - Objects] && (ViewWasRecorded[obj - Objects] - 1) == RenderingType)
+	if (ViewWasRecorded[obj - Objects.data()] && (ViewWasRecorded[obj - Objects.data()] - 1) == RenderingType)
 		return;
-	//if (WasRecorded[obj-Objects])
+	//if (WasRecorded[obj-Objects.data()])
 	  //	return;
 	if (RenderingWasRecorded[RenderingType])
 		return;
 
-	ViewWasRecorded[obj - Objects] = RenderingType + 1;
+	ViewWasRecorded[obj - Objects.data()] = RenderingType + 1;
 	RenderingWasRecorded[RenderingType] = 1;
 	stop_time();
 	nd_write_byte(ND_EVENT_VIEWER_OBJECT);
@@ -1689,7 +1690,7 @@ int newdemo_read_frame_information()
 
 					if (segnum > Highest_segment_index)
 						segnum = 0;
-					obj_link(Viewer - Objects, segnum);
+					obj_link(Viewer - Objects.data(), segnum);
 				}
 			}
 			break;
@@ -1712,7 +1713,7 @@ int newdemo_read_frame_information()
 				if (segnum > Highest_segment_index)
 					break;
 
-				obj_link(obj - Objects, segnum);
+				obj_link(obj - Objects.data(), segnum);
 				if ((obj->type == OBJ_PLAYER) && (Newdemo_game_mode & GM_MULTI)) 
 				{
 #ifdef NETWORK
@@ -1867,7 +1868,7 @@ int newdemo_read_frame_information()
 				if (Newdemo_vcr_state != ND_STATE_PAUSED) {
 					segnum = obj->segnum;
 					obj->next = obj->prev = obj->segnum = -1;
-					obj_link(obj - Objects, segnum);
+					obj_link(obj - Objects.data(), segnum);
 				}
 			}
 			break;

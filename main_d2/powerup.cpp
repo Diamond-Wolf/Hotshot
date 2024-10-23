@@ -61,7 +61,7 @@ void do_powerup_frame(object* obj)
 	vclip_info_t* vci = &obj->rtype.vclip_info;
 	vclip* vc = &activeBMTable->vclips[vci->vclip_num];
 
-	fudge = (FrameTime * ((obj - Objects) & 3)) >> 4;
+	fudge = (FrameTime * ((obj - Objects.data()) & 3)) >> 4;
 
 	vci->frametime -= FrameTime + fudge;
 
@@ -69,7 +69,7 @@ void do_powerup_frame(object* obj)
 	{
 		vci->frametime += vc->frame_time;
 
-		if ((obj - Objects) & 1)
+		if ((obj - Objects.data()) & 1)
 			vci->framenum--;
 		else
 			vci->framenum++;
@@ -86,7 +86,7 @@ void do_powerup_frame(object* obj)
 		object_create_explosion(obj->segnum, &obj->pos, F1_0 * 7 / 2, VCLIP_POWERUP_DISAPPEARANCE);
 
 		if (activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num > -1)
-			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num, obj - Objects, 0, F1_0);
+			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num, obj - Objects.data(), 0, F1_0);
 	}
 }
 
@@ -124,7 +124,7 @@ void draw_powerup(object* obj)
 	draw_object_blob(obj, activeBMTable->vclips[obj->rtype.vclip_info.vclip_num].frames[obj->rtype.vclip_info.framenum]);
 
 #ifdef EDITOR
-	if ((Function_mode == FMODE_EDITOR) && (Cur_object_index == obj - Objects))
+	if ((Function_mode == FMODE_EDITOR) && (Cur_object_index == obj - Objects.data()))
 		if (blob_vertices[0].x != 0x80000)
 			draw_blob_outline();
 #endif
@@ -697,7 +697,7 @@ int do_powerup(object* obj)
 			multi_send_play_sound(activeBMTable->powerups[id].hit_sound, F1_0);
 #endif
 		digi_play_sample(activeBMTable->powerups[id].hit_sound, F1_0);
-		detect_escort_goal_accomplished(obj - Objects);
+		detect_escort_goal_accomplished(obj - Objects.data());
 	}
 
 	PlayerMessage = 1;

@@ -371,7 +371,7 @@ if (Dont_move_ai_objects)
 	if (!(pi->velocity.x || pi->velocity.y || pi->velocity.z || pi->thrust.x || pi->thrust.y || pi->thrust.z))
 		return;
 
-	objnum = obj-Objects;
+	objnum = obj-Objects.data();
 
 	n_phys_segs = 0;
 
@@ -538,7 +538,7 @@ save_p1 = *fq.p1;
 
 		#ifndef NDEBUG
 		if (fate == HIT_BAD_P0) {
-			mprintf((0,"Warning: Bad p0 in physics!  Object = %i, type = %i [%s]\n", obj-Objects, obj->type, Object_type_names[obj->type]));
+			mprintf((0,"Warning: Bad p0 in physics!  Object = %i, type = %i [%s]\n", obj-Objects.data(), obj->type, Object_type_names[obj->type]));
 			Int3();
 		}
 		#endif
@@ -565,7 +565,7 @@ save_p1 = *fq.p1;
 
 		if (iseg==-1) {		//some sort of horrible error
 			#ifndef NDEBUG
-			mprintf((1,"iseg==-1 in physics!  Object = %i, type = %i (%s)\n", obj-Objects, obj->type, Object_type_names[obj->type]));
+			mprintf((1,"iseg==-1 in physics!  Object = %i, type = %i (%s)\n", obj-Objects.data(), obj->type, Object_type_names[obj->type]));
 			#endif
 			//Int3();
 			//compute_segment_center(&ipos,&Segments[obj->segnum]);
@@ -630,7 +630,7 @@ save_p1 = *fq.p1;
 
 				//don't change position or sim_time
 
-//*******					mprintf((0,"Obj %d moved backwards\n",obj-Objects));
+//*******					mprintf((0,"Obj %d moved backwards\n",obj-Objects.data()));
 
 				#ifdef EXTRA_DEBUG
 				if (obj == debug_obj)
@@ -708,7 +708,7 @@ save_p1 = *fq.p1;
 
 					if (!forcefield_bounce && (obj->mtype.phys_info.flags & PF_STICK)) {		//stop moving
 
-						// mprintf((0, "Object %i stuck at %i:%i\n", obj-Objects, WallHitSeg, WallHitSide));
+						// mprintf((0, "Object %i stuck at %i:%i\n", obj-Objects.data(), WallHitSeg, WallHitSide));
 						add_stuck_object(obj, WallHitSeg, WallHitSide);
 
 						vm_vec_zero(&obj->mtype.phys_info.velocity);
@@ -968,7 +968,7 @@ save_p1 = *fq.p1;
 //--unused-- 
 //--unused-- 	Assert(obj->movement_type == MT_PHYSICS);
 //--unused-- 
-//--unused-- 	objnum = obj-Objects;
+//--unused-- 	objnum = obj-Objects.data();
 //--unused-- 
 //--unused-- 	vm_vec_scale_add(&new_pos, &obj->pos, &obj->mtype.phys_info.velocity, t);
 //--unused-- 

@@ -126,7 +126,7 @@ uint8_t Reticle_on = 1;
 
 #define PAGE_IN_GAUGE(x) \
 	do {									 				\
-		if (FontHires) {				\
+		if (FontHires && currentGame == G_DESCENT_2) {				\
 			PIGGY_PAGE_IN(activeBMTable->hiresGauges[x]);	  	\
 		} else {										  	\
 			PIGGY_PAGE_IN(activeBMTable->gauges[x]);			  	\
@@ -1781,8 +1781,8 @@ void add_bonus_points_to_score(int points)
 
 void init_gauge_canvases()
 {
-	PAGE_IN_GAUGE(SB_GAUGE_ENERGY);
-	PAGE_IN_GAUGE(GAUGE_AFTERBURNER);
+	//PAGE_IN_GAUGE(SB_GAUGE_ENERGY);
+	//PAGE_IN_GAUGE(GAUGE_AFTERBURNER);
 
 	Canv_LeftEnergyGauge = gr_create_canvas(LEFT_ENERGY_GAUGE_W, LEFT_ENERGY_GAUGE_H);
 	Canv_SBEnergyGauge = gr_create_canvas(SB_ENERGY_GAUGE_W, SB_ENERGY_GAUGE_H);
@@ -2984,7 +2984,7 @@ int see_object(int objnum)
 	fq.p0 = &Viewer->pos;
 	fq.p1 = &Objects[objnum].pos;
 	fq.rad = 0;
-	fq.thisobjnum = Viewer - Objects;
+	fq.thisobjnum = Viewer - Objects.data();
 	fq.flags = FQ_TRANSWALL | FQ_CHECK_OBJS;
 	fq.startseg = Viewer->segnum;
 	fq.ignore_obj_list = NULL;

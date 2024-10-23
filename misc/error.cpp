@@ -19,8 +19,6 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/error.h"
 #include "platform/platform.h"
 
-#undef Int3
-
 #ifdef WIN32
 #include <Windows.h>
 #include <debugapi.h>

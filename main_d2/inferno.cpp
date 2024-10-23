@@ -949,6 +949,7 @@ Here:
 
 	//the bitmap loading code changes gr_palette, so restore it
 	memcpy(gr_palette, title_pal, sizeof(gr_palette));
+	//load_palette(MENU_PALETTE, 1, 1);
 
 	if (FindArg("-norun"))
 		return(0);

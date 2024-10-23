@@ -21,5 +21,3 @@ void Error(const char* fmt, ...);					//exit with error code=1, print message
 
 #define Assert(expr) _Assert(expr,#expr,__FILE__,__LINE__)
 void Int3();
-
-#define Int3() Assert(false)

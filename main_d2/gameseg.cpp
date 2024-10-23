@@ -1242,7 +1242,7 @@ void extract_shortpos(object *objp, shortpos *spp)
 	objp->mtype.phys_info.velocity.y = (spp->vely << VEL_PRECISION);
 	objp->mtype.phys_info.velocity.z = (spp->velz << VEL_PRECISION);
 
-	obj_relink(objp-Objects, segnum);
+	obj_relink(objp-Objects.data(), segnum);
 }
 
 //--unused-- void test_shortpos(void)
@@ -2183,6 +2183,9 @@ void set_ambient_sound_flags_common(int tmi_bit, int s2f_bit)
 
 		for (j=0; j<MAX_SIDES_PER_SEGMENT; j++) {
 			side	*sidep = &segp->sides[j];
+
+			if (sidep->tmap_num >= activeBMTable->tmaps.size() || (sidep->tmap_num2 & 0x3fff) >= activeBMTable->tmaps.size())
+				continue;
 
 			if ((activeBMTable->tmaps[sidep->tmap_num].flags & tmi_bit) || (activeBMTable->tmaps[sidep->tmap_num2 & 0x3fff].flags & tmi_bit)) {
 				if (!IS_CHILD(segp->children[j]) || (sidep->wall_num != -1)) {

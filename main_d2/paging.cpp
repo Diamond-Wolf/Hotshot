@@ -398,7 +398,7 @@ void paging_touch_all()
 	}
 
 
-	for (s=0; s<MAX_GAUGE_BMS; s++ )	{
+	for (s=0; s < activeBMTable->gauges.size(); s++ )	{
 		if ( activeBMTable->gauges[s].index )	{
 			PIGGY_PAGE_IN( activeBMTable->gauges[s] );
 		}
