@@ -64,10 +64,8 @@ workspace "Hotshot"
 		"fix/*.h",
 		"iff/*.cpp",
 		"iff/*.h",
-		"main_shared/*.cpp",
-		"main_shared/*.h",
-		"main_d2/*.cpp",
-		"main_d2/*.h",
+		"main/*.cpp",
+		"main/*.h",
 		"mem/*.cpp",
 		"mem/*.h",
 		"misc/*.c",
@@ -83,19 +81,10 @@ workspace "Hotshot"
 		"platform/openal/*.h",
 		"platform/sdl/*.cpp",
 		"platform/sdl/*.h",
-		"texmap/ntmap_d2.cpp",
-		"texmap/scanline_d2.cpp",
-		"texmap/tmapflat_d2.cpp",
+		"texmap/*.cpp",
 		"texmap/*.h",
 		"vecmat/*.cpp",
 		"vecmat/*.h"
-	}
-	
-	removefiles {
-		"2d/font.cpp",
-		"2d/scale.cpp",
-		"2d/scale_blend.cpp",
-		"main_d2/i_main.cpp"
 	}
 	
 	filter { "options:build-editor" }
@@ -201,6 +190,6 @@ project "Hotshot"
 
 	filter { "options:build-editor" }
 		files {
-			"main_d2/editor/*.cpp",
-			"main_d2/editor/*.h"
+			"main/editor/*.cpp",
+			"main/editor/*.h"
 		}

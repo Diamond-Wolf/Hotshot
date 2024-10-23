@@ -19,7 +19,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "2d/gr.h"
 #include "misc/byteswap.h"
 #include "2d/palette.h"
-#include "main_shared/inferno.h"
+#include "main/inferno.h"
 
 #define OP_EOF				0	//eof
 #define OP_DEFPOINTS		1	//defpoints

@@ -7,37 +7,39 @@ IN USING, DISPLAYING,  AND CREATING DERIVATIVE WORKS THEREOF, SO LONG AS
 SUCH USE, DISPLAY OR CREATION IS FOR NON-COMMERCIAL, ROYALTY OR REVENUE
 FREE PURPOSES.  IN NO EVENT SHALL THE END-USER USE THE COMPUTER CODE
 CONTAINED HEREIN FOR REVENUE-BEARING PURPOSES.  THE END-USER UNDERSTANDS
-AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
-COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
+AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.  
+COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #include <math.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "fix/fix.h"
 #include "platform/mono.h"
-#include "misc/error.h"
 #include "2d/gr.h"
 #include "2d/grdef.h"
-#include "texmap/texmap.h"
+#include "texmap.h"
 #include "texmapl.h"
 #include "scanline.h"
 
-extern int	y_pointers[];
+#define DIVIDE_SIG_BITS		12
+#define Z_SHIFTER 			(30-DIVIDE_SIG_BITS)
+#define DIVIDE_TABLE_SIZE	(1<<DIVIDE_SIG_BITS)
+
+
+extern uint8_t * dest_row_data;
+extern int loop_count;
 
 void c_tmap_scanline_flat()
 {
-	uint8_t* dest;
+	uint8_t *dest;
 	int x;
 
-	//[ISB] godawful hack from the ASM
-	if (fx_y > window_bottom)
-		return;
+	dest = dest_row_data;
 
-	dest = (uint8_t*)(write_buffer + fx_xleft + (bytes_per_row * fx_y));
-
-	for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
+	for (x=loop_count; x >= 0; x-- )
 	{
 		*dest = tmap_flat_color;
 		dest++;
@@ -47,122 +49,155 @@ void c_tmap_scanline_flat()
 void c_tmap_scanline_shaded()
 {
 	int fade;
-	uint8_t* dest;
+	uint8_t *dest;
 	int x;
 
-	//[ISB] godawful hack from the ASM
-	if (fx_y > window_bottom)
-		return;
+	dest = dest_row_data;
 
-	dest = (uint8_t*)(write_buffer + fx_xleft + (bytes_per_row * fx_y));
-
-	fade = tmap_flat_shade_value << 8;
-	for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
+	fade = tmap_flat_shade_value<<8;
+	for (x=loop_count; x >= 0; x-- ) 
 	{
-		*dest = gr_fade_table[fade | (*dest)];
+		*dest = gr_fade_table[fade |(*dest)];
 		dest++;
 	}
 }
 
 void c_tmap_scanline_lin_nolight()
 {
+	uint8_t *dest;
+	uint32_t c;
+	int x;
+	fix u,v,dudx, dvdx;
+
+	u = fx_u;
+	v = fx_v*64;
+	dudx = fx_du_dx; 
+	dvdx = fx_dv_dx*64; 
+
+	dest = dest_row_data;
+
+	for (x=loop_count; x >= 0; x-- ) 
+	{
+		*dest = (uint32_t)pixptr[(f2i(v)&(64*63)) + (f2i(u)&63)];
+		dest++;
+		u += dudx;
+		v += dvdx;
+	}
+}
+
+void c_tmap_scanline_lin_nolight_trans()
+{
 	uint8_t* dest;
 	uint32_t c;
 	int x;
 	fix u, v, dudx, dvdx;
-
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
 
 	u = fx_u;
 	v = fx_v * 64;
 	dudx = fx_du_dx;
 	dvdx = fx_dv_dx * 64;
 
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
+	dest = dest_row_data;
 
-	if (!Transparency_on) 
+	for (x = loop_count; x >= 0; x--)
 	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			*dest = (uint32_t)pixptr[(f2i(v) & (64 * 63)) + (f2i(u) & 63)];
-			dest++;
-			u += dudx;
-			v += dvdx;
-		}
-	}
-	else 
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			c = (uint32_t)pixptr[(f2i(v) & (64 * 63)) + (f2i(u) & 63)];
-			if (c != 255)
-				* dest = c;
-			dest++;
-			u += dudx;
-			v += dvdx;
-		}
+		c = (uint32_t)pixptr[(f2i(v) & (64 * 63)) + (f2i(u) & 63)];
+		if (c != 255)
+			*dest = c;
+		dest++;
+		u += dudx;
+		v += dvdx;
 	}
 }
 
-
 void c_tmap_scanline_lin()
+{
+	uint8_t *dest;
+	uint32_t c;
+	int x;
+	fix u,v,l,dudx, dvdx, dldx;
+
+	u = fx_u;
+	v = fx_v*64;
+	dudx = fx_du_dx; 
+	dvdx = fx_dv_dx*64; 
+
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
+
+	for (x=loop_count; x >= 0; x-- ) 
+	{
+		*dest = gr_fade_table[(l&(0xff00)) + (uint32_t)pixptr[(f2i(v)&(64*63)) + (f2i(u)&63)]];
+		dest++;
+		l += dldx;
+		u += dudx;
+		v += dvdx;
+	}
+}
+
+void c_tmap_scanline_lin_trans()
 {
 	uint8_t* dest;
 	uint32_t c;
 	int x;
 	fix u, v, l, dudx, dvdx, dldx;
 
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
-
 	u = fx_u;
-	v = fx_v;
+	v = fx_v * 64;
 	dudx = fx_du_dx;
-	dvdx = fx_dv_dx;
+	dvdx = fx_dv_dx * 64;
 
-	l = fx_l >> 8;
-	dldx = fx_dl_dx >> 8;
-	if (dldx < 0)
-		dldx++; //round towards 0 for negative deltas
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
 
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
-
-	if (!Transparency_on) 
+	for (x = loop_count; x >= 0; x--)
 	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[((f2i(v) & 63) * 64) + (f2i(u) & 63)]];
-			dest++;
-			l += dldx;
-			u += dudx;
-			v += dvdx;
-		}
-	}
-	else 
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			c = (uint32_t)pixptr[((f2i(v) & 63) * 64) + (f2i(u) & 63)];
-			if (c != 255)
-				* dest = gr_fade_table[(l & (0xff00)) + c];
-			dest++;
-			l += dldx;
-			u += dudx;
-			v += dvdx;
-		}
+		c = (uint32_t)pixptr[(f2i(v) & (64 * 63)) + (f2i(u) & 63)];
+		if (c != 255)
+			*dest = gr_fade_table[(l & (0xff00)) + c];
+		dest++;
+		l += dldx;
+		u += dudx;
+		v += dvdx;
 	}
 }
 
 void c_tmap_scanline_per_nolight()
 {
+	uint8_t *dest;
+	uint32_t c;
+	int x, localz;
+	fix u,v,z,dudx, dvdx, dzdx;
+
+	u = fx_u;
+	v = fx_v;
+	z = fx_z;
+	dudx = fx_du_dx; 
+	dvdx = fx_dv_dx; 
+	dzdx = fx_dz_dx;
+
+	dest = dest_row_data;
+
+	for (x=loop_count; x >= 0; x-- ) 
+	{
+		localz = z >> Z_SHIFTER;
+		if (localz == 0) break;
+		*dest = (uint32_t)pixptr[(((v / localz) & 63) << 6) + ((u / localz) & 63)];
+		dest++;
+		u += dudx;
+		v += dvdx;
+		z += dzdx;
+	} 
+}
+
+void c_tmap_scanline_per_nolight_trans()
+{
 	uint8_t* dest;
 	uint32_t c;
-	int x;
+	int x, localz;
 	fix u, v, z, dudx, dvdx, dzdx;
-
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
 
 	u = fx_u;
 	v = fx_v;
@@ -171,289 +206,151 @@ void c_tmap_scanline_per_nolight()
 	dvdx = fx_dv_dx;
 	dzdx = fx_dz_dx;
 
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
+	dest = dest_row_data;
 
-	if (!Transparency_on) 
+	for (x = loop_count; x >= 0; x--)
 	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			*dest = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-			dest++;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-		}
-	}
-	else 
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			c = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-
-			if (c != 255)
-				*dest = c;
-			dest++;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-		}
+		localz = z >> Z_SHIFTER;
+		if (localz == 0) break;
+		c = (uint32_t)pixptr[(((v / localz) & 63) << 6) + ((u / localz) & 63)];
+		if (c != 255)
+			*dest = c;
+		dest++;
+		u += dudx;
+		v += dvdx;
+		z += dzdx;
 	}
 }
 
 void c_tmap_scanline_per()
 {
-	uint8_t* dest;
+	uint8_t *dest;
 	uint32_t c;
+	fix localz;
 	int x;
-	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
-
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
+	fix u,v,z,l,dudx, dvdx, dzdx, dldx;
 
 	u = fx_u;
-	v = fx_v;
+	v = fx_v;// *64;
 	z = fx_z;
-	dudx = fx_du_dx;
-	dvdx = fx_dv_dx;
+	dudx = fx_du_dx; 
+	dvdx = fx_dv_dx;// *64; //[ISB] changes to make more accurate to ASM tmapper
 	dzdx = fx_dz_dx;
 
-	l = fx_l >> 8;
-	dldx = fx_dl_dx >> 8;
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
-	if (dldx < 0)
-		dldx++; //round towards 0 for negative deltas
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
 
-	if (!Transparency_on) 
+	for (x=loop_count; x >= 0; x-- ) 
 	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((v / z) & 63) * 64) + ((u / z) & 63)]];
-			dest++;
-			l += dldx;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
-		}
-	}
-	else 
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x) 
-		{
-			c = (uint32_t)pixptr[(((v / z) & 63) * 64) + ((u / z) & 63)];
-			if (c != 255)
-				*dest = gr_fade_table[(l & (0xff00)) + c];
-			dest++;
-			l += dldx;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
-		}
+		localz = z >> Z_SHIFTER;
+		if (localz == 0) break;
+		*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((v / localz) & 63) << 6) + ((u / localz) & 63)]];
+		dest++;
+		l += dldx;
+		u += dudx;
+		v += dvdx;
+		z += dzdx;
 	}
 }
 
-#ifdef TEXMAP_DITHER
-//[ISB] unused dithering code ported from the original ASM. 
-void c_tmap_scanline_per_dither()
+void c_tmap_scanline_per_trans()
 {
 	uint8_t* dest;
 	uint32_t c;
+	fix localz;
 	int x;
 	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
-	fix fx_dl_dx1, fx_dl_dx2;
-	int dither_test;
-
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
 
 	u = fx_u;
-	v = fx_v;
+	v = fx_v;// *64;
 	z = fx_z;
 	dudx = fx_du_dx;
-	dvdx = fx_dv_dx;
+	dvdx = fx_dv_dx;// *64; //[ISB] changes to make more accurate to ASM tmapper
 	dzdx = fx_dz_dx;
 
-	l = fx_l >> 8;
-	dldx = fx_dl_dx >> 8;
-	if (dldx < 0)
-		dldx++; //round towards 0 for negative deltas
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
 
-	fx_dl_dx1 = dldx + 0x80;
-	fx_dl_dx2 = dldx - 0x80;
-	dither_test = ((fx_xleft >> 16) ^ fx_y);
-	if (dither_test & 1)
+	for (x = loop_count; x >= 0; x--)
 	{
-		fx_dl_dx2 = dldx + 0x80;
-		fx_dl_dx1 = dldx - 0x80;
-		l += 0x80;
-	}
-	dldx = fx_dl_dx1;
-
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
-
-	if (!Transparency_on)
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x)
-		{
-			*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((v / z) & 63) * 64) + ((u / z) & 63)]];
-			dest++;
-			l += dldx;
-			fx_dl_dx1 = fx_dl_dx2;
-			fx_dl_dx2 = dldx;
-			dldx = fx_dl_dx1;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
-		}
-	}
-	else
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x)
-		{
-			c = (uint32_t)pixptr[(((v / z) & 63) * 64) + ((u / z) & 63)];
-			if (c != 255)
-				*dest = gr_fade_table[(l & (0xff00)) + c];
-			dest++;
-			l += dldx;
-			fx_dl_dx1 = fx_dl_dx2;
-			fx_dl_dx2 = dldx;
-			dldx = fx_dl_dx1;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
-		}
+		localz = z >> Z_SHIFTER;
+		if (localz == 0) break;
+		//c = (uint32_t)pixptr[ ( (v/z)&(64*63) ) + ((u/z)&63) ];
+		c = (uint32_t)pixptr[(((v / localz) & 63) << 6) + ((u / localz) & 63)];
+		if (c != 255)
+			*dest = gr_fade_table[(l & (0xff00)) + c];
+		dest++;
+		l += dldx;
+		u += dudx;
+		v += dvdx;
+		z += dzdx;
 	}
 }
-#endif
 
-#define NBITS 4
-#define ZSHIFT 4
-uint16_t ut, vt;
-uint16_t ui, vi;
-int uvt, uvi;
+
+extern fix divide_table[];
+
+fix invert_z(fix in)
+{
+	in >>= Z_SHIFTER;
+	return divide_table[(in & (DIVIDE_TABLE_SIZE-1))];
+}
+
+int num_left_over;
 fix U0, V0, Z0, U1, V1;
+#define NBITS 4
 
-fix pdiv(int a, int b)
-{
-	return (fix)((((int64_t)a << ZSHIFT) / b) << (16 - ZSHIFT));
-}
+int uvt, uvi;
 
-//even and odd
-#define C_TMAP_SCANLINE_PLN_LOOP        *dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))]];\
-										dest++; \
-										uvt += uvi;\
-										l += dldx;\
-										*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))]];\
+extern int fx_u_right, fx_v_right, fx_z_right;
+
+#define C_TMAP_SCANLINE_PLN_LOOP 		*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))]];\
 										dest++; \
 										uvt += uvi;\
 										l += dldx;
-
-#define C_TMAP_SCANLINE_PLT_LOOP 		c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = gr_fade_table[(l & (0xff00)) + c];\
-										dest++;\
-										l += dldx;\
-										c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = gr_fade_table[(l & (0xff00)) + c];\
-										dest++;\
-										l += dldx;
-
-#define C_TMAP_SCANLINE_PLN_LOOP_F 				*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))]];\
-												dest++; \
-												uvt += uvi;\
-												l += dldx;\
-												if (--num_left_over == 0) return;\
-												*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))]];\
-												dest++; \
-												uvt += uvi;\
-												l += dldx;\
-												if (--num_left_over == 0) return;
-
-#define C_TMAP_SCANLINE_PLT_LOOP_F 		c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = gr_fade_table[(l & (0xff00)) + c];\
-										dest++;\
-										l += dldx;\
-										if (--num_left_over == 0) return;\
-										c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = gr_fade_table[(l & (0xff00)) + c];\
-										dest++;\
-										l += dldx;\
-										if (--num_left_over == 0) return;
-
-int loop_count, num_left_over;
-dbool new_end;
 
 void c_tmap_scanline_pln()
 {
 	uint8_t* dest;
 	uint32_t c;
+	fix localz;
 	int x;
 	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
-	short cl;
 
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
+	if (loop_count == 0) return;
 
 	u = fx_u;
-	v = fx_v;
+	v = fx_v;// *64;
 	z = fx_z;
-	dudx = fx_du_dx;
-	dvdx = fx_dv_dx;
-	dzdx = fx_dz_dx;
+	z = invert_z(z);
 
-	l = fx_l >> 8;
-	dldx = fx_dl_dx >> 8;
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
-	if (dldx < 0)
-		dldx++; //round towards 0 for negative deltas
+	U0 = fixmul(u, z);
+	V0 = fixmul(v, z);
 
-	loop_count = fx_xright - fx_xleft + 1;
-
-	//This isn't acutally important for this code, since I don't write words at a time, but it has visual artificating in Descent.
-	//TODO: Should I look into doing words/dword writes? Register caching might make it faster (build register of pixels, write that once), but on 32-bit x86 platforms this seems sketchy.
-	while ((uintptr_t)(dest) & 3)
-	{
-		c = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-		if (c != 255)
-			*dest = gr_fade_table[(l & (0xff00)) + c]; //oh yeah first ~3 pixels don't check transparency, not that it's relevant
-		dest++;
-		l += dldx;
-		u += dudx;
-		v += dvdx;
-		z += dzdx;
-		if (z == 0) return;
-		if (--loop_count == 0) return; //none to do anymore
-	}
+	z = fx_z;
 
 	num_left_over = (loop_count & ((1 << NBITS) - 1));
 	loop_count >>= NBITS;
 
-	V0 = pdiv(v, z);
-	U0 = pdiv(u, z);
-
 	dudx = fx_du_dx << NBITS;
 	dvdx = fx_dv_dx << NBITS;
 	dzdx = fx_dz_dx << NBITS;
+
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
 
 	for (x = loop_count; x > 0; x--)
 	{
 		u += dudx;
 		v += dvdx;
 		z += dzdx;
-		if (z == 0) return;
+		localz = invert_z(z);
 
-		V1 = pdiv(v, z);
-		U1 = pdiv(u, z);
+		U1 = fixmul(u, localz);
+		V1 = fixmul(v, localz);
 
 		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
 		uvi = (((U1 - U0) >> (NBITS + 6)) & 0xFFFF) | (((V1 - V0) >> (NBITS + 6)) << 16);
@@ -461,243 +358,181 @@ void c_tmap_scanline_pln()
 		U0 = U1;
 		V0 = V1;
 
-		if (!Transparency_on)
-		{
-			C_TMAP_SCANLINE_PLN_LOOP
-			C_TMAP_SCANLINE_PLN_LOOP
-			C_TMAP_SCANLINE_PLN_LOOP
-			C_TMAP_SCANLINE_PLN_LOOP
-			C_TMAP_SCANLINE_PLN_LOOP
-			C_TMAP_SCANLINE_PLN_LOOP
-			C_TMAP_SCANLINE_PLN_LOOP
-			C_TMAP_SCANLINE_PLN_LOOP
-		}
-		else
-		{
-			C_TMAP_SCANLINE_PLT_LOOP
-			C_TMAP_SCANLINE_PLT_LOOP
-			C_TMAP_SCANLINE_PLT_LOOP
-			C_TMAP_SCANLINE_PLT_LOOP
-			C_TMAP_SCANLINE_PLT_LOOP
-			C_TMAP_SCANLINE_PLT_LOOP
-			C_TMAP_SCANLINE_PLT_LOOP
-			C_TMAP_SCANLINE_PLT_LOOP
-		}
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
+		C_TMAP_SCANLINE_PLN_LOOP
 	}
-
-	if (num_left_over == 0) return;
-
-	int zcmp = z * 2 + z;
-	int localz = z + dzdx;
-
-	if (localz >= 0)
+	if (loop_count == 0 || num_left_over > 4)
 	{
-		localz <<= 2;
-		if (zcmp < localz) //Under certain circumstances, the weirder finishing code can be used. Replicate this.
-		{
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
+		z = fx_z_right;
+		z = invert_z(z);
+		U1 = fixmul(fx_u_right, z);
+		V1 = fixmul(fx_v_right, z);
 
-			cl = 1;
-			//z went negative.
-			//this can happen because we added DZ1 to the current z, but dz1 represents dz for perhaps 16 pixels
-			//though we might only plot one more pixel.
-			while (z < 0 && cl != NBITS)
-			{
-				u -= (dudx >> cl);
-				v -= (dvdx >> cl);
-				z -= (dzdx >> cl);
-
-				cl++;
-			}
-			if (z <= (1 << (ZSHIFT + 1)))
-			{
-				z = (1 << (ZSHIFT + 1));
-			}
-
-			V1 = pdiv(v, z);
-			U1 = pdiv(u, z);
-
-			uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
-			uvi = (((U1 - U0) >> (NBITS + 6)) & 0xFFFF) | (((V1 - V0) >> (NBITS + 6)) << 16);
-
-			U0 = U1;
-			V0 = V1;
-
-			if (!Transparency_on)
-			{
-				C_TMAP_SCANLINE_PLN_LOOP_F
-					C_TMAP_SCANLINE_PLN_LOOP_F
-					C_TMAP_SCANLINE_PLN_LOOP_F
-					C_TMAP_SCANLINE_PLN_LOOP_F
-					C_TMAP_SCANLINE_PLN_LOOP_F
-					C_TMAP_SCANLINE_PLN_LOOP_F
-					C_TMAP_SCANLINE_PLN_LOOP_F
-					C_TMAP_SCANLINE_PLN_LOOP_F
-			}
-			else
-			{
-				C_TMAP_SCANLINE_PLT_LOOP_F
-					C_TMAP_SCANLINE_PLT_LOOP_F
-					C_TMAP_SCANLINE_PLT_LOOP_F
-					C_TMAP_SCANLINE_PLT_LOOP_F
-					C_TMAP_SCANLINE_PLT_LOOP_F
-					C_TMAP_SCANLINE_PLT_LOOP_F
-					C_TMAP_SCANLINE_PLT_LOOP_F
-					C_TMAP_SCANLINE_PLT_LOOP_F
-			}
-
-			Int3();
-			return;
-		}
+		uvi = ((((U1 - U0) / num_left_over) >> 6) & 0xFFFF) | ((((V1 - V0) / num_left_over) >> 6) << 16);
+		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
 	}
-	
-	
-	if (!Transparency_on)
+	for (x = num_left_over; x >= 0; x--)
 	{
-		for (x = num_left_over; x > 0; --x)
-		{
-			*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)]];
-			dest++;
-			//*dest++ = 15;
-			l += dldx;
-			u += fx_du_dx;
-			v += fx_dv_dx;
-			z += fx_dz_dx;
-			if (z == 0) return;
-		}
+		uvt += uvi;
+		*dest = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))]];
+		dest++;
+		l += dldx;
 	}
-	else
-	{
-		for (x = num_left_over; x > 0; --x)
-		{
-			c = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-			//c = 15;
-			if (c != 255)
-				*dest = gr_fade_table[(l & (0xff00)) + c];
-			dest++;
-			l += dldx;
-			u += fx_du_dx;
-			v += fx_dv_dx;
-			z += fx_dz_dx;
-			if (z == 0) return;
-		}
-	}
-	
 }
 
-//even and odd
-#define C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP 		*dest = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										dest++;\
+#define C_TMAP_SCANLINE_PLT_LOOP 		c =  (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
 										uvt += uvi;\
-										l += dldx;\
-										*dest = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
+										if (c != 255)\
+										*dest = gr_fade_table[(l & (0xff00)) + c];\
+										dest++;\
+										l += dldx;
+
+void c_tmap_scanline_plt()
+{
+	uint8_t* dest;
+	uint32_t c;
+	fix localz;
+	int x;
+	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
+
+	if (loop_count == 0) return;
+
+	u = fx_u;
+	v = fx_v;// *64;
+	z = fx_z;
+	z = invert_z(z);
+
+	U0 = fixmul(u, z);
+	V0 = fixmul(v, z);
+
+	z = fx_z;
+
+	num_left_over = (loop_count & ((1 << NBITS) - 1));
+	loop_count >>= NBITS;
+
+	dudx = fx_du_dx << NBITS;
+	dvdx = fx_dv_dx << NBITS;
+	dzdx = fx_dz_dx << NBITS;
+
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
+
+	for (x = loop_count; x > 0; x--)
+	{
+		u += dudx;
+		v += dvdx;
+		z += dzdx;
+		localz = invert_z(z);
+
+		U1 = fixmul(u, localz);
+		V1 = fixmul(v, localz);
+
+		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
+		uvi = (((U1 - U0) >> (NBITS + 6)) & 0xFFFF) | (((V1 - V0) >> (NBITS + 6)) << 16);
+
+		U0 = U1;
+		V0 = V1;
+
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+		C_TMAP_SCANLINE_PLT_LOOP
+
+	}
+	if (loop_count == 0 || num_left_over > 4)
+	{
+		z = fx_z_right;
+		z = invert_z(z);
+		U1 = fixmul(fx_u_right, z);
+		V1 = fixmul(fx_v_right, z);
+
+		uvi = ((((U1 - U0) / num_left_over) >> 6) & 0xFFFF) | ((((V1 - V0) / num_left_over) >> 6) << 16);
+		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
+	}
+	for (x = num_left_over; x >= 0; x--)
+	{
+		uvt += uvi;
+		c = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))]];
+		if (c != 255)
+			*dest = c;
+		dest++;
+		l += dldx;
+	}
+}
+
+#define C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP *dest = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
 										dest++; \
 										uvt += uvi;\
 										l += dldx;
 
-#define C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP 	c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = c;\
-										dest++;\
-										l += dldx;\
-										c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = c;\
-										dest++;\
-										l += dldx;
-
-#define C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F		*dest = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-												dest++; \
-												uvt += uvi;\
-												l += dldx;\
-												if (--num_left_over == 0) return;\
-												*dest = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-												dest++; \
-												uvt += uvi;\
-												l += dldx;\
-												if (--num_left_over == 0) return;
-
-#define C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F 		c = pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = c;\
-										dest++;\
-										l += dldx;\
-										if (--num_left_over == 0) return;\
-										c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
-										uvt += uvi;\
-										if (c != 255)\
-										*dest = c;\
-										dest++;\
-										l += dldx;\
-										if (--num_left_over == 0) return;
 
 void c_tmap_scanline_pln_nolight()
 {
 	uint8_t* dest;
 	uint32_t c;
+	fix localz;
 	int x;
 	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
-	short cl;
 
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
+	if (loop_count == 0) return;
 
 	u = fx_u;
-	v = fx_v;
+	v = fx_v;// *64;
 	z = fx_z;
-	dudx = fx_du_dx;
-	dvdx = fx_dv_dx;
-	dzdx = fx_dz_dx;
+	z = invert_z(z);
 
-	l = fx_l >> 8;
-	dldx = fx_dl_dx >> 8;
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
-	if (dldx < 0)
-		dldx++; //round towards 0 for negative deltas
+	U0 = fixmul(u, z);
+	V0 = fixmul(v, z);
 
-	loop_count = fx_xright - fx_xleft + 1;
-
-	//Painful code to try to replicate the ASM drawer. aaa
-	//Wants to be dword aligned.
-	while ((uintptr_t)(dest) & 3)
-	{
-		c = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-		if (c != 255)
-			*dest = c; //oh yeah first ~3 pixels don't check transparency, not that it's relevant
-		dest++;
-		l += dldx;
-		u += dudx;
-		v += dvdx;
-		z += dzdx;
-		if (z == 0) return;
-		if (--loop_count == 0) return; //none to do anymore
-	}
+	z = fx_z;
 
 	num_left_over = (loop_count & ((1 << NBITS) - 1));
 	loop_count >>= NBITS;
 
-	V0 = pdiv(v, z);
-	U0 = pdiv(u, z);
-
 	dudx = fx_du_dx << NBITS;
 	dvdx = fx_dv_dx << NBITS;
 	dzdx = fx_dz_dx << NBITS;
+
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
 
 	for (x = loop_count; x > 0; x--)
 	{
 		u += dudx;
 		v += dvdx;
 		z += dzdx;
-		if (z == 0) return;
+		localz = invert_z(z);
 
-		V1 = pdiv(v, z);
-		U1 = pdiv(u, z);
+		U1 = fixmul(u, localz);
+		V1 = fixmul(v, localz);
 
 		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
 		uvi = (((U1 - U0) >> (NBITS + 6)) & 0xFFFF) | (((V1 - V0) >> (NBITS + 6)) << 16);
@@ -705,516 +540,177 @@ void c_tmap_scanline_pln_nolight()
 		U0 = U1;
 		V0 = V1;
 
-		if (!Transparency_on)
-		{
+		C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
 			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
-		}
-		else
-		{
-			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
-		}
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP
 	}
-
-	if (num_left_over == 0) return;
-
-	int zcmp = z * 2 + z;
-	int localz = z + dzdx;
-
-	if (localz >= 0)
+	if (loop_count == 0 || num_left_over > 4)
 	{
-		localz <<= 2;
-		if (zcmp < localz) //Under certain circumstances, the weirder finishing code can be used. Replicate this.
-		{
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
+		z = fx_z_right;
+		z = invert_z(z);
+		U1 = fixmul(fx_u_right, z);
+		V1 = fixmul(fx_v_right, z);
 
-			cl = 1;
-			//z went negative.
-			//this can happen because we added DZ1 to the current z, but dz1 represents dz for perhaps 16 pixels
-			//though we might only plot one more pixel.
-			while (z < 0 && cl != NBITS)
-			{
-				u -= (dudx >> cl);
-				v -= (dvdx >> cl);
-				z -= (dzdx >> cl);
-
-				cl++;
-			}
-			if (z <= (1 << (ZSHIFT + 1)))
-			{
-				z = (1 << (ZSHIFT + 1));
-			}
-
-			V1 = pdiv(v, z);
-			U1 = pdiv(u, z);
-
-			uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
-			uvi = (((U1 - U0) >> (NBITS + 6)) & 0xFFFF) | (((V1 - V0) >> (NBITS + 6)) << 16);
-
-			U0 = U1;
-			V0 = V1;
-
-			if (!Transparency_on)
-			{
-				C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLN_NOLIGHT_LOOP_F
-			}
-			else
-			{
-				C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-					C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP_F
-			}
-
-			Int3();
-			return;
-		}
+		uvi = ((((U1 - U0) / num_left_over) >> 6) & 0xFFFF) | ((((V1 - V0) / num_left_over) >> 6) << 16);
+		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
 	}
-
-
-	if (!Transparency_on)
+	for (x = num_left_over; x >= 0; x--)
 	{
-		for (x = num_left_over; x > 0; --x)
-		{
-			*dest = pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-			dest++;
-			//*dest++ = 15;
-			l += dldx;
-			u += fx_du_dx;
-			v += fx_dv_dx;
-			z += fx_dz_dx;
-			if (z == 0) return;
-		}
-	}
-	else
-	{
-		for (x = num_left_over; x > 0; --x)
-		{
-			c = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-			if (c != 255)
-				*dest = c;
-			dest++;
-			l += dldx;
-			u += fx_du_dx;
-			v += fx_dv_dx;
-			z += fx_dz_dx;
-			if (z == 0) return;
-		}
-	}
-
-}
-
-#define zonk 1
-
-//[ISB] TODO: This isn't 100% correct to the original editor, since that based the editor tmap off of the per 16 texture mapper
-void c_tmap_scanline_editor()
-{
-	uint8_t* dest;
-	uint32_t c;
-	int x;
-	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
-
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
-
-	u = fx_u;
-	v = fx_v;
-	z = fx_z;
-	dudx = fx_du_dx;
-	dvdx = fx_dv_dx;
-	dzdx = fx_dz_dx;
-
-	l = fx_l >> 8;
-	dldx = fx_dl_dx >> 8;
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
-	if (dldx < 0)
-		dldx++; //round towards 0 for negative deltas
-
-	if (!Transparency_on)
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x)
-		{
-			*dest = zonk;
-			dest++;
-			l += dldx;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
-		}
-	}
-	else
-	{
-		for (x = fx_xright - fx_xleft + 1; x > 0; --x)
-		{
-			c = (uint32_t)pixptr[(((v / z) & 63) * 64) + ((u / z) & 63)];
-			if (c != 255)
-				*dest = zonk;
-			dest++;
-			l += dldx;
-			u += dudx;
-			v += dvdx;
-			z += dzdx;
-			if (z == 0) return;
-		}
-	}
-}
-
-#ifdef TEXMAP_ANTIALIAS
-//[ISB] I could have cfopen'ed a blendtbl.raw but this method is more disgusting I love it. 
-#include "blendtable.h"
-
-uint8_t hackcolor;
-uint16_t blendindex;
-
-//even and odd
-#define C_TMAP_SCANLINE_PLN_AA_LOOP     hackcolor = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[((ut >> 10) | ((vt >> 10) << 6))]];\
-										if (fx_y != 0)\
-										{\
-											blendindex = (lastcolor << 8) | *(dest-window_width);\
-											blendindex = (header_data[blendindex] << 8) | hackcolor;\
-											hackcolor = header_data[blendindex];\
-										}\
-										*dest++ = hackcolor;\
-										lastcolor = hackcolor;\
-										ut = (ut + ui); \
-										vt = (vt + vi); \
-										l += dldx;
-
-#define C_TMAP_SCANLINE_PLT_AA_LOOP 		c = (uint32_t)pixptr[((ut >> 10) | ((vt >> 10) << 6))];\
-										ut = (ut + ui);\
-										vt = (vt + vi);\
-										if (c != 255)\
-										{\
-											hackcolor = gr_fade_table[(l & (0xff00)) + c];\
-											if (fx_y != 0)\
-											{\
-												blendindex = (lastcolor << 8) | *(dest-window_width);\
-												blendindex = (header_data[blendindex] << 8) | hackcolor;\
-												hackcolor = header_data[blendindex];\
-											}\
-											*dest = hackcolor;\
-											lastcolor = hackcolor;\
-										}\
-										dest++;\
-										l += dldx;
-
-#define C_TMAP_SCANLINE_PLN_AA_LOOP_F 				hackcolor = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[((ut >> 10) | ((vt >> 10) << 6))]];\
-										if (fx_y != 0)\
-										{\
-											blendindex = (lastcolor << 8) | *(dest-window_width);\
-											blendindex = (header_data[blendindex] << 8) | hackcolor;\
-											hackcolor = header_data[blendindex];\
-										}\
-										*dest++ = hackcolor;\
-										lastcolor = hackcolor;\
-										ut = (ut + ui); \
-										vt = (vt + vi); \
-										if (--num_left_over == 0) return;\
-
-#define C_TMAP_SCANLINE_PLT_AA_LOOP_F 		c = (uint32_t)pixptr[((ut >> 10) | ((vt >> 10) << 6))];\
-										ut = (ut + ui);\
-										vt = (vt + vi);\
-										if (c != 255)\
-										{\
-											hackcolor = gr_fade_table[(l & (0xff00)) + c];\
-											if (fx_y != 0)\
-											{\
-												blendindex = (lastcolor << 8) | *(dest-window_width);\
-												blendindex = (header_data[blendindex] << 8) | hackcolor;\
-												hackcolor = header_data[blendindex];\
-											}\
-											*dest = hackcolor;\
-											lastcolor = hackcolor;\
-										}\
-										dest++;\
-										l += dldx;\
-										if (--num_left_over == 0) return;\
-
-void c_tmap_scanline_pln_aa()
-{
-	uint8_t* dest;
-	uint32_t c;
-	int x;
-	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
-	short cl;
-
-	//godawful hack
-	if (fx_xleft < 0) fx_xleft = 0;
-
-	u = fx_u;
-	v = fx_v;
-	z = fx_z;
-	dudx = fx_du_dx;
-	dvdx = fx_dv_dx;
-	dzdx = fx_dz_dx;
-
-	l = fx_l >> 8;
-	dldx = fx_dl_dx >> 8;
-	dest = (uint8_t*)(write_buffer + y_pointers[fx_y] + fx_xleft);
-	if (dldx < 0)
-		dldx++; //round towards 0 for negative deltas
-
-	loop_count = fx_xright - fx_xleft + 1;
-	uint8_t lastcolor = *dest;
-
-	//Painful code to try to replicate the ASM drawer. aaa
-	//Wants to be dword aligned.
-	while ((uintptr_t)(dest) & 3)
-	{
-		c = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
-		if (c != 255)
-		{
-			hackcolor = gr_fade_table[(l & (0xff00)) + c];
-			if (fx_y != 0)\
-			{\
-				blendindex = (lastcolor << 8) | *(dest - window_width); \
-				blendindex = (header_data[blendindex] << 8) | hackcolor; \
-				hackcolor = header_data[blendindex]; \
-			}\
-			*dest = hackcolor; //oh yeah first ~3 pixels don't check transparency, not that it's relevant
-			lastcolor = hackcolor;
-		}
+		uvt += uvi;
+		*dest = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];
 		dest++;
 		l += dldx;
-		u += dudx;
-		v += dvdx;
-		z += dzdx;
-		if (z == 0) return;
-		if (--loop_count == 0) return; //none to do anymore
 	}
+}
+
+#define C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP c =  (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];\
+										uvt += uvi;\
+										if (c != 255)\
+										*dest = c;\
+										dest++;\
+										l += dldx;
+
+void c_tmap_scanline_plt_nolight()
+{
+	uint8_t* dest;
+	uint32_t c;
+	fix localz;
+	int x;
+	fix u, v, z, l, dudx, dvdx, dzdx, dldx;
+
+	if (loop_count == 0) return;
+
+	u = fx_u;
+	v = fx_v;// *64;
+	z = fx_z;
+	z = invert_z(z);
+
+	U0 = fixmul(u, z);
+	V0 = fixmul(v, z);
+
+	z = fx_z;
 
 	num_left_over = (loop_count & ((1 << NBITS) - 1));
 	loop_count >>= NBITS;
 
-	V0 = pdiv(v, z);
-	U0 = pdiv(u, z);
-
 	dudx = fx_du_dx << NBITS;
 	dvdx = fx_dv_dx << NBITS;
 	dzdx = fx_dz_dx << NBITS;
+
+	l = fx_l;
+	dldx = fx_dl_dx;
+	dest = dest_row_data;
 
 	for (x = loop_count; x > 0; x--)
 	{
 		u += dudx;
 		v += dvdx;
 		z += dzdx;
-		if (z == 0) return;
+		localz = invert_z(z);
 
-		V1 = pdiv(v, z);
-		U1 = pdiv(u, z);
+		U1 = fixmul(u, localz);
+		V1 = fixmul(v, localz);
 
-		ut = static_cast<uint16_t>(U0 >> 6);
-		vt = static_cast<uint16_t>(V0 >> 6);
-
-		ui = static_cast<uint16_t>((U1 - U0) >> (NBITS + 6));
-		vi = static_cast<uint16_t>((V1 - V0) >> (NBITS + 6));
+		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
+		uvi = (((U1 - U0) >> (NBITS + 6)) & 0xFFFF) | (((V1 - V0) >> (NBITS + 6)) << 16);
 
 		U0 = U1;
 		V0 = V1;
 
-		if (!Transparency_on)
-		{
-			C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-				C_TMAP_SCANLINE_PLN_AA_LOOP
-		}
-		else
-		{
-			C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-				C_TMAP_SCANLINE_PLT_AA_LOOP
-		}
+		C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+			C_TMAP_SCANLINE_PLT_NOLIGHT_LOOP
+
 	}
-
-	if (num_left_over == 0) return;
-
-	int zcmp = z * 2 + z;
-	int localz = z + dzdx;
-
-	if (localz >= 0)
+	if (loop_count == 0 || num_left_over > 4)
 	{
-		localz <<= 2;
-		if (zcmp < localz) //Under certain circumstances, the weirder finishing code can be used. Replicate this.
+		z = fx_z_right;
+		z = invert_z(z);
+		U1 = fixmul(fx_u_right, z);
+		V1 = fixmul(fx_v_right, z);
+
+		uvi = ((((U1 - U0) / num_left_over) >> 6) & 0xFFFF) | ((((V1 - V0) / num_left_over) >> 6) << 16);
+		uvt = ((U0 >> 6) & 0xFFFF) | ((V0 >> 6) << 16);
+	}
+	for (x = num_left_over; x >= 0; x--)
+	{
+		uvt += uvi;
+		c = (uint32_t)pixptr[(((uvt >> 10) & 63) | ((uvt >> 20) & 4032))];
+		if (c != 255)
+			*dest = c;
+		dest++;
+		l += dldx;
+	}
+}
+
+#define zonk 1
+
+void c_tmap_scanline_editor()
+{
+	uint8_t* dest;
+	uint32_t c;
+	int x, localz;
+	fix u, v, z, dudx, dvdx, dzdx;
+
+	u = fx_u;
+	v = fx_v;
+	z = fx_z;
+	dudx = fx_du_dx;
+	dvdx = fx_dv_dx;
+	dzdx = fx_dz_dx;
+
+	dest = dest_row_data;
+
+	if (!Transparency_on) 
+	{
+		for (x = loop_count; x >= 0; x--) 
 		{
+			*dest = zonk;
+			dest++;
 			u += dudx;
 			v += dvdx;
 			z += dzdx;
-			if (z == 0) return;
-
-			cl = 1;
-			//z went negative.
-			//this can happen because we added DZ1 to the current z, but dz1 represents dz for perhaps 16 pixels
-			//though we might only plot one more pixel.
-			while (z < 0 && cl != NBITS)
-			{
-				u -= (dudx >> cl);
-				v -= (dvdx >> cl);
-				z -= (dzdx >> cl);
-
-				cl++;
-			}
-			if (z <= (1 << (ZSHIFT + 1)))
-			{
-				z = (1 << (ZSHIFT + 1));
-			}
-
-			V1 = pdiv(v, z);
-			U1 = pdiv(u, z);
-
-			ut = static_cast<uint16_t>(U0 >> 6);
-			vt = static_cast<uint16_t>(V0 >> 6);
-
-			ui = static_cast<uint16_t>((U1 - U0) >> (NBITS + 6));
-			vi = static_cast<uint16_t>((V1 - V0) >> (NBITS + 6));
-
-			U0 = U1;
-			V0 = V1;
-
-			if (!Transparency_on)
-			{
-				C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-					C_TMAP_SCANLINE_PLN_AA_LOOP_F
-			}
-			else
-			{
-				C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-					C_TMAP_SCANLINE_PLT_AA_LOOP_F
-			}
-
-			Int3();
-			return;
 		}
 	}
-
-
-	if (!Transparency_on)
+	else 
 	{
-		for (x = num_left_over; x > 0; --x)
+		for (x = loop_count; x >= 0; x--) 
 		{
-			hackcolor = gr_fade_table[(l & (0xff00)) + (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)]];
-			if (fx_y != 0)
-			{
-				blendindex = (lastcolor << 8) | *(dest - window_width);
-				blendindex = (header_data[blendindex] << 8) | hackcolor;
-				hackcolor = header_data[blendindex];
-			}
-			lastcolor = hackcolor;
-			*dest++ = hackcolor;
-			l += dldx;
-			u += fx_du_dx;
-			v += fx_dv_dx;
-			z += fx_dz_dx;
-			if (z == 0) return;
-		}
-	}
-	else
-	{
-		for (x = num_left_over; x > 0; --x)
-		{
-			c = (uint32_t)pixptr[(((v / z) & 63) << 6) + ((u / z) & 63)];
+			localz = z >> Z_SHIFTER;
+			if (localz == 0) break;
+			c = (uint32_t)pixptr[(((v / localz) & 63) << 6) + ((u / localz) & 63)];
 			if (c != 255)
-			{
-				hackcolor = gr_fade_table[(l & (0xff00)) + c];
-				if (fx_y != 0)
-				{
-					blendindex = (lastcolor << 8) | *(dest - window_width); 
-					blendindex = (header_data[blendindex] << 8) | hackcolor; 
-					hackcolor = header_data[blendindex]; 
-				}
-				*dest = hackcolor;
-				lastcolor = hackcolor;
-			}
+				*dest = zonk;
 			dest++;
-			l += dldx;
-			u += fx_du_dx;
-			v += fx_dv_dx;
-			z += fx_dz_dx;
-			if (z == 0) return;
+			u += dudx;
+			v += dvdx;
+			z += dzdx;
 		}
 	}
-
 }
-
-#endif

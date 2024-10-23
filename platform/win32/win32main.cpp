@@ -10,7 +10,7 @@ as described in copying.txt.
 
 #include <stdio.h>
 
-#include "main_shared/inferno.h"
+#include "main/inferno.h"
 #include "platform/platform.h"
 
 #include "SDL.h" 
