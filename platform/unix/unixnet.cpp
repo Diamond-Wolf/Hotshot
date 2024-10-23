@@ -249,10 +249,10 @@ void NetSendInternetworkPacket(char* data, int datasize, char* address)
 	//printf("sending packet over port %d to %d.%d.%d.%d\n", BS_MakeShort(server), address[0], address[1], address[2], address[3]);
 }
 
-void ipx_read_user_file(char* filename)
+void ipx_read_user_file(const char* filename)
 {
 }
 
-void ipx_read_network_file(char* filename)
+void ipx_read_network_file(const char* filename)
 {
 }

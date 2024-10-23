@@ -368,6 +368,10 @@ void init_cockpit()
 	if ( Screen_mode == SCREEN_EDITOR )
 		Cockpit_mode = CM_FULL_SCREEN;
 
+	
+	if (currentGame == G_DESCENT_1)
+		Cockpit_mode = CM_FULL_SCREEN;
+
  WINDOS(
 	dd_gr_set_current_canvas(NULL),
 	gr_set_current_canvas(NULL)
