@@ -565,6 +565,7 @@ void set_popup_screen(void)
 		set_screen_mode(SCREEN_MENU);		//must switch to menu mode
 }
 
+int menuHiresCache = -1;
 
 //called to change the screen mode. Parameter sm is the new mode, one of
 //SMODE_GAME or SMODE_EDITOR. returns mode acutally set (could be other
@@ -579,11 +580,13 @@ int set_screen_mode(int sm)
 	}
 #endif
 
-	if ( Screen_mode == sm && VGA_current_mode == VR_screen_mode) 
+	if ( Screen_mode == sm && VGA_current_mode == VR_screen_mode && menuHiresCache == MenuHiresAvailable) 
 	{
 		gr_set_current_canvas( &VR_screen_pages );
 		return 1;
 	}
+
+	menuHiresCache = MenuHiresAvailable;
 
 #ifdef EDITOR
 	Canv_editor = NULL;
@@ -618,6 +621,8 @@ int set_screen_mode(int sm)
 			}
 
 			gr_init_sub_canvas( &VR_screen_pages, &grd_curscreen->sc_canvas, 0, 0, grd_curscreen->sc_w, grd_curscreen->sc_h );
+
+			mprintf((0, "\nMenu ScreenMode: %d %d %d", MenuHiresAvailable, MenuHires, menu_mode));
 
 			FontHires = MenuHires;
 

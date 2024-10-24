@@ -78,6 +78,8 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "compbit.h"
 #include "misc/types.h"
 
+extern void SwitchGame(uint8_t gameVersion);
+
 #define SANTA
 
 //#include "3dfx_des.h"
@@ -1022,7 +1024,10 @@ Here:
 		switch (Function_mode) 
 		{
 		case FMODE_MENU:
+			SwitchGame(2);
+
 			set_screen_mode(SCREEN_MENU);
+
 			if (Auto_demo) 
 			{
 				newdemo_start_playback(NULL);		// Randomly pick a file

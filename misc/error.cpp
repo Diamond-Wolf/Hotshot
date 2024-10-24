@@ -32,6 +32,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_MSG_LEN 256
 #endif
 
+#undef Int3 //Uncomment on dev environments where an Int3 might not produce any message
+
 int initialized = 0;
 
 char exit_message[MAX_MSG_LEN] = "";

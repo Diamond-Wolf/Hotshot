@@ -279,27 +279,29 @@ bitmap_index piggy_find_bitmap(char* name)
 
 	bmp.index = 0;
 
-	if ((t = strchr(name, '#')) != NULL)
-		*t = 0;
+	if (currentGame == G_DESCENT_2) { //D1 never used alias table, skip
+		if ((t = strchr(name, '#')) != NULL)
+			*t = 0;
 
-	for (i = 0; i < activePiggyTable->aliases.size(); i++)
-		if (_strfcmp(name, activePiggyTable->aliases[i].alias_name) == 0)
-		{
-			if (t) //extra stuff for ABMs
+		for (i = 0; i < activePiggyTable->aliases.size(); i++)
+			if (_strfcmp(name, activePiggyTable->aliases[i].alias_name) == 0)
 			{
-				static char temp[FILENAME_LEN];
-				_splitpath(activePiggyTable->aliases[i].file_name, NULL, NULL, temp, NULL);
-				name = temp;
-				strcat(name, "#");
-				strcat(name, t + 1);
+				if (t) //extra stuff for ABMs
+				{
+					static char temp[FILENAME_LEN];
+					_splitpath(activePiggyTable->aliases[i].file_name, NULL, NULL, temp, NULL);
+					name = temp;
+					strcat(name, "#");
+					strcat(name, t + 1);
+				}
+				else
+					name = activePiggyTable->aliases[i].file_name;
+				break;
 			}
-			else
-				name = activePiggyTable->aliases[i].file_name;
-			break;
-		}
 
-	if (t)
-		*t = '#';
+		if (t)
+			*t = '#';
+	}
 
 	i = hashtable_search(&activePiggyTable->bitmapNames, name);
 	Assert(i != 0);

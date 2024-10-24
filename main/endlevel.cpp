@@ -191,6 +191,10 @@ extern int Kmatrix_nomovie_message;
 //returns movie played status.  see movie.h
 int start_endlevel_movie()
 {
+
+	if (currentGame == G_DESCENT_1)
+		return MOVIE_NOT_PLAYED;
+
 	char movie_name[] = "esa.mve";
    int r;
 	uint8_t save_pal[768];
@@ -335,7 +339,7 @@ void start_endlevel_sequence()
 #endif
 	}
 
-	if (Current_mission_num == 1)//only play movie for built-in mission
+	if (Current_mission_num == 1 || currentGame == G_DESCENT_1)//only play movie for built-in mission
 	{		
 		//try playing movie.  If it plays, great. if not, do rendered ending
 		movie_played = MOVIE_NOT_PLAYED;
@@ -343,7 +347,7 @@ void start_endlevel_sequence()
 			if (!(Game_mode & GM_MULTI))
 				movie_played = start_endlevel_movie();
 		
-		if (CurrentDataVersion == DataVer::DEMO)
+		if (CurrentDataVersion == DataVer::DEMO || currentGame == G_DESCENT_1)
 		{
 			if (movie_played == MOVIE_NOT_PLAYED) //don't have movie.  Do rendered sequence
 			{
@@ -415,7 +419,7 @@ void start_rendered_endlevel_sequence()
 	}
 	#endif
 
-	if (CurrentDataVersion == DataVer::DEMO)
+	if (CurrentDataVersion == DataVer::DEMO || currentGame == G_DESCENT_1)
 	{
 		Assert(last_segnum == exit_segnum);
 		songs_play_song( SONG_ENDLEVEL, 0 );
