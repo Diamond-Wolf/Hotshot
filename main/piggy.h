@@ -101,6 +101,7 @@ typedef struct SoundFile {
 
 struct piggytable {
 	CFILE* file;
+
 	hashtable bitmapNames;
 	hashtable soundNames;
 

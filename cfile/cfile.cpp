@@ -278,8 +278,6 @@ FILE* cfile_find_libfile(const char* name, int* length)
 		if (fp) 
 			return fp;
 
-		mprintf((1, "Now trying D2\n"));
-
 		return FindFileInD2(name, length);
 
 	} else {
@@ -289,8 +287,6 @@ FILE* cfile_find_libfile(const char* name, int* length)
 		fp = FindFileInD2(name, length);
 		if (fp)
 			return fp;
-
-		mprintf((1, "Now trying D1\n"));
 
 		return FindFileInD1(name, length);
 

@@ -19,6 +19,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "error.h"
 #include "hash.h"
 
+#include "main/inferno.h"
+
 int hashtable_init(hashtable* ht, int size) {
 	int i;
 
@@ -36,7 +38,7 @@ int hashtable_init(hashtable* ht, int size) {
 	if (ht->size == 0)
 		Error("Hashtable has size of 0");
 
-	ht->key = (char**)malloc(size * sizeof(char*));
+	ht->key = new char* [size];//(char**)malloc(size * sizeof(char*));
 	if (ht->key == NULL)
 		Error("Not enough memory to create a hash table of size %d", size);
 
@@ -44,7 +46,7 @@ int hashtable_init(hashtable* ht, int size) {
 		ht->key[i] = NULL;
 
 	// Use calloc cause we want zero'd array.
-	ht->value = (int*)malloc(size * sizeof(int));
+	ht->value = new int[size];// (int*)malloc(size * sizeof(int));
 	if (ht->value == NULL) {
 		free(ht->key);
 		Error("Not enough memory to create a hash table of size %d\n", size);
@@ -93,6 +95,9 @@ int hashtable_search(hashtable* ht, char* key) {
 
 void hashtable_insert(hashtable* ht, char* key, int value) {
 	int i, j, k;
+
+	//if (!strncmp(key, "door13#0", 8))
+	//	Int3();
 
 	_strlwr(key);
 	k = hashtable_getkey(key);

@@ -234,7 +234,11 @@ bitmap_index piggy_register_bitmap(grs_bitmap* bmp, const char* name, int in_fil
 	BitmapFile file;
 	strncpy(file.name, name, 12);
 	activePiggyTable->bitmapFiles.push_back(file);
-	hashtable_insert(&activePiggyTable->bitmapNames, file.name, Num_bitmap_files);
+	hashtable_insert(&activePiggyTable->bitmapNames, file.name, activePiggyTable->gameBitmaps.size());
+
+	if (currentGame == G_DESCENT_1 && !strncmp(file.name, "door", 4))
+		mprintf((1, "%s = %d\n", file.name, activePiggyTable->gameBitmaps.size()));
+
 	//activePiggyTable->gameBitmaps[Num_bitmap_files] = *bmp;
 	activePiggyTable->gameBitmaps.push_back(*bmp);
 	if (!in_file)
