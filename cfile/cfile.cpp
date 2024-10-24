@@ -28,6 +28,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
 
+#include "main/inferno.h"
+#include "main/songs.h" //for D1 descent.sng patch hack
+#include "platform/mono.h"
+
 typedef struct hogfile
 {
 	char	name[13];
@@ -203,6 +207,49 @@ int cfile_init_d1(const char* hogname)
 		return 0;	//not loaded!
 }
 
+FILE* FindFileInD1(const char* name, int* length) {
+
+	//Hack to patch v1.5 descent.sng if needed
+	if (currentGame == G_DESCENT_1 && !_strnicmp(name, "descent.sng", 11))
+		needToMaybePatchD1SongFile = true;
+
+	FILE* fp;
+	for (int i = 0; i < numD1Hogfiles; i++)
+	{
+		if (!_stricmp(D1HogFiles[i].name, name))
+		{
+			fp = cfile_get_filehandle(d1HogFilename, "rb");
+			if (fp == NULL) return NULL;
+			fseek(fp, D1HogFiles[i].offset, SEEK_SET);
+			*length = D1HogFiles[i].length;
+			return fp;
+		}
+	}
+
+	needToMaybePatchD1SongFile = false;
+	return NULL;
+
+}
+
+FILE* FindFileInD2(const char* name, int* length) {
+
+	FILE* fp;
+	for (int i = 0; i < Num_hogfiles; i++) 
+	{
+		if (!_stricmp(HogFiles[i].name, name))
+		{
+			fp = cfile_get_filehandle(HogFilename, "rb");
+			if (fp == NULL) return NULL;
+			fseek(fp, HogFiles[i].offset, SEEK_SET);
+			*length = HogFiles[i].length;
+			return fp;
+		}
+	}
+
+	return NULL;
+
+}
+
 FILE* cfile_find_libfile(const char* name, int* length)
 {
 	FILE* fp;
@@ -223,30 +270,32 @@ FILE* cfile_find_libfile(const char* name, int* length)
 		}
 	}
 
-	for (i = 0; i < Num_hogfiles; i++) 
-	{
-		if (!_stricmp(HogFiles[i].name, name))
-		{
-			fp = cfile_get_filehandle(HogFilename, "rb");
-			if (fp == NULL) return NULL;
-			fseek(fp, HogFiles[i].offset, SEEK_SET);
-			*length = HogFiles[i].length;
-			return fp;
-		}
-	}
+	if (currentGame == G_DESCENT_1) { //Search the correct game's files first
 
-	for (i = 0; i < numD1Hogfiles; i++)
-	{
-		if (!_stricmp(D1HogFiles[i].name, name))
-		{
-			fp = cfile_get_filehandle(d1HogFilename, "rb");
-			if (fp == NULL) return NULL;
-			fseek(fp, D1HogFiles[i].offset, SEEK_SET);
-			*length = D1HogFiles[i].length;
-			return fp;
-		}
-	}
+		//mprintf((1, "\nCurrent game is D1, trying D1 first (%s)\n", name));
 
+		fp = FindFileInD1(name, length);
+		if (fp) 
+			return fp;
+
+		mprintf((1, "Now trying D2\n"));
+
+		return FindFileInD2(name, length);
+
+	} else {
+
+		//mprintf((1, "\nCurrent game is D2, trying D2 first (%s)\n", name));
+
+		fp = FindFileInD2(name, length);
+		if (fp)
+			return fp;
+
+		mprintf((1, "Now trying D1\n"));
+
+		return FindFileInD1(name, length);
+
+	}
+	
 	return NULL;
 }
 

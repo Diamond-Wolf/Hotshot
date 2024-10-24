@@ -22,6 +22,8 @@ typedef struct song_info
 
 extern song_info Songs[];
 
+extern bool needToMaybePatchD1SongFile;
+
 #define SONG_TITLE				0
 #ifdef MACINTOSH
 #define SONG_BRIEFING			3		// endgame and briefing the same
@@ -47,6 +49,8 @@ extern int Redbook_playing;		// track that is currently playing
 
 void songs_play_song( int songnum, int repeat );
 void songs_play_level_song( int levelnum );
+
+void songs_init();
 
 //stop the redbook, so we can read off the CD
 void songs_stop_redbook(void);

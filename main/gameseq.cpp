@@ -1047,6 +1047,8 @@ void StartNewGame(int start_level)
 	Network_new_game = 0;
 #endif
 
+	songs_init(); //reset descent.sng
+
 	if (start_level < 0)
 		StartNewLevelSecret(start_level, 0);
 	else

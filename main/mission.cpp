@@ -591,10 +591,13 @@ int load_mission(int mission_num)
 
 		strcpy(Briefing_text_filename, D1_BIM_BRIEFING_FILE);
 		strcpy(Ending_text_filename, D1_BIM_ENDING_FILE);
-		cfile_use_alternate_hogfile("descent.hog");		//disable alternate
+		cfile_use_alternate_hogfile(NULL);		//disable alternate
 	} 
 	else
 	{
+		if (mission_num == 1)
+			cfile_use_alternate_hogfile(NULL);
+
 		mfile = cfopen(buf,"rb");
 		if (mfile == NULL) 
 		{
