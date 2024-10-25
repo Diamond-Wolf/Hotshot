@@ -135,6 +135,8 @@ char	Current_level_name[LEVEL_NAME_LEN];
 int Last_level, Last_secret_level;
 #endif
 
+extern int MenuHiresAvailable;
+
 // Global variables describing the player
 int 				N_players = 1;						// Number of players ( >1 means a net game, eh?)
 int 				Player_num = 0;						// The player number who is on the console.
@@ -968,7 +970,7 @@ void LoadLevel(int level_num, int page_in_textures)
 
 	load_palette(Current_level_palette, 1, 1);		//don't change screen
 
-	if (CurrentDataVersion == DataVer::DEMO)
+	if (CurrentDataVersion == DataVer::DEMO || currentGame == G_DESCENT_1)
 		load_endlevel_data(level_num);
 
 	if (page_in_textures)
@@ -1635,7 +1637,13 @@ void DoEndGame(void)
 	{
 		char tname[FILENAME_LEN];
 		snprintf(tname, FILENAME_LEN, "%s.tex", Current_mission_filename);
-		do_briefing_screens(tname, Last_level + 1);		//level past last is endgame breifing
+		if (currentGame == G_DESCENT_1) {
+			auto hiresSave = MenuHiresAvailable;
+			MenuHiresAvailable = false;
+			do_briefing_screens(Ending_text_filename, REGISTERED_ENDING_LEVEL_NUM);
+			MenuHiresAvailable = hiresSave;
+		} else
+			do_briefing_screens(tname, Last_level + 1);		//level past last is endgame breifing
 
 		//try doing special credits
 		snprintf(tname, FILENAME_LEN, "%s.ctb", Current_mission_filename);
@@ -2180,6 +2188,8 @@ void ShowLevelIntro(int level_num)
 			do_briefing_screens("brief2o.tex", 1);
 #endif
 
+		int hires_save;
+
 		if (Current_mission_num == 1)
 		{
 			int movie = 0;
@@ -2203,7 +2213,7 @@ void ShowLevelIntro(int level_num)
 			{
 				if (robot_movies)
 				{
-					int hires_save = MenuHiresAvailable;
+					hires_save = MenuHiresAvailable;
 
 					if (robot_movies == 1)		//lowres only
 					{
@@ -2215,19 +2225,25 @@ void ShowLevelIntro(int level_num)
 					}
 					do_briefing_screens("robot.tex", level_num);
 					MenuHiresAvailable = hires_save;
-		}
-	}
+				}
+			}
 
 		}
-		else //not the built-in mission.  check for add-on briefing
+		else if (currentGame == G_DESCENT_1) //not the built-in mission.  check for add-on briefing
 		{
+			hires_save = MenuHiresAvailable;
+			MenuHiresAvailable = false;
+			load_palette("descent.256", 0, 0);
+			do_briefing_screens("", level_num);
+			MenuHiresAvailable = hires_save;
+		} else {
 			char tname[FILENAME_LEN];
 			snprintf(tname, FILENAME_LEN, "%s.tex", Current_mission_filename);
 			do_briefing_screens(tname, level_num);
 		}
 
-
-		memcpy(gr_palette, save_pal, sizeof(gr_palette));
+		if (currentGame != G_DESCENT_1)
+			memcpy(gr_palette, save_pal, sizeof(gr_palette));
 	}
 }
 

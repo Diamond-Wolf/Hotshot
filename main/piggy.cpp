@@ -16,6 +16,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "win\ds.h"
 #endif
 
+#include <stdexcept>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -189,8 +190,8 @@ void piggytable::Init() {
 		gameBitmapXlat[i] = i;
 	}
 
-	hashtable_init(&bitmapNames, MAX_BITMAP_FILES);
-	hashtable_init(&soundNames, MAX_SOUND_FILES);
+	/*hashtable_init(&bitmapNames, MAX_BITMAP_FILES);
+	hashtable_init(&soundNames, MAX_SOUND_FILES);*/
 
 }
 
@@ -201,8 +202,8 @@ void piggytable::SetActive() {
 
 piggytable::~piggytable() {
 
-	hashtable_free(&bitmapNames);
-	hashtable_free(&soundNames);
+	/*hashtable_free(&bitmapNames);
+	hashtable_free(&soundNames);*/
 
 	if (file)
 	{
@@ -233,8 +234,13 @@ bitmap_index piggy_register_bitmap(grs_bitmap* bmp, const char* name, int in_fil
 
 	BitmapFile file;
 	strncpy(file.name, name, 12);
+	//hashtable_insert(&activePiggyTable->bitmapNames, file.name, activePiggyTable->gameBitmaps.size());
+	activePiggyTable->bitmapNames[file.name] = activePiggyTable->bitmapFiles.size();
 	activePiggyTable->bitmapFiles.push_back(file);
-	hashtable_insert(&activePiggyTable->bitmapNames, file.name, Num_bitmap_files);
+
+	if (currentGame == G_DESCENT_1 && !strncmp(file.name, "door", 4))
+		mprintf((1, "%s = %d\n", file.name, activePiggyTable->gameBitmaps.size()));
+
 	//activePiggyTable->gameBitmaps[Num_bitmap_files] = *bmp;
 	activePiggyTable->gameBitmaps.push_back(*bmp);
 	if (!in_file)
@@ -259,8 +265,8 @@ int piggy_register_sound(digi_sound* snd, const char* name, int in_file)
 	SoundFile file;
 	strncpy(file.name, name, 12);
 	activePiggyTable->soundFiles.push_back(file);
-	hashtable_insert(&activePiggyTable->soundNames, file.name, activePiggyTable->soundFiles.size());
-	//GameSounds[Num_sound_files] = *snd;
+	//hashtable_insert(&activePiggyTable->soundNames, file.name, activePiggyTable->soundFiles.size());
+	activePiggyTable->soundNames[file.name] = activePiggyTable->soundFiles.size();
 	activePiggyTable->gameSounds.push_back(*snd);
 	if (!in_file) {
 		activePiggyTable->soundOffsets[activePiggyTable->gameSounds.size() - 1] = 0;
@@ -279,47 +285,72 @@ bitmap_index piggy_find_bitmap(char* name)
 
 	bmp.index = 0;
 
-	if ((t = strchr(name, '#')) != NULL)
-		*t = 0;
+	if (currentGame == G_DESCENT_2) { //D1 never used alias table, skip
+		if ((t = strchr(name, '#')) != NULL)
+			*t = 0;
 
-	for (i = 0; i < activePiggyTable->aliases.size(); i++)
-		if (_strfcmp(name, activePiggyTable->aliases[i].alias_name) == 0)
-		{
-			if (t) //extra stuff for ABMs
+		for (i = 0; i < activePiggyTable->aliases.size(); i++)
+			if (_strfcmp(name, activePiggyTable->aliases[i].alias_name) == 0)
 			{
-				static char temp[FILENAME_LEN];
-				_splitpath(activePiggyTable->aliases[i].file_name, NULL, NULL, temp, NULL);
-				name = temp;
-				strcat(name, "#");
-				strcat(name, t + 1);
+				if (t) //extra stuff for ABMs
+				{
+					static char temp[FILENAME_LEN];
+					_splitpath(activePiggyTable->aliases[i].file_name, NULL, NULL, temp, NULL);
+					name = temp;
+					strcat(name, "#");
+					strcat(name, t + 1);
+				}
+				else
+					name = activePiggyTable->aliases[i].file_name;
+				break;
 			}
-			else
-				name = activePiggyTable->aliases[i].file_name;
-			break;
-		}
 
-	if (t)
-		*t = '#';
+		if (t)
+			*t = '#';
+	}
 
-	i = hashtable_search(&activePiggyTable->bitmapNames, name);
-	Assert(i != 0);
-	if (i < 0)
+	//i = hashtable_search(&activePiggyTable->bitmapNames, name);
+
+	/*if (!activePiggyTable->bitmapNames.contains(name))
 		return bmp;
 
+	i = activePiggyTable->bitmapNames[name];
+	/*Assert(i != 0);
+	if (i < 0)
+		return bmp;*\/
+
 	bmp.index = i;
+	return bmp;*/
+
+	try {
+		bmp.index = activePiggyTable->bitmapNames.at(name);
+	} catch (std::out_of_range) {
+		bmp.index = 0;
+	}
+
 	return bmp;
+
 }
 
 int piggy_find_sound(const char* name)
 {
-	int i;
+	//int i;
 
-	i = hashtable_search(&activePiggyTable->soundNames, const_cast<char*>(name));
 
-	if (i < 0)
+	//i = hashtable_search(&activePiggyTable->soundNames, const_cast<char*>(name));
+
+	//if (i < 0)
+	//if (!activePiggyTable->soundNames.contains(name))
+	//	return 255;
+
+	//return activePiggyTable->soundNames[name];
+
+	try {
+		return activePiggyTable->soundNames.at(name); 
+	} catch (std::out_of_range) {
 		return 255;
+	}
 
-	return i;
 }
 
 //CFILE* Piggy_fp = NULL;

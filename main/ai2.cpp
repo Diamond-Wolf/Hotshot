@@ -1670,7 +1670,7 @@ void move_object_to_legal_spot(object *objp)
 	}
 
 	if (activeBMTable->robots[objp->id].boss_flag) {
-		Int3();		//	Note: Boss is poking outside mine.  Will try to resolve.
+		//Int3();		//	Note: Boss is poking outside mine.  Will try to resolve.
 		teleport_boss(objp);
 	} else {
 		mprintf((0, "Note: Killing robot #%i because he's badly stuck outside the mine.\n", objp-Objects.data()));
