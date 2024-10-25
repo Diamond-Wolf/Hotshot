@@ -84,9 +84,6 @@ char RobotPlaying = 0;
 char Ending_text_filename[13] = "endreg.tex";
 char Briefing_text_filename[13] = "briefing.tex";
 
-#define	SHAREWARE_ENDING_LEVEL_NUM		0x7f
-#define	REGISTERED_ENDING_LEVEL_NUM	0x7e
-
 //	Can be set by -noscreens command line option.  Causes bypassing of all briefing screens.
 int	Skip_briefing_screens = 0;
 int	Briefing_foreground_colors[MAX_BRIEFING_COLORS], Briefing_background_colors[MAX_BRIEFING_COLORS];
@@ -300,6 +297,8 @@ briefing_screen d1BriefingScreens[] =
 #endif
 
 };
+
+#define REGISTERED_ENDING_SCENE 42
 
 #define	MAX_BRIEFING_SCREEN_D1	(sizeof(d1BriefingScreens) / sizeof(d1BriefingScreens[0]))
 
@@ -1603,8 +1602,6 @@ int showBriefingScreenD1(int screen_num, int allow_keys)
 		return 0;
 	}
 
-	
-
 	gr_palette_clear();
 	gr_bitmap(0, 0, &briefing_bm);
 
@@ -1667,7 +1664,17 @@ void doBriefingD1(int level_num)
 
 	key_flush();
 
-	load_screen_text(Briefing_text_filename, &Briefing_text);
+	load_screen_text(level_num != REGISTERED_ENDING_LEVEL_NUM ? Briefing_text_filename : Ending_text_filename, &Briefing_text);
+
+	if (level_num == REGISTERED_ENDING_LEVEL_NUM) {
+		for (cur_briefing_screen = 0; cur_briefing_screen < MAX_BRIEFING_SCREEN_D1; cur_briefing_screen++)
+			if (d1BriefingScreens[cur_briefing_screen].level_num == REGISTERED_ENDING_LEVEL_NUM)
+				if (show_briefing_screen(cur_briefing_screen, 0))
+					break;
+		mem_free(Briefing_text);
+		key_flush();
+		return;
+	}
 
 	if (level_num == 1) {
 		while ((!abort_briefing_screens) && (d1BriefingScreens[cur_briefing_screen].level_num == 0)) {
@@ -1693,7 +1700,7 @@ void do_briefing_screens(const char* filename, int level_num)
 {
 
 	if (Current_mission_num != 1)
-		songs_play_song(SONG_BRIEFING, 1);
+		songs_play_song((level_num != REGISTERED_ENDING_LEVEL_NUM ? SONG_BRIEFING : SONG_ENDGAME), 1);
 
 	if (currentGame == G_DESCENT_1) {
 		doBriefingD1(level_num);

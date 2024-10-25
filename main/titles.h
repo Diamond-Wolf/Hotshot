@@ -32,3 +32,6 @@ extern char* get_briefing_screen(int level_num);
 
 void title_save_game();
 extern void show_endgame_briefing(void);
+
+#define	SHAREWARE_ENDING_LEVEL_NUM  0x7f
+#define	REGISTERED_ENDING_LEVEL_NUM 0x7e

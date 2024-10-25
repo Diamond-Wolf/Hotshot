@@ -196,7 +196,7 @@ int start_endlevel_movie()
 		return MOVIE_NOT_PLAYED;
 
 	char movie_name[] = "esa.mve";
-   int r;
+	int r;
 	uint8_t save_pal[768];
 
 	Assert(Current_mission_num == 1);		//only play movie for built-in mission

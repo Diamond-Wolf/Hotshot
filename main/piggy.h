@@ -14,6 +14,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 
 #include "digi.h"
 #include "sounds.h"
@@ -102,8 +103,11 @@ typedef struct SoundFile {
 struct piggytable {
 	CFILE* file;
 
-	hashtable bitmapNames;
-	hashtable soundNames;
+	/*hashtable bitmapNames;
+	hashtable soundNames;*/
+
+	std::unordered_map<std::string, int> bitmapNames;
+	std::unordered_map<std::string, int> soundNames;
 
 	bool bogusInitialized = false;
 	bool piggyInitialized = false;

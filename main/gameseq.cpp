@@ -135,6 +135,8 @@ char	Current_level_name[LEVEL_NAME_LEN];
 int Last_level, Last_secret_level;
 #endif
 
+extern int MenuHiresAvailable;
+
 // Global variables describing the player
 int 				N_players = 1;						// Number of players ( >1 means a net game, eh?)
 int 				Player_num = 0;						// The player number who is on the console.
@@ -1635,7 +1637,13 @@ void DoEndGame(void)
 	{
 		char tname[FILENAME_LEN];
 		snprintf(tname, FILENAME_LEN, "%s.tex", Current_mission_filename);
-		do_briefing_screens(tname, Last_level + 1);		//level past last is endgame breifing
+		if (currentGame == G_DESCENT_1) {
+			auto hiresSave = MenuHiresAvailable;
+			MenuHiresAvailable = false;
+			do_briefing_screens(Ending_text_filename, REGISTERED_ENDING_LEVEL_NUM);
+			MenuHiresAvailable = hiresSave;
+		} else
+			do_briefing_screens(tname, Last_level + 1);		//level past last is endgame breifing
 
 		//try doing special credits
 		snprintf(tname, FILENAME_LEN, "%s.ctb", Current_mission_filename);
@@ -2221,20 +2229,21 @@ void ShowLevelIntro(int level_num)
 			}
 
 		}
-		else if (currentGame == G_DESCENT_2) //not the built-in mission.  check for add-on briefing
+		else if (currentGame == G_DESCENT_1) //not the built-in mission.  check for add-on briefing
 		{
+			hires_save = MenuHiresAvailable;
+			MenuHiresAvailable = false;
+			load_palette("descent.256", 0, 0);
+			do_briefing_screens("", level_num);
+			MenuHiresAvailable = hires_save;
+		} else {
 			char tname[FILENAME_LEN];
 			snprintf(tname, FILENAME_LEN, "%s.tex", Current_mission_filename);
 			do_briefing_screens(tname, level_num);
-		} else {
-			hires_save = MenuHiresAvailable;
-			MenuHiresAvailable = false;
-			do_briefing_screens("", level_num);
-			MenuHiresAvailable = hires_save;
 		}
 
-
-		memcpy(gr_palette, save_pal, sizeof(gr_palette));
+		if (currentGame != G_DESCENT_1)
+			memcpy(gr_palette, save_pal, sizeof(gr_palette));
 	}
 }
 

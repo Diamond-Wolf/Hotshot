@@ -1236,17 +1236,17 @@ void hud_show_orbs(void)
 		{
 			y = 5 * Line_spacing;
 			x = GAME_FONT->ft_w;
-			if (FontHires)
+			if (FontHires && currentGame == G_DESCENT_2)
 				y += Line_spacing;
 		}
 		else
 			Int3();		//what sort of cockpit?
 
-		bm = &Orb_icons[FontHires];
+		bm = &Orb_icons[FontHires && currentGame == G_DESCENT_2];
 		gr_ubitmapm(x, y, bm);
 
 		gr_set_fontcolor(gr_getcolor(0, 31, 0), -1);
-		gr_printf(x + bm->bm_w + bm->bm_w / 2, y + (FontHires ? 2 : 1), "x %d", Players[Player_num].secondary_ammo[PROXIMITY_INDEX]);
+		gr_printf(x + bm->bm_w + bm->bm_w / 2, y + (FontHires && currentGame == G_DESCENT_2 ? 2 : 1), "x %d", Players[Player_num].secondary_ammo[PROXIMITY_INDEX]);
 	}
 #endif
 }
@@ -1272,7 +1272,7 @@ void hud_show_flag(void)
 		{
 			y = 5 * Line_spacing;
 			x = GAME_FONT->ft_w;
-			if (FontHires)
+			if (FontHires && currentGame == G_DESCENT_2)
 				y += Line_spacing;
 		}
 		else
@@ -1512,7 +1512,7 @@ void hud_show_weapons(void)
 		old_ammo_count[1] = Players[Player_num].secondary_ammo[Secondary_weapon];
 	}
 
-	show_bomb_count(grd_curcanv->cv_bitmap.bm_w - (3 * GAME_FONT->ft_w + (FontHires ? 0 : 2)), y - 3 * Line_spacing, -1, 1);
+	show_bomb_count(grd_curcanv->cv_bitmap.bm_w - (3 * GAME_FONT->ft_w + (FontHires && currentGame == G_DESCENT_2 ? 0 : 2)), y - 3 * Line_spacing, -1, 1);
 }
 
 void hud_show_cloak_invuln(void)
@@ -2807,7 +2807,7 @@ void show_reticle(int force_big_one)
 	Assert(secondary_bm_num <= 4);
 	Assert(cross_bm_num <= 1);
 
-	use_hires_reticle = (FontHires != 0);
+	use_hires_reticle = (FontHires != 0 && currentGame == G_DESCENT_2);
 
 	small_reticle = !(grd_curcanv->cv_bitmap.bm_w * 3 > max_window_w * 2 || force_big_one);
 	ofs = (use_hires_reticle ? 0 : 2) + small_reticle;
