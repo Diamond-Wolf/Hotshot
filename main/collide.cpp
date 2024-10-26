@@ -1232,7 +1232,7 @@ void maybe_kill_weapon(object* weapon, object* other_obj)
 
 	//	Changed, 10/12/95, MK: Make weapon-weapon collisions always kill both weapons if not persistent.
 	//	Reason: Otherwise you can't use proxbombs to detonate incoming homing missiles (or mega missiles).
-	if (weapon->mtype.phys_info.flags & PF_PERSISTENT || (CurrentLogicVersion == LogicVer::SHAREWARE && other_obj->type == OBJ_WEAPON))
+	if (weapon->mtype.phys_info.flags & PF_PERSISTENT || ((currentGame == G_DESCENT_1 || CurrentLogicVersion == LogicVer::SHAREWARE) && other_obj->type == OBJ_WEAPON))
 	{
 		//	Weapons do a lot of damage to weapons, other objects do much less.
 		if (!(weapon->mtype.phys_info.flags & PF_PERSISTENT)) 
@@ -2459,12 +2459,20 @@ void collide_weapon_and_weapon(object* weapon1, object* weapon2, vms_vector* col
 			return;
 
 		if (activeBMTable->weapons[weapon1->id].destroyable)
-			if (maybe_detonate_weapon(weapon1, weapon2, collision_point))
-				maybe_detonate_weapon(weapon2, weapon1, collision_point);
+			if (maybe_detonate_weapon(weapon1, weapon2, collision_point)) {
+				if (currentGame == G_DESCENT_1)
+					maybe_kill_weapon(weapon2, weapon1);
+				else
+					maybe_detonate_weapon(weapon2, weapon1, collision_point);
+			}
 
 		if (activeBMTable->weapons[weapon2->id].destroyable)
-			if (maybe_detonate_weapon(weapon2, weapon1, collision_point))
-				maybe_detonate_weapon(weapon1, weapon2, collision_point);
+			if (maybe_detonate_weapon(weapon2, weapon1, collision_point)) {
+				if (currentGame == G_DESCENT_1)
+					maybe_kill_weapon(weapon1, weapon2);
+				else
+					maybe_detonate_weapon(weapon1, weapon2, collision_point);
+			}
 
 	}
 

@@ -2372,28 +2372,30 @@ void copy_defaults_to_robot(object* objp)
 	//	Boost shield for Thief and Buddy based on level.
 	objp->shields = robptr->strength;
 
-	if ((robptr->thief) || (robptr->companion))
-	{
-		objp->shields = (objp->shields * (abs(Current_level_num) + 7)) / 8;
-
-		if (robptr->companion)
+	if (currentGame == G_DESCENT_2) {
+		if ((robptr->thief) || (robptr->companion))
 		{
-			//	Now, scale guide-bot hits by skill level
-			switch (Difficulty_level)
+			objp->shields = (objp->shields * (abs(Current_level_num) + 7)) / 8;
+
+			if (robptr->companion)
 			{
-			case 0:	objp->shields = i2f(20000);	break;		//	Trainee, basically unkillable
-			case 1:	objp->shields *= 3;				break;		//	Rookie, pretty dang hard
-			case 2:	objp->shields *= 2;				break;		//	Hotshot, a bit tough
-			default:	break;
+				//	Now, scale guide-bot hits by skill level
+				switch (Difficulty_level)
+				{
+				case 0:	objp->shields = i2f(20000);	break;		//	Trainee, basically unkillable
+				case 1:	objp->shields *= 3;				break;		//	Rookie, pretty dang hard
+				case 2:	objp->shields *= 2;				break;		//	Hotshot, a bit tough
+				default:	break;
+				}
 			}
 		}
-	}
-	else if (robptr->boss_flag)	//	MK, 01/16/95, make boss shields lower on lower diff levels.
-		objp->shields = objp->shields / (NDL + 3) * (Difficulty_level + 4);
+		else if (robptr->boss_flag)	//	MK, 01/16/95, make boss shields lower on lower diff levels.
+			objp->shields = objp->shields / (NDL + 3) * (Difficulty_level + 4);
 
-	//	Additional wimpification of bosses at Trainee
-	if ((robptr->boss_flag) && (Difficulty_level == 0))
-		objp->shields /= 2;
+		//	Additional wimpification of bosses at Trainee
+		if ((robptr->boss_flag) && (Difficulty_level == 0))
+			objp->shields /= 2;
+	}
 }
 
 //	-----------------------------------------------------------------------------------------------------
