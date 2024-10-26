@@ -68,7 +68,7 @@ void calc_controlcen_gun_point(vms_vector *gun_point,vms_vector *gun_dir,object 
 	Assert(obj->type == OBJ_CNTRLCEN);
 	Assert(obj->render_type==RT_POLYOBJ);
 
-	reactor = &activeBMTable->reactors[obj->id];
+	reactor = &activeBMTable->reactors[(currentGame == G_DESCENT_2 ? obj->id : 0)];
 
 	Assert(gun_num < reactor->n_guns);
 

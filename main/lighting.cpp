@@ -168,7 +168,7 @@ void apply_light(fix obj_intensity, int obj_seg, vms_vector* obj_pos, int n_rend
 			int	headlight_shift = 0;
 			fix	max_headlight_dist = F1_0 * 200;
 
-			if (CurrentLogicVersion >= LogicVer::FULL_1_0)
+			if (CurrentLogicVersion >= LogicVer::FULL_1_0 && currentGame == G_DESCENT_2)
 			{
 				if (objtype == OBJ_PLAYER)
 					if (Players[Objects[objnum].id].flags & PLAYER_FLAGS_HEADLIGHT_ON)
@@ -328,7 +328,7 @@ fix compute_light_intensity(int objnum)
 
 	switch (objtype) {
 	case OBJ_PLAYER:
-		if (CurrentLogicVersion >= LogicVer::FULL_1_0)
+		if (CurrentLogicVersion >= LogicVer::FULL_1_0 && currentGame == G_DESCENT_2)
 		{
 			if (Players[obj->id].flags & PLAYER_FLAGS_HEADLIGHT_ON)
 			{
@@ -478,7 +478,7 @@ void set_dynamic_light(void)
 		}
 	}
 
-	if (CurrentLogicVersion >= LogicVer::FULL_1_0)
+	if (CurrentLogicVersion >= LogicVer::FULL_1_0 && currentGame == G_DESCENT_2)
 	{
 		for (vv = 0; vv < n_render_vertices; vv++)
 		{

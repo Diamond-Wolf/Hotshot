@@ -990,7 +990,6 @@ void bm_read_all(CFILE* fp) {
 		activeBMTable->firstMultiBitmapNum = cfile_read_int(fp);
 		auto N_controlcen_guns = cfile_read_int(fp);
 		activeBMTable->reactors[0].n_guns = N_controlcen_guns;
-		activeBMTable->reactorGunPos.resize(N_controlcen_guns);
 
 		activeBMTable->reactorGunPos.resize(MAX_CONTROLCEN_GUNS_D1);
 		activeBMTable->reactorGunDirs.resize(MAX_CONTROLCEN_GUNS_D1);
@@ -1000,13 +999,16 @@ void bm_read_all(CFILE* fp) {
 			activeBMTable->reactorGunPos[i].x = cfile_read_fix(fp);
 			activeBMTable->reactorGunPos[i].y = cfile_read_fix(fp);
 			activeBMTable->reactorGunPos[i].z = cfile_read_fix(fp);
+			activeBMTable->reactors[0].gun_points[i] = activeBMTable->reactorGunPos[i];
 		}
 		for (i = 0; i < MAX_CONTROLCEN_GUNS_D1; i++) 
 		{
 			activeBMTable->reactorGunDirs[i].x = cfile_read_fix(fp);
 			activeBMTable->reactorGunDirs[i].y = cfile_read_fix(fp);
 			activeBMTable->reactorGunDirs[i].z = cfile_read_fix(fp);
+			activeBMTable->reactors[0].gun_dirs[i] = activeBMTable->reactorGunDirs[i];
 		}
+
 
 		activeBMTable->exitModel = cfile_read_int(fp);
 		activeBMTable->destroyedExitModel = cfile_read_int(fp);
