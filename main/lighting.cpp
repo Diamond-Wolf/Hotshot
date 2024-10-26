@@ -328,7 +328,7 @@ fix compute_light_intensity(int objnum)
 
 	switch (objtype) {
 	case OBJ_PLAYER:
-		if (CurrentLogicVersion >= LogicVer::FULL_1_0 && currentGame == G_DESCENT_2)
+		if (CurrentLogicVersion >= LogicVer::FULL_1_0)
 		{
 			if (Players[obj->id].flags & PLAYER_FLAGS_HEADLIGHT_ON)
 			{

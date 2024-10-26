@@ -1009,7 +1009,6 @@ void bm_read_all(CFILE* fp) {
 			activeBMTable->reactors[0].gun_dirs[i] = activeBMTable->reactorGunDirs[i];
 		}
 
-
 		activeBMTable->exitModel = cfile_read_int(fp);
 		activeBMTable->destroyedExitModel = cfile_read_int(fp);
 

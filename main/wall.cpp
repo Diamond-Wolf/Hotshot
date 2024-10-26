@@ -885,9 +885,10 @@ void do_door_close(int door_num)
 	//check for objects in doorway before closing
 	if (w->flags & WALL_DOOR_AUTO)
 		if (!is_door_free(&Segments[w->segnum], w->sidenum)) {
-			if (currentGame != G_DESCENT_1)
+			if (currentGame != G_DESCENT_1) {
 				digi_kill_sound_linked_to_segment(w->segnum, w->sidenum, -1);
 				wall_open_door(&Segments[w->segnum], w->sidenum);		//re-open door
+			}
 			return;
 		} 
 
