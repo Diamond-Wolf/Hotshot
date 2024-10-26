@@ -696,7 +696,7 @@ void do_endlevel_frame()
 
 			if (hit_data.hit_type==HIT_WALL && hit_data.hit_seg!=-1)
 				object_create_explosion(hit_data.hit_seg,&hit_data.hit_pnt,i2f(3)+P_Rand()*6,VCLIP_SMALL_EXPLOSION);
-
+			
 			explosion_wait2 = (0xa00 + P_Rand()/8)/2;
 		}
 

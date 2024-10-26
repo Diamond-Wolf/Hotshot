@@ -693,11 +693,11 @@ int is_door_free(segment* seg, int side)
 	//it pokes into the connecting seg
 
 	for (objnum = seg->objects; objnum != -1; objnum = Objects[objnum].next)
-		if (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL && check_poke(objnum, seg - Segments, side))
+		if ((currentGame == G_DESCENT_1 || (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL)) && check_poke(objnum, seg - Segments, side))
 			return 0;	//not free
 
 	for (objnum = csegp->objects; objnum != -1; objnum = Objects[objnum].next)
-		if (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL && check_poke(objnum, csegp - Segments, Connectside))
+		if ((currentGame == G_DESCENT_1 || (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL)) && check_poke(objnum, csegp - Segments, Connectside))
 			return 0;	//not free
 
 	return 1; 	//doorway is free!
@@ -885,10 +885,12 @@ void do_door_close(int door_num)
 	//check for objects in doorway before closing
 	if (w->flags & WALL_DOOR_AUTO)
 		if (!is_door_free(&Segments[w->segnum], w->sidenum)) {
-			digi_kill_sound_linked_to_segment(w->segnum, w->sidenum, -1);
-			wall_open_door(&Segments[w->segnum], w->sidenum);		//re-open door
+			if (currentGame != G_DESCENT_1) {
+				digi_kill_sound_linked_to_segment(w->segnum, w->sidenum, -1);
+				wall_open_door(&Segments[w->segnum], w->sidenum);		//re-open door
+			}
 			return;
-		}
+		} 
 
 	for (p = 0; p < d->n_parts; p++) {
 		wall* w;

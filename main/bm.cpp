@@ -262,7 +262,6 @@ void ReadRobotD1(CFILE* fp, int inNumRobotsToRead, int inOffset) {
 		activeBMTable->robots[i].exp2_vclip_num = cfile_read_short(fp);
 		activeBMTable->robots[i].exp2_sound_num = cfile_read_short(fp);
 		activeBMTable->robots[i].weapon_type = cfile_read_short(fp);
-		activeBMTable->robots[i].weapon_type2 = -1;
 		activeBMTable->robots[i].contains_id = cfile_read_byte(fp);
 		activeBMTable->robots[i].contains_count = cfile_read_byte(fp);
 		activeBMTable->robots[i].contains_prob = cfile_read_byte(fp);
@@ -308,13 +307,22 @@ void ReadRobotD1(CFILE* fp, int inNumRobotsToRead, int inOffset) {
 
 		activeBMTable->robots[i].always_0xabcd = cfile_read_int(fp);
 
-		activeBMTable->robots[i].behavior = AIB_NORMAL;
+		if (i == 10) //gopher
+			activeBMTable->robots[i].behavior = AIB_RUN_FROM;
+		else
+			activeBMTable->robots[i].behavior = AIB_NORMAL;
 
 		if (activeBMTable->robots[i].boss_flag) {
 			activeBMTable->robots[i].deathroll_sound = SOUND_BOSS_SHARE_DIE;
 			activeBMTable->robots[i].see_sound = SOUND_BOSS_SHARE_SEE;
 			activeBMTable->robots[i].attack_sound = SOUND_BOSS_SHARE_ATTACK;
 		}
+
+		activeBMTable->robots[i].companion = 0;
+		activeBMTable->robots[i].thief = 0;
+		activeBMTable->robots[i].kamikaze = 0;
+		activeBMTable->robots[i].badass = 0;
+		activeBMTable->robots[i].weapon_type2 = -1;
 	}
 }
 
@@ -982,7 +990,6 @@ void bm_read_all(CFILE* fp) {
 		activeBMTable->firstMultiBitmapNum = cfile_read_int(fp);
 		auto N_controlcen_guns = cfile_read_int(fp);
 		activeBMTable->reactors[0].n_guns = N_controlcen_guns;
-		activeBMTable->reactorGunPos.resize(N_controlcen_guns);
 
 		activeBMTable->reactorGunPos.resize(MAX_CONTROLCEN_GUNS_D1);
 		activeBMTable->reactorGunDirs.resize(MAX_CONTROLCEN_GUNS_D1);
@@ -992,12 +999,14 @@ void bm_read_all(CFILE* fp) {
 			activeBMTable->reactorGunPos[i].x = cfile_read_fix(fp);
 			activeBMTable->reactorGunPos[i].y = cfile_read_fix(fp);
 			activeBMTable->reactorGunPos[i].z = cfile_read_fix(fp);
+			activeBMTable->reactors[0].gun_points[i] = activeBMTable->reactorGunPos[i];
 		}
 		for (i = 0; i < MAX_CONTROLCEN_GUNS_D1; i++) 
 		{
 			activeBMTable->reactorGunDirs[i].x = cfile_read_fix(fp);
 			activeBMTable->reactorGunDirs[i].y = cfile_read_fix(fp);
 			activeBMTable->reactorGunDirs[i].z = cfile_read_fix(fp);
+			activeBMTable->reactors[0].gun_dirs[i] = activeBMTable->reactorGunDirs[i];
 		}
 
 		activeBMTable->exitModel = cfile_read_int(fp);

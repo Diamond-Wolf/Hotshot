@@ -367,7 +367,7 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 			uvl_copy[i].l += Dynamic_light[vp[i]];
 
 			//add in light from player's headlight
-			if (CurrentLogicVersion < LogicVer::FULL_1_0)
+			if (CurrentLogicVersion < LogicVer::FULL_1_0 || currentGame == G_DESCENT_1)
 				uvl_copy[i].l += compute_headlight_light(&Segment_points[vp[i]].p3_vec,face_light);
 
 			//saturate at max value
@@ -1503,9 +1503,9 @@ void render_frame(fix eye_offset, int window_num)
 	if (Endlevel_sequence)
 	{
 		render_endlevel_frame(eye_offset);
-		FrameCount++;
+		//FrameCount++; // [DW] D2 moved FrameCount increment into game_render_frame(), not need here.
 		return;
-}
+	}
 
 #ifdef NEWDEMO
 	if (Newdemo_state == ND_STATE_RECORDING && eye_offset >= 0)

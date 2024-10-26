@@ -297,7 +297,6 @@ void init_game()
 
 	init_objects();
 	init_special_effects();
-	init_ai_system();
 	init_gauge_canvases();
 	init_exploding_walls();
 	load_background_bitmap();
@@ -1621,7 +1620,6 @@ jmp_buf LeaveGame;
 int Cheats_enabled=0;
 
 extern int Laser_rapid_fire;
-extern void do_lunacy_on(), do_lunacy_off();
 
 extern int Physics_cheat_flag,Robots_kill_robots_cheat;
 extern char BounceCheat,HomingCheat,OldHomingState[20];

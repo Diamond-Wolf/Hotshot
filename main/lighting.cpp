@@ -168,7 +168,7 @@ void apply_light(fix obj_intensity, int obj_seg, vms_vector* obj_pos, int n_rend
 			int	headlight_shift = 0;
 			fix	max_headlight_dist = F1_0 * 200;
 
-			if (CurrentLogicVersion >= LogicVer::FULL_1_0)
+			if (CurrentLogicVersion >= LogicVer::FULL_1_0 && currentGame == G_DESCENT_2)
 			{
 				if (objtype == OBJ_PLAYER)
 					if (Players[Objects[objnum].id].flags & PLAYER_FLAGS_HEADLIGHT_ON)
@@ -478,7 +478,7 @@ void set_dynamic_light(void)
 		}
 	}
 
-	if (CurrentLogicVersion >= LogicVer::FULL_1_0)
+	if (CurrentLogicVersion >= LogicVer::FULL_1_0 && currentGame == G_DESCENT_2)
 	{
 		for (vv = 0; vv < n_render_vertices; vv++)
 		{
@@ -749,25 +749,32 @@ fix compute_headlight_light(vms_vector* point, fix face_light)
 			fix dist_scale, face_scale;
 
 			dist_scale = (MAX_DIST - point_dist) >> MAX_DIST_LOG;
-			light = fixmul(light, dist_scale);
-
 			if (face_light < 0)
 				face_light = 0;
 
 			face_scale = f1_0 / 4 + face_light / 2;
-			light = fixmul(light, face_scale);
+
+			if (currentGame == G_DESCENT_1)
+				light = Beam_brightness;
+			else {
+				light = fixmul(light, dist_scale);
+				light = fixmul(light, face_scale);
+			}
 
 			if (use_beam) 
 			{
 				fix beam_scale;
 
-				if (face_light > f1_0 * 3 / 4 && point->z > i2f(12)) 
+				if (currentGame == G_DESCENT_1 || (face_light > f1_0 * 3 / 4 && point->z > i2f(12))) 
 				{
 					beam_scale = fixdiv(point->z, point_dist);
 					beam_scale = fixmul(beam_scale, beam_scale);	//square it
 					light = fixmul(light, beam_scale);
 				}
 			}
+
+			if (currentGame == G_DESCENT_1)
+				light = fixmul(light, fixmul(dist_scale, face_scale));
 		}
 	}
 

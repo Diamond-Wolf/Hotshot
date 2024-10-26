@@ -43,6 +43,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #define	NUM_D2_BOSSES	8
 
+#define AI_QUEUE_SIZE	256
+
 // +2 until AI merge
 extern uint8_t	Boss_teleports[NUM_D2_BOSSES + 2];		// Set int8_t if this boss can teleport
 extern uint8_t	Boss_spew_more[NUM_D2_BOSSES + 2];		// Set int8_t if this boss can teleport
@@ -68,7 +70,7 @@ extern void move_towards_segment_center(object *objp);
 extern int gate_in_robot(int type, int segnum);
 extern void do_ai_movement(object *objp);
 extern void ai_move_to_new_segment( object * obj, short newseg, int first_time );
-// extern void ai_follow_path( object * obj, short newseg, int first_time );
+//extern void ai_follow_path( object * obj, short newseg, int first_time );
 extern void ai_recover_from_wall_hit(object *obj, int segnum);
 extern void ai_move_one(object *objp);
 extern void do_ai_frame(object *objp);
@@ -76,17 +78,12 @@ extern void init_ai_object(int objnum, int initial_mode, int hide_segment);
 extern void update_player_awareness(object *objp, fix new_awareness);
 extern void create_awareness_event(object *objp, int type);			// object *objp can create awareness of player, amount based on "type"
 extern void do_ai_frame_all(void);
-extern void init_ai_system(void);
 extern void reset_ai_states(object *objp);
 extern int create_path_points(object *objp, int start_seg, int end_seg, point_seg *point_segs, short *num_points, int max_depth, int random_flag, int safety_flag, int avoid_seg);
 extern void create_all_paths(void);
 extern void create_path_to_station(object *objp, int max_length);
 
-#ifdef BUILD_DESCENT2
 extern void ai_follow_path(object *objp, int player_visibility, int previous_visibility, vms_vector *vec_to_player);
-#else
-extern void ai_follow_path(object *objp, int player_visibility);
-#endif
 
 extern void ai_turn_towards_vector(vms_vector *vec_to_player, object *obj, fix rate);
 extern void ai_turn_towards_vel_vec(object *objp, fix rate);
@@ -103,7 +100,7 @@ extern int ready_to_fire(robot_info *robptr, ai_local *ailp);
 extern int polish_path(object *objp, point_seg *psegs, int num_points);
 extern void move_towards_player(object *objp, vms_vector *vec_to_player);
 
-void init_boss_segments(short segptr[], int* num_segs, int size_check);
+void init_boss_segments(short segptr[], int* num_segs, int size_check, int wall_hack);
 
 //	max_length is maximum depth of path to create.
 //	If -1, use default:	MAX_DEPTH_TO_SEARCH_FOR_PLAYER
@@ -124,11 +121,11 @@ extern void do_escort_frame(object *objp, fix dist_to_player, int player_visibil
 extern void do_snipe_frame(object *objp, fix dist_to_player, int player_visibility, vms_vector *vec_to_player);
 extern void do_thief_frame(object *objp, fix dist_to_player, int player_visibility, vms_vector *vec_to_player);
 
-#ifndef NDEBUG
+/*#ifndef NDEBUG
 extern void force_dump_ai_objects_all(const char *msg);
-#else
+#else*/
 #define force_dump_ai_objects_all(msg)
-#endif
+//#endif
 
 extern void start_boss_death_sequence(object *objp);
 extern void ai_init_boss_for_ship(void);
@@ -164,15 +161,12 @@ extern	vms_vector	Last_fired_upon_player_pos;
 extern	int	Laser_rapid_fire;
 
 #define	MAX_AWARENESS_EVENTS	64
-#ifdef BUILD_DESCENT2
+
 typedef struct awareness_event {
 	short 		segnum;				// segment the event occurred in
 	short			type;					// type of event, defines behavior
 	vms_vector	pos;					// absolute 3 space location of event
 } awareness_event;
-#else
-struct awareness_event;
-#endif
 
 #define	AIS_MAX	8
 #define	AIE_MAX	4
@@ -273,11 +267,7 @@ extern fix				Boss_cloak_duration;
 extern fix				Last_gate_time;
 extern fix				Gate_interval;
 extern fix				Boss_dying_start_time;
-#ifdef BUILD_DESCENT2
-extern int8_t				Boss_dying, Boss_dying_sound_playing;
-#else
 extern int                  Boss_dying, Boss_dying_sound_playing;
-#endif
 extern fix				Boss_hit_time;
 // -- extern int				Boss_been_hit;
 //	---------- John: End of variables which must be saved as part of gamesave. ----------
@@ -303,16 +293,50 @@ extern awareness_event	Awareness_events[MAX_AWARENESS_EVENTS];
 extern vms_vector		Believed_player_pos;
 
 #ifndef NDEBUG
-#ifdef BUILD_DESCENT2
 //	Index into this array with ailp->mode
-extern const char	*mode_text[18];
+inline const char* mode_text[18] = {
+	"STILL",
+	"WANDER",
+	"FOL_PATH",
+	"CHASE_OBJ",
+	"RUN_FROM",
+	"BEHIND",
+	"FOL_PATH2",
+	"OPEN_DOOR",
+	"GOTO_PLR",
+	"GOTO_OBJ",
+	"SN_ATT",
+	"SN_FIRE",
+	"SN_RETR",
+	"SN_RTBK",
+	"SN_WAIT",
+	"TH_ATTACK",
+	"TH_RETREAT",
+	"TH_WAIT",
+
+};
 
 //	Index into this array with aip->behavior
-extern const char	behavior_text[6][9];
+inline const char	behavior_text[6][9] = {
+	"STILL   ",
+	"NORMAL  ",
+	"HIDE    ",
+	"RUN_FROM",
+	"FOLPATH ",
+	"STATION "
+};
 
 //	Index into this array with aip->GOAL_STATE or aip->CURRENT_STATE
-extern const char	state_text[8][5];
-#endif
+inline const char	state_text[8][5] = {
+	"NONE",
+	"REST",
+	"SRCH",
+	"LOCK",
+	"FLIN",
+	"FIRE",
+	"RECO",
+	"ERR_",
+};
 
 extern int Do_ai_flag, Break_on_object;
 
@@ -342,9 +366,6 @@ extern void set_escort_special_goal(int key);
 extern void create_bfs_list(int start_seg, short bfs_list[], int *length, int max_segs);
 extern void init_thief_for_level();
 
-
-
-
 extern int Escort_goal_object;
 
 extern int ai_save_state( FILE * fp );
@@ -361,3 +382,6 @@ extern void special_reactor_stuff(void);
 
 void P_WriteCloakInfo(ai_cloak_info* info, FILE* fp);
 void P_ReadCloakInfo(ai_cloak_info* info, FILE* fp);
+
+extern void do_lunacy_on();
+extern void do_lunacy_off();
