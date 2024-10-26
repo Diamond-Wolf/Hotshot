@@ -1032,6 +1032,7 @@ void StartNewLevelSecret(int level_num, int page_in_textures);
 //starts a new game on the given level
 void StartNewGame(int start_level)
 {
+
 	Game_mode = GM_NORMAL;
 	Function_mode = FMODE_GAME;
 
@@ -1396,7 +1397,12 @@ void StartNewLevelSecret(int level_num, int page_in_textures)
 
 	automap_clear_visited();
 
-	// --	init_player_stats_level();
+	//init_player_stats_level(true);
+
+	if (currentGame == G_DESCENT_1)
+	{
+		init_player_stats_level(false); //D1 needs to be reset for a secret level
+	}
 
 	Viewer = &Objects[Players[Player_num].objnum];
 
@@ -1498,9 +1504,9 @@ void ExitSecretLevel(void)
 
 	#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
 	char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
-	get_full_file_path(secretfile, SECRETC_FILENAME, CHOCOLATE_SAVE_DIR);
+	get_full_file_path(secretfile, SECRETB_FILENAME, CHOCOLATE_SAVE_DIR);
 	#else
-	const char* secretfile = SECRETC_FILENAME;
+	const char* secretfile = SECRETB_FILENAME;
 	#endif
 
 	if ((fp = fopen(secretfile, "rb")) != NULL)
@@ -1982,9 +1988,9 @@ void DoPlayerDead()
 
 			#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
 			char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
-			get_full_file_path(secretfile, SECRETC_FILENAME, CHOCOLATE_SAVE_DIR);
+			get_full_file_path(secretfile, SECRETB_FILENAME, CHOCOLATE_SAVE_DIR);
 			#else
-			const char* secretfile = SECRETC_FILENAME;
+			const char* secretfile = SECRETB_FILENAME;
 			#endif
 
 			if ((fp = fopen(secretfile, "rb")) != NULL)
