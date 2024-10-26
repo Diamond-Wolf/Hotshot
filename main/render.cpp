@@ -367,7 +367,7 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 			uvl_copy[i].l += Dynamic_light[vp[i]];
 
 			//add in light from player's headlight
-			if (CurrentLogicVersion < LogicVer::FULL_1_0)
+			if (CurrentLogicVersion < LogicVer::FULL_1_0 || currentGame == G_DESCENT_1)
 				uvl_copy[i].l += compute_headlight_light(&Segment_points[vp[i]].p3_vec,face_light);
 
 			//saturate at max value
