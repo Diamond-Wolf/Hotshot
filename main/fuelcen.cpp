@@ -353,11 +353,7 @@ object* create_morph_robot(segment* segp, vms_vector* object_pos, int object_id)
 
 	obj->shields = activeBMTable->robots[obj->id].strength;
 
-	if (currentGame == G_DESCENT_1) {
-		default_behavior = (obj->id == 10 ? AIB_RUN_FROM : AIB_NORMAL);
-	} else {
-		default_behavior = activeBMTable->robots[obj->id].behavior;
-	}
+	default_behavior = activeBMTable->robots[obj->id].behavior;
 
 	init_ai_object(obj - Objects.data(), default_behavior, -1);		//	Note, -1 = segment this robot goes to to hide, should probably be something useful
 

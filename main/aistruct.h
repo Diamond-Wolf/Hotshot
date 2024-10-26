@@ -141,7 +141,7 @@ typedef struct ai_static {
 	short			hide_index;					//	Index in Path_seg_points
 	short			path_length;				//	Length of hide path.
 	short			cur_path_index;			//	Current index in path.
-	int8_t			dying_sound_playing;		//	!0 if this robot is playing its dying sound.
+	int			dying_sound_playing;		//	!0 if this robot is playing its dying sound.
 
 short			follow_path_start_seg;	//	Start segment for robot which follows path.
 short			follow_path_end_seg;		//	End segment for robot which follows path.

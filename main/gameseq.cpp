@@ -1640,7 +1640,7 @@ void DoEndGame(void)
 		if (currentGame == G_DESCENT_1) {
 			auto hiresSave = MenuHiresAvailable;
 			MenuHiresAvailable = false;
-			do_briefing_screens(Ending_text_filename, REGISTERED_ENDING_LEVEL_NUM);
+			do_briefing_screens("", REGISTERED_ENDING_LEVEL_NUM);
 			MenuHiresAvailable = hiresSave;
 		} else
 			do_briefing_screens(tname, Last_level + 1);		//level past last is endgame breifing

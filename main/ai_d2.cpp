@@ -53,6 +53,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "controls.h"
 #include "kconfig.h"
 #include "misc/rand.h"
+#include "cfile/cfile.h"
+
+#include "ai_ifwd.h"
 
 #ifdef EDITOR
 #include "editor\editor.h"
@@ -63,25 +66,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifndef NDEBUG
 #include <time.h>
 #endif
-
-//	---------- John: These variables must be saved as part of gamesave. ----------
-int				Ai_initialized = 0;
-int				Overall_agitation;
-ai_local			Ai_local_info[MAX_OBJECTS];
-point_seg		Point_segs[MAX_POINT_SEGS];
-point_seg* Point_segs_free_ptr = Point_segs;
-ai_cloak_info	Ai_cloak_info[MAX_AI_CLOAK_INFO];
-fix				Boss_cloak_start_time = 0;
-fix				Boss_cloak_end_time = 0;
-fix				Last_teleport_time = 0;
-fix				Boss_teleport_interval = F1_0 * 8;
-fix				Boss_cloak_interval = F1_0 * 10;					//	Time between cloaks
-fix				Boss_cloak_duration = BOSS_CLOAK_DURATION;
-fix				Last_gate_time = 0;
-fix				Gate_interval = F1_0 * 6;
-fix				Boss_dying_start_time;
-fix				Boss_hit_time;
-int8_t				Boss_dying, Boss_dying_sound_playing, unused123, unused234;
 
 // -- MK, 10/21/95, unused! -- int				Boss_been_hit=0;
 
@@ -99,78 +83,10 @@ uint8_t	Boss_invulnerable_energy[NUM_D2_BOSSES + 2] = { 0, 0, 0,0,1,1,0,0, 0,0 }
 uint8_t	Boss_invulnerable_matter[NUM_D2_BOSSES + 2] = { 0, 0, 0,0,0,0,1,1, 1,0 };		//	Set int8_t if boss is invulnerable to matter weapons.
 uint8_t	Boss_invulnerable_spot[NUM_D2_BOSSES + 2] = { 0, 0, 0,0,0,0,0,1, 0,1 };		//	Set int8_t if boss is invulnerable in all but a certain spot.  (Dot product fvec|vec_to_collision < BOSS_INVULNERABLE_DOT)
 
-int				ai_evaded = 0;
-
 // -- int8_t	Super_boss_gate_list[MAX_GATE_INDEX] = {0, 1, 8, 9, 10, 11, 12, 15, 16, 18, 19, 20, 22, 0, 8, 11, 19, 20, 8, 20, 8};
-
-int	Robot_firing_enabled = 1;
 int	Animation_enabled = 1;
 
-#ifndef NDEBUG
-int	Ai_info_enabled = 0;
-#endif
-
-
-//	These globals are set by a call to find_vector_intersection, which is a slow routine,
-//	so we don't want to call it again (for this object) unless we have to.
-vms_vector	Hit_pos;
-int			Hit_type, Hit_seg;
-fvi_info		Hit_data;
-
-int					Num_awareness_events = 0;
-awareness_event	Awareness_events[MAX_AWARENESS_EVENTS];
-
-vms_vector		Believed_player_pos;
 int	Believed_player_seg;
-
-#ifndef NDEBUG
-//	Index into this array with ailp->mode
-const char* mode_text[18] = {
-	"STILL",
-	"WANDER",
-	"FOL_PATH",
-	"CHASE_OBJ",
-	"RUN_FROM",
-	"BEHIND",
-	"FOL_PATH2",
-	"OPEN_DOOR",
-	"GOTO_PLR",
-	"GOTO_OBJ",
-	"SN_ATT",
-	"SN_FIRE",
-	"SN_RETR",
-	"SN_RTBK",
-	"SN_WAIT",
-	"TH_ATTACK",
-	"TH_RETREAT",
-	"TH_WAIT",
-
-};
-
-//	Index into this array with aip->behavior
-const char	behavior_text[6][9] = {
-	"STILL   ",
-	"NORMAL  ",
-	"HIDE    ",
-	"RUN_FROM",
-	"FOLPATH ",
-	"STATION "
-};
-
-//	Index into this array with aip->GOAL_STATE or aip->CURRENT_STATE
-const char	state_text[8][5] = {
-	"NONE",
-	"REST",
-	"SRCH",
-	"LOCK",
-	"FLIN",
-	"FIRE",
-	"RECO",
-	"ERR_",
-};
-
-
-#endif
 
 // Current state indicates where the robot current is, or has just done.
 //	Transition table between states for an AI object.
@@ -179,55 +95,6 @@ const char	state_text[8][5] = {
 //	 Third dimension is goal state.
 //	Result is new goal state.
 //	ERR_ means something impossible has happened.
-int8_t Ai_transition_table[AI_MAX_EVENT][AI_MAX_STATE][AI_MAX_STATE] = {
-	{
-		//	Event = AIE_FIRE, a nearby object fired
-		//	none			rest			srch			lock			flin			fire			reco				// CURRENT is rows, GOAL is columns
-		{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},		//	none
-		{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},		//	rest
-		{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},		//	search
-		{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},		//	lock
-		{	AIS_ERR_,	AIS_REST,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FIRE,	AIS_RECO},		//	flinch
-		{	AIS_ERR_,	AIS_FIRE,	AIS_FIRE,	AIS_FIRE,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},		//	fire
-		{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_FIRE}		//	recoil
-		},
-
-	//	Event = AIE_HITT, a nearby object was hit (or a wall was hit)
-	{
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_REST,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_FIRE}
-	},
-
-	//	Event = AIE_COLL, player collided with robot
-	{
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_LOCK,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_REST,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FIRE,	AIS_RECO},
-	{	AIS_ERR_,	AIS_LOCK,	AIS_LOCK,	AIS_LOCK,	AIS_FLIN,	AIS_FIRE,	AIS_FIRE}
-	},
-
-	//	Event = AIE_HURT, player hurt robot (by firing at and hitting it)
-	//	Note, this doesn't necessarily mean the robot JUST got hit, only that that is the most recent thing that happened.
-	{
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN},
-	{	AIS_ERR_,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN,	AIS_FLIN}
-	}
-};
-
-
 
 fix	Dist_to_last_fired_upon_player_pos = 0;
 
@@ -299,7 +166,7 @@ int	Ai_last_missile_camera;
 int	Robots_kill_robots_cheat = 0;
 
 // --------------------------------------------------------------------------------------------------------------------
-void do_ai_frame(object* obj)
+void do_ai_frame_d2(object* obj)
 {
 	int			objnum = obj - Objects.data();
 	ai_static* aip = &obj->ctype.ai_info;
@@ -1377,212 +1244,8 @@ void do_ai_frame(object* obj)
 
 }
 
-//	-----------------------------------------------------------------------------------
-void ai_do_cloak_stuff(void)
-{
-	int	i;
-
-	for (i = 0; i < MAX_AI_CLOAK_INFO; i++) {
-		Ai_cloak_info[i].last_position = ConsoleObject->pos;
-		Ai_cloak_info[i].last_segment = ConsoleObject->segnum;
-		Ai_cloak_info[i].last_time = GameTime;
-	}
-
-	//	Make work for control centers.
-	Believed_player_pos = Ai_cloak_info[0].last_position;
-	Believed_player_seg = Ai_cloak_info[0].last_segment;
-
-}
-
-//	-----------------------------------------------------------------------------------
-//	Returns false if awareness is considered too puny to add, else returns true.
-int add_awareness_event(object* objp, int type)
-{
-	//	If player cloaked and hit a robot, then increase awareness
-	if ((type == PA_WEAPON_ROBOT_COLLISION) || (type == PA_WEAPON_WALL_COLLISION) || (type == PA_PLAYER_COLLISION))
-		ai_do_cloak_stuff();
-
-	if (Num_awareness_events < MAX_AWARENESS_EVENTS) {
-		if ((type == PA_WEAPON_WALL_COLLISION) || (type == PA_WEAPON_ROBOT_COLLISION))
-			if (objp->id == VULCAN_ID)
-				if (P_Rand() > 3276)
-					return 0;		//	For vulcan cannon, only about 1/10 actually cause awareness
-
-		Awareness_events[Num_awareness_events].segnum = objp->segnum;
-		Awareness_events[Num_awareness_events].pos = objp->pos;
-		Awareness_events[Num_awareness_events].type = type;
-		Num_awareness_events++;
-	}
-	else {
-		//		Int3();		// Hey -- Overflowed Awareness_events, make more or something
-								// This just gets ignored, so you can just continue.
-	}
-	return 1;
-
-}
-
-// ----------------------------------------------------------------------------------
-//	Robots will become aware of the player based on something that occurred.
-//	The object (probably player or weapon) which created the awareness is objp.
-void create_awareness_event(object* objp, int type)
-{
-	//	If not in multiplayer, or in multiplayer with robots, do this, else unnecessary!
-	if (!(Game_mode & GM_MULTI) || (Game_mode & GM_MULTI_ROBOTS)) {
-		if (add_awareness_event(objp, type)) {
-			if (((P_Rand() * (type + 4)) >> 15) > 4)
-				Overall_agitation++;
-			if (Overall_agitation > OVERALL_AGITATION_MAX)
-				Overall_agitation = OVERALL_AGITATION_MAX;
-		}
-	}
-}
-
-int8_t	New_awareness[MAX_SEGMENTS];
-
-// ----------------------------------------------------------------------------------
-void pae_aux(int segnum, int type, int level)
-{
-	int	j;
-
-	if (New_awareness[segnum] < type)
-		New_awareness[segnum] = type;
-
-	// Process children.
-	for (j = 0; j < MAX_SIDES_PER_SEGMENT; j++)
-		if (IS_CHILD(Segments[segnum].children[j]))
-			if (level <= 3)
-				if (type == 4)
-					pae_aux(Segments[segnum].children[j], type - 1, level + 1);
-				else
-					pae_aux(Segments[segnum].children[j], type, level + 1);
-}
-
-
-// ----------------------------------------------------------------------------------
-void process_awareness_events(void)
-{
-	int	i;
-
-	if (!(Game_mode & GM_MULTI) || (Game_mode & GM_MULTI_ROBOTS)) {
-		memset(New_awareness, 0, sizeof(New_awareness[0]) * (Highest_segment_index + 1));
-
-		for (i = 0; i < Num_awareness_events; i++)
-			pae_aux(Awareness_events[i].segnum, Awareness_events[i].type, 1);
-
-	}
-
-	Num_awareness_events = 0;
-}
-
-// ----------------------------------------------------------------------------------
-void set_player_awareness_all(void)
-{
-	int	i;
-
-	process_awareness_events();
-
-	for (i = 0; i <= Highest_object_index; i++)
-		if (Objects[i].control_type == CT_AI) {
-			if (New_awareness[Objects[i].segnum] > Ai_local_info[i].player_awareness_type) {
-				Ai_local_info[i].player_awareness_type = New_awareness[Objects[i].segnum];
-				Ai_local_info[i].player_awareness_time = PLAYER_AWARENESS_INITIAL_TIME;
-			}
-
-			//	Clear the bit that says this robot is only awake because a camera woke it up.
-			if (New_awareness[Objects[i].segnum] > Ai_local_info[i].player_awareness_type)
-				Objects[i].ctype.ai_info.SUB_FLAGS &= ~SUB_FLAGS_CAMERA_AWAKE;
-		}
-}
-
-#ifndef NDEBUG
-int	Ai_dump_enable = 0;
-
-FILE* Ai_dump_file = NULL;
-
-char	Ai_error_message[128] = "";
-
-// ----------------------------------------------------------------------------------
-void force_dump_ai_objects_all(const char* msg)
-{
-	int	tsave;
-
-	tsave = Ai_dump_enable;
-
-	Ai_dump_enable = 1;
-
-	snprintf(Ai_error_message, 128, "%s\n", msg);
-	//dump_ai_objects_all();
-	Ai_error_message[0] = 0;
-
-	Ai_dump_enable = tsave;
-}
-
-// ----------------------------------------------------------------------------------
-void turn_off_ai_dump(void)
-{
-	if (Ai_dump_file != NULL)
-		fclose(Ai_dump_file);
-
-	Ai_dump_file = NULL;
-}
-
-#endif
 
 extern void do_boss_dying_frame(object* objp);
-
-// ----------------------------------------------------------------------------------
-//	Do things which need to get done for all AI objects each frame.
-//	This includes:
-//		Setting player_awareness (a fix, time in seconds which object is aware of player)
-void do_ai_frame_all(void)
-{
-#ifndef NDEBUG
-	//dump_ai_objects_all();
-#endif
-
-	set_player_awareness_all();
-
-	if (Ai_last_missile_camera != -1) {
-		//	Clear if supposed misisle camera is not a weapon, or just every so often, just in case.
-		if (((FrameCount & 0x0f) == 0) || (Objects[Ai_last_missile_camera].type != OBJ_WEAPON)) {
-			int	i;
-
-			Ai_last_missile_camera = -1;
-			for (i = 0; i <= Highest_object_index; i++)
-				if (Objects[i].type == OBJ_ROBOT)
-					Objects[i].ctype.ai_info.SUB_FLAGS &= ~SUB_FLAGS_CAMERA_AWAKE;
-		}
-	}
-
-	//	(Moved here from do_boss_stuff() because that only gets called if robot aware of player.)
-	if (Boss_dying) {
-		int	i;
-
-		for (i = 0; i <= Highest_object_index; i++)
-			if (Objects[i].type == OBJ_ROBOT)
-				if (activeBMTable->robots[Objects[i].id].boss_flag)
-					do_boss_dying_frame(&Objects[i]);
-	}
-}
-
-
-extern int Final_boss_is_dead;
-extern fix Boss_invulnerable_dot;
-
-//	Initializations to be performed for all robots for a new level.
-void init_robots_for_level(void)
-{
-	Overall_agitation = 0;
-	Final_boss_is_dead = 0;
-
-	Buddy_objnum = 0;
-	Buddy_allowed_to_talk = 0;
-
-	Boss_invulnerable_dot = F1_0 / 4 - i2f(Difficulty_level) / 8;
-	Boss_dying_start_time = 0;
-}
-
-#include "cfile/cfile.h"
 
 int ai_save_state(FILE* fp)
 {

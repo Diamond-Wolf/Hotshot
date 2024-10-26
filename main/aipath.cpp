@@ -1049,7 +1049,7 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 	}
 
 	if (aip->path_length < 2) {
-		if ((aip->behavior == AIB_SNIPE) || (ailp->mode == AIM_RUN_FROM_OBJECT)) {
+		if ((currentGame == G_DESCENT_2 && aip->behavior == AIB_SNIPE) || (ailp->mode == AIM_RUN_FROM_OBJECT)) {
 			if (ConsoleObject->segnum == objp->segnum) {
 				create_n_segment_path(objp, AVOID_SEG_LENGTH, -1);			//	Can't avoid segment player is in, robot is already in it! (That's what the -1 is for) 
 				//--Int3_if((aip->path_length != 0));
@@ -1057,7 +1057,7 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 				create_n_segment_path(objp, AVOID_SEG_LENGTH, ConsoleObject->segnum);
 				//--Int3_if((aip->path_length != 0));
 			}
-			if (aip->behavior == AIB_SNIPE) {
+			if (currentGame == G_DESCENT_2 && aip->behavior == AIB_SNIPE) {
 				if (robptr->thief)
 					ailp->mode = AIM_THIEF_ATTACK;	//	It gets bashed in create_n_segment_path
 				else
@@ -1067,13 +1067,19 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 			}
 		} else if (robptr->companion == 0) {
 			ailp->mode = AIM_STILL;
-			aip->path_length = 0;
+			if (currentGame == G_DESCENT_2)
+				aip->path_length = 0;
 			return;
 		}
 	}
 
 	//--Int3_if(((aip->PATH_DIR == -1) || (aip->PATH_DIR == 1)));
 	//--Int3_if(((aip->cur_path_index >= 0) && (aip->cur_path_index < aip->path_length)));
+
+	if (currentGame == G_DESCENT_1) {
+		if ((aip->SUBMODE == AISM_HIDING) && (aip->behavior == AIB_HIDE))
+			return;
+	}
 
 	goal_point = Point_segs[aip->hide_index + aip->cur_path_index].point;
 	goal_seg = Point_segs[aip->hide_index + aip->cur_path_index].segnum;

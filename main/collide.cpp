@@ -1635,11 +1635,12 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 			return;
 
 	if (activeBMTable->robots[robot->id].boss_flag) {
-		Boss_hit_time = GameTime;
-		//if (activeBMTable->robots[robot->id].boss_flag >= BOSS_D2) {
+		Boss_hit_this_frame = true;
+		if (currentGame == G_DESCENT_2) {
+			Boss_hit_time = GameTime;
 			damage_flag = do_boss_weapon_collision(robot, weapon, collision_point);
 			boss_invul_flag = !damage_flag;
-		//}
+		}
 	}
 
 	//	Put in at request of Jasen (and Adam) because the Buddy-Bot gets in their way.
