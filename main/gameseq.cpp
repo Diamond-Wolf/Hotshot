@@ -390,7 +390,7 @@ void init_player_stats_level(int secret_flag)
 	Players[Player_num].hostages_total += Players[Player_num].hostages_level;
 	Players[Player_num].hostages_on_board = 0;
 
-	if (!secret_flag && currentGame != G_DESCENT_1)
+	if (!(secret_flag && currentGame == G_DESCENT_2))
 	{
 		init_ammo_and_energy();
 
@@ -1032,6 +1032,7 @@ void StartNewLevelSecret(int level_num, int page_in_textures);
 //starts a new game on the given level
 void StartNewGame(int start_level)
 {
+
 	Game_mode = GM_NORMAL;
 	Function_mode = FMODE_GAME;
 
@@ -1275,7 +1276,15 @@ int p_secret_level_destroyed(void)
 	else
 	{
 		FILE* fp;
-		if ((fp = fopen(SECRETC_FILENAME, "rb")) != NULL)
+
+		#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+		char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
+		get_full_file_path(secretfile, SECRETC_FILENAME, CHOCOLATE_SAVE_DIR);
+		#else
+		const char* secretfile = SECRETC_FILENAME;
+		#endif
+
+		if ((fp = fopen(secretfile, "rb")) != NULL)
 		{
 			fclose(fp);
 			return 0;
@@ -1352,7 +1361,15 @@ void StartNewLevelSecret(int level_num, int page_in_textures)
 		else
 		{
 			FILE* fp;
-			if ((fp = fopen(SECRETC_FILENAME, "rb")) != NULL)
+
+			#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+			char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
+			get_full_file_path(secretfile, SECRETC_FILENAME, CHOCOLATE_SAVE_DIR);
+			#else
+			const char* secretfile = SECRETC_FILENAME;
+			#endif
+
+			if ((fp = fopen(secretfile, "rb")) != NULL)
 			{
 				fclose(fp);
 				do_secret_message(TXT_SECRET_EXIT);
@@ -1380,7 +1397,12 @@ void StartNewLevelSecret(int level_num, int page_in_textures)
 
 	automap_clear_visited();
 
-	// --	init_player_stats_level();
+	//init_player_stats_level(true);
+
+	if (currentGame == G_DESCENT_1)
+	{
+		init_player_stats_level(false); //D1 needs to be reset for a secret level
+	}
 
 	Viewer = &Objects[Players[Player_num].objnum];
 
@@ -1406,7 +1428,15 @@ void StartNewLevelSecret(int level_num, int page_in_textures)
 	else
 	{
 		FILE* fp;
-		if ((fp = fopen(SECRETC_FILENAME, "rb")) != NULL)
+
+		#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+		char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
+		get_full_file_path(secretfile, SECRETC_FILENAME, CHOCOLATE_SAVE_DIR);
+		#else
+		const char* secretfile = SECRETC_FILENAME;
+		#endif
+
+		if ((fp = fopen(secretfile, "rb")) != NULL)
 		{
 			int	pw_save, sw_save;
 
@@ -1472,7 +1502,14 @@ void ExitSecretLevel(void)
 		state_save_all(0, 2, const_cast<char*>(SECRETC_FILENAME));
 	}
 
-	if ((fp = fopen(SECRETB_FILENAME, "rb")) != NULL)
+	#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+	char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
+	get_full_file_path(secretfile, SECRETB_FILENAME, CHOCOLATE_SAVE_DIR);
+	#else
+	const char* secretfile = SECRETB_FILENAME;
+	#endif
+
+	if ((fp = fopen(secretfile, "rb")) != NULL)
 	{
 		int	pw_save, sw_save;
 
@@ -1949,7 +1986,14 @@ void DoPlayerDead()
 		{
 			FILE* fp;
 
-			if ((fp = fopen(SECRETB_FILENAME, "rb")) != NULL)
+			#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+			char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
+			get_full_file_path(secretfile, SECRETB_FILENAME, CHOCOLATE_SAVE_DIR);
+			#else
+			const char* secretfile = SECRETB_FILENAME;
+			#endif
+
+			if ((fp = fopen(secretfile, "rb")) != NULL)
 			{
 				fclose(fp);
 				returning_to_level_message();
@@ -1976,7 +2020,15 @@ void DoPlayerDead()
 	else if (Current_level_num < 0)
 	{
 		FILE* fp;
-		if ((fp = fopen(SECRETB_FILENAME, "rb")) != NULL)
+
+		#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+		char secretfile[CHOCOLATE_MAX_FILE_PATH_SIZE];
+		get_full_file_path(secretfile, SECRETC_FILENAME, CHOCOLATE_SAVE_DIR);
+		#else
+		const char* secretfile = SECRETC_FILENAME;
+		#endif
+
+		if ((fp = fopen(secretfile, "rb")) != NULL)
 		{
 			fclose(fp);
 			returning_to_level_message();
