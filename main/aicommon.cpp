@@ -2140,6 +2140,29 @@ void do_ai_frame(object *objp) {
 		Int3();
 }
 
+extern int ai_save_state_d1(FILE* fp);
+extern int ai_save_state_d2(FILE* fp);
+
+int ai_save_state(FILE* fp) {
+	if (currentGame == G_DESCENT_1)
+		return ai_save_state_d1(fp);
+	else if (currentGame == G_DESCENT_2)
+		return ai_save_state_d2(fp);
+	else
+		Int3();
+}
+
+extern int ai_restore_state_d1(FILE* fp);
+extern int ai_restore_state_d2(FILE* fp, int version);
+
+int ai_restore_state(FILE* fp, int version) {
+	if (currentGame == G_DESCENT_1)
+		return ai_restore_state_d1(fp);
+	else if (currentGame == G_DESCENT_2)
+		return ai_restore_state_d2(fp, version);
+	else
+		Int3();
+}
 
 #ifndef NDEBUG
 int	Ai_dump_enable = 0;

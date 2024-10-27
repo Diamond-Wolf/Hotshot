@@ -439,7 +439,11 @@ int check_trigger_sub(int trigger_num, int pnum,int shot)
 				if ((Players[Player_num].shields < 0) || Player_is_dead)
 					break;
 
-				ExitSecretLevel();
+				if (currentGame == G_DESCENT_1)
+					start_endlevel_sequence();
+				else
+					ExitSecretLevel();
+					
 				return 1;
 			} 
 			else 

@@ -1161,7 +1161,8 @@ void read_matcen(matcen_info* center, FILE* fp)
 void write_matcen(matcen_info* center, FILE* fp)
 {
 	file_write_int(fp, center->robot_flags[0]);
-	file_write_int(fp, center->robot_flags[1]);
+	if (currentGame == G_DESCENT_2)
+		file_write_int(fp, center->robot_flags[1]);
 	file_write_int(fp, center->hit_points);
 	file_write_int(fp, center->interval);
 	file_write_short(fp, center->segnum);

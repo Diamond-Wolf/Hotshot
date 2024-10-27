@@ -544,7 +544,7 @@ void stop_endlevel_sequence()
 
 	Endlevel_sequence = EL_OFF;
 
-	PlayerFinishedLevel(0);
+	PlayerFinishedLevel(Current_level_num < 0);
 }
 
 #define VCLIP_BIG_PLAYER_EXPLOSION	58

@@ -15,7 +15,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "desw.h"
 #endif
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -516,7 +515,7 @@ int state_save_all(int between_levels, int secret_save, char* filename_override)
 	}
 #endif
 
-	if ((Current_level_num < 0) && (secret_save == 0))
+	if (currentGame == G_DESCENT_2 && (Current_level_num < 0) && (secret_save == 0))
 	{
 		HUD_init_message("Can't save in secret level!");
 		return 0;
@@ -752,6 +751,9 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 	//fwrite(&i, sizeof(int), 1, fp);
 	file_write_int(fp, i);
 
+	printf("Saving version %d file\n", i);
+
+
 	//Save description
 	fwrite(desc, sizeof(char) * DESC_LENGTH, 1, fp);
 
@@ -968,6 +970,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//fwrite(Objects, sizeof(object) * i, 1, fp);
 
 		//Save wall info
+
 		i = Num_walls;
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
@@ -978,6 +981,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//fwrite(Walls, sizeof(wall) * i, 1, fp);
 
 		//Save exploding wall info
+
 		i = MAX_EXPLODING_WALLS; //[ISB] i dunno
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
@@ -990,6 +994,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//fwrite(expl_wall_list, sizeof(*expl_wall_list), i, fp);
 
 		//Save door info
+
 		i = Num_open_doors;
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
@@ -1003,6 +1008,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//i = Num_cloaking_walls;
 		//fwrite(&i, sizeof(int), 1, fp);
 		//fwrite(CloakingWalls, sizeof(cloaking_wall), i, fp);
+
 		file_write_int(fp, Num_cloaking_walls);
 		for (elem = 0; elem < Num_cloaking_walls; elem++)
 			P_WriteCloakingWall(&CloakingWalls[i], fp);
@@ -1010,6 +1016,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//Save trigger info
 		//fwrite(&Num_triggers, sizeof(int), 1, fp);
 		//fwrite(Triggers, sizeof(trigger) * Num_triggers, 1, fp);
+
 		file_write_int(fp, Num_triggers);
 		for (elem = 0; elem < Num_triggers; elem++)
 		{
@@ -1031,23 +1038,18 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		file_write_int(fp, Control_center_destroyed);
 		file_write_int(fp, Countdown_timer);
 		file_write_int(fp, Num_robot_centers);
+
 		for (elem = 0; elem < Num_robot_centers; elem++)
 		{
 			write_matcen(&RobotCenters[elem], fp);
 		}
 		write_reactor_triggers(&ControlCenterTriggers, fp);
+
 		file_write_int(fp, Num_fuelcenters);
 		for (elem = 0; elem < Num_fuelcenters; elem++)
 		{
 			write_fuelcen(&Station[elem], fp);
 		}
-		/*fwrite(&Control_center_destroyed, sizeof(int), 1, fp);
-		fwrite(&Countdown_timer, sizeof(int), 1, fp);
-		fwrite(&Num_robot_centers, sizeof(int), 1, fp);
-		fwrite(RobotCenters, sizeof(matcen_info) * Num_robot_centers, 1, fp);
-		fwrite(&ControlCenterTriggers, sizeof(control_center_triggers), 1, fp);
-		fwrite(&Num_fuelcenters, sizeof(int), 1, fp);
-		fwrite(Station, sizeof(FuelCenter) * Num_fuelcenters, 1, fp);*/
 
 		// Save the control cen info
 		file_write_int(fp, Control_center_been_hit);
@@ -1055,11 +1057,6 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		file_write_int(fp, Control_center_next_fire_time);
 		file_write_int(fp, Control_center_present);
 		file_write_int(fp, Dead_controlcen_object_num);
-		/*fwrite(&Control_center_been_hit, sizeof(int), 1, fp);
-		fwrite(&Control_center_player_been_seen, sizeof(int), 1, fp);
-		fwrite(&Control_center_next_fire_time, sizeof(int), 1, fp);
-		fwrite(&Control_center_present, sizeof(int), 1, fp);
-		fwrite(&Dead_controlcen_object_num, sizeof(int), 1, fp);*/
 
 		// Save the AI state
 		ai_save_state(fp);
@@ -1068,10 +1065,6 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		fwrite(Automap_visited, sizeof(uint8_t) * MAX_SEGMENTS, 1, fp);
 
 	}
-	//fwrite(&state_game_id, sizeof(uint32_t), 1, fp);
-	//fwrite(&Laser_rapid_fire, sizeof(int), 1, fp);
-	//fwrite(&Lunacy, sizeof(int), 1, fp);		//	Yes, writing this twice.  Removed the Ugly robot system, but didn't want to change savegame format.
-	//fwrite(&Lunacy, sizeof(int), 1, fp);
 	file_write_int(fp, state_game_id);
 	file_write_int(fp, Laser_rapid_fire);
 	file_write_int(fp, Lunacy); //[ISB]rip pletchxxx
@@ -1171,7 +1164,7 @@ int state_restore_all(int in_game, int secret_restore, char* filename_override)
 		return 0;
 	}
 
-	if (in_game && (Current_level_num < 0) && (secret_restore == 0))
+	if (currentGame == G_DESCENT_2 && in_game && (Current_level_num < 0) && (secret_restore == 0))
 	{
 		HUD_init_message("Can't restore in secret level!");
 		return 0;
@@ -1336,6 +1329,9 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		fclose(fp);
 		return 0;
 	}
+
+	printf("Loading version %d file\n", version);
+
 
 	// Read description
 	fread(desc, sizeof(char) * DESC_LENGTH, 1, fp);
@@ -1532,6 +1528,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 			Error("state_restore_all_sub: Too many objects in save file.\n");
 			return 0;
 		}
+		
 		for (i = 0; i <= Highest_object_index; i++)
 		{
 			obj = &Objects[i];
@@ -1575,6 +1572,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//Restore wall info
 		//fread(&i, sizeof(int), 1, fp);
 		//Num_walls = i;
+
 		Num_walls = file_read_int(fp);
 		if (Num_walls > MAX_WALLS)
 		{
@@ -1618,11 +1616,14 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//fread(&i, sizeof(int), 1, fp);
 		//Num_open_doors = i;
 		//fread(ActiveDoors, sizeof(active_door) * Num_open_doors, 1, fp);
+
 		Num_open_doors = file_read_int(fp);
 		for (i = 0; i < Num_open_doors; i++)
 		{
 			read_active_door(&ActiveDoors[i], fp);
 		}
+
+
 
 		if (version >= 14) //Restore cloaking wall info
 		{
@@ -1643,6 +1644,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//Restore trigger info
 		//fread(&Num_triggers, sizeof(int), 1, fp);
 		//fread(Triggers, sizeof(trigger) * Num_triggers, 1, fp);
+
 		Num_triggers = file_read_int(fp);
 		if (Num_triggers > MAX_TRIGGERS)
 		{
@@ -1669,6 +1671,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		fread(&Control_center_destroyed, sizeof(int), 1, fp);
 		fread(&Countdown_timer, sizeof(int), 1, fp);
 		fread(&Num_robot_centers, sizeof(int), 1, fp);
+
 		if (Num_robot_centers > MAX_ROBOT_CENTERS)
 		{
 			Error("state_restore_all_sub: Too many matcens in save file.\n");
@@ -1681,6 +1684,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//fread(RobotCenters, sizeof(matcen_info) * Num_robot_centers, 1, fp);
 		fread(&ControlCenterTriggers, sizeof(control_center_triggers), 1, fp);
 		fread(&Num_fuelcenters, sizeof(int), 1, fp);
+		
 		if (Num_fuelcenters > MAX_NUM_FUELCENS)
 		{
 			Error("state_restore_all_sub: Too many matcens in save file.\n");
@@ -1698,11 +1702,6 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		Control_center_next_fire_time = file_read_int(fp);
 		Control_center_present = file_read_int(fp);
 		Dead_controlcen_object_num = file_read_int(fp);
-		//fread(&Control_center_been_hit, sizeof(int), 1, fp);
-		//fread(&Control_center_player_been_seen, sizeof(int), 1, fp);
-		//fread(&Control_center_next_fire_time, sizeof(int), 1, fp);
-		//fread(&Control_center_present, sizeof(int), 1, fp);
-		//fread(&Dead_controlcen_object_num, sizeof(int), 1, fp);
 
 		// Restore the AI state
 		ai_restore_state(fp, version);

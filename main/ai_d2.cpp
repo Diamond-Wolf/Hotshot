@@ -1247,50 +1247,8 @@ void do_ai_frame_d2(object* obj)
 
 extern void do_boss_dying_frame(object* objp);
 
-int ai_save_state(FILE* fp)
+int ai_save_state_d2(FILE* fp)
 {
-	/*fwrite(&Ai_initialized, sizeof(int), 1, fp);
-	fwrite(&Overall_agitation, sizeof(int), 1, fp);
-
-	fwrite(Ai_local_info, sizeof(ai_local) * MAX_OBJECTS, 1, fp);
-	fwrite(Point_segs, sizeof(point_seg) * MAX_POINT_SEGS, 1, fp);
-	fwrite(Ai_cloak_info, sizeof(ai_cloak_info) * MAX_AI_CLOAK_INFO, 1, fp);
-
-	fwrite(&Boss_cloak_start_time, sizeof(fix), 1, fp);
-	fwrite(&Boss_cloak_end_time, sizeof(fix), 1, fp);
-	fwrite(&Last_teleport_time, sizeof(fix), 1, fp);
-	fwrite(&Boss_teleport_interval, sizeof(fix), 1, fp);
-	fwrite(&Boss_cloak_interval, sizeof(fix), 1, fp);
-	fwrite(&Boss_cloak_duration, sizeof(fix), 1, fp);
-	fwrite(&Last_gate_time, sizeof(fix), 1, fp);
-	fwrite(&Gate_interval, sizeof(fix), 1, fp);
-	fwrite(&Boss_dying_start_time, sizeof(fix), 1, fp);
-	fwrite(&Boss_dying, sizeof(int), 1, fp);
-	fwrite(&Boss_dying_sound_playing, sizeof(int), 1, fp);
-	fwrite(&Boss_hit_time, sizeof(fix), 1, fp);
-	// -- MK, 10/21/95, unused! -- fwrite( &Boss_been_hit, sizeof(int), 1, fp );
-
-	fwrite(&Escort_kill_object, sizeof(Escort_kill_object), 1, fp);
-	fwrite(&Escort_last_path_created, sizeof(Escort_last_path_created), 1, fp);
-	fwrite(&Escort_goal_object, sizeof(Escort_goal_object), 1, fp);
-	fwrite(&Escort_special_goal, sizeof(Escort_special_goal), 1, fp);
-	fwrite(&Escort_goal_index, sizeof(Escort_goal_index), 1, fp);
-	fwrite(&Stolen_items, sizeof(Stolen_items[0]) * MAX_STOLEN_ITEMS, 1, fp);
-
-	{ int temp;
-	temp = Point_segs_free_ptr - Point_segs;
-	fwrite(&temp, sizeof(int), 1, fp);
-	}
-
-	fwrite(&Num_boss_teleport_segs, sizeof(Num_boss_teleport_segs), 1, fp);
-	fwrite(&Num_boss_gate_segs, sizeof(Num_boss_gate_segs), 1, fp);
-
-	if (Num_boss_gate_segs)
-		fwrite(Boss_gate_segs, sizeof(Boss_gate_segs[0]), Num_boss_gate_segs, fp);
-
-	if (Num_boss_teleport_segs)
-		fwrite(Boss_teleport_segs, sizeof(Boss_teleport_segs[0]), Num_boss_teleport_segs, fp);*/
-
 	int i;
 
 	file_write_int(fp, Ai_initialized);
@@ -1350,7 +1308,7 @@ int ai_save_state(FILE* fp)
 	return 1;
 }
 
-int ai_restore_state(FILE* fp, int version)
+int ai_restore_state_d2(FILE* fp, int version)
 {
 	int i;
 	Ai_initialized = file_read_int(fp);
