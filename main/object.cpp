@@ -2464,7 +2464,7 @@ void read_obj_instance(object* obj, FILE* f)
 	}
 	fseek(f, bytesLeft, SEEK_CUR);
 
-	bytesLeft = 30;
+	bytesLeft = 34;
 	switch (obj->control_type)
 	{
 
@@ -2486,7 +2486,10 @@ void read_obj_instance(object* obj, FILE* f)
 		obj->ctype.ai_info.danger_laser_num = file_read_short(f); //22
 		obj->ctype.ai_info.danger_laser_signature = file_read_int(f); //26
 		obj->ctype.ai_info.dying_start_time = file_read_int(f); //30
-		
+
+		obj->ctype.ai_info.follow_path_start_seg = file_read_short(f); // [DW] D1 needs these
+		obj->ctype.ai_info.follow_path_end_seg = file_read_short(f);
+
 		bytesLeft = 0;
 		break;
 	}
@@ -2622,7 +2625,7 @@ void write_obj_instance(object* obj, FILE* f)
 	//fseek(f, bytesLeft, SEEK_CUR);
 	fwrite(&hack[0], 1, bytesLeft, f);
 
-	bytesLeft = 30;
+	bytesLeft = 34;
 	switch (obj->control_type)
 	{
 
@@ -2644,6 +2647,9 @@ void write_obj_instance(object* obj, FILE* f)
 		file_write_short(f, obj->ctype.ai_info.danger_laser_num); //22
 		file_write_int(f, obj->ctype.ai_info.danger_laser_signature); //26
 		file_write_int(f, obj->ctype.ai_info.dying_start_time); //30
+
+		file_write_short(f, obj->ctype.ai_info.follow_path_start_seg); // [DW] D1 needs these
+		file_write_short(f, obj->ctype.ai_info.follow_path_end_seg);
 		
 		bytesLeft = 0;
 		break;

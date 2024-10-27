@@ -1,6 +1,6 @@
 Building is handled through Premake, and as far as I have tested shouldn't have too many issues.
 
-First, you need to install Premake 5; you can get the from https://premake.github.io. You also need SDL2, FluidSynth, and OpenAL. Find the folder these are located in; specifically, you want the folder for the correct version, which contains the include and lib folders.
+First, you need to install Premake 5; you can get the from https://premake.github.io. You also need SDL2, FluidSynth, and OpenAL Soft. Find the folder these are located in; specifically, you want the folder for the correct version, which contains the include and lib folders.
 
 Once you have all dependencies located, run Premake:
 

@@ -755,7 +755,7 @@ void do_ai_frame_d1(object* obj)
 
 #ifndef NDEBUG
 	if ((aip->behavior == AIB_RUN_FROM) && (ailp->mode != AIM_RUN_FROM_OBJECT))
-		Int3();	//	This is peculiar.  Behavior is run from, but mode is not.  Contact Mike.
+		//Int3();	//	This is peculiar.  Behavior is run from, but mode is not.  Contact Mike.
 
 	mprintf_animation_info((obj));
 
@@ -877,6 +877,7 @@ void do_ai_frame_d1(object* obj)
 					attempt_to_resume_path(obj);
 				break;
 			case AIM_RUN_FROM_OBJECT:
+				mprintf((1,"Runner!\n"));
 				move_towards_segment_center(obj);
 				obj->mtype.phys_info.velocity.x = 0;
 				obj->mtype.phys_info.velocity.y = 0;
@@ -1576,29 +1577,10 @@ void do_ai_frame_d1(object* obj)
 
 }
 
-
-/*
-int ai_save_state(FILE* fp)
+int ai_save_state_d1(FILE* fp)
 {
 	int i;
-	/*fwrite(&Ai_initialized, sizeof(int), 1, fp);
-	fwrite(&Overall_agitation, sizeof(int), 1, fp);
-	fwrite(Ai_local_info, sizeof(ai_local) * MAX_OBJECTS, 1, fp);
-	fwrite(Point_segs, sizeof(point_seg) * MAX_POINT_SEGS, 1, fp);
-	fwrite(Ai_cloak_info, sizeof(ai_cloak_info) * MAX_AI_CLOAK_INFO, 1, fp);
-	fwrite(&Boss_cloak_start_time, sizeof(fix), 1, fp);
-	fwrite(&Boss_cloak_end_time, sizeof(fix), 1, fp);
-	fwrite(&Last_teleport_time, sizeof(fix), 1, fp);
-	fwrite(&Boss_teleport_interval, sizeof(fix), 1, fp);
-	fwrite(&Boss_cloak_interval, sizeof(fix), 1, fp);
-	fwrite(&Boss_cloak_duration, sizeof(fix), 1, fp);
-	fwrite(&Last_gate_time, sizeof(fix), 1, fp);
-	fwrite(&Gate_interval, sizeof(fix), 1, fp);
-	fwrite(&Boss_dying_start_time, sizeof(fix), 1, fp);
-	fwrite(&Boss_dying, sizeof(int), 1, fp);
-	fwrite(&Boss_dying_sound_playing, sizeof(int), 1, fp);
-	fwrite(&Boss_hit_this_frame, sizeof(int), 1, fp);
-	fwrite(&Boss_been_hit, sizeof(int), 1, fp);*./
+	
 	file_write_int(fp, Ai_initialized);
 	file_write_int(fp, Overall_agitation);
 	for (i = 0; i < MAX_OBJECTS; i++)
@@ -1621,31 +1603,13 @@ int ai_save_state(FILE* fp)
 	file_write_int(fp, Boss_dying_sound_playing);
 	file_write_int(fp, Boss_hit_this_frame);
 	file_write_int(fp, Boss_been_hit);
-	
+
 	return 1;
 }
 
-int ai_restore_state(FILE* fp)
+int ai_restore_state_d1(FILE* fp)
 {
 	int i;
-	/*fread(&Ai_initialized, sizeof(int), 1, fp);
-	fread(&Overall_agitation, sizeof(int), 1, fp);
-	fread(Ai_local_info, sizeof(ai_local) * MAX_OBJECTS, 1, fp);
-	fread(Point_segs, sizeof(point_seg) * MAX_POINT_SEGS, 1, fp);
-	fread(Ai_cloak_info, sizeof(ai_cloak_info) * MAX_AI_CLOAK_INFO, 1, fp);
-	fread(&Boss_cloak_start_time, sizeof(fix), 1, fp);
-	fread(&Boss_cloak_end_time, sizeof(fix), 1, fp);
-	fread(&Last_teleport_time, sizeof(fix), 1, fp);
-	fread(&Boss_teleport_interval, sizeof(fix), 1, fp);
-	fread(&Boss_cloak_interval, sizeof(fix), 1, fp);
-	fread(&Boss_cloak_duration, sizeof(fix), 1, fp);
-	fread(&Last_gate_time, sizeof(fix), 1, fp);
-	fread(&Gate_interval, sizeof(fix), 1, fp);
-	fread(&Boss_dying_start_time, sizeof(fix), 1, fp);
-	fread(&Boss_dying, sizeof(int), 1, fp);
-	fread(&Boss_dying_sound_playing, sizeof(int), 1, fp);
-	fread(&Boss_hit_this_frame, sizeof(int), 1, fp);
-	fread(&Boss_been_hit, sizeof(int), 1, fp);*./
 
 	Ai_initialized = file_read_int(fp);
 	Overall_agitation = file_read_int(fp);
@@ -1670,18 +1634,7 @@ int ai_restore_state(FILE* fp)
 	Boss_hit_this_frame = file_read_int(fp);
 	Boss_been_hit = file_read_int(fp);
 
+	ai_reset_all_paths();
+
 	return 1;
 }
-
-*/
-
-// -- void show_path_and_other(object *objp )
-// -- {
-// -- 	int			i;
-// -- 	ai_static	*aip = &objp->ctype.ai_info;
-
-// -- 	for (i=0; i<aip->path_length; i++)
-// -- 		mprintf((0, "%2i ", Point_segs[aip->hide_index+i].segnum));
-// -- 	mprintf((0, "[pl: %i cur: st: %i]\n", ConsoleObject->segnum, objp->segnum, aip->hide_segment));
-
-// -- }

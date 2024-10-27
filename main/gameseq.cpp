@@ -1327,8 +1327,8 @@ void do_secret_message(char* msg)
 //	Need to deal with whether this is the first time coming to this level or not.  If not the
 //	first time, instead of initializing various things, need to do a game restore for all the
 //	robots, powerups, walls, doors, etc.
-void StartNewLevelSecret(int level_num, int page_in_textures)
-{
+void StartNewLevelSecret(int level_num, int page_in_textures) {
+
 	newmenu_item	m[1];
 	//int i;
 
@@ -1382,6 +1382,14 @@ void StartNewLevelSecret(int level_num, int page_in_textures)
 				do_secret_message(text_str);
 			}
 		}
+	}
+
+	if (currentGame == G_DESCENT_1) {
+		bool hires_save = MenuHiresAvailable;
+		MenuHiresAvailable = false;
+		load_palette("descent.256", 0, 0);
+		do_briefing_screens("", level_num);
+		MenuHiresAvailable = hires_save;
 	}
 
 	LoadLevel(level_num, page_in_textures);
@@ -1492,12 +1500,12 @@ void advancing_to_level_message(void);
 //	Called from switch.c when player is on a secret level and hits exit to return to base level.
 void ExitSecretLevel(void)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 
 	if (Newdemo_state == ND_STATE_PLAYBACK)
 		return;
 
-	if (!Control_center_destroyed)
+	if (!Control_center_destroyed && currentGame == G_DESCENT_2)
 	{
 		state_save_all(0, 2, const_cast<char*>(SECRETC_FILENAME));
 	}
@@ -1509,7 +1517,10 @@ void ExitSecretLevel(void)
 	const char* secretfile = SECRETB_FILENAME;
 	#endif
 
-	if ((fp = fopen(secretfile, "rb")) != NULL)
+	if (currentGame == G_DESCENT_2)
+		fp = fopen(secretfile, "rb");
+
+	if (fp != NULL)
 	{
 		int	pw_save, sw_save;
 
@@ -1528,7 +1539,8 @@ void ExitSecretLevel(void)
 			DoEndGame();
 		else
 		{
-			advancing_to_level_message();
+			if (currentGame == G_DESCENT_2)
+				advancing_to_level_message();
 			StartNewLevel(Entered_from_level + 1, 0);
 		}
 	}
@@ -1603,7 +1615,7 @@ void AdvanceLevel(int secret_flag);
 //called when the player has finished a level
 void PlayerFinishedLevel(int secret_flag)
 {
-	Assert(!secret_flag);
+	//Assert(!secret_flag);
 
 	//credit the player for hostages
 	Players[Player_num].hostages_rescued_total += Players[Player_num].hostages_on_board;
@@ -1732,7 +1744,7 @@ void AdvanceLevel(int secret_flag)
 
 	mprintf((0, "AdvanceLevel\n"));
 
-	Assert(!secret_flag);
+//	Assert(!secret_flag);
 
 	if (Current_level_num != Last_level)
 	{
@@ -1767,6 +1779,9 @@ void AdvanceLevel(int secret_flag)
 	{
 		mprintf((0, "Finished last level!\n"));
 		DoEndGame();
+	}
+	else if (secret_flag) {
+		ExitSecretLevel();
 	}
 	else
 	{

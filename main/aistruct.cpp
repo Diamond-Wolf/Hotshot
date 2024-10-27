@@ -19,6 +19,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "ai.h"
 #include "aistruct.h"
+#include "platform/mono.h"
 
 void P_WriteAILocals(ai_local* info, FILE* fp)
 {
