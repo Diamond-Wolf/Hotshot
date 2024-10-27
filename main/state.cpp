@@ -72,8 +72,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "poly_acc.h"
 #endif
 
-#define STATE_VERSION 22
-#define STATE_COMPATIBLE_VERSION 20
+#define STATE_VERSION 23
+#define STATE_COMPATIBLE_VERSION 23
 // 0 - Put DGSS (Descent Game State Save) id at tof.
 // 1 - Added Difficulty level save
 // 2 - Added Cheats_enabled flag
@@ -94,6 +94,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 // 19- Saved cheats_enabled flag
 // 20- First_secret_visit
 // 22- Omega_charge
+// 23- Hotshot single-save file
 
 #define NUM_SAVES 9
 #define THUMBNAIL_W 100
@@ -136,6 +137,7 @@ extern int robot_send_pending[MAX_ROBOTS_CONTROLLED];
 extern int robot_fired[MAX_ROBOTS_CONTROLLED];
 extern int8_t robot_fire_buf[MAX_ROBOTS_CONTROLLED][18 + 3];
 
+extern int Entered_from_level;
 
 #if defined(WINDOWS) || defined(MACINTOSH)
 extern uint8_t Hack_DblClick_MenuMode;
@@ -880,6 +882,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 	//fwrite(&Next_level_num, sizeof(int), 1, fp);
 	file_write_int(fp, Current_level_num);
 	file_write_int(fp, Next_level_num);
+	file_write_int(fp, Entered_from_level); //for D1 secret level
 
 	//Save GameTime
 	//fwrite(&GameTime, sizeof(fix), 1, fp);
@@ -1364,6 +1367,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	//fread(&next_level, sizeof(int), 1, fp);
 	current_level = file_read_int(fp);
 	next_level = file_read_int(fp);
+	Entered_from_level = file_read_int(fp);
 
 	//Restore GameTime
 	//fread(&GameTime, sizeof(fix), 1, fp);
@@ -1443,7 +1447,10 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 
 	//Read player info
 	{
-		StartNewLevelSub(current_level, 1, secret_restore);
+		//if (current_level > 0)
+			StartNewLevelSub(current_level, 1, secret_restore);
+		//else
+		//	;
 
 		if (secret_restore)
 		{
