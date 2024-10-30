@@ -1832,6 +1832,8 @@ void render_mine(int start_seg_num, fix eye_offset, int window_num)
 #endif
 
 #ifndef NDEBUG
+	if (object_rendered.size() < Highest_object_index + 1)
+		object_rendered.resize(Highest_object_index + 1);
 	for (i = 0; i <= Highest_object_index; i++)
 		object_rendered[i] = 0;
 #endif

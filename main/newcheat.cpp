@@ -390,6 +390,7 @@ bool CheckCheats(char newKeyIn) {
         case CI_LEVEL_D2:
             int new_level_num;
             //digi_play_sample( SOUND_CHEATER, F1_0);
+            text[0] = '\0';
             m.type = NM_TYPE_INPUT; m.text_len = 10; m.text = text;
             item = newmenu_do(NULL, TXT_WARP_TO_LEVEL, 1, &m, NULL);
             if (item != -1) {
@@ -721,6 +722,7 @@ bool CheckCheats(char newKeyIn) {
 
         case CI_TELEPORT:
             int newSegNum;
+            text[0] = '\0';
             m.type = NM_TYPE_INPUT; m.text_len = 10; m.text = text;
             item = newmenu_do(NULL, "Go to which segment?", 1, &m, NULL);
             if (item != -1) {

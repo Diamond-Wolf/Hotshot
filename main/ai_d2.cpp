@@ -657,7 +657,7 @@ void do_ai_frame_d2(object* obj)
 		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 		do_escort_frame(obj, dist_to_player, player_visibility);
 
-		if (obj->ctype.ai_info.danger_laser_num != -1) {
+		if (obj->ctype.ai_info.danger_laser_num > 0 && obj->ctype.ai_info.danger_laser_num < Objects.size()) { //How did they get away with only checking -1?
 			object* dobjp = &Objects[obj->ctype.ai_info.danger_laser_num];
 
 			if ((dobjp->type == OBJ_WEAPON) && (dobjp->signature == obj->ctype.ai_info.danger_laser_signature)) {

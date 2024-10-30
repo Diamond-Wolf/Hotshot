@@ -1170,7 +1170,7 @@ void ai_move_relative_to_player(object *objp, ai_local *ailp, fix dist_to_player
 	//	See if should take avoidance.
 
 	// New way, green guys don't evade:	if ((robptr->attack_type == 0) && (objp->ctype.ai_info.danger_laser_num != -1)) {
-	if (objp->ctype.ai_info.danger_laser_num != -1) {
+	if (objp->ctype.ai_info.danger_laser_num > 0 && objp->ctype.ai_info.danger_laser_num < Objects.size()) {
 		dobjp = &Objects[objp->ctype.ai_info.danger_laser_num];
 
 		if ((dobjp->type == OBJ_WEAPON) && (dobjp->signature == objp->ctype.ai_info.danger_laser_signature)) {

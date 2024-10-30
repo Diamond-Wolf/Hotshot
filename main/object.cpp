@@ -833,7 +833,7 @@ void init_objects()
 	if (free_obj_list.size() != Objects.size())
 		free_obj_list.resize(Objects.size());
 
-	for (i = 0; i < Objects.size(); i++);
+	for (i = 0; i < free_obj_list.size(); i++)
 		free_obj_list[i] = i;
 
 	for (i = 0; i < MAX_SEGMENTS; i++)
