@@ -36,6 +36,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <array>
 #include <vector>
 #include <cstring>
+#include <stdexcept>
 
 #include "ai.h"
 #include "bm.h"
