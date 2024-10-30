@@ -19,7 +19,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #define MAX_RENDER_SEGS		500
 #define OBJS_PER_SEG 		5
-#define N_EXTRA_OBJ_LISTS	50
+#define N_EXTRA_OBJ_LISTS	100
 
 extern int	Clear_window;			//	1 = Clear whole background window, 2 = clear view portals into rest of world, 0 = no clear
 

@@ -1253,8 +1253,10 @@ typedef struct sort_item
 	fix dist;
 } sort_item;
 
-sort_item sort_list[SORT_LIST_SIZE];
-int n_sort_items;
+//sort_item sort_list[SORT_LIST_SIZE];
+//int n_sort_items;
+
+std::vector<sort_item> sort_list(SORT_LIST_SIZE);
 
 //compare function for object sort. 
 int sort_func(const void* ai, const void* bi)
@@ -1383,82 +1385,28 @@ void build_object_lists(int n_segs)
 			//first count the number of objects & copy into sort list
 
 			lookn = nn;
-			i = n_sort_items = 0;
+			sort_list.clear();
+			i = 0;
 			while ((t = render_obj_list[lookn][i++]) != -1)
 				if (t < 0)
 				{
 					lookn = -t; i = 0;
 				}
-				else
-					if (n_sort_items < SORT_LIST_SIZE - 1) //add if room
-					{
-						sort_list[n_sort_items].objnum = t;
-						//NOTE: maybe use depth, not dist - quicker computation
-						sort_list[n_sort_items].dist = vm_vec_dist_quick(&Objects[t].pos, &Viewer_eye);
-						n_sort_items++;
-					}
-					else //no room for object
-					{
-						int ii;
-
-#ifndef NDEBUG
-						FILE* tfile = fopen("sortlist.out", "wt");
-
-						//I find this strange, so I'm going to write out
-						//some information to look at later
-						if (tfile)
-						{
-							for (ii = 0; ii < SORT_LIST_SIZE; ii++)
-							{
-								int objnum = sort_list[ii].objnum;
-
-								fprintf(tfile, "Obj %3d  Type = %2d  Id = %2d  Dist = %08x  Segnum = %3d\n",
-									objnum, Objects[objnum].type, Objects[objnum].id, sort_list[ii].dist, Objects[objnum].segnum);
-							}
-							fclose(tfile);
-						}
-#endif
-
-						Int3();	//Get Matt!!!
-
-						//Now try to find a place for this object by getting rid
-						//of an object we don't care about
-
-						for (ii = 0; ii < SORT_LIST_SIZE; ii++)
-						{
-							int objnum = sort_list[ii].objnum;
-							object* obj = &Objects[objnum];
-							int type = obj->type;
-
-							//replace debris & fireballs
-							if (type == OBJ_DEBRIS || type == OBJ_FIREBALL)
-							{
-								fix dist = vm_vec_dist_quick(&Objects[t].pos, &Viewer_eye);
-
-								//don't replace same kind of object unless new 
-								//one is closer
-
-								if (Objects[t].type != type || dist < sort_list[ii].dist)
-								{
-									sort_list[ii].objnum = t;
-									sort_list[ii].dist = dist;
-									break;
-								}
-							}
-						}
-
-						Int3();	//still couldn't find a slot
-					}
-
+				else {
+					sort_item s;
+					s.objnum = t;
+					s.dist = vm_vec_dist_quick(&Objects[t].pos, &Viewer_eye);
+					sort_list.push_back(std::move(s));
+				}
 
 			//now call qsort
-			qsort(sort_list, n_sort_items, sizeof(*sort_list), sort_func);
+			qsort(sort_list.data(), sort_list.size(), sizeof(sort_list[0]), sort_func);
 
 			//now copy back into list
 
 			lookn = nn;
 			i = 0;
-			n = n_sort_items;
+			n = sort_list.size();
 			while ((t = render_obj_list[lookn][i]) != -1 && n > 0)
 				if (t < 0)
 				{
