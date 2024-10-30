@@ -67,6 +67,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "controls.h"
 #include "laser.h"
 #include "multibot.h"
+#include "newcheat.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -108,9 +109,6 @@ extern void apply_all_changed_light(void);
 extern int Do_appearance_effect;
 extern fix Fusion_next_sound_time;
 
-extern int Laser_rapid_fire;
-extern int Physics_cheat_flag;
-extern int	Lunacy;
 extern void do_lunacy_on(void);
 extern void do_lunacy_off(void);
 extern int First_secret_visit;
@@ -1069,9 +1067,9 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 
 	}
 	file_write_int(fp, state_game_id);
-	file_write_int(fp, Laser_rapid_fire);
-	file_write_int(fp, Lunacy); //[ISB]rip pletchxxx
-	file_write_int(fp, Lunacy);
+	file_write_int(fp, cheatValues[CI_RAPID_FIRE]);
+	file_write_int(fp, cheatValues[CI_LUNACY]); //[ISB]rip pletchxxx
+	file_write_int(fp, cheatValues[CI_LUNACY]);
 
 	// Save automap marker info
 
@@ -1729,10 +1727,10 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	if (version >= 7)
 	{
 		fread(&state_game_id, sizeof(uint32_t), 1, fp);
-		fread(&Laser_rapid_fire, sizeof(int), 1, fp);
-		fread(&Lunacy, sizeof(int), 1, fp);		//	Yes, writing this twice.  Removed the Ugly robot system, but didn't want to change savegame format.
-		fread(&Lunacy, sizeof(int), 1, fp);
-		if (Lunacy)
+		fread(&cheatValues[CI_RAPID_FIRE], sizeof(int), 1, fp);
+		fread(&cheatValues[CI_LUNACY], sizeof(int), 1, fp);		//	Yes, writing this twice.  Removed the Ugly robot system, but didn't want to change savegame format.
+		fread(&cheatValues[CI_LUNACY], sizeof(int), 1, fp);
+		if (cheatValues[CI_LUNACY])
 			do_lunacy_on();
 	}
 

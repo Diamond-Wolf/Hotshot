@@ -104,6 +104,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "playsave.h"
 #include "fix/fix.h"
 
+#include "newcheat.h"
+
 #ifdef MWPROFILER
 #include <profiler.h>
 #endif
@@ -195,8 +197,6 @@ int Cockpit_mode=CM_FULL_COCKPIT;		//set game.h for values
 int Cockpit_mode_save=-1;					//set while in letterbox or rear view, or -1
 int force_cockpit_redraw=0;
 
-int framerate_on=0;
-
 int PaletteRedAdd, PaletteGreenAdd, PaletteBlueAdd;
 
 //	Toggle_var points at a variable which gets !ed on ctrl-alt-T press.
@@ -229,7 +229,6 @@ fix	Fusion_next_sound_time = 0;
 fix	Fusion_last_sound_time = 0;
 
 int Debug_spew = 1;
-int Game_turbo_mode = 0;
 
 int Game_mode = GM_GAME_OVER;
 
@@ -272,8 +271,6 @@ extern char Marker_input[];
 
 //	==============================================================================================
 
-extern char john_head_on;
-
 void load_background_bitmap()
 {
 	uint8_t pal[256*3];
@@ -282,10 +279,10 @@ void load_background_bitmap()
 	if (background_bitmap.bm_data)
 		mem_free(background_bitmap.bm_data);
 
-	background_bitmap.bm_data=NULL;
-	pcx_error = pcx_read_bitmap(john_head_on?"johnhead.pcx":BACKGROUND_NAME,&background_bitmap,BM_LINEAR,pal);
+	background_bitmap.bm_data = NULL;
+	pcx_error = pcx_read_bitmap(cheatValues[CI_JOHN] ? "johnhead.pcx" : BACKGROUND_NAME, &background_bitmap, BM_LINEAR, pal);
 	if (pcx_error != PCX_ERROR_NONE)
-		Error("File %s - PCX error: %s",BACKGROUND_NAME,pcx_errormsg(pcx_error));
+		Error("File %s - PCX error: %s", BACKGROUND_NAME, pcx_errormsg(pcx_error));
 	gr_remap_bitmap_good( &background_bitmap, pal, -1, -1 );
 }
 
@@ -848,7 +845,7 @@ void calc_frame_time()
 	actual_last_timer_value = last_timer_value;
 	#endif
 
-	if ( Game_turbo_mode )
+	if ( cheatValues[CI_TURBO] )
 		FrameTime *= 2;
 
 	// Limit frametime to be between 5 and 150 fps.
@@ -1619,37 +1616,25 @@ jmp_buf LeaveGame;
 
 int Cheats_enabled=0;
 
-extern int Laser_rapid_fire;
-
-extern int Physics_cheat_flag,Robots_kill_robots_cheat;
-extern char BounceCheat,HomingCheat,OldHomingState[20];
-extern char AcidCheatOn,old_IntMethod, Monster_mode;
-extern int Buddy_dude_cheat;
+extern short cheatValues[CI_TOTAL];
 
 //turns off active cheats
 void turn_cheats_off()
 {
-	int i;
+	/*int i;
 
 	if (HomingCheat)
 		for (i=0;i<20;i++)
 			activeBMTable->weapons[i].homing_flag=OldHomingState[i];
 
-	if (AcidCheatOn)
-	{
-		AcidCheatOn=0;
-		Interpolation_method=old_IntMethod;
-	}
+	*/
 
-	Buddy_dude_cheat = 0;
-	BounceCheat=0;
-    HomingCheat=0;
+	ResetCheatStates();
 	do_lunacy_off();
-	Laser_rapid_fire = 0;
-	Physics_cheat_flag = 0;
-	Monster_mode = 0;
-	Robots_kill_robots_cheat=0;
-	Robot_firing_enabled = 1;
+
+	short helium = cheatValues[CI_HELIUM];
+	memset(cheatValues, 0, CI_TOTAL * sizeof(*cheatValues));
+	cheatValues[CI_HELIUM] = helium;
 }
 
 //turns off all cheats & resets cheater flag	

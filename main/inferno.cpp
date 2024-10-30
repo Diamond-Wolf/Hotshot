@@ -77,6 +77,7 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "movie.h"
 #include "compbit.h"
 #include "misc/types.h"
+#include "newcheat.h"
 
 extern void SwitchGame(uint8_t gameVersion);
 
@@ -827,6 +828,9 @@ Here:
 	}
 
 	//PA_DFX(pa_splash());
+
+	mprintf((0, "\nInitializing cheats.."));
+	InitializeCheats();
 
 	mprintf((0, "\nShowing loading screen..."));
 	{

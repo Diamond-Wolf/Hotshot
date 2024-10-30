@@ -130,6 +130,7 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 									{
 										obj0p->flags |= OF_SHOULD_BE_DEAD;
 										explode_badass_weapon(obj0p,&obj0p->pos);
+										create_smart_children(objp, NUM_SMART_CHILDREN);
 									}
 								}
 								break;
@@ -281,8 +282,9 @@ object *object_create_badass_explosion(object *objp, short segnum, vms_vector * 
 
 	rval = object_create_explosion_sub(objp, segnum, position, size, vclip_type, maxdamage, maxdistance, maxforce, parent );
 
+	/* // [DW] Making non-exploding weapons also spawn children
 	if ((objp != NULL) && (objp->type == OBJ_WEAPON))
-		create_smart_children(objp, NUM_SMART_CHILDREN);
+		create_smart_children(objp, NUM_SMART_CHILDREN);*/
 
 // -- 	if (objp->type == OBJ_ROBOT)
 // -- 		if (activeBMTable->robots[objp->id].smart_blobs)

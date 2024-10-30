@@ -52,6 +52,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "automap.h"
 #include "mission.h" //for mission number
 #include "gameseq.h" //for level number
+#include "newcheat.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -60,7 +61,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 extern fix Cruise_speed;
 extern int LinearSVGABuffer;
 extern int Current_display_mode;
-extern int framerate_on;
 
 void draw_guided_crosshair(void);
 
@@ -400,7 +400,7 @@ void game_draw_hud_stuff()
 		}
 	}
 
-	if (framerate_on)
+	if (cheatValues[CI_FPS])
 		show_framerate();
 
 	if ((Newdemo_state == ND_STATE_PLAYBACK))

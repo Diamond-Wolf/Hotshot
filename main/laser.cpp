@@ -46,14 +46,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "multi.h"
 #include "physics.h"
 #include "multi.h"
+#include "newcheat.h"
 
 #include "misc/rand.h"
 
 #ifdef TACTILE
 #include "tactile.h"
 #endif
-
-int Laser_rapid_fire = 0;
 
 object *Guided_missile[MAX_PLAYERS]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 int Guided_missile_sig[MAX_PLAYERS]={-1,-1,-1,-1,-1,-1,-1,-1};
@@ -65,7 +64,6 @@ extern char Multi_is_guided;
 #else
 char Multi_is_guided = 0;
 #endif
-extern char BounceCheat;
                                                                                                 
 extern void newdemo_record_guided_end();
 extern void newdemo_record_guided_start();
@@ -222,7 +220,7 @@ int create_weapon_object(int weapon_type,int segnum,vms_vector *position)
 	if (activeBMTable->weapons[weapon_type].bounce==1)
 		obj->mtype.phys_info.flags |= PF_BOUNCE;
 
-	if (activeBMTable->weapons[weapon_type].bounce==2 || BounceCheat)
+	if (activeBMTable->weapons[weapon_type].bounce==2 || cheatValues[CI_BOUNCY])
 		obj->mtype.phys_info.flags |= PF_BOUNCE+PF_BOUNCES_TWICE;
 
 	return objnum;
@@ -904,8 +902,6 @@ int object_is_trackable(int track_goal, object *tracker, fix *dot)
 	}
 }
 
-extern int Robots_kill_robots_cheat;
-
 //	--------------------------------------------------------------------------------------------
 int call_find_homing_object_complete(object *tracker, vms_vector *curpos)
 {
@@ -923,7 +919,7 @@ int call_find_homing_object_complete(object *tracker, vms_vector *curpos)
 		{
 			int	goal2_type = -1;
 
-			if (Robots_kill_robots_cheat)
+			if (cheatValues[CI_INFIGHTING])
 				goal2_type = OBJ_ROBOT;
 			Assert(tracker->ctype.laser_info.parent_type == OBJ_ROBOT);
 			return find_homing_object_complete(curpos, tracker, OBJ_PLAYER, goal2_type);
@@ -1206,7 +1202,7 @@ int track_track_goal(int track_goal, object *tracker, fix *dot)
 		{
 			int	goal_type, goal2_type = -1;
 
-			if (Robots_kill_robots_cheat)
+			if (cheatValues[CI_INFIGHTING])
 				goal2_type = OBJ_ROBOT;
 
 			if (track_goal == -1)
@@ -1455,6 +1451,7 @@ void Laser_do_weapon_sequence(object *obj)
 		obj->flags |= OF_SHOULD_BE_DEAD;
 		if ( activeBMTable->weapons[obj->id].damage_radius )
 			explode_badass_weapon(obj,&obj->pos);
+		create_smart_children(obj, NUM_SMART_CHILDREN);
 		return;
 	}
 
@@ -1681,7 +1678,7 @@ if (Zbonkers)
 			int	laser_level, flags;
 
 //mprintf(0, ".");
-			if (Laser_rapid_fire!=0xBADA55)
+			if (!cheatValues[CI_RAPID_FIRE])
 				Next_laser_fire_time += activeBMTable->weapons[weapon_index].fire_wait;
 			else
 				Next_laser_fire_time += F1_0/25;
@@ -2328,7 +2325,7 @@ void do_missile_firing(int do_autoselect)
 		Players[Player_num].secondary_ammo[Secondary_weapon]--;
 		weapon_id = Secondary_weapon_to_weapon_info[Secondary_weapon];
 
-		if (Laser_rapid_fire!=0xBADA55)
+		if (!cheatValues[CI_RAPID_FIRE])
 			Next_missile_fire_time = GameTime + activeBMTable->weapons[weapon_id].fire_wait;
 		else
 			Next_missile_fire_time = GameTime + F1_0/25;

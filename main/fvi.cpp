@@ -15,6 +15,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #include <stdlib.h>
+#include "newcheat.h"
 
 #if defined(__linux__) || defined(_WIN32) || defined(_WIN64)
 #include <malloc.h>
@@ -38,8 +39,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "player.h"
 
 #include "bm.h"
-
-extern int Physics_cheat_flag;
 
 #define face_type_num(nfaces,face_num,tri_edge) ((nfaces==1)?0:(tri_edge*2 + face_num))
 
@@ -1003,7 +1002,7 @@ int fvi_sub(vms_vector *intp,int *ints,vms_vector *p0,int startseg,vms_vector *p
 
 						//if what we have hit is a door, check the adjoining seg
 
-						if ( (thisobjnum == Players[Player_num].objnum) && (Physics_cheat_flag==0xBADA55) )	{
+						if ( (thisobjnum == Players[Player_num].objnum) && (cheatValues[CI_GHOST]) )	{
 							wid_flag = WALL_IS_DOORWAY(seg, side);
 							if (seg->children[side] >= 0 ) 
  								wid_flag |= WID_FLY_FLAG;

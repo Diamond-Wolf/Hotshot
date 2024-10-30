@@ -50,6 +50,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "stringtable.h"
 #include "misc/rand.h"
+#include "newcheat.h"
 
 #include "ai_ifwd.h"
 
@@ -248,7 +249,7 @@ void ai_fire_laser_at_player_d2(object *obj, vms_vector *fire_point, int gun_num
 	if (obj->ctype.ai_info.SUB_FLAGS & SUB_FLAGS_CAMERA_AWAKE)
 		return;
 
-	if (!Robot_firing_enabled)
+	if (cheatValues[CI_NO_FIRING_D1])
 		return;
 
 	if (obj->control_type == CT_MORPH)

@@ -1265,7 +1265,7 @@ void DropSecondaryWeapon()
 
 	if (Players[Player_num].secondary_ammo[Secondary_weapon] == 0)
 	{
-		Players[Player_num].secondary_weapon_flags &= (~(1 << Secondary_weapon));
+		//Players[Player_num].secondary_weapon_flags &= (~(1 << Secondary_weapon));
 		auto_select_weapon(1);
 	}
 }

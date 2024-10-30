@@ -65,6 +65,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "switch.h"
 #include "2d/palette.h"
 #include "gameseq.h"
+#include "newcheat.h"
 
 #ifdef TACTILE
 #include "tactile.h"
@@ -140,8 +141,6 @@ int apply_damage_to_clutter(object* clutter, fix damage)
 		return 0;
 }
 
-char	Monster_mode = 0;		//	A cheat.  Do massive damage when collide.
-
 //given the specified force, apply damage from that force to an object
 void apply_force_damage(object* obj, fix force, object* other_obj)
 {
@@ -153,7 +152,7 @@ void apply_force_damage(object* obj, fix force, object* other_obj)
 
 	damage = fixdiv(force, obj->mtype.phys_info.mass) / 8;
 
-	if ((other_obj->type == OBJ_PLAYER) && Monster_mode)
+	if ((other_obj->type == OBJ_PLAYER) && cheatValues[CI_GODZILLA])
 		damage = 0x7fffffff;
 
 	//mprintf((0,"obj %d, damage=%x\n",obj-Objects.data(),damage));
@@ -413,6 +412,7 @@ int check_volatile_wall(object* obj, int segnum, int sidenum, vms_vector* hitpt)
 	tmap_num = Segments[segnum].sides[sidenum].tmap_num;
 
 	d = activeBMTable->tmaps[tmap_num].damage;
+
 	water = (activeBMTable->tmaps[tmap_num].flags & TMI_WATER);
 
 	if (d > 0 || water) {
@@ -833,6 +833,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 		if (wi->damage_radius >= VOLATILE_WALL_DAMAGE_RADIUS / 2) {
 			// -- mprintf((0, "Big weapon doing badass in lava instead.\n"));
 			explode_badass_weapon(weapon, hitpt);
+			
 		}
 		else {
 			object_create_badass_explosion(weapon, hitseg, hitpt,
@@ -843,6 +844,8 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 				wi->strength[Difficulty_level] / 2 + VOLATILE_WALL_DAMAGE_FORCE,
 				weapon->ctype.laser_info.parent_num);
 		}
+
+		//create_smart_children(weapon, NUM_SMART_CHILDREN);
 
 		weapon->flags |= OF_SHOULD_BE_DEAD;		//make flares die in lava
 
@@ -902,7 +905,10 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 					explode_badass_weapon(weapon, hitpt);
 				else
 					object_create_explosion(weapon->segnum, &weapon->pos, activeBMTable->weapons[weapon->id].impact_size, activeBMTable->weapons[weapon->id].wall_hit_vclip);
+
 			}
+
+			//create_smart_children(weapon, NUM_SMART_CHILDREN);
 		}
 	}
 
@@ -964,6 +970,8 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 		if (!(weapon->mtype.phys_info.flags & PF_BOUNCE))
 			weapon->flags |= OF_SHOULD_BE_DEAD;
 	}
+
+	create_smart_children(weapon, NUM_SMART_CHILDREN);
 
 	return;
 }
@@ -1287,6 +1295,10 @@ void collide_weapon_and_controlcen(object* weapon, object* controlcen, vms_vecto
 		else
 			object_create_explosion(controlcen->segnum, collision_point, controlcen->size * 3 / 20, VCLIP_SMALL_EXPLOSION);
 
+		create_smart_children(weapon, NUM_SMART_CHILDREN);
+
+		//create_smart_children(objp, NUM_SMART_CHILDREN);
+
 		digi_link_sound_to_pos(SOUND_CONTROL_CENTER_HIT, controlcen->segnum, 0, collision_point, 0, F1_0);
 
 		damage = fixmul(damage, weapon->ctype.laser_info.multiplier);
@@ -1372,7 +1384,6 @@ void do_final_boss_hacks(void)
 	Final_boss_is_dead = 1;
 }
 
-extern int Buddy_dude_cheat;
 extern int multi_all_players_alive();
 void multi_send_finish_game();
 
@@ -1619,10 +1630,10 @@ int do_boss_weapon_collision(object* robot, object* weapon, vms_vector* collisio
 		damage_flag = 0;
 	}
 
+	create_smart_children(weapon, NUM_SMART_CHILDREN);
+
 	return damage_flag;
 }
-
-extern int Robots_kill_robots_cheat;
 
 //	------------------------------------------------------------------------------------------------------
 void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collision_point)
@@ -1645,7 +1656,7 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 
 	//	Put in at request of Jasen (and Adam) because the Buddy-Bot gets in their way.
 	//	MK has so much fun whacking his butt around the mine he never cared...
-	if ((activeBMTable->robots[robot->id].companion) && ((weapon->ctype.laser_info.parent_type != OBJ_ROBOT) && !Robots_kill_robots_cheat))
+	if ((activeBMTable->robots[robot->id].companion) && ((weapon->ctype.laser_info.parent_type != OBJ_ROBOT) && !cheatValues[CI_INFIGHTING]))
 		return;
 
 	if (weapon->id == EARTHSHAKER_ID)
@@ -1685,7 +1696,7 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 
 	//	Note: If weapon hits an invulnerable boss, it will still do badass damage, including to the boss,
 	//	unless this is trapped elsewhere.
-	if (activeBMTable->weapons[weapon->id].damage_radius)
+	if (activeBMTable->weapons[weapon->id].damage_radius) {
 		if (boss_invul_flag) {			//don't make badass sound
 			weapon_info* wi = &activeBMTable->weapons[weapon->id];
 
@@ -1701,8 +1712,11 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 		}
 		else		//normal badass explosion
 			explode_badass_weapon(weapon, collision_point);
+	}
 
-	if (((weapon->ctype.laser_info.parent_type == OBJ_PLAYER) || Robots_kill_robots_cheat) && !(robot->flags & OF_EXPLODING)) {
+	create_smart_children(weapon, NUM_SMART_CHILDREN);
+
+	if (((weapon->ctype.laser_info.parent_type == OBJ_PLAYER) || cheatValues[CI_INFIGHTING]) && !(robot->flags & OF_EXPLODING)) {
 		object* expl_obj = NULL;
 
 		if (weapon->ctype.laser_info.parent_num == Players[Player_num].objnum) {
@@ -1863,12 +1877,12 @@ int maybe_drop_primary_weapon_egg(object* playerobj, int weapon_index)
 
 void maybe_drop_secondary_weapon_egg(object* playerobj, int weapon_index, int count)
 {
-	int weapon_flag = HAS_FLAG(weapon_index);
+	//int weapon_flag = HAS_FLAG(weapon_index);
 	int powerup_num;
 
 	powerup_num = Secondary_weapon_to_powerup[weapon_index];
 
-	if (Players[playerobj->id].secondary_weapon_flags & weapon_flag) {
+	if (Players[playerobj->id].secondary_ammo[weapon_index] > 0) {
 		int	i, max_count;
 
 		max_count = std::min(count, 3);
@@ -2255,6 +2269,8 @@ void collide_player_and_weapon(object* playerobj, object* weapon, vms_vector* co
 	if (activeBMTable->weapons[weapon->id].damage_radius)
 		explode_badass_weapon(weapon, collision_point);
 
+	create_smart_children(weapon, NUM_SMART_CHILDREN);
+
 	maybe_kill_weapon(weapon, playerobj);
 
 	bump_two_objects(playerobj, weapon, 0);	//no damage from bump
@@ -2418,6 +2434,7 @@ int maybe_detonate_weapon(object* weapon1, object* weapon2, vms_vector* collisio
 			maybe_kill_weapon(weapon1, weapon2);
 			if (weapon1->flags & OF_SHOULD_BE_DEAD) {
 				explode_badass_weapon(weapon1, collision_point);
+				create_smart_children(weapon1, NUM_SMART_CHILDREN);
 				digi_link_sound_to_pos(activeBMTable->weapons[weapon1->id].robot_hit_sound, weapon1->segnum, 0, collision_point, 0, F1_0);
 			}
 			return 1;
@@ -2500,6 +2517,9 @@ void collide_weapon_and_debris(object* weapon, object* debris, vms_vector* colli
 		explode_object(debris, 0);
 		if (activeBMTable->weapons[weapon->id].damage_radius)
 			explode_badass_weapon(weapon, collision_point);
+
+		create_smart_children(weapon, NUM_SMART_CHILDREN);
+
 		maybe_kill_weapon(weapon, debris);
 		weapon->flags |= OF_SHOULD_BE_DEAD;
 	}

@@ -1914,8 +1914,11 @@ void object_move_one(object* obj)
 
 	if (obj->lifeleft < 0) {		// We died of old age
 		obj->flags |= OF_SHOULD_BE_DEAD;
-		if (obj->type == OBJ_WEAPON && activeBMTable->weapons[obj->id].damage_radius)
-			explode_badass_weapon(obj, &obj->pos);
+		if (obj->type == OBJ_WEAPON) {
+			if (activeBMTable->weapons[obj->id].damage_radius)
+				explode_badass_weapon(obj, &obj->pos);
+			create_smart_children(obj, NUM_SMART_CHILDREN);
+		}
 		else if (obj->type == OBJ_ROBOT)	//make robots explode
 			explode_object(obj, 0);
 	}

@@ -55,6 +55,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "lighting.h"
 #include "ai.h"
 #include "cntrlcen.h"
+#include "newcheat.h"
 
 #if defined (TACTILE)
 #include "tactile.h"
@@ -1434,7 +1435,7 @@ void controls_read_all()
 	int use_mouse, use_joystick;
 	int speed_factor = 1;
 
-	if (Game_turbo_mode)
+	if (cheatValues[CI_TURBO])
 		speed_factor = 2;
 
 	if (Arcade_mode) 

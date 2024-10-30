@@ -36,6 +36,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "laser.h"
 #include "bm.h"
 #include "player.h"
+#include "newcheat.h"
 
 #ifdef TACTILE
 #include "tactile.h"
@@ -56,9 +57,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 //check point against each side of segment. return bitmask, where bit
 //set means behind that side
-
-int Physics_cheat_flag = 0;
-extern char BounceCheat;
 
 //##//returns the distance of a point (checkp) from a plane (defined by norm & planep) 
 //##fix dist_to_plane(vms_vector *checkp,vms_vector *norm,vms_vector *planep)
@@ -702,7 +700,7 @@ save_p1 = *fq.p1;
 				if ( !(obj->flags&OF_SHOULD_BE_DEAD) )	{
 					int forcefield_bounce;		//bounce off a forcefield
 
-					Assert(BounceCheat || !(obj->mtype.phys_info.flags & PF_STICK && obj->mtype.phys_info.flags & PF_BOUNCE));	//can't be bounce and stick
+					Assert(cheatValues[CI_BOUNCY] || !(obj->mtype.phys_info.flags & PF_STICK && obj->mtype.phys_info.flags & PF_BOUNCE));	//can't be bounce and stick
 
 					forcefield_bounce = (activeBMTable->tmaps[Segments[WallHitSeg].sides[WallHitSide].tmap_num].flags & TMI_FORCE_FIELD);
 
@@ -887,7 +885,7 @@ save_p1 = *fq.p1;
 
 
 	//hack to keep player from going through closed doors
-	if (obj->type==OBJ_PLAYER && obj->segnum!=orig_segnum && (Physics_cheat_flag!=0xBADA55) ) {
+	if (obj->type==OBJ_PLAYER && obj->segnum!=orig_segnum && (!cheatValues[CI_GHOST]) ) {
 		int sidenum;
 
 		sidenum = find_connect_side(&Segments[obj->segnum],&Segments[orig_segnum]);

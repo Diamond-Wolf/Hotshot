@@ -56,6 +56,7 @@ void do_load_save_levels(int save);
 #include "gamepal.h"
 #include "laser.h"
 #include "misc/byteswap.h"
+#include "newcheat.h"
 
 #define SANTA
 
@@ -2321,6 +2322,8 @@ int load_level(char* filename_passed)
 #endif
 		//NOTE LINK TO ABOVE!!
 		mine_err = load_mine_data_compiled(LoadFile);
+
+	ResetLavaWalls();
 
 	if (mine_err == -1) 
 	{	//error!!

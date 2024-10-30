@@ -54,6 +54,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "kconfig.h"
 #include "misc/rand.h"
 #include "cfile/cfile.h"
+#include "newcheat.h"
 
 #include "ai_ifwd.h"
 
@@ -163,8 +164,6 @@ void make_nearby_robot_snipe(void)
 
 int	Ai_last_missile_camera;
 
-int	Robots_kill_robots_cheat = 0;
-
 // --------------------------------------------------------------------------------------------------------------------
 void do_ai_frame_d2(object* obj)
 {
@@ -266,7 +265,7 @@ void do_ai_frame_d2(object* obj)
 	if ((aip->SUB_FLAGS & SUB_FLAGS_CAMERA_AWAKE) && (Ai_last_missile_camera != -1))
 		Believed_player_pos = Objects[Ai_last_missile_camera].pos;
 	else {
-		if (Robots_kill_robots_cheat) {
+		if (cheatValues[CI_INFIGHTING]) {
 			vis_vec_pos = obj->pos;
 			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 			if (player_visibility) {

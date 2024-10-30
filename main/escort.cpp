@@ -52,6 +52,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "automap.h"
 #include "laser.h"
+#include "newcheat.h"
 //#include "pa_enabl.h"
 
 #include "bm.h"
@@ -951,7 +952,6 @@ int time_to_visit_player(object *objp, ai_local *ailp, ai_static *aip)
 }
 
 //int	Buddy_objnum; //[ISB] what are old c compilers
-int Buddy_dude_cheat;
 fix	Last_come_back_message_time = 0;
 
 fix	Buddy_last_missile_time;
@@ -1080,7 +1080,7 @@ void do_escort_frame(object *objp, fix dist_to_player, int player_visibility)
 
 	}
 
-	if (Buddy_dude_cheat)
+	if (cheatValues[CI_WINGNUT])
 		do_buddy_dude_stuff();
 
 	if (Buddy_sorry_time + F1_0 > GameTime) {

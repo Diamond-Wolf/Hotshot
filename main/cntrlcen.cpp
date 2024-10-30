@@ -37,6 +37,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fireball.h"
 #include "endlevel.h"
 #include "misc/rand.h"
+#include "newcheat.h"
 
 #include "fuelcen.h"
 
@@ -302,10 +303,10 @@ void do_controlcen_frame(object *obj)
 		return;
 
 #ifndef NDEBUG
-	if (!Robot_firing_enabled || (Game_suspended & SUSP_ROBOTS))
+	if (cheatValues[CI_NO_FIRING_D1] || (Game_suspended & SUSP_ROBOTS))
 		return;
 #else
-	if (!Robot_firing_enabled)
+	if (cheatValues[CI_NO_FIRING_D1])
 		return;
 #endif
 

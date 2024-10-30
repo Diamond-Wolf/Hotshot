@@ -50,6 +50,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main/gauges.h"
 #include "stringtable.h"
 #include "misc/rand.h"
+#include "newcheat.h"
 
 #include "ai_ifwd.h"
 
@@ -93,13 +94,9 @@ int	john_cheats_index_2;		//	PORGYS		high speed weapon firing
 #define	BOSS_DEATH_DURATION	(F1_0*6)
 #define	BOSS_DEATH_SOUND_DURATION	0x2ae14		//	2.68 seconds
 
-extern int Lunacy;
-
 //	Amount of time since the current robot was last processed for things such as movement.
 //	It is not valid to use FrameTime because robots do not get moved every frame.
 //fix	AI_proc_time;
-
-int	john_cheats_index_3;		//	LUNACY		lunacy (insane behavior, rookie firing)
 
 //	---------- John: End of variables which must be saved as part of gamesave. ----------
 
@@ -136,10 +133,7 @@ int8_t	Super_boss_gate_list[] = { 0, 1, 8, 9, 10, 11, 12, 15, 16, 18, 19, 20, 22
 #define	MAX_GATE_INDEX	( sizeof(Super_boss_gate_list) / sizeof(Super_boss_gate_list[0]) )
 #endif
 
-int	Robot_firing_enabled = 1;
-
 int	Ugly_robot_cheat, Ugly_robot_texture;
-extern int Laser_rapid_fire;
 extern	int8_t	Enable_john_cheat_1, Enable_john_cheat_2, Enable_john_cheat_3, Enable_john_cheat_4;
 
 uint8_t	john_cheats_3[2 * JOHN_CHEATS_SIZE_3 + 1] = { KEY_Y ^ 0x67,
@@ -200,7 +194,7 @@ void john_cheat_func_2(int key)
 	if (key == (john_cheats_2[2 * john_cheats_index_2] ^ (john_cheats_index_2 << 4) ^ 0x43)) {
 		john_cheats_index_2++;
 		if (john_cheats_index_2 == JOHN_CHEATS_SIZE_2) {
-			Laser_rapid_fire = 0xBADA55;
+			cheatValues[CI_RAPID_FIRE] = 0xBADA55;
 			do_megawow_powerup(200);
 			john_cheats_index_2 = 0;
 			digi_play_sample(SOUND_CHEATER, F1_0);
@@ -208,33 +202,6 @@ void john_cheat_func_2(int key)
 	}
 	else
 		john_cheats_index_2 = 0;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-void john_cheat_func_3(int key)
-{
-	if (!Cheats_enabled)
-		return;
-
-	if (key == (john_cheats_3[JOHN_CHEATS_SIZE_3 - john_cheats_index_3] ^ (0x61 + john_cheats_index_3))) {
-		if (john_cheats_index_3 == 4)
-			john_cheats_index_3++;
-		john_cheats_index_3++;
-		if (john_cheats_index_3 == JOHN_CHEATS_SIZE_3 + 1) {
-			if (Lunacy) {
-				do_lunacy_off();
-				HUD_init_message(TXT_NO_LUNACY);
-			}
-			else {
-				do_lunacy_on();
-				HUD_init_message(TXT_LUNACY);
-				digi_play_sample(SOUND_CHEATER, F1_0);
-			}
-			john_cheats_index_3 = 0;
-		}
-	}
-	else
-		john_cheats_index_3 = 0;
 }
 
 //--debug-- #ifndef NDEBUG
@@ -389,7 +356,7 @@ void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num
 	vms_vector	fire_vec;
 	vms_vector	bpp_diff;
 
-	if (!Robot_firing_enabled)
+	if (cheatValues[CI_NO_FIRING_D1])
 		return;
 
 #ifndef NDEBUG
@@ -813,6 +780,32 @@ void do_ai_frame_d1(object* obj)
 		else
 			aip->CLOAKED = 0;
 
+	if (cheatValues[CI_INFIGHTING]) {
+		vis_vec_pos = obj->pos;
+		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+		if (player_visibility) {
+			int	ii, min_obj = -1;
+			fix	min_dist = F1_0 * 200, cur_dist;
+
+			for (ii = 0; ii <= Highest_object_index; ii++)
+				if ((Objects[ii].type == OBJ_ROBOT) && (ii != objnum)) {
+					cur_dist = vm_vec_dist_quick(&obj->pos, &Objects[ii].pos);
+
+					if (cur_dist < F1_0 * 100)
+						if (object_to_object_visibility(obj, &Objects[ii], FQ_TRANSWALL))
+							if (cur_dist < min_dist) {
+								min_obj = ii;
+								min_dist = cur_dist;
+							}
+				}
+			if (min_obj != -1) {
+				Believed_player_pos = Objects[min_obj].pos;
+				Believed_player_seg = Objects[min_obj].segnum;
+				vm_vec_normalized_dir_quick(&vec_to_player, &Believed_player_pos, &obj->pos);
+			}
+		}
+	}
+
 	if (!(Players[Player_num].flags & PLAYER_FLAGS_CLOAKED))
 		Believed_player_pos = ConsoleObject->pos;
 
@@ -877,7 +870,6 @@ void do_ai_frame_d1(object* obj)
 					attempt_to_resume_path(obj);
 				break;
 			case AIM_RUN_FROM_OBJECT:
-				mprintf((1,"Runner!\n"));
 				move_towards_segment_center(obj);
 				obj->mtype.phys_info.velocity.x = 0;
 				obj->mtype.phys_info.velocity.y = 0;
@@ -921,24 +913,7 @@ void do_ai_frame_d1(object* obj)
 
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -
 	//	Decrease player awareness due to the passage of time.
-//-----old, faster way from about 11/06/94-----	if (ailp->player_awareness_type) {
-//-----old, faster way from about 11/06/94-----		if (ailp->player_awareness_time > 0) {
-//-----old, faster way from about 11/06/94-----			ailp->player_awareness_time -= FrameTime;
-//-----old, faster way from about 11/06/94-----			if (ailp->player_awareness_time <= 0) {
-//-----old, faster way from about 11/06/94----- 				ailp->player_awareness_time = F1_0*2;
-//-----old, faster way from about 11/06/94----- 				ailp->player_awareness_type--;
-//-----old, faster way from about 11/06/94-----				if (ailp->player_awareness_type < 0) {
-//-----old, faster way from about 11/06/94-----	 				aip->GOAL_STATE = AIS_REST;
-//-----old, faster way from about 11/06/94-----	 				ailp->player_awareness_type = 0;
-//-----old, faster way from about 11/06/94-----				}
-//-----old, faster way from about 11/06/94-----
-//-----old, faster way from about 11/06/94-----			}
-//-----old, faster way from about 11/06/94-----		} else {
-//-----old, faster way from about 11/06/94----- 			ailp->player_awareness_type = 0;
-//-----old, faster way from about 11/06/94----- 			aip->GOAL_STATE = AIS_REST;
-//-----old, faster way from about 11/06/94-----		}
-//-----old, faster way from about 11/06/94-----	} else
-//-----old, faster way from about 11/06/94-----		aip->GOAL_STATE = AIS_REST;
+
 
 
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -

@@ -101,6 +101,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "movie.h"
 #include "controls.h"
 #include "credits.h"
+#include "newcheat.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -1261,7 +1262,7 @@ void StartSecretLevel()
 	Auto_fire_fusion_cannon_time = 0;
 	Fusion_charge = 0;
 
-	Robot_firing_enabled = 1;
+	cheatValues[CI_NO_FIRING_D1] = 0;
 }
 
 extern void set_pos_from_return_segment(void);
@@ -2532,5 +2533,5 @@ void StartLevel(int random_flag)
 	Auto_fire_fusion_cannon_time = 0;
 	Fusion_charge = 0;
 
-	Robot_firing_enabled = 1;
+	cheatValues[CI_NO_FIRING_D1] = 0;
 }
