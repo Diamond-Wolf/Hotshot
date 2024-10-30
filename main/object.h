@@ -21,6 +21,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "segment.h"
 #include "gameseg.h"
 
+#define MAX_PLAYERS 8 //Would include player, but that creates a circular dependency that breaks everything
+
 /*
  *		CONSTANTS
  */
@@ -260,6 +262,11 @@ typedef struct object
 		vclip_info_t	 vclip_info;		//vclip
 	} rtype;
 
+	object() {
+		type = OBJ_NONE; //init to null object
+		segnum = -1;
+	}
+
 } object;
 
 typedef struct obj_position 
@@ -447,6 +454,21 @@ extern void wake_up_rendered_objects(object *gmissp, int window_num);
 
 void obj_detach_one(object* sub);
 void obj_detach_all(object* parent);
+
+#define PREPARE_RELINK(viewer, missile, save, guideds) {\
+	printf("\nPreparing relink\n");\
+	extern object* Viewer_save;\
+	viewer = Viewer - Objects.data();\
+	missile = Missile_viewer - Objects.data();\
+	save = Viewer_save - Objects.data();\
+	guideds[MAX_PLAYERS];\
+	for (int i = 0; i < MAX_PLAYERS; i++) {\
+		guideds[i] = Guided_missile[i] - Objects.data();\
+	}\
+	printf("Relinked\n");\
+}
+
+void RelinkSpecialObjectPointers(size_t viewer, size_t missileViewer, size_t saveViewer, size_t guideds[MAX_PLAYERS]);
 
 #include <stdio.h>
 //Reads an object from disk. This code is my absolute nightmare. Thanks, unions.

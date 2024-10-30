@@ -73,6 +73,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "piggy.h"
 #include "switch.h"
 #include "cfile/cfile.h"
+#include "game.h"
 
 #ifdef TACTILE
 #include "tactile.h"
@@ -90,13 +91,19 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *  Global variables
  */
 
-extern int8_t WasRecorded[MAX_OBJECTS];
+//After this many object creations, perform some GC and trim the object list.
+#define OBJECT_TRIM_RATE 30
+
+extern int8_t WasRecorded[MAX_OBJECTS * 10];
 
 uint8_t CollisionResult[MAX_OBJECT_TYPES][MAX_OBJECT_TYPES];
 
 object* ConsoleObject;					//the object that is the player
 
-static short free_obj_list[MAX_OBJECTS];
+object* Viewer_save;
+
+//static short free_obj_list[MAX_OBJECTS * 10];
+static std::vector<short> free_obj_list(MAX_OBJECTS);
 
 //Data for objects
 
@@ -108,7 +115,7 @@ object	Object_minus_one;
 #endif
 
 //object Objects[MAX_OBJECTS];
-std::vector<object> Objects;
+std::vector<object> Objects(MAX_OBJECTS);
 int num_objects = 0;
 int Highest_object_index = 0;
 int Highest_ever_object_index = 0;
@@ -195,6 +202,28 @@ void object_goto_prev_viewer()
 	Error("Couldn't find a viewer object!");
 }
 #endif
+
+extern void verify_console_object();
+
+void RelinkSpecialObjectPointers(size_t viewer, size_t missileViewer, size_t saveViewer, size_t guideds[MAX_PLAYERS]) {
+	
+	verify_console_object();
+
+	if (viewer < Objects.size())
+		Viewer = &Objects[viewer];
+
+	if (missileViewer < Objects.size())
+		Missile_viewer = &Objects[missileViewer];
+
+	if (saveViewer < Objects.size())
+		Viewer_save = &Objects[saveViewer];
+
+	for (int i = 0; i < MAX_PLAYERS; i++) {
+		if (guideds[i] < Objects.size())
+			Guided_missile[i] = &Objects[guideds[i]];
+	}
+
+}
 
 object* obj_find_first_of_type(int type)
 {
@@ -792,14 +821,20 @@ void init_objects()
 
 	collide_init();
 
-	Objects.resize(MAX_OBJECTS);
+	//Objects.resize(MAX_OBJECTS);
+	mprintf((0, "Object vector size: %d\n", Objects.size()));
 
-	for (i = 0; i < MAX_OBJECTS; i++) 
+	for (i = 0; i < Objects.size(); i++) 
 	{
-		free_obj_list[i] = i;
 		Objects[i].type = OBJ_NONE;
 		Objects[i].segnum = -1;
 	}
+
+	if (free_obj_list.size() != Objects.size())
+		free_obj_list.resize(Objects.size());
+
+	for (i = 0; i < Objects.size(); i++);
+		free_obj_list[i] = i;
 
 	for (i = 0; i < MAX_SEGMENTS; i++)
 		Segments[i].objects = -1;
@@ -820,12 +855,15 @@ void special_reset_objects(void)
 {
 	int i;
 
-	num_objects = MAX_OBJECTS;
+	num_objects = Objects.size();
 
 	Highest_object_index = 0;
 	Assert(Objects[0].type != OBJ_NONE);		//0 should be used
 
-	for (i = MAX_OBJECTS; i--;)
+	if (free_obj_list.size() != Objects.size())
+		free_obj_list.resize(Objects.size());
+
+	for (i = Objects.size(); i--;)
 		if (Objects[i].type == OBJ_NONE)
 			free_obj_list[--num_objects] = i;
 		else
@@ -840,7 +878,7 @@ int is_object_in_seg(int segnum, int objn)
 
 	for (objnum = Segments[segnum].objects; objnum != -1; objnum = Objects[objnum].next)
 	{
-		if (count > MAX_OBJECTS) 
+		if (count > Objects.size()) 
 		{
 			Int3();
 			return count;
@@ -888,7 +926,7 @@ void remove_incorrect_objects()
 		{
 			count++;
 #ifndef NDEBUG
-			if (count > MAX_OBJECTS) 
+			if (count > Objects.size()) 
 			{
 				mprintf((1, "Object list in segment %d is circular.\n", segnum));
 				Int3();
@@ -952,7 +990,7 @@ void list_seg_objects(int segnum)
 	for (objnum = Segments[segnum].objects; objnum != -1; objnum = Objects[objnum].next) 
 	{
 		count++;
-		if (count > MAX_OBJECTS)
+		if (count > Objects.size())
 		{
 			Int3();
 			return;
@@ -1029,31 +1067,68 @@ void obj_detach_one(object* sub);
 //returns -1 if no free objects
 int obj_allocate(void)
 {
-	int objnum;
 
-	if (num_objects >= MAX_OBJECTS - 2) 
+	static int allocCheck = 0;
+
+	int objnum;
+	bool createAtEnd = false;
+
+	if (num_objects >= Objects.size() - 2) 
 	{
 		int	num_freed;
 
-		num_freed = free_object_slots(MAX_OBJECTS - 10);
+		num_freed = free_object_slots(Objects.size() - 10);
 		mprintf((0, " *** Freed %i objects in frame %i\n", num_freed, FrameCount));
 	}
 
-	if (num_objects >= MAX_OBJECTS) 
+	if (num_objects == Objects.size() - 1) 
 	{
 #ifndef NDEBUG
-		mprintf((1, "Object creation failed - too many objects!\n"));
+		mprintf((1, "Hit object vector size!\n"));
 #endif
-		return -1;
+		objnum = Objects.size();
+		createAtEnd = true;
+
+		size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
+		PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+
+		Objects.push_back(object());
+		//Objects.resize(Objects.size() * 1.5);
+		num_objects++;
+
+		RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs); 
 	}
 
-	objnum = free_obj_list[num_objects++];
+	if (!createAtEnd)
+		objnum = free_obj_list[num_objects++];
 
 	if (objnum > Highest_object_index)
 	{
 		Highest_object_index = objnum;
 		if (Highest_object_index > Highest_ever_object_index)
 			Highest_ever_object_index = Highest_object_index;
+	}
+
+	int preallocCap = Highest_object_index * 2;
+
+	if (allocCheck++ == OBJECT_TRIM_RATE && Objects.size() > preallocCap) {
+		allocCheck = 0;
+		int newSize = MAX_OBJECTS;
+		if (preallocCap > newSize)
+			newSize = preallocCap;
+
+		size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
+		PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+
+		mprintf((0, "Performing Object GC. Old capacity: %d, ", Objects.capacity()));
+
+		Objects.resize(newSize);
+		Objects.shrink_to_fit();
+
+		mprintf((0, "New capacity: %d\n", Objects.capacity()));
+
+		RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
+
 	}
 
 	{
@@ -1071,6 +1146,9 @@ int obj_allocate(void)
 //the object has been unlinked
 void obj_free(int objnum)
 {
+	if (free_obj_list.size() != Objects.size())
+		free_obj_list.resize(Objects.size());
+
 	free_obj_list[--num_objects] = objnum;
 	Assert(num_objects >= 0);
 
@@ -1084,11 +1162,12 @@ void obj_free(int objnum)
 int free_object_slots(int num_used)
 {
 	int	i, olind;
-	int	obj_list[MAX_OBJECTS];
+	//int	obj_list[MAX_OBJECTS];
+	std::vector<int> obj_list(Objects.size());
 	int	num_already_free, num_to_free, original_num_to_free;
 
 	olind = 0;
-	num_already_free = MAX_OBJECTS - Highest_object_index - 1;
+	num_already_free = Objects.size() - Highest_object_index - 1;
 
 	if (MAX_OBJECTS - num_already_free < num_used)
 		return 0;
@@ -1132,7 +1211,7 @@ int free_object_slots(int num_used)
 
 	}
 
-	num_to_free = MAX_OBJECTS - num_used - num_already_free;
+	num_to_free = Objects.size() - num_used - num_already_free;
 	original_num_to_free = num_to_free;
 
 	if (num_to_free > olind)
@@ -1398,7 +1477,6 @@ void obj_delete(int objnum)
 int		Player_is_dead = 0;			//	If !0, then player is dead, but game continues so he can watch.
 object* Dead_player_camera = NULL;	//	Object index of object watching deader.
 fix		Player_time_of_death;		//	Time at which player died.
-object* Viewer_save;
 int		Player_flags_save;
 int		Player_exploded = 0;
 int		Death_sequence_aborted = 0;
@@ -1816,7 +1894,7 @@ extern void fuelcen_check_for_goal(segment*);
 int check_volatile_wall(object* obj, int segnum, int sidenum, vms_vector* hitpt);
 
 //	Time at which this object last created afterburner blobs.
-fix	Last_afterburner_time[MAX_OBJECTS];
+fix	Last_afterburner_time[MAX_OBJECTS * 10];
 
 //--------------------------------------------------------------------
 //move an object for the current frame
@@ -2055,6 +2133,8 @@ void object_move_all()
 	int i;
 	object* objp;
 
+	Max_used_objects = Objects.size() - 20;
+
 	// -- mprintf((0, "Frame %i: %i/%i objects used.\n", FrameCount, num_objects, MAX_OBJECTS));
 
 	//	check_duplicate_objects();
@@ -2153,7 +2233,10 @@ void reset_objects(int n_objs)
 
 	Assert(num_objects > 0);
 
-	for (i = num_objects; i < MAX_OBJECTS; i++) {
+	if (free_obj_list.size() != Objects.size())
+		free_obj_list.resize(Objects.size());
+
+	for (i = num_objects; i < Objects.size(); i++) {
 		free_obj_list[i] = i;
 		Objects[i].type = OBJ_NONE;
 		Objects[i].segnum = -1;

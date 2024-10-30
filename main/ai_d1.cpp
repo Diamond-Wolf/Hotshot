@@ -1558,7 +1558,8 @@ int ai_save_state_d1(FILE* fp)
 	
 	file_write_int(fp, Ai_initialized);
 	file_write_int(fp, Overall_agitation);
-	for (i = 0; i < MAX_OBJECTS; i++)
+	file_write_int(fp, Objects.size());
+	for (i = 0; i < Objects.size(); i++)
 		P_WriteAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
 		P_WriteSegPoint(&Point_segs[i], fp);
@@ -1588,7 +1589,10 @@ int ai_restore_state_d1(FILE* fp)
 
 	Ai_initialized = file_read_int(fp);
 	Overall_agitation = file_read_int(fp);
-	for (i = 0; i < MAX_OBJECTS; i++)
+	int numObjects = file_read_int(fp);
+	Assert(Objects.size() == numObjects);
+	//Objects.resize(numObjects);
+	for (i = 0; i < numObjects; i++)
 		P_ReadAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
 		P_ReadSegPoint(&Point_segs[i], fp);

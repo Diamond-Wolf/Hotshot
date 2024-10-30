@@ -1528,10 +1528,17 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		}
 
 		Object_next_signature = 0;
-		if (Highest_object_index >= MAX_OBJECTS)
+		/*if (Highest_object_index >= MAX_OBJECTS)
 		{
 			Error("state_restore_all_sub: Too many objects in save file.\n");
 			return 0;
+		}*/
+
+		if (Highest_object_index >= Objects.size()) {
+			size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
+			PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+			Objects.resize(Highest_object_index);
+			RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
 		}
 		
 		for (i = 0; i <= Highest_object_index; i++)

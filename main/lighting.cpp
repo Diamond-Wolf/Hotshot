@@ -313,7 +313,7 @@ fix	Obj_light_xlate[16] =
  0x3123, 0x29af, 0x1f03, 0x032a };
 
 //	Flag array of objects lit last frame.  Guaranteed to process this frame if lit last frame.
-int8_t Lighting_objects[MAX_OBJECTS];
+int8_t Lighting_objects[MAX_OBJECTS * 10];
 
 #define	MAX_HEADLIGHTS	8
 object * Headlights[MAX_HEADLIGHTS];
@@ -441,7 +441,7 @@ void set_dynamic_light(void)
 	short	render_vertices[MAX_VERTICES];
 	int8_t	render_vertex_flags[MAX_VERTICES];
 	int	render_seg, segnum, v;
-	int8_t	new_lighting_objects[MAX_OBJECTS];
+	int8_t	new_lighting_objects[MAX_OBJECTS * 10];
 
 	Num_headlights = 0;
 
@@ -645,8 +645,8 @@ fix compute_seg_dynamic_light(int segnum)
 	return sum >> 3;
 }
 
-fix object_light[MAX_OBJECTS];
-int object_sig[MAX_OBJECTS];
+fix object_light[MAX_OBJECTS* 10];
+int object_sig[MAX_OBJECTS * 10];
 object* old_viewer;
 int reset_lighting_hack;
 

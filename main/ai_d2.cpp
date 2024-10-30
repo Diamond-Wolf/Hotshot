@@ -1252,7 +1252,8 @@ int ai_save_state_d2(FILE* fp)
 
 	file_write_int(fp, Ai_initialized);
 	file_write_int(fp, Overall_agitation);
-	for (i = 0; i < MAX_OBJECTS; i++)
+	file_write_int(fp, Objects.size());
+	for (i = 0; i < Objects.size(); i++)
 		P_WriteAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
 		P_WriteSegPoint(&Point_segs[i], fp);
@@ -1310,9 +1311,13 @@ int ai_save_state_d2(FILE* fp)
 int ai_restore_state_d2(FILE* fp, int version)
 {
 	int i;
+
 	Ai_initialized = file_read_int(fp);
 	Overall_agitation = file_read_int(fp);
-	for (i = 0; i < MAX_OBJECTS; i++)
+	int numObjects = file_read_int(fp);
+	Assert(Objects.size() == numObjects);
+	//Objects.resize(numObjects);
+	for (i = 0; i < numObjects; i++)
 		P_ReadAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
 		P_ReadSegPoint(&Point_segs[i], fp);
@@ -1394,80 +1399,6 @@ int ai_restore_state_d2(FILE* fp, int version)
 		//	Note: Maybe better to leave alone...will probably be ok.
 		mprintf((1, "Warning: If you fight the boss, he might teleport to segment #0!\n"));
 	}
-
-
-	/*fread(&Ai_initialized, sizeof(int), 1, fp);
-	fread(&Overall_agitation, sizeof(int), 1, fp);
-	fread(Ai_local_info, sizeof(ai_local) * MAX_OBJECTS, 1, fp);
-	fread(Point_segs, sizeof(point_seg) * MAX_POINT_SEGS, 1, fp);
-	fread(Ai_cloak_info, sizeof(ai_cloak_info) * MAX_AI_CLOAK_INFO, 1, fp);
-	fread(&Boss_cloak_start_time, sizeof(fix), 1, fp);
-	fread(&Boss_cloak_end_time, sizeof(fix), 1, fp);
-	fread(&Last_teleport_time, sizeof(fix), 1, fp);
-	fread(&Boss_teleport_interval, sizeof(fix), 1, fp);
-	fread(&Boss_cloak_interval, sizeof(fix), 1, fp);
-	fread(&Boss_cloak_duration, sizeof(fix), 1, fp);
-	fread(&Last_gate_time, sizeof(fix), 1, fp);
-	fread(&Gate_interval, sizeof(fix), 1, fp);
-	fread(&Boss_dying_start_time, sizeof(fix), 1, fp);
-	fread(&Boss_dying, sizeof(int), 1, fp);
-	fread(&Boss_dying_sound_playing, sizeof(int), 1, fp);
-	fread(&Boss_hit_time, sizeof(fix), 1, fp);
-	// -- MK, 10/21/95, unused! -- fread( &Boss_been_hit, sizeof(int), 1, fp );
-
-	if (version >= 8) {
-		fread(&Escort_kill_object, sizeof(Escort_kill_object), 1, fp);
-		fread(&Escort_last_path_created, sizeof(Escort_last_path_created), 1, fp);
-		fread(&Escort_goal_object, sizeof(Escort_goal_object), 1, fp);
-		fread(&Escort_special_goal, sizeof(Escort_special_goal), 1, fp);
-		fread(&Escort_goal_index, sizeof(Escort_goal_index), 1, fp);
-		fread(&Stolen_items, sizeof(Stolen_items[0]) * MAX_STOLEN_ITEMS, 1, fp);
-	}
-	else {
-		int	i;
-
-		Escort_kill_object = -1;
-		Escort_last_path_created = 0;
-		Escort_goal_object = ESCORT_GOAL_UNSPECIFIED;
-		Escort_special_goal = -1;
-		Escort_goal_index = -1;
-
-		for (i = 0; i < MAX_STOLEN_ITEMS; i++) 
-		{
-			Stolen_items[i] = 255;
-		}
-
-	}
-
-	if (version >= 15) 
-	{
-		int	temp;
-		fread(&temp, sizeof(int), 1, fp);
-		Point_segs_free_ptr = &Point_segs[temp];
-	}
-	else
-		ai_reset_all_paths();
-
-	if (version >= 21) 
-	{
-		fread(&Num_boss_teleport_segs, sizeof(Num_boss_teleport_segs), 1, fp);
-		fread(&Num_boss_gate_segs, sizeof(Num_boss_gate_segs), 1, fp);
-
-		if (Num_boss_gate_segs)
-			fread(Boss_gate_segs, sizeof(Boss_gate_segs[0]), Num_boss_gate_segs, fp);
-
-		if (Num_boss_teleport_segs)
-			fread(Boss_teleport_segs, sizeof(Boss_teleport_segs[0]), Num_boss_teleport_segs, fp);
-	}
-	else {
-		// -- Num_boss_teleport_segs = 1;
-		// -- Num_boss_gate_segs = 1;
-		// -- Boss_teleport_segs[0] = 0;
-		// -- Boss_gate_segs[0] = 0;
-		//	Note: Maybe better to leave alone...will probably be ok.
-		mprintf((1, "Warning: If you fight the boss, he might teleport to segment #0!\n"));
-	}*/
-
 
 	return 1;
 }

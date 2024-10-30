@@ -2338,7 +2338,7 @@ void network_read_object_packet(char* data)
 				if (obj->segnum != -1)
 					obj_unlink(objnum);
 				Assert(obj->segnum == -1);
-				Assert(objnum < MAX_OBJECTS);
+				Assert(objnum < MAX_OBJECTS * 10);
 				netmisc_decode_object(data, &loc, obj);
 				segnum = obj->segnum;
 				obj->next = obj->prev = obj->segnum = -1;

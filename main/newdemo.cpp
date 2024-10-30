@@ -95,8 +95,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //Does demo start automatically?
 int Auto_demo = 0;
 
-int8_t WasRecorded[MAX_OBJECTS];
-int8_t ViewWasRecorded[MAX_OBJECTS];
+int8_t WasRecorded[MAX_OBJECTS * 10];
+int8_t ViewWasRecorded[MAX_OBJECTS * 10];
 int8_t RenderingWasRecorded[32];
 
 #define ND_EVENT_EOF					0			// EOF
@@ -919,7 +919,7 @@ void newdemo_record_start_frame(int frame_number, fix frame_time)
 
 	stop_time();
 
-	for (i = 0; i < MAX_OBJECTS; i++)
+	for (i = 0; i < Objects.size(); i++)
 	{
 		WasRecorded[i] = 0;
 		ViewWasRecorded[i] = 0;

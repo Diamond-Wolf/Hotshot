@@ -353,7 +353,8 @@ object *object_create_debris(object *parent, int subobj_num)
 				&parent->orient,activeBMTable->models[parent->rtype.pobj_info.model_num].submodel_rads[subobj_num],
 				CT_DEBRIS,MT_PHYSICS,RT_POLYOBJ);
 
-	if ((objnum < 0 ) && (Highest_object_index >= MAX_OBJECTS-1)) {
+	//if ((objnum < 0 ) && (Highest_object_index >= MAX_OBJECTS-1)) {
+	if (objnum < 0) {
 		mprintf((1, "Can't create object in object_create_debris.\n"));
 		Int3();
 		return NULL;

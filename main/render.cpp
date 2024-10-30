@@ -80,7 +80,8 @@ fix Render_zoom = 0xB000;
 #endif
 
 #ifndef NDEBUG
-uint8_t object_rendered[MAX_OBJECTS];
+//uint8_t object_rendered[MAX_OBJECTS];
+std::vector<uint8_t> object_rendered(MAX_OBJECTS);
 #endif
 
 #define DEFAULT_RENDER_DEPTH 16
@@ -658,11 +659,15 @@ void do_render_object(int objnum, int window_num)
 #ifdef EDITOR
 	int save_3d_outline;
 #endif
+
+	Assert(objnum < Objects.size());
+	
 	object* obj = &Objects[objnum];
 	int count = 0;
 	int n;
 
-	Assert(objnum < MAX_OBJECTS);
+	if (object_rendered.size() != Objects.size())
+		object_rendered.resize(Objects.size());
 
 #ifndef NDEBUG
 	if (object_rendered[objnum]) {		//already rendered this...
@@ -699,7 +704,7 @@ void do_render_object(int objnum, int window_num)
 		Window_rendered_data[window_num].rendered_objects[Window_rendered_data[window_num].num_objects++] = objnum;
 	}
 
-	if ((count++ > MAX_OBJECTS) || (obj->next == objnum)) {
+	if ((count++ > Objects.size()) || (obj->next == objnum)) {
 		Int3();					// infinite loop detected
 		obj->next = -1;		// won't this clean things up?
 		return;					// get out of this infinite loop!
@@ -1235,7 +1240,7 @@ void add_obj_to_seglist(int objnum, int listnum)
 		//Assert(lookn<MAX_RENDER_SEGS+N_EXTRA_OBJ_LISTS);
 		if (lookn >= MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS)
 		{
-			Int3();
+			//Int3();
 			return;
 		}
 

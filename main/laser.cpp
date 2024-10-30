@@ -2119,7 +2119,7 @@ void create_smart_children(object *objp, int num_smart_children)
 		if (CurrentLogicVersion == LogicVer::SHAREWARE) //[ISB] SW always used code in above check, but this isn't always safe so try a safe emulation. 
 		{
 			parent_type = objp->ctype.ai_info.behavior | (objp->ctype.ai_info.flags[0] << 8);
-			parent_num = MAX_OBJECTS-1;
+			parent_num = Objects.size()-1;
 		}
 		else
 		{

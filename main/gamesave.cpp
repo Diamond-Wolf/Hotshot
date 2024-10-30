@@ -1227,8 +1227,15 @@ int LoadGameDataD1(CFILE* LoadFile)
 		if (cfseek(LoadFile, game_fileinfo.object_offset, SEEK_SET))
 			Error("Error seeking to object_offset in gamesave.c");
 
-		if (game_fileinfo.object_howmany > MAX_OBJECTS)
-			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);
+		/*if (game_fileinfo.object_howmany > MAX_OBJECTS)
+			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);*/
+
+		if (game_fileinfo.object_howmany > Objects.size()) {
+			size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
+			PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+			Objects.resize(game_fileinfo.object_howmany);
+			RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
+		}
 
 		for (i = 0; i < game_fileinfo.object_howmany; i++) 
 		{
@@ -1368,7 +1375,7 @@ int LoadGameDataD1(CFILE* LoadFile)
 
 	reset_objects(game_fileinfo.object_howmany);
 
-	for (i = 0; i < MAX_OBJECTS; i++) 
+	for (i = 0; i < Objects.size(); i++) 
 	{
 		Objects[i].next = Objects[i].prev = -1;
 		if (Objects[i].type != OBJ_NONE) 
@@ -1607,8 +1614,15 @@ int LoadGameDataD2(CFILE* LoadFile)
 		if (cfseek(LoadFile, game_fileinfo.object_offset, SEEK_SET))
 			Error("Error seeking to object_offset in gamesave.c");
 
-		if (game_fileinfo.object_howmany > MAX_OBJECTS)
-			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);
+		/*if (game_fileinfo.object_howmany > MAX_OBJECTS)
+			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);*/
+		
+		if (game_fileinfo.object_howmany > Objects.size()) {
+			size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
+			PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+			Objects.resize(game_fileinfo.object_howmany);
+			RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
+		}
 
 		for (i = 0; i < game_fileinfo.object_howmany; i++)
 		{
@@ -1953,7 +1967,7 @@ int LoadGameDataD2(CFILE* LoadFile)
 
 	reset_objects(game_fileinfo.object_howmany);
 
-	for (i = 0; i < MAX_OBJECTS; i++) 
+	for (i = 0; i < Objects.size(); i++) 
 	{
 		Objects[i].next = Objects[i].prev = -1;
 		if (Objects[i].type != OBJ_NONE) 

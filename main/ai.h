@@ -62,7 +62,7 @@ extern short	Boss_teleport_segs[MAX_BOSS_TELEPORT_SEGS];
 extern fix	Last_teleport_time;
 extern fix 	Boss_cloak_duration;
 
-extern ai_local	Ai_local_info[MAX_OBJECTS];
+extern ai_local	Ai_local_info[MAX_OBJECTS * 10];
 extern vms_vector	Believed_player_pos;
 extern int Believed_player_seg;
 
@@ -252,7 +252,7 @@ extern short	Boss_gate_segs[];
 //	---------- John: These variables must be saved as part of gamesave. ----------
 extern int				Ai_initialized;
 extern int				Overall_agitation;
-extern ai_local			Ai_local_info[MAX_OBJECTS];
+extern ai_local			Ai_local_info[MAX_OBJECTS * 10];
 extern point_seg		Point_segs[MAX_POINT_SEGS];
 extern point_seg		*Point_segs_free_ptr;
 extern ai_cloak_info	Ai_cloak_info[MAX_AI_CLOAK_INFO];
