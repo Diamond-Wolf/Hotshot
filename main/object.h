@@ -357,7 +357,7 @@ void obj_delete(int objnum);
 
 //called after load.  Takes number of objects,  and objects should be 
 //compressed
-void reset_objects(int n_objs);
+void reset_objects(int n_objs, bool inLevel = false);
 
 //make object array non-sparse
 void compress_objects(void);

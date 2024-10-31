@@ -1079,7 +1079,6 @@ void obj_detach_one(object* sub);
 
 int allocCheck = 0;
 int extraObjNum = -1;
-int gcCap;
 bool objectGCReady;
 
 void validateFreeObjecte() { // [DW] Hack: If an invalid entry is found, create one new object and bash all free object entries to it
@@ -1104,6 +1103,9 @@ void doObjectGC() {
 
 	compress_objects();
 	allocCheck = 0;
+	objectGCReady = false;
+
+	int gcCap = Highest_object_index + MAX_OBJECTS;
 
 	/*mprintf((0, "Just compressing.\n"));
 	return;*/
@@ -1176,11 +1178,8 @@ int obj_allocate(void)
 			Highest_ever_object_index = Highest_object_index;
 	}
 
-	int preallocCap = Highest_object_index + MAX_OBJECTS;
-
 	if (allocCheck++ >= OBJECT_GC_RATE) {
 		objectGCReady = true;
-		gcCap = preallocCap;	
 	}
 
 	{
@@ -2317,14 +2316,14 @@ void compress_objects(void)
 
 		}
 
+	reset_objects(num_objects, true);
 	verify_console_object();
-	reset_objects(num_objects);
 
 }
 
 //called after load.  Takes number of objects,  and objects should be 
 //compressed.  resets free list, marks unused objects as unused
-void reset_objects(int n_objs)
+void reset_objects(int n_objs, bool inLevel)
 {
 	int i;
 
@@ -2343,7 +2342,8 @@ void reset_objects(int n_objs)
 
 	Highest_object_index = num_objects - 1;
 
-	Debris_object_count = 0;
+	if (!inLevel)
+		Debris_object_count = 0;
 }
 
 //Tries to find a segment for an object, using find_point_seg()
