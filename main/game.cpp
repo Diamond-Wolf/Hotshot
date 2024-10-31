@@ -2442,6 +2442,9 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 	slide_textures();
 	flicker_lights();
 
+	if (objectGCReady)
+		doObjectGC();
+
 	//!!hoard_light_pulse();		//do cool hoard light pulsing
 
 }

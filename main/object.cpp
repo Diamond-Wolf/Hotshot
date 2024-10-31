@@ -91,9 +91,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *  Global variables
  */
 
-//After this many object creations, perform some GC and trim the object list.
-#define OBJECT_TRIM_RATE 30
-
 extern int8_t WasRecorded[MAX_OBJECTS * 10];
 
 uint8_t CollisionResult[MAX_OBJECT_TYPES][MAX_OBJECT_TYPES];
@@ -205,23 +202,40 @@ void object_goto_prev_viewer()
 
 extern void verify_console_object();
 
-void RelinkSpecialObjectPointers(size_t viewer, size_t missileViewer, size_t saveViewer, size_t guideds[MAX_PLAYERS]) {
+void RelinkSpecialObjectPointers(const RelinkCache& cache) {
+
+	extern object* Viewer_save;
+	extern object* old_viewer;
+	extern object* prev_obj;
+	extern object* slew_obj;
 	
 	verify_console_object();
 
-	if (viewer < Objects.size())
-		Viewer = &Objects[viewer];
+	if (cache.viewer < Objects.size())
+		Viewer = &Objects[cache.viewer];
 
-	if (missileViewer < Objects.size())
-		Missile_viewer = &Objects[missileViewer];
+	if (cache.missile < Objects.size())
+		Missile_viewer = &Objects[cache.missile];
 
-	if (saveViewer < Objects.size())
-		Viewer_save = &Objects[saveViewer];
+	if (cache.save < Objects.size())
+		Viewer_save = &Objects[cache.save];
 
 	for (int i = 0; i < MAX_PLAYERS; i++) {
-		if (guideds[i] < Objects.size())
-			Guided_missile[i] = &Objects[guideds[i]];
+		if (cache.guideds[i] < Objects.size())
+			Guided_missile[i] = &Objects[cache.guideds[i]];
 	}
+
+	if (cache.old < Objects.size())
+		old_viewer = &Objects[cache.old];
+
+	if (cache.prev < Objects.size())
+		old_viewer = &Objects[cache.prev];
+
+	if (cache.deadcam < Objects.size())
+		old_viewer = &Objects[cache.deadcam];
+
+	if (cache.slew < Objects.size())
+		old_viewer = &Objects[cache.slew];
 
 }
 
@@ -1061,14 +1075,68 @@ int	Unused_object_slots;
 int free_object_slots(int num_used);
 void obj_detach_one(object* sub);
 
+//----------------------------------------------------------------------------------
+
+int allocCheck = 0;
+int extraObjNum = -1;
+int gcCap;
+bool objectGCReady;
+
+void validateFreeObjecte() { // [DW] Hack: If an invalid entry is found, create one new object and bash all free object entries to it
+	for (int i = 0; i < free_obj_list.size(); i++) {
+		if (free_obj_list[i] >= Objects.size()) {
+			if (extraObjNum >= 0)
+				free_obj_list[i] = extraObjNum;
+			else {
+				extraObjNum = Objects.size();
+				Objects.push_back(object());
+				free_obj_list.push_back(extraObjNum);
+				free_obj_list[i] = extraObjNum;
+			}
+		}
+	}
+}
+
+//After this many object creations, run GC on the object list.
+#define OBJECT_GC_RATE 100
+
+void doObjectGC() {
+
+	compress_objects();
+	allocCheck = 0;
+
+	/*mprintf((0, "Just compressing.\n"));
+	return;*/
+
+	if (Objects.size() > gcCap) {
+
+		RelinkCache cache;
+
+		mprintf((0, "Performing object GC.\nOld capacity: %d, ", Objects.capacity()));
+
+		Objects.resize(gcCap);
+		Objects.shrink_to_fit();
+
+		free_obj_list.resize(gcCap);
+		free_obj_list.shrink_to_fit();
+
+		mprintf((0, "New capacity: %d\n", Objects.capacity()));
+
+		RelinkSpecialObjectPointers(cache);
+
+	} else if (Objects.size() > MAX_OBJECTS) 
+		mprintf((0, "Did not perform object GC.\nCapacity / size / cap (highest):\n%d / %d / %d (%d)\n", Objects.capacity(), Objects.size(), gcCap, Highest_object_index));
+	else 
+		mprintf((0, "Skipping object GC. Not enough objects.\n"));
+	
+}
+
 //returns the number of a free object, updating Highest_object_index.
 //Generally, obj_create() should be called to get an object, since it
 //fills in important fields and does the linking.
 //returns -1 if no free objects
 int obj_allocate(void)
 {
-
-	static int allocCheck = 0;
 
 	int objnum;
 	bool createAtEnd = false;
@@ -1089,14 +1157,13 @@ int obj_allocate(void)
 		objnum = Objects.size();
 		createAtEnd = true;
 
-		size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
-		PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+		RelinkCache cache;
 
 		Objects.push_back(object());
 		//Objects.resize(Objects.size() * 1.5);
 		num_objects++;
 
-		RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs); 
+		RelinkSpecialObjectPointers(cache); 
 	}
 
 	if (!createAtEnd)
@@ -1109,26 +1176,11 @@ int obj_allocate(void)
 			Highest_ever_object_index = Highest_object_index;
 	}
 
-	int preallocCap = Highest_object_index * 2;
+	int preallocCap = Highest_object_index + MAX_OBJECTS;
 
-	if (allocCheck++ == OBJECT_TRIM_RATE && Objects.size() > preallocCap) {
-		allocCheck = 0;
-		int newSize = MAX_OBJECTS;
-		if (preallocCap > newSize)
-			newSize = preallocCap;
-
-		size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
-		PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
-
-		mprintf((0, "Performing Object GC. Old capacity: %d, ", Objects.capacity()));
-
-		Objects.resize(newSize);
-		Objects.shrink_to_fit();
-
-		mprintf((0, "New capacity: %d\n", Objects.capacity()));
-
-		RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
-
+	if (allocCheck++ >= OBJECT_GC_RATE) {
+		objectGCReady = true;
+		gcCap = preallocCap;	
 	}
 
 	{
@@ -1220,6 +1272,7 @@ int free_object_slots(int num_used)
 		num_to_free = olind;
 	}
 
+	
 	for (i = 0; i < num_to_free; i++)
 		if (Objects[obj_list[i]].type == OBJ_DEBRIS)
 		{
@@ -1242,6 +1295,8 @@ int free_object_slots(int num_used)
 	if (!num_to_free)
 		return original_num_to_free;
 
+	/* //With theoretically infinite objects, should never need to actually delete any important ones
+
 	for (i = 0; i < num_to_free; i++)
 		if ((Objects[obj_list[i]].type == OBJ_WEAPON) && (Objects[obj_list[i]].id == FLARE_ID)) 
 		{
@@ -1259,8 +1314,10 @@ int free_object_slots(int num_used)
 			mprintf((0, "Freeing   WEAPON object %3i\n", obj_list[i]));
 			Objects[obj_list[i]].flags |= OF_SHOULD_BE_DEAD;
 		}
+	*/
 
 	return original_num_to_free - num_to_free;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -2190,13 +2247,50 @@ void compress_objects(void)
 
 	//last_i = find_last_obj(MAX_OBJECTS);
 
+	extern object* Missile_viewer;
+	extern object* Viewer_save;
+	extern object* Guided_missile[MAX_PLAYERS];
+	extern object* old_viewer;
+	extern object* prev_obj;
+	extern object* slew_obj;
+
 	//	Note: It's proper to do < (rather than <=) Highest_object_index here because we
 	//	are just removing gaps, and the last object can't be a gap.
 	for (start_i = 0; start_i < Highest_object_index; start_i++)
 
 		if (Objects[start_i].type == OBJ_NONE) {
 
+			object** specialRelink = NULL;
 			int	segnum_copy;
+
+			if (&Objects[Highest_object_index] == Viewer)
+				specialRelink = &Viewer;
+			else if (&Objects[Highest_object_index] == Missile_viewer)
+				specialRelink = &Missile_viewer;
+			else if (&Objects[Highest_object_index] == Viewer_save)
+				specialRelink = &Viewer_save;
+			else if (&Objects[Highest_object_index] == old_viewer)
+				specialRelink = &old_viewer;
+			else if (&Objects[Highest_object_index] == prev_obj)
+				specialRelink = &prev_obj;
+			else if (&Objects[Highest_object_index] == Dead_player_camera)
+				specialRelink = &Dead_player_camera;
+			else if (&Objects[Highest_object_index] == slew_obj)
+				specialRelink = &slew_obj;
+			else {
+				for (int i = 0; i < MAX_PLAYERS; i++) {
+					if (&Objects[Highest_object_index] == Guided_missile[i]) {
+						specialRelink = &Guided_missile[i];
+						break;
+					}
+				}
+			}
+
+			if (Objects[Highest_object_index].next >= 0)
+				Objects[Objects[Highest_object_index].next].prev = start_i;
+
+			if (Objects[Highest_object_index].prev >= 0)
+				Objects[Objects[Highest_object_index].prev].next = start_i;
 
 			segnum_copy = Objects[Highest_object_index].segnum;
 
@@ -2213,12 +2307,17 @@ void compress_objects(void)
 
 			obj_link(start_i, segnum_copy);
 
-			while (Objects[--Highest_object_index].type == OBJ_NONE);
+			if (specialRelink)
+				*specialRelink = &Objects[start_i];
+
+			while (Objects[--Highest_object_index].type == OBJ_NONE)
+				;
 
 			//last_i = find_last_obj(last_i);
 
 		}
 
+	verify_console_object();
 	reset_objects(num_objects);
 
 }

@@ -1535,10 +1535,9 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		}*/
 
 		if (Highest_object_index >= Objects.size()) {
-			size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
-			PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+			RelinkCache cache;
 			Objects.resize(Highest_object_index);
-			RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
+			RelinkSpecialObjectPointers(cache);
 		}
 		
 		for (i = 0; i <= Highest_object_index; i++)

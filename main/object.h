@@ -317,6 +317,8 @@ extern int Player_exploded;
 extern int Death_sequence_aborted;
 extern int Player_fired_laser_this_frame;
 
+extern bool objectGCReady;
+
 /*
  *		FUNCTIONS
  */
@@ -455,20 +457,46 @@ extern void wake_up_rendered_objects(object *gmissp, int window_num);
 void obj_detach_one(object* sub);
 void obj_detach_all(object* parent);
 
+struct RelinkCache {
+	size_t viewer;
+	size_t missile;
+	size_t save;
+	size_t guideds[MAX_PLAYERS];
+	size_t old;
+	size_t prev;
+	size_t deadcam;
+	size_t slew;
+
+	RelinkCache() {
+		extern object* Missile_viewer;
+		extern object* Viewer_save;
+		extern object* Guided_missile[MAX_PLAYERS];
+		extern object* old_viewer;
+		extern object* prev_obj;
+		extern object* slew_obj;
+
+		viewer = Viewer - Objects.data();
+		missile = Missile_viewer - Objects.data();
+		save = Viewer_save - Objects.data();
+		for (int i = 0; i < MAX_PLAYERS; i++) {
+			guideds[i] = Guided_missile[i] - Objects.data();
+		}
+		old = old_viewer - Objects.data();
+		prev = prev_obj - Objects.data();
+		deadcam = Dead_player_camera - Objects.data();
+		slew = slew_obj - Objects.data();
+	}
+};
+
+/*
 #define PREPARE_RELINK(viewer, missile, save, guideds) {\
 	printf("\nPreparing relink\n");\
-	extern object* Viewer_save;\
-	viewer = Viewer - Objects.data();\
-	missile = Missile_viewer - Objects.data();\
-	save = Viewer_save - Objects.data();\
-	guideds[MAX_PLAYERS];\
-	for (int i = 0; i < MAX_PLAYERS; i++) {\
-		guideds[i] = Guided_missile[i] - Objects.data();\
-	}\
+	
 	printf("Relinked\n");\
-}
+}*/
 
-void RelinkSpecialObjectPointers(size_t viewer, size_t missileViewer, size_t saveViewer, size_t guideds[MAX_PLAYERS]);
+void RelinkSpecialObjectPointers(const RelinkCache& cache);
+void doObjectGC();
 
 #include <stdio.h>
 //Reads an object from disk. This code is my absolute nightmare. Thanks, unions.

@@ -1231,10 +1231,9 @@ int LoadGameDataD1(CFILE* LoadFile)
 			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);*/
 
 		if (game_fileinfo.object_howmany > Objects.size()) {
-			size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
-			PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+			RelinkCache cache;
 			Objects.resize(game_fileinfo.object_howmany);
-			RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
+			RelinkSpecialObjectPointers(cache);
 		}
 
 		for (i = 0; i < game_fileinfo.object_howmany; i++) 
@@ -1618,10 +1617,9 @@ int LoadGameDataD2(CFILE* LoadFile)
 			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);*/
 		
 		if (game_fileinfo.object_howmany > Objects.size()) {
-			size_t viewerObj, missileObj, saveObj, guidedObjs[MAX_PLAYERS];
-			PREPARE_RELINK(viewerObj, missileObj, saveObj, guidedObjs);
+			RelinkCache cache;
 			Objects.resize(game_fileinfo.object_howmany);
-			RelinkSpecialObjectPointers(viewerObj, missileObj, saveObj, guidedObjs);
+			RelinkSpecialObjectPointers(cache);
 		}
 
 		for (i = 0; i < game_fileinfo.object_howmany; i++)
