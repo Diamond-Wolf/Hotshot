@@ -731,6 +731,15 @@ void do_render_object(int objnum, int window_num)
 
 	for (n = obj->attached_obj; n != -1; n = Objects[n].ctype.expl_info.next_attach) {
 
+		if (Objects[n].type != OBJ_FIREBALL)
+			mprintf((1, "Bad type! %d in %d\n", Objects[n].type, n));
+
+		if (Objects[n].control_type != CT_EXPLOSION)
+			mprintf((1, "Bad ct! %d in %d\n", Objects[n].control_type, n));
+
+		if (!Objects[n].flags & OF_ATTACHED)
+			mprintf((1, "Bad flags! %d in %d\n", Objects[n].flags, n));
+
 		Assert(Objects[n].type == OBJ_FIREBALL);
 		Assert(Objects[n].control_type == CT_EXPLOSION);
 		Assert(Objects[n].flags & OF_ATTACHED);

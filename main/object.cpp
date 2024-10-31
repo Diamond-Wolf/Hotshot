@@ -1097,13 +1097,19 @@ void validateFreeObjecte() { // [DW] Hack: If an invalid entry is found, create 
 }
 
 //After this many object creations, run GC on the object list.
-#define OBJECT_GC_RATE 100
+#define OBJECT_GC_RATE 1000
 
 void doObjectGC() {
 
-	compress_objects();
 	allocCheck = 0;
 	objectGCReady = false;
+
+	//compress_objects();
+
+	if (Objects.size() <= MAX_OBJECTS) {
+		mprintf((0, "Skipping object GC. Not enough objects.\n"));
+		return;
+	}
 
 	int gcCap = Highest_object_index + MAX_OBJECTS;
 
@@ -1111,6 +1117,8 @@ void doObjectGC() {
 	return;*/
 
 	if (Objects.size() > gcCap) {
+
+		compress_objects();
 
 		RelinkCache cache;
 
@@ -1126,11 +1134,9 @@ void doObjectGC() {
 
 		RelinkSpecialObjectPointers(cache);
 
-	} else if (Objects.size() > MAX_OBJECTS) 
-		mprintf((0, "Did not perform object GC.\nCapacity / size / cap (highest):\n%d / %d / %d (%d)\n", Objects.capacity(), Objects.size(), gcCap, Highest_object_index));
-	else 
-		mprintf((0, "Skipping object GC. Not enough objects.\n"));
-	
+	} else
+		mprintf((0, "Did not perform object GC.\nCapacity / size / cap (highest):\n%d / %d / %d (%d)\n", Objects.capacity(), Objects.size(), gcCap, Highest_object_index)); 
+		
 }
 
 //returns the number of a free object, updating Highest_object_index.
@@ -1334,8 +1340,8 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 	Assert(segnum >= 0);
 	Assert(ctype <= CT_CNTRLCEN);
 
-	if (type == OBJ_DEBRIS && Debris_object_count >= Max_debris_objects)
-		return -1;
+	//if (type == OBJ_DEBRIS && Debris_object_count >= Max_debris_objects)
+	//	return -1;
 
 	if (get_seg_masks(pos, segnum, 0).centermask != 0)
 		if ((segnum = find_point_seg(pos, segnum)) == -1) {
@@ -2285,11 +2291,36 @@ void compress_objects(void)
 				}
 			}
 
-			if (Objects[Highest_object_index].next >= 0)
+			/*if (Objects[Highest_object_index].next >= 0)
 				Objects[Objects[Highest_object_index].next].prev = start_i;
 
 			if (Objects[Highest_object_index].prev >= 0)
-				Objects[Objects[Highest_object_index].prev].next = start_i;
+				Objects[Objects[Highest_object_index].prev].next = start_i;*/
+
+			for (int i = 0; i < Highest_object_index; i++) {
+
+				if (Objects[i].next == Highest_object_index)
+					Objects[i].next = start_i;
+
+				if (Objects[i].prev == Highest_object_index)
+					Objects[i].prev = start_i;
+
+				if (Objects[i].attached_obj == Highest_object_index)
+					Objects[i].attached_obj = start_i;
+
+				if (Objects[i].ctype.expl_info.next_attach == Highest_object_index)
+					Objects[i].ctype.expl_info.next_attach = start_i;
+
+				if (Objects[i].ctype.expl_info.prev_attach == Highest_object_index)
+					Objects[i].ctype.expl_info.prev_attach = start_i;
+
+				if (Objects[i].ctype.expl_info.attach_parent == Highest_object_index)
+					Objects[i].ctype.expl_info.attach_parent = start_i;
+
+				if (Objects[i].ctype.expl_info.delete_objnum == Highest_object_index)
+					Objects[i].ctype.expl_info.delete_objnum = start_i;
+
+			}
 
 			segnum_copy = Objects[Highest_object_index].segnum;
 
