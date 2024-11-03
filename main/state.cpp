@@ -1528,15 +1528,10 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		}
 
 		Object_next_signature = 0;
-		/*if (Highest_object_index >= MAX_OBJECTS)
-		{
-			Error("state_restore_all_sub: Too many objects in save file.\n");
-			return 0;
-		}*/
 
 		if (Highest_object_index >= Objects.size()) {
 			RelinkCache cache;
-			Objects.resize(Highest_object_index);
+			ResizeObjectVectors(Highest_object_index, false);
 			RelinkSpecialObjectPointers(cache);
 		}
 		

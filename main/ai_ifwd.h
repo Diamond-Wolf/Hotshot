@@ -17,7 +17,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifndef NDEBUG
 extern int	Do_ai_flag;
 extern int	Cvv_test;
-extern int	Cvv_last_time[MAX_OBJECTS * 10];
 extern int	Gun_point_hack;
 extern fix	Prev_boss_shields;
 #endif

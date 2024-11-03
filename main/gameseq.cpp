@@ -1030,6 +1030,11 @@ extern void turn_cheats_off();
 extern void init_seismic_disturbances(void);
 void StartNewLevelSecret(int level_num, int page_in_textures);
 
+extern std::vector<fix> Last_afterburner_time;
+extern std::vector<int8_t> Lighting_objects;
+extern std::vector<fix> object_light;
+extern std::vector<int> object_sig;
+
 //starts a new game on the given level
 void StartNewGame(int start_level)
 {
@@ -1040,8 +1045,9 @@ void StartNewGame(int start_level)
 	Next_level_num = 0;
 
 	Objects.clear();
-	Objects.resize(MAX_OBJECTS);
-
+	
+	ResizeObjectVectors(MAX_OBJECTS, false);
+	
 	InitPlayerObject();				//make sure player's object set up
 
 	init_player_stats_game();		//clear all stats

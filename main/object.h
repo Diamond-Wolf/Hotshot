@@ -495,6 +495,7 @@ struct RelinkCache {
 	printf("Relinked\n");\
 }*/
 
+void ResizeObjectVectors(int newSize, bool shrinkToFit);
 void RelinkSpecialObjectPointers(const RelinkCache& cache);
 void doObjectGC();
 

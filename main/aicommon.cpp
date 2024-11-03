@@ -53,7 +53,6 @@ int	Break_on_object = -1;
 #ifndef NDEBUG
 int	Do_ai_flag = 1;
 int	Cvv_test = 0;
-int	Cvv_last_time[MAX_OBJECTS * 10];
 int	Gun_point_hack = 0;
 fix	Prev_boss_shields = -1;
 #endif
@@ -84,7 +83,7 @@ vms_vector		Believed_player_pos;
 //	---------- John: These variables must be saved as part of gamesave. ----------
 int				Ai_initialized = 0;
 int				Overall_agitation;
-ai_local			Ai_local_info[MAX_OBJECTS * 10];
+std::vector<ai_local> Ai_local_info(MAX_OBJECTS);
 point_seg		Point_segs[MAX_POINT_SEGS];
 point_seg* Point_segs_free_ptr = Point_segs;
 ai_cloak_info	Ai_cloak_info[MAX_AI_CLOAK_INFO];

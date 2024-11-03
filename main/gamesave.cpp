@@ -57,6 +57,7 @@ void do_load_save_levels(int save);
 #include "laser.h"
 #include "misc/byteswap.h"
 #include "newcheat.h"
+#include "ai.h"
 
 #define SANTA
 
@@ -1096,6 +1097,11 @@ int8_t ConvertTrigger(short v29Flags) {
 		return -1;
 }
 
+extern std::vector<fix> Last_afterburner_time;
+extern std::vector<int8_t> Lighting_objects;
+extern std::vector<fix> object_light;
+extern std::vector<int> object_sig;
+
 // -----------------------------------------------------------------------------
 // Load game 
 // Loads all the relevant data for a level.
@@ -1227,12 +1233,9 @@ int LoadGameDataD1(CFILE* LoadFile)
 		if (cfseek(LoadFile, game_fileinfo.object_offset, SEEK_SET))
 			Error("Error seeking to object_offset in gamesave.c");
 
-		/*if (game_fileinfo.object_howmany > MAX_OBJECTS)
-			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);*/
-
 		if (game_fileinfo.object_howmany > Objects.size()) {
 			RelinkCache cache;
-			Objects.resize(game_fileinfo.object_howmany);
+			ResizeObjectVectors(game_fileinfo.object_howmany, false);
 			RelinkSpecialObjectPointers(cache);
 		}
 
@@ -1613,12 +1616,9 @@ int LoadGameDataD2(CFILE* LoadFile)
 		if (cfseek(LoadFile, game_fileinfo.object_offset, SEEK_SET))
 			Error("Error seeking to object_offset in gamesave.c");
 
-		/*if (game_fileinfo.object_howmany > MAX_OBJECTS)
-			Error("Level contains over MAX_OBJECTS(%d) objects.", MAX_OBJECTS);*/
-		
 		if (game_fileinfo.object_howmany > Objects.size()) {
 			RelinkCache cache;
-			Objects.resize(game_fileinfo.object_howmany);
+			ResizeObjectVectors(game_fileinfo.object_howmany, false);
 			RelinkSpecialObjectPointers(cache);
 		}
 

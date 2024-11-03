@@ -99,8 +99,13 @@ object* ConsoleObject;					//the object that is the player
 
 object* Viewer_save;
 
-//static short free_obj_list[MAX_OBJECTS * 10];
 static std::vector<short> free_obj_list(MAX_OBJECTS);
+
+
+extern std::vector<fix> Last_afterburner_time;
+extern std::vector<int8_t> Lighting_objects;
+extern std::vector<fix> object_light;
+extern std::vector<int> object_sig;
 
 //Data for objects
 
@@ -111,7 +116,6 @@ static std::vector<short> free_obj_list(MAX_OBJECTS);
 object	Object_minus_one;
 #endif
 
-//object Objects[MAX_OBJECTS];
 std::vector<object> Objects(MAX_OBJECTS);
 int num_objects = 0;
 int Highest_object_index = 0;
@@ -201,6 +205,28 @@ void object_goto_prev_viewer()
 #endif
 
 extern void verify_console_object();
+
+void ResizeObjectVectors(int newSize, bool shrinkToFit) {
+
+	Objects.resize(newSize);
+	free_obj_list.resize(newSize);
+	Ai_local_info.resize(newSize);
+	Last_afterburner_time.resize(newSize);
+	Lighting_objects.resize(newSize);
+	object_light.resize(newSize);
+	object_sig.resize(newSize);
+
+	if (shrinkToFit) {
+		Objects.shrink_to_fit();
+		free_obj_list.shrink_to_fit();
+		Ai_local_info.shrink_to_fit();
+		Last_afterburner_time.shrink_to_fit();
+		Lighting_objects.shrink_to_fit();
+		object_light.shrink_to_fit();
+		object_sig.shrink_to_fit();
+	}
+
+}
 
 void RelinkSpecialObjectPointers(const RelinkCache& cache) {
 
@@ -716,68 +742,6 @@ void render_object(object* obj)
 
 }
 
-//--unused-- void object_toggle_lock_targets()	{
-//--unused-- 	Object_draw_lock_boxes ^= 1;
-//--unused-- }
-
-//091494: //draw target boxes for nearby robots
-//091494: void object_render_targets()
-//091494: {
-//091494: 	g3s_point pt;
-//091494: 	uint8_t codes;
-//091494: 	int i;
-//091494: 	int radius,x,y;
-//091494: 
-//091494: 	if (Object_draw_lock_boxes==0) 
-//091494: 		return;
-//091494: 
-//091494: 	for (i=0; i<Object_num_close; i++ )	{
-//091494: 			
-//091494: 		codes = g3_rotate_point(&pt, &Object_close_ones[i]->pos );
-//091494: 		if ( !(codes & CC_BEHIND) )	{
-//091494: 			g3_project_point(&pt);
-//091494: 			if (pt.p3_flags & PF_PROJECTED)	{
-//091494: 				x = f2i(pt.p3_sx);
-//091494: 				y = f2i(pt.p3_sy);
-//091494: 				radius = f2i(fixdiv((grd_curcanv->cv_bitmap.bm_w*Object_close_ones[i]->size)/8,pt.z));
-//091494: 				gr_setcolor( BM_XRGB(0,31,0) );
-//091494: 				gr_box(x-radius,y-radius,x+radius,y+radius);
-//091494: 			}
-//091494: 		}
-//091494: 	}
-//091494: 	Object_num_close=0;
-//091494: }
-//--unused-- //draw target boxes for nearby robots
-//--unused-- void object_render_id(object * obj)
-//--unused-- {
-//--unused-- 	g3s_point pt;
-//--unused-- 	uint8_t codes;
-//--unused-- 	int x,y;
-//--unused-- 	int w, h, aw;
-//--unused-- 	char s[20], *s1;
-//--unused-- 
-//--unused-- 	s1 = network_get_player_name( obj-Objects );
-//--unused-- 
-//--unused-- 	if (s1)
-//--unused-- 		sprintf( s, "%s", s1 );
-//--unused-- 	else
-//--unused-- 		sprintf( s, "<%d>", obj->id );
-//--unused-- 
-//--unused-- 	codes = g3_rotate_point(&pt, &obj->pos );
-//--unused-- 	if ( !(codes & CC_BEHIND) )	{
-//--unused-- 		g3_project_point(&pt);
-//--unused-- 		if (pt.p3_flags & PF_PROJECTED)	{
-//--unused-- 			gr_get_string_size( s, &w, &h, &aw );
-//--unused-- 			x = f2i(pt.p3_sx) - w/2;
-//--unused-- 			y = f2i(pt.p3_sy) - h/2;
-//--unused-- 			if ( x>= 0 && y>=0 && (x+w)<=grd_curcanv->cv_bitmap.bm_w && (y+h)<grd_curcanv->cv_bitmap.bm_h )	{
-//--unused-- 				gr_set_fontcolor( BM_XRGB(0,31,0), -1 );
-//--unused-- 				gr_string( x, y, s );
-//--unused-- 			}
-//--unused-- 		}
-//--unused-- 	}
-//--unused-- }
-
 void check_and_fix_matrix(vms_matrix* m);
 
 #define vm_angvec_zero(v) (v)->p=(v)->b=(v)->h=0
@@ -812,7 +776,6 @@ void reset_player_object()
 	ConsoleObject->flags = 0;
 }
 
-
 //make object0 the player, setting all relevant fields
 void init_player_object()
 {
@@ -835,7 +798,6 @@ void init_objects()
 
 	collide_init();
 
-	//Objects.resize(MAX_OBJECTS);
 	mprintf((0, "Object vector size: %d\n", Objects.size()));
 
 	for (i = 0; i < Objects.size(); i++) 
@@ -1081,21 +1043,6 @@ int allocCheck = 0;
 int extraObjNum = -1;
 bool objectGCReady;
 
-void validateFreeObjecte() { // [DW] Hack: If an invalid entry is found, create one new object and bash all free object entries to it
-	for (int i = 0; i < free_obj_list.size(); i++) {
-		if (free_obj_list[i] >= Objects.size()) {
-			if (extraObjNum >= 0)
-				free_obj_list[i] = extraObjNum;
-			else {
-				extraObjNum = Objects.size();
-				Objects.push_back(object());
-				free_obj_list.push_back(extraObjNum);
-				free_obj_list[i] = extraObjNum;
-			}
-		}
-	}
-}
-
 //After this many object creations, run GC on the object list.
 #define OBJECT_GC_RATE 1000
 
@@ -1104,17 +1051,12 @@ void doObjectGC() {
 	allocCheck = 0;
 	objectGCReady = false;
 
-	//compress_objects();
-
 	if (Objects.size() <= MAX_OBJECTS) {
 		mprintf((0, "Skipping object GC. Not enough objects.\n"));
 		return;
 	}
 
-	int gcCap = Highest_object_index + MAX_OBJECTS;
-
-	/*mprintf((0, "Just compressing.\n"));
-	return;*/
+	int gcCap = num_objects + MAX_OBJECTS;
 
 	if (Objects.size() > gcCap) {
 
@@ -1124,18 +1066,14 @@ void doObjectGC() {
 
 		mprintf((0, "Performing object GC.\nOld capacity: %d, ", Objects.capacity()));
 
-		Objects.resize(gcCap);
-		Objects.shrink_to_fit();
-
-		free_obj_list.resize(gcCap);
-		free_obj_list.shrink_to_fit();
+		ResizeObjectVectors(gcCap, true);
 
 		mprintf((0, "New capacity: %d\n", Objects.capacity()));
 
 		RelinkSpecialObjectPointers(cache);
 
 	} else
-		mprintf((0, "Did not perform object GC.\nCapacity / size / cap (highest):\n%d / %d / %d (%d)\n", Objects.capacity(), Objects.size(), gcCap, Highest_object_index)); 
+		mprintf((0, "Did not perform object GC.\nCapacity / size / cap (num):\n%d / %d / %d (%d)\n", Objects.capacity(), Objects.size(), gcCap, num_objects)); 
 		
 }
 
@@ -1149,13 +1087,13 @@ int obj_allocate(void)
 	int objnum;
 	bool createAtEnd = false;
 
-	if (num_objects >= Objects.size() - 2) 
+	/*if (num_objects >= Objects.size() - 2) 
 	{
 		int	num_freed;
 
 		num_freed = free_object_slots(Objects.size() - 10);
 		mprintf((0, " *** Freed %i objects in frame %i\n", num_freed, FrameCount));
-	}
+	}*/
 
 	if (num_objects == Objects.size() - 1) 
 	{
@@ -1168,7 +1106,13 @@ int obj_allocate(void)
 		RelinkCache cache;
 
 		Objects.push_back(object());
-		//Objects.resize(Objects.size() * 1.5);
+		free_obj_list.push_back(free_obj_list.size());
+		Ai_local_info.push_back(ai_local());
+		Last_afterburner_time.push_back(0);
+		Lighting_objects.push_back(0);
+		object_light.push_back(0);
+		object_sig.push_back(0);
+		
 		num_objects++;
 
 		RelinkSpecialObjectPointers(cache); 
@@ -1956,7 +1900,8 @@ extern void fuelcen_check_for_goal(segment*);
 int check_volatile_wall(object* obj, int segnum, int sidenum, vms_vector* hitpt);
 
 //	Time at which this object last created afterburner blobs.
-fix	Last_afterburner_time[MAX_OBJECTS * 10];
+
+std::vector<fix> Last_afterburner_time(MAX_OBJECTS);
 
 //--------------------------------------------------------------------
 //move an object for the current frame
@@ -2268,35 +2213,32 @@ void compress_objects(void)
 			object** specialRelink = NULL;
 			int	segnum_copy;
 
-			if (&Objects[Highest_object_index] == Viewer)
-				specialRelink = &Viewer;
-			else if (&Objects[Highest_object_index] == Missile_viewer)
-				specialRelink = &Missile_viewer;
-			else if (&Objects[Highest_object_index] == Viewer_save)
-				specialRelink = &Viewer_save;
-			else if (&Objects[Highest_object_index] == old_viewer)
-				specialRelink = &old_viewer;
-			else if (&Objects[Highest_object_index] == prev_obj)
-				specialRelink = &prev_obj;
-			else if (&Objects[Highest_object_index] == Dead_player_camera)
-				specialRelink = &Dead_player_camera;
-			else if (&Objects[Highest_object_index] == slew_obj)
-				specialRelink = &slew_obj;
-			else {
-				for (int i = 0; i < MAX_PLAYERS; i++) {
-					if (&Objects[Highest_object_index] == Guided_missile[i]) {
-						specialRelink = &Guided_missile[i];
-						break;
+			{
+				if (&Objects[Highest_object_index] == Viewer)
+					specialRelink = &Viewer;
+				else if (&Objects[Highest_object_index] == Missile_viewer)
+					specialRelink = &Missile_viewer;
+				else if (&Objects[Highest_object_index] == Viewer_save)
+					specialRelink = &Viewer_save;
+				else if (&Objects[Highest_object_index] == old_viewer)
+					specialRelink = &old_viewer;
+				else if (&Objects[Highest_object_index] == prev_obj)
+					specialRelink = &prev_obj;
+				else if (&Objects[Highest_object_index] == Dead_player_camera)
+					specialRelink = &Dead_player_camera;
+				else if (&Objects[Highest_object_index] == slew_obj)
+					specialRelink = &slew_obj;
+				else {
+					for (int i = 0; i < MAX_PLAYERS; i++) {
+						if (&Objects[Highest_object_index] == Guided_missile[i]) {
+							specialRelink = &Guided_missile[i];
+							break;
+						}
 					}
 				}
 			}
 
-			/*if (Objects[Highest_object_index].next >= 0)
-				Objects[Objects[Highest_object_index].next].prev = start_i;
-
-			if (Objects[Highest_object_index].prev >= 0)
-				Objects[Objects[Highest_object_index].prev].next = start_i;*/
-
+			//Adjust objnum-as-pointer values embedded within objects
 			for (int i = 0; i < Highest_object_index; i++) {
 
 				if (Objects[i].next == Highest_object_index)
@@ -2327,6 +2269,11 @@ void compress_objects(void)
 			obj_unlink(Highest_object_index);
 
 			Objects[start_i] = Objects[Highest_object_index];
+			Ai_local_info[start_i] = Ai_local_info[Highest_object_index];
+			Last_afterburner_time[start_i] = Last_afterburner_time[Highest_object_index];
+			Lighting_objects[start_i] = Lighting_objects[Highest_object_index];
+			object_light[start_i] = object_light[Highest_object_index];
+			object_sig[start_i] = object_sig[Highest_object_index];
 
 #ifdef EDITOR
 			if (Cur_object_index == Highest_object_index)
@@ -2364,6 +2311,8 @@ void reset_objects(int n_objs, bool inLevel)
 
 	if (free_obj_list.size() != Objects.size())
 		free_obj_list.resize(Objects.size());
+
+	
 
 	for (i = num_objects; i < Objects.size(); i++) {
 		free_obj_list[i] = i;

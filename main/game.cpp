@@ -2866,7 +2866,7 @@ void show_free_objects(void)
 		int	i;
 		int	count=0;
 
-		mprintf((0, "Highest_object_index = %3i, MAX_OBJECTS = %3i, now used = ", Highest_object_index, MAX_OBJECTS));
+		mprintf((0, "Highest_object_index = %3i, Object vector size = %3i, now used = ", Highest_object_index, Objects.size()));
 
 		for (i=0; i<=Highest_object_index; i++)
 			if (Objects[i].type != OBJ_NONE)

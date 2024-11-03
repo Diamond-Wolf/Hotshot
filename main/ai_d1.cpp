@@ -1591,7 +1591,6 @@ int ai_restore_state_d1(FILE* fp)
 	Overall_agitation = file_read_int(fp);
 	int numObjects = file_read_int(fp);
 	Assert(Objects.size() == numObjects);
-	//Objects.resize(numObjects);
 	for (i = 0; i < numObjects; i++)
 		P_ReadAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)

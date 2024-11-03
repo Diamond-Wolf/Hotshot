@@ -80,7 +80,6 @@ fix Render_zoom = 0xB000;
 #endif
 
 #ifndef NDEBUG
-//uint8_t object_rendered[MAX_OBJECTS];
 std::vector<uint8_t> object_rendered(MAX_OBJECTS);
 #endif
 

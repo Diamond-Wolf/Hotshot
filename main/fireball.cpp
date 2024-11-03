@@ -54,7 +54,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define EXPLOSION_SCALE (F1_0*5/2)		//explosion is the obj size times this  
 
 fix	Flash_effect=0;
-//--unused-- ubyte	Frame_processed[MAX_OBJECTS];
 
 int	PK1=1, PK2=8;
 
@@ -353,7 +352,6 @@ object *object_create_debris(object *parent, int subobj_num)
 				&parent->orient,activeBMTable->models[parent->rtype.pobj_info.model_num].submodel_rads[subobj_num],
 				CT_DEBRIS,MT_PHYSICS,RT_POLYOBJ);
 
-	//if ((objnum < 0 ) && (Highest_object_index >= MAX_OBJECTS-1)) {
 	if (objnum < 0) {
 		mprintf((1, "Can't create object in object_create_debris.\n"));
 		Int3();

@@ -486,7 +486,7 @@ void robotmaker_proc(FuelCenter* robotcen)
 			for (objnum = Segments[segnum].objects; objnum != -1; objnum = Objects[objnum].next)
 			{
 				count++;
-				if (count > MAX_OBJECTS * 10)
+				if (count > Objects.size())
 				{
 					mprintf((0, "Object list in segment %d is circular.", segnum));
 					Int3();
