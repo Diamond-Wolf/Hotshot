@@ -1439,7 +1439,8 @@ void ai_path_garbage_collect(void)
 	int	num_path_objects = 0;
 	int	objnum;
 	int	objind;
-	obj_path		object_list[Objects.size()];
+	//obj_path		object_list[Objects.size()];
+	obj_path* object_list = new obj_path[Objects.size()];
 
 #ifndef NDEBUG
 	force_dump_ai_objects_all("***** Start ai_path_garbage_collect *****");
@@ -1506,6 +1507,8 @@ void ai_path_garbage_collect(void)
 	validate_all_paths();
 	}
 #endif
+
+	delete[] object_list;
 
 }
 
