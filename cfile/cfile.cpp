@@ -98,6 +98,15 @@ FILE* cfile_get_filehandle(const char* filename, const char* mode)
 	fp = fopen(temp, mode);
 #else
 	fp = fopen(filename, mode);
+
+	if (!fp) {
+#ifdef _WIN32
+		snprintf(temp, HOG_FILENAME_MAX * 2, ".\\missions\\%s", filename);
+#else
+		snprintf(temp, HOG_FILENAME_MAX * 2, "./missions/%s", filename);
+#endif
+		fp = fopen(temp, mode);
+	}
 #endif
 
 #ifndef _WINDOWS
