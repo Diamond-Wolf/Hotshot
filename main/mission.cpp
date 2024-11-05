@@ -230,9 +230,9 @@ char *get_parm_value(const char *parm,CFILE *f)
 		return NULL;
 }
 
-int ml_sort_func(mle *e0,mle *e1)
+int ml_sort_func(const mle e0, const mle e1)
 {
-	return _stricmp(e0->mission_name,e1->mission_name);
+	return _strnicmp(e0.mission_name, e1.mission_name, MISSION_NAME_LEN);
 }
 
 extern int HoardEquipped();
@@ -451,38 +451,35 @@ int build_mission_list(int anarchy_mode)
 		FileFindClose();
 	}
 
+	int i;
 
-	//move vertigo to top of mission list
-	/*
-	if (currentGame == G_DESCENT_2) {
-		int i;
-
-		for (i=special_count;i<count;i++)
-		{
+	for (i=special_count;i<count;i++)
+	{
 # if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-			if (!_strnicmp(Mission_list[i].filename, "d2x", 3))
+		if (!_strnicmp(Mission_list[i].filename, "d2x", 3))
 # else
-			if (!_strfcmp(Mission_list[i].filename,"D2X")) //swap!
+		if (!_strfcmp(Mission_list[i].filename,"D2X")) //swap!
 # endif
-			{
-				printf("found D2X");
-				mle temp;
+		{
+			printf("found D2X");
+			mle temp;
 
-				temp = Mission_list[special_count];
-				Mission_list[special_count] = Mission_list[i];
-				Mission_list[i] = temp;
+			temp = Mission_list[special_count];
+			Mission_list[special_count] = Mission_list[i];
+			Mission_list[i] = temp;
 
-				special_count++;
+			special_count++;
 
-				break;
-			}
+			break;
 		}
 	}
-	*/
-
-	if (count>special_count)
-		qsort(&Mission_list[special_count],count-special_count,sizeof(*Mission_list),
-				(int (*)( const void *, const void * ))ml_sort_func);
+	
+	if (count>special_count) {
+		//qsort(&Mission_list[special_count],count-special_count,sizeof(*Mission_list),
+		//		(int (*)( const void *, const void * ))ml_sort_func);
+		printf("MC %d %d\n", special_count, count);
+		std::sort(Mission_list + special_count, Mission_list + count, ml_sort_func);
+	}
 
 	load_mission(1);			//set built-in mission as default
 	num_missions = count;
