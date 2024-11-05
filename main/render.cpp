@@ -665,10 +665,10 @@ void do_render_object(int objnum, int window_num)
 	int count = 0;
 	int n;
 
+#ifndef NDEBUG
 	if (object_rendered.size() != Objects.size())
 		object_rendered.resize(Objects.size());
 
-#ifndef NDEBUG
 	if (object_rendered[objnum]) {		//already rendered this...
 		Int3();		//get Matt!!!
 		return;

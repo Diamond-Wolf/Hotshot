@@ -1127,7 +1127,9 @@ int spit_powerup(object * spitter, int id, int seed)
 #endif
 	}
 
+	size_t tempID = spitter - Objects.data();
 	objnum = obj_create(OBJ_POWERUP, id, spitter->segnum, &new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+	spitter = &Objects[tempID];
 
 	if (objnum < 0)
 	{

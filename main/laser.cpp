@@ -368,10 +368,14 @@ void create_omega_blobs(int firing_segnum, vms_vector *firing_pos, vms_vector *g
 		{
 			object		*objp;
 
+			size_t tempID = parent_objp - Objects.data();
+
 			last_segnum = segnum;
 			blob_objnum = obj_create(OBJ_WEAPON, OMEGA_ID, segnum, &temp_pos, NULL, 0, CT_WEAPON, MT_PHYSICS, RT_WEAPON_VCLIP );
 			if (blob_objnum == -1)
 				break;
+
+			parent_objp = &Objects[tempID];
 
 			last_created_objnum = blob_objnum;
 

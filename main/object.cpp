@@ -91,7 +91,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *  Global variables
  */
 
-extern int8_t WasRecorded[MAX_OBJECTS * 10];
+extern std::vector<int8_t> WasRecorded;
+extern std::vector<int8_t> ViewWasRecorded;
 
 uint8_t CollisionResult[MAX_OBJECT_TYPES][MAX_OBJECT_TYPES];
 
@@ -100,7 +101,6 @@ object* ConsoleObject;					//the object that is the player
 object* Viewer_save;
 
 static std::vector<short> free_obj_list(MAX_OBJECTS);
-
 
 extern std::vector<fix> Last_afterburner_time;
 extern std::vector<int8_t> Lighting_objects;
@@ -215,6 +215,8 @@ void ResizeObjectVectors(int newSize, bool shrinkToFit) {
 	Lighting_objects.resize(newSize);
 	object_light.resize(newSize);
 	object_sig.resize(newSize);
+	WasRecorded.resize(newSize);
+	ViewWasRecorded.resize(newSize);
 
 	if (shrinkToFit) {
 		Objects.shrink_to_fit();
@@ -224,6 +226,8 @@ void ResizeObjectVectors(int newSize, bool shrinkToFit) {
 		Lighting_objects.shrink_to_fit();
 		object_light.shrink_to_fit();
 		object_sig.shrink_to_fit();
+		WasRecorded.shrink_to_fit();
+		ViewWasRecorded.shrink_to_fit();
 	}
 
 }
@@ -1065,9 +1069,7 @@ void doObjectGC() {
 		RelinkCache cache;
 
 		mprintf((0, "Performing object GC.\nOld capacity: %d, ", Objects.capacity()));
-
 		ResizeObjectVectors(gcCap, true);
-
 		mprintf((0, "New capacity: %d\n", Objects.capacity()));
 
 		RelinkSpecialObjectPointers(cache);
@@ -1112,6 +1114,8 @@ int obj_allocate(void)
 		Lighting_objects.push_back(0);
 		object_light.push_back(0);
 		object_sig.push_back(0);
+		WasRecorded.push_back(0);
+		ViewWasRecorded.push_back(0);
 		
 		num_objects++;
 
@@ -1356,6 +1360,7 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 
 	segnum = find_point_seg(pos, segnum);		//find correct segment
 
+	
 	Assert(segnum != -1);
 
 	obj->segnum = -1;					//set to zero by memset, above
@@ -1791,7 +1796,10 @@ void start_player_death_sequence(object* player)
 
 	Player_time_of_death = GameTime;
 
+	size_t tempID = player - Objects.data();
 	objnum = obj_create(OBJ_CAMERA, 0, player->segnum, &player->pos, &player->orient, 0, CT_NONE, MT_NONE, RT_NONE);
+	player = &Objects[tempID];
+
 	Viewer_save = Viewer;
 	if (objnum != -1)
 		Viewer = Dead_player_camera = &Objects[objnum];
@@ -2250,17 +2258,31 @@ void compress_objects(void)
 				if (Objects[i].attached_obj == Highest_object_index)
 					Objects[i].attached_obj = start_i;
 
-				if (Objects[i].ctype.expl_info.next_attach == Highest_object_index)
-					Objects[i].ctype.expl_info.next_attach = start_i;
+				if (Objects[i].control_type == CT_WEAPON) {
 
-				if (Objects[i].ctype.expl_info.prev_attach == Highest_object_index)
-					Objects[i].ctype.expl_info.prev_attach = start_i;
+					if (Objects[i].ctype.laser_info.parent_num == Highest_object_index)
+						Objects[i].ctype.laser_info.parent_num = start_i;
 
-				if (Objects[i].ctype.expl_info.attach_parent == Highest_object_index)
-					Objects[i].ctype.expl_info.attach_parent = start_i;
+				} else if (Objects[i].control_type == CT_EXPLOSION || Objects[i].control_type == CT_DEBRIS) {
 
-				if (Objects[i].ctype.expl_info.delete_objnum == Highest_object_index)
-					Objects[i].ctype.expl_info.delete_objnum = start_i;
+					if (Objects[i].ctype.expl_info.next_attach == Highest_object_index)
+						Objects[i].ctype.expl_info.next_attach = start_i;
+
+					if (Objects[i].ctype.expl_info.prev_attach == Highest_object_index)
+						Objects[i].ctype.expl_info.prev_attach = start_i;
+
+					if (Objects[i].ctype.expl_info.attach_parent == Highest_object_index)
+						Objects[i].ctype.expl_info.attach_parent = start_i;
+
+					if (Objects[i].ctype.expl_info.delete_objnum == Highest_object_index)
+						Objects[i].ctype.expl_info.delete_objnum = start_i;
+					
+				} else if (Objects[i].control_type == CT_AI) {
+
+					if (Objects[i].ctype.ai_info.danger_laser_num == Highest_object_index)
+						Objects[i].ctype.ai_info.danger_laser_num = start_i;
+
+				}
 
 			}
 
@@ -2274,6 +2296,8 @@ void compress_objects(void)
 			Lighting_objects[start_i] = Lighting_objects[Highest_object_index];
 			object_light[start_i] = object_light[Highest_object_index];
 			object_sig[start_i] = object_sig[Highest_object_index];
+			WasRecorded[start_i] = WasRecorded[Highest_object_index];
+			ViewWasRecorded[start_i] = ViewWasRecorded[Highest_object_index];
 
 #ifdef EDITOR
 			if (Cur_object_index == Highest_object_index)

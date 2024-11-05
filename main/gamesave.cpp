@@ -1239,12 +1239,15 @@ int LoadGameDataD1(CFILE* LoadFile)
 			RelinkSpecialObjectPointers(cache);
 		}
 
-		for (i = 0; i < game_fileinfo.object_howmany; i++) 
+		for (i = 0; i < Objects.size(); i++) 
 		{
-			read_object(&Objects[i], LoadFile, game_top_fileinfo.fileinfo_version);
+			if (i < game_fileinfo.object_howmany) {
+				read_object(&Objects[i], LoadFile, game_top_fileinfo.fileinfo_version);
 
-			Objects[i].signature = Object_next_signature++;
-			verify_object(&Objects[i]);
+				Objects[i].signature = Object_next_signature++;
+				verify_object(&Objects[i]);
+			} else
+				Objects[i] = object();
 		}
 	}
 
@@ -1622,12 +1625,16 @@ int LoadGameDataD2(CFILE* LoadFile)
 			RelinkSpecialObjectPointers(cache);
 		}
 
-		for (i = 0; i < game_fileinfo.object_howmany; i++)
+		for (i = 0; i < Objects.size(); i++)
 		{
-			read_object(&Objects[i], LoadFile, game_top_fileinfo.fileinfo_version);
+			if (i < game_fileinfo.object_howmany) {
+				read_object(&Objects[i], LoadFile, game_top_fileinfo.fileinfo_version);
 
-			Objects[i].signature = Object_next_signature++;
-			verify_object(&Objects[i]);
+				Objects[i].signature = Object_next_signature++;
+				verify_object(&Objects[i]);
+			}
+			else
+				Objects[i] = object();
 		}
 	}
 

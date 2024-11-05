@@ -62,8 +62,13 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 	int objnum;
 	object *obj;
 
+	size_t tempID = objp - Objects.data();
+
 	objnum = obj_create( OBJ_FIREBALL,vclip_type,segnum,position,&vmd_identity_matrix,size,
 					CT_EXPLOSION,MT_NONE,RT_FIREBALL);
+
+	if (objp != NULL)
+		objp = &Objects[tempID];
 
 	if (objnum < 0 ) 
 	{
@@ -348,9 +353,13 @@ object *object_create_debris(object *parent, int subobj_num)
 
 	Assert((parent->type == OBJ_ROBOT) || (parent->type == OBJ_PLAYER)  );
 
+	size_t tempID = parent - Objects.data();
+
 	objnum = obj_create(OBJ_DEBRIS,0,parent->segnum,&parent->pos,
 				&parent->orient,activeBMTable->models[parent->rtype.pobj_info.model_num].submodel_rads[subobj_num],
 				CT_DEBRIS,MT_PHYSICS,RT_POLYOBJ);
+
+	parent = &Objects[tempID];
 
 	if (objnum < 0) {
 		mprintf((1, "Can't create object in object_create_debris.\n"));
@@ -1110,8 +1119,12 @@ void explode_object(object *hitobj,fix delay_time)
 
 		//create a placeholder object to do the delay, with id==-1
 
+		size_t tempID = hitobj - Objects.data();
+
 		objnum = obj_create( OBJ_FIREBALL,-1,hitobj->segnum,&hitobj->pos,&vmd_identity_matrix,0,
 						CT_EXPLOSION,MT_NONE,RT_NONE);
+
+		hitobj = &Objects[tempID];
 	
 		if (objnum < 0 ) {
 			maybe_delete_object(hitobj);		//no explosion, die instantly
