@@ -11,6 +11,7 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -228,11 +229,6 @@ char *get_parm_value(const char *parm,CFILE *f)
 		return get_value(buf);
 	else
 		return NULL;
-}
-
-int ml_sort_func(const mle e0, const mle e1)
-{
-	return _strnicmp(e0.mission_name, e1.mission_name, MISSION_NAME_LEN);
 }
 
 extern int HoardEquipped();
@@ -475,10 +471,10 @@ int build_mission_list(int anarchy_mode)
 	}
 	
 	if (count>special_count) {
-		//qsort(&Mission_list[special_count],count-special_count,sizeof(*Mission_list),
-		//		(int (*)( const void *, const void * ))ml_sort_func);
-		printf("MC %d %d\n", special_count, count);
-		std::sort(Mission_list + special_count, Mission_list + count, ml_sort_func);
+		std::sort(Mission_list + special_count, Mission_list + count, [](const mle& a, const mle& b) {
+			auto res = _strnicmp(a.mission_name + 4, b.mission_name + 4, MISSION_NAME_LEN - 4);
+			return res < 0;
+		});
 	}
 
 	load_mission(1);			//set built-in mission as default
