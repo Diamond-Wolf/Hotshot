@@ -349,7 +349,7 @@ void start_endlevel_sequence()
 		
 		if (CurrentDataVersion == DataVer::DEMO || currentGame == G_DESCENT_1)
 		{
-			if (movie_played == MOVIE_NOT_PLAYED) //don't have movie.  Do rendered sequence
+			if (movie_played == MOVIE_NOT_PLAYED && endlevel_data_loaded) //don't have movie.  Do rendered sequence
 			{
 				start_rendered_endlevel_sequence();
 				return;
@@ -1511,7 +1511,8 @@ try_again:
 		if (!ifile)
 			if (level_num==1) 
 			{
-				Error("Cannot load file text of binary version of <%s>",filename);
+				Warning("Cannot load file text of binary version of <%s>",filename);
+				return;
 			}
 			else {
 				level_num = 1;

@@ -32,6 +32,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main/songs.h" //for D1 descent.sng patch hack
 #include "platform/mono.h"
 
+extern bool noHog;
+
 typedef struct hogfile
 {
 	char	name[13];
@@ -86,16 +88,17 @@ FILE* cfile_get_filehandle(const char* filename, const char* mode)
 	FILE* fp;
 	char temp[HOG_FILENAME_MAX * 2];
 
-	#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	if (!_strnicmp(filename, "descent.hog", 11)) {
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+	if (!_strnicmp(filename, "descent.hog", 11)) { //Check data dir instead for descent.hog
 			get_full_file_path(temp, "descent.hog", CHOCOLATE_SYSTEM_FILE_DIR);
-			//cfile_init_hogfile(HogFilename, HogFiles, &Num_hogfiles);
-			//Hogfile_initialized = 1;
 			return cfile_get_filehandle(temp, mode);
 	}
-	#endif
 
+	get_full_file_path(temp, filename, CHOCOLATE_MISSIONS_DIR);
+	fp = fopen(temp, mode);
+#else
 	fp = fopen(filename, mode);
+#endif
 
 #ifndef _WINDOWS
 	if (!fp)
@@ -373,7 +376,7 @@ CFILE* cfopen(const char* filename, const char* mode)
 		* p = '\0';
 
 	//[ISB] descent 2 code for handling '\x01'
-	if (filename[0] != '\x01')
+	if (filename[0] != '\x01' || noHog)
 	{
 		fp = cfile_get_filehandle(filename, mode);		// Check for non-hog file first...
 	}

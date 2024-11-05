@@ -609,13 +609,8 @@ int load_mission(int mission_num)
 
 			found_hogfile = cfile_use_alternate_hogfile(buf);
 
-			#ifdef RELEASE				//for release, require mission to be in hogfile
-			if (! found_hogfile) {
-				cfclose(mfile);
-				Current_mission_num = -1;
-				return 0;
-			}
-			#endif
+			noHog = !found_hogfile;
+
 		}
 
 		//init vars

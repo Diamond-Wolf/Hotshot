@@ -890,7 +890,34 @@ void do_new_game_menu()
 				default_mission = i;
 		}
 
-		new_mission_num = newmenu_listbox1("New Game\n\nSelect mission", n_missions, m, 1, default_mission, NULL);
+		new_mission_num = newmenu_listbox1("New Game\n\nSelect mission", n_missions, m, 1, default_mission, [](int* citem, int* nitems, char** items, int* keypress){
+			if (*keypress > 0) 
+			{
+				int ascii = key_to_ascii(*keypress);
+				if (ascii < 255) 
+				{
+					int cc, cc1;
+					cc = cc1 = *citem + 1;
+					if (cc1 < 0)  cc1 = 0;
+					if (cc1 >= *nitems)  cc1 = 0;
+					while (1)
+					{
+						if (cc < 0) cc = 0;
+						if (cc >= *nitems) cc = 0;
+						if (*citem == cc) break;
+
+						if (toupper(items[cc][4]) == toupper(ascii)) 
+						{
+							*citem = cc;
+							break;
+						}
+						cc++;
+					}
+				}
+			}
+
+			return 0;
+		});
 
 		if (new_mission_num == -1)
 			return;         //abort!

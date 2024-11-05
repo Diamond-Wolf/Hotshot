@@ -49,6 +49,8 @@ extern char *Current_mission_filename,*Current_mission_longname;
 extern char Level_names[MAX_LEVELS_PER_MISSION][FILENAME_LEN];
 extern char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
 
+inline bool noHog;
+
 //fills in the global list of missions.  Returns the number of missions
 //in the list.  If anarchy_mode set, don't include non-anarchy levels.
 //if there is only one mission, this function will call load_mission on it.
