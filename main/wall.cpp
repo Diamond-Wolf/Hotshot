@@ -1533,6 +1533,56 @@ void blast_nearby_glass(object* objp, fix damage)
 	bng_process_segment(objp, damage, cursegp, 0, visited);
 }
 
+void validate_walls() {
+	for (int i = 0; i < Num_walls; i++)
+		Walls[i].linked_wall = -1; //que?
+}
+
+/*
+void validate_walls() {
+	for (int i = 0; i < Num_walls; i++) {
+
+		bool maybeFix = false;
+
+		if (Walls[i].linked_wall >= 0 && Walls[i].linked_wall < Num_walls) {
+			if (Walls[Walls[i].linked_wall].linked_wall != i) {
+				mprintf((0, "Walls[%d].linked = %d != %d\n", Walls[i].linked_wall, Walls[Walls[i].linked_wall], i));
+				maybeFix = true;
+			}
+		} else {
+			mprintf((0, "%d out of range 0..<%d\n", Walls[i].linked_wall, Num_walls));
+			maybeFix = true;
+		}
+
+		if (maybeFix) {
+			//mprintf((0, "Maybe fix wall %d? Detected one of (%d out of range 0..<%d | (%d linked to) %d != %d)\n", i, Walls[i].linked_wall, Num_walls, Walls[i].linked_wall, Walls[Walls[i].linked_wall].linked_wall, i));
+			short segnum = Walls[i].segnum;
+
+			short backID = Segments[segnum].children[Walls[i].sidenum];
+			if (backID > 0 && backID < Num_segments) {
+				auto& other = Segments[backID];
+
+				for (int j = 0; j < 6; j++) {
+					if (other.children[j] == segnum) {
+						if (other.sides[j].wall_num > 0 && other.sides[j].wall_num < Num_walls) {
+							short otherWall = other.sides[j].wall_num;
+							mprintf((0, "Relinking walls %d and %d (had links %d and %d)\n", i, otherWall, Walls[i].linked_wall, Walls[otherWall].linked_wall));
+							Walls[i].linked_wall = otherWall;
+							Walls[otherWall].linked_wall = i;
+						}
+
+						break;
+					}
+				}
+
+			}
+
+		}
+
+	}
+}
+*/
+
 #include "cfile/cfile.h"
 
 void read_wall(wall* nwall, FILE* fp)

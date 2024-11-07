@@ -103,9 +103,10 @@ int multi_message_index = 0;
 
 char multibuf[MAX_MULTI_MESSAGE_LEN + 4];                // This is where multiplayer message are built
 
-short remote_to_local[MAX_NUM_NET_PLAYERS][MAX_OBJECTS * 10];  // Remote object number for each local object
-short local_to_remote[MAX_OBJECTS * 10];
-int8_t  object_owner[MAX_OBJECTS * 10];   // Who created each object in my universe, -1 = loaded at start
+std::vector<short> local_to_remote(MAX_OBJECTS);
+std::vector<int8_t>  object_owner(MAX_OBJECTS);   // Who created each object in my universe, -1 = loaded at start
+// [DW] It's an array! Of vectors!
+std::vector<short> remote_to_local[MAX_NUM_NET_PLAYERS];  // Remote object number for each local object
 
 int     Net_create_objnums[MAX_NET_CREATE_OBJECTS]; // For tracking object creation that will be sent to remote
 int     Net_create_loc = 0;  // pointer into previous array
@@ -281,6 +282,12 @@ void init_hoard_data();
 void multi_apply_goal_textures();
 void multi_bad_restore();
 
+void InitRemoteToLocal(size_t initialSize) {
+	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++) {
+		remote_to_local[i] = std::vector<short>(initialSize);
+	}
+}
+
 //
 //  Functions that replace what used to be macros
 //              
@@ -300,7 +307,7 @@ int objnum_remote_to_local(int remote_objnum, int owner)
 	if (owner == -1)
 		return(remote_objnum);
 
-	if ((remote_objnum < 0) || (remote_objnum >= MAX_OBJECTS * 10))
+	if ((remote_objnum < 0) || (remote_objnum >= local_to_remote.size()))
 		return(-1);
 
 	result = remote_to_local[owner][remote_objnum];
@@ -368,8 +375,8 @@ map_objnum_local_to_remote(int local_objnum, int remote_objnum, int owner)
 	Assert(remote_objnum > -1);
 	Assert(owner > -1);
 	Assert(owner != Player_num);
-	Assert(local_objnum < MAX_OBJECTS * 10);
-	Assert(remote_objnum < MAX_OBJECTS * 10);
+	Assert(local_objnum < local_to_remote.size());
+	Assert(remote_objnum < local_to_remote.size());
 
 	object_owner[local_objnum] = owner;
 
@@ -379,13 +386,12 @@ map_objnum_local_to_remote(int local_objnum, int remote_objnum, int owner)
 	return;
 }
 
-void
-map_objnum_local_to_local(int local_objnum)
+void map_objnum_local_to_local(int local_objnum)
 {
 	// Add a mapping for our locally created objects
 
 	Assert(local_objnum > -1);
-	Assert(local_objnum < MAX_OBJECTS * 10);
+	Assert(local_objnum < local_to_remote.size());
 
 	object_owner[local_objnum] = Player_num;
 	remote_to_local[Player_num][local_objnum] = local_objnum;

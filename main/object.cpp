@@ -218,6 +218,13 @@ void ResizeObjectVectors(int newSize, bool shrinkToFit) {
 	WasRecorded.resize(newSize);
 	ViewWasRecorded.resize(newSize);
 
+#ifdef NETWORK
+	local_to_remote.resize(newSize);
+	object_owner.resize(newSize);
+	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++)
+		remote_to_local[i].resize(newSize);
+#endif
+
 	if (shrinkToFit) {
 		Objects.shrink_to_fit();
 		free_obj_list.shrink_to_fit();
@@ -228,6 +235,14 @@ void ResizeObjectVectors(int newSize, bool shrinkToFit) {
 		object_sig.shrink_to_fit();
 		WasRecorded.shrink_to_fit();
 		ViewWasRecorded.shrink_to_fit();
+
+#ifdef NETWORK
+		local_to_remote.shrink_to_fit();
+		object_owner.shrink_to_fit();
+		for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++)
+			remote_to_local[i].shrink_to_fit();
+#endif
+		
 	}
 
 }
@@ -1167,14 +1182,13 @@ void obj_free(int objnum)
 int free_object_slots(int num_used)
 {
 	int	i, olind;
-	//int	obj_list[MAX_OBJECTS];
 	std::vector<int> obj_list(Objects.size());
 	int	num_already_free, num_to_free, original_num_to_free;
 
 	olind = 0;
 	num_already_free = Objects.size() - Highest_object_index - 1;
 
-	if (MAX_OBJECTS - num_already_free < num_used)
+	if (Objects.size() - num_already_free < num_used)
 		return 0;
 
 	for (i = 0; i <= Highest_object_index; i++) 
@@ -1182,7 +1196,7 @@ int free_object_slots(int num_used)
 		if (Objects[i].flags & OF_SHOULD_BE_DEAD) 
 		{
 			num_already_free++;
-			if (MAX_OBJECTS - num_already_free < num_used)
+			if (Objects.size() - num_already_free < num_used)
 				return num_already_free;
 		}
 		else
@@ -1190,7 +1204,7 @@ int free_object_slots(int num_used)
 			{
 			case OBJ_NONE:
 				num_already_free++;
-				if (MAX_OBJECTS - num_already_free < num_used)
+				if (Objects.size() - num_already_free < num_used)
 					return 0;
 				break;
 			case OBJ_WALL:
@@ -2185,25 +2199,10 @@ void object_move_all()
 
 }
 
-
-//--unused-- // -----------------------------------------------------------
-//--unused-- //	Moved here from eobject.c on 02/09/94 by MK.
-//--unused-- int find_last_obj(int i)
-//--unused-- {
-//--unused-- 	for (i=MAX_OBJECTS;--i>=0;)
-//--unused-- 		if (Objects[i].type != OBJ_NONE) break;
-//--unused-- 
-//--unused-- 	return i;
-//--unused-- 
-//--unused-- }
-
-
 //make object array non-sparse
 void compress_objects(void)
 {
 	int start_i;	//,last_i;
-
-	//last_i = find_last_obj(MAX_OBJECTS);
 
 	extern object* Missile_viewer;
 	extern object* Viewer_save;

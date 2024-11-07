@@ -86,16 +86,26 @@ void cfile_use_alternate_hogdir(const char* path)
 FILE* cfile_get_filehandle(const char* filename, const char* mode)
 {
 	FILE* fp;
+
+#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+	char temp[CHOCOLATE_MAX_FILE_PATH_SIZE];
+#else
 	char temp[HOG_FILENAME_MAX * 2];
+#endif
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	if (!_strnicmp(filename, "descent.hog", 11)) { //Check data dir instead for descent.hog
+	/*if (!_strnicmp(filename, "descent.hog", 11)) { //Check data dir instead for descent.hog
 			get_full_file_path(temp, "descent.hog", CHOCOLATE_SYSTEM_FILE_DIR);
 			return cfile_get_filehandle(temp, mode);
-	}
+	}*/
 
-	get_full_file_path(temp, filename, CHOCOLATE_MISSIONS_DIR);
+	get_full_file_path(temp, filename, CHOCOLATE_SYSTEM_FILE_DIR);
 	fp = fopen(temp, mode);
+
+	if (!fp) {
+		get_full_file_path(temp, filename, CHOCOLATE_MISSIONS_DIR);
+		fp = fopen(temp, mode);
+	}
 #else
 	fp = fopen(filename, mode);
 
@@ -284,7 +294,7 @@ FILE* cfile_find_libfile(const char* name, int* length)
 
 	if (currentGame == G_DESCENT_1) { //Search the correct game's files first
 
-		//mprintf((1, "\nCurrent game is D1, trying D1 first (%s)\n", name));
+		mprintf((1, "\nCurrent game is D1, trying D1 first (%s)\n", name));
 
 		fp = FindFileInD1(name, length);
 		if (fp) 
@@ -294,7 +304,7 @@ FILE* cfile_find_libfile(const char* name, int* length)
 
 	} else {
 
-		//mprintf((1, "\nCurrent game is D2, trying D2 first (%s)\n", name));
+		mprintf((1, "\nCurrent game is D2, trying D2 first (%s)\n", name));
 
 		fp = FindFileInD2(name, length);
 		if (fp)

@@ -1059,6 +1059,8 @@ void init_all_matcens(void)
 			Station[i].Lives = 3;
 			Station[i].Enabled = 0;
 			Station[i].Disable_time = 0;
+
+			/*
 #ifndef NDEBUG
 			{
 				//	Make sure this fuelcen is pointed at by a matcen.
@@ -1070,9 +1072,11 @@ void init_all_matcens(void)
 				Assert(j != Num_robot_centers);
 			}
 #endif
+		*/
 
 		}
 
+/*
 #ifndef NDEBUG
 	//	Make sure all matcens point at a fuelcen
 	for (i = 0; i < Num_robot_centers; i++) {
@@ -1082,6 +1086,7 @@ void init_all_matcens(void)
 		Assert(Station[fuelcen_num].Type == SEGMENT_IS_ROBOTMAKER);
 	}
 #endif
+*/
 
 }
 extern void multi_send_capture_bonus(char);

@@ -217,9 +217,9 @@ extern int Network_message_reciever;
 
 // Used to map network to local object numbers
 
-extern short remote_to_local[MAX_NUM_NET_PLAYERS][MAX_OBJECTS * 10];  // Network object num for each 
-extern short local_to_remote[MAX_OBJECTS * 10];   // Local object num for each network objnum
-extern int8_t object_owner[MAX_OBJECTS * 10]; // Who 'owns' each local object for network purposes
+extern std::vector<short> remote_to_local[MAX_NUM_NET_PLAYERS];  // Network object num for each 
+extern std::vector<short> local_to_remote;   // Local object num for each network objnum
+extern std::vector<int8_t> object_owner; // Who 'owns' each local object for network purposes
 
 extern int multi_in_menu; // Flag to tell if we're executing GameLoop from within a newmenu.
 extern int multi_leave_menu;
@@ -403,5 +403,6 @@ void change_playernum_to(int new_pnum);
 #define MISSILE_ADJUST	100
 #define FLARE_ADJUST		127
 
+void InitRemoteToLocal(size_t initialSize);
 
 #endif

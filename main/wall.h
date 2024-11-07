@@ -240,6 +240,8 @@ void kill_stuck_objects(int wallnum);
 void start_wall_cloak(segment *seg, int side);
 void start_wall_decloak(segment *seg, int side);
 
+void validate_walls();
+
 #include <stdio.h>
 
 //Reads a wall from the specified file. 

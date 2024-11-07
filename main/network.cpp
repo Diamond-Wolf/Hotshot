@@ -64,6 +64,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "playsave.h"
 #include "misc/rand.h"
 #include "gamestat.h"
+#include "songs.h"
 
 #define LHX(x)          ((x)*(MenuHires?2:1))
 #define LHY(y)          ((y)*(MenuHires?2.4:1))
@@ -2338,7 +2339,7 @@ void network_read_object_packet(char* data)
 				if (obj->segnum != -1)
 					obj_unlink(objnum);
 				Assert(obj->segnum == -1);
-				Assert(objnum < MAX_OBJECTS * 10);
+				Assert(objnum < local_to_remote.size());
 				netmisc_decode_object(data, &loc, obj);
 				segnum = obj->segnum;
 				obj->next = obj->prev = obj->segnum = -1;
@@ -3245,6 +3246,7 @@ void network_start_game()
 
 	if (network_select_players())
 	{
+		songs_init(); //reset descent.sng
 		StartNewLevel(Netgame.levelnum, 0);
 	}
 	else

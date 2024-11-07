@@ -95,8 +95,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //Does demo start automatically?
 int Auto_demo = 0;
 
-//int8_t WasRecorded[MAX_OBJECTS * 10];
-//int8_t ViewWasRecorded[MAX_OBJECTS * 10];
 std::vector<int8_t> WasRecorded(MAX_OBJECTS);
 std::vector<int8_t> ViewWasRecorded(MAX_OBJECTS);
 int8_t RenderingWasRecorded[32];

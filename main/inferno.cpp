@@ -678,6 +678,7 @@ Here:
 	}
 
 #ifdef NETWORK
+	InitRemoteToLocal(MAX_OBJECTS);
 	do_network_init();
 #endif
 

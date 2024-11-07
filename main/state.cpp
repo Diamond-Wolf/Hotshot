@@ -1529,9 +1529,9 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 
 		Object_next_signature = 0;
 
-		if (Highest_object_index >= Objects.size()) {
+		if (Highest_object_index + 1 != Objects.size()) {
 			RelinkCache cache;
-			ResizeObjectVectors(Highest_object_index, false);
+			ResizeObjectVectors(Highest_object_index + 1, false);
 			RelinkSpecialObjectPointers(cache);
 		}
 		

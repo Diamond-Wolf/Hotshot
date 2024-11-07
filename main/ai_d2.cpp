@@ -1315,6 +1315,9 @@ int ai_restore_state_d2(FILE* fp, int version)
 	Ai_initialized = file_read_int(fp);
 	Overall_agitation = file_read_int(fp);
 	int numObjects = file_read_int(fp);
+	if (numObjects != Objects.size()) {
+		printf("<%d %d>\n", Objects.size(), numObjects);
+	}
 	Assert(Objects.size() == numObjects);
 	for (i = 0; i < numObjects; i++)
 		P_ReadAILocals(&Ai_local_info[i], fp);

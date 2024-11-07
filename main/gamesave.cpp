@@ -1268,6 +1268,8 @@ int LoadGameDataD1(CFILE* LoadFile)
 				else 
 					read_v16_wall(&Walls[i], LoadFile);
 			}
+
+			validate_walls();
 		}
 	}
 	
@@ -1683,6 +1685,8 @@ int LoadGameDataD2(CFILE* LoadFile)
 					read_v16_wall(&Walls[i], LoadFile);
 				}
 			}
+
+			validate_walls();
 		}
 	}
 
