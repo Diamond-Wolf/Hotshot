@@ -196,9 +196,9 @@ int segment_is_reachable(int curseg, int sidenum)
 void create_bfs_list(int start_seg, short bfs_list[], int *length, int max_segs)
 {
 	int	i, head, tail;
-	int8_t	visited[MAX_SEGMENTS];
+	int8_t* visited = new int8_t[Segments.size()];
 
-	for (i=0; i<MAX_SEGMENTS; i++)
+	for (i=0; i<Segments.size(); i++)
 		visited[i] = 0;
 
 	head = 0;
@@ -230,13 +230,15 @@ void create_bfs_list(int start_seg, short bfs_list[], int *length, int max_segs)
 					if (head >= max_segs)
 						break;
 					visited[connected_seg] = 1;
-					Assert(head < MAX_SEGMENTS);
+					Assert(head < Segments.size());
 				}
 			}
 		}
 	}
 
 	*length = head;
+
+	delete[] visited;
 	
 }
 
@@ -665,18 +667,20 @@ int exists_in_mine_2(int segnum, int objtype, int objid, int special)
 int exists_in_mine(int start_seg, int objtype, int objid, int special)
 {
 	int	segindex, segnum;
-	short	bfs_list[MAX_SEGMENTS];
+	short* bfs_list = new short[Segments.size()];
 	int	length;
 
 //	mprintf((0, "exists_in_mine, type == %i, id == %i\n", objtype, objid));
 
-	create_bfs_list(start_seg, bfs_list, &length, MAX_SEGMENTS);
+	create_bfs_list(start_seg, bfs_list, &length, Segments.size());
 
 	if (objtype == FUELCEN_CHECK) {
 		for (segindex=0; segindex<length; segindex++) {
 			segnum = bfs_list[segindex];
-			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN)
+			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN) {
+				delete[] bfs_list;
 				return segnum;
+			}
 		}
 	} else {
 		for (segindex=0; segindex<length; segindex++) {
@@ -685,8 +689,10 @@ int exists_in_mine(int start_seg, int objtype, int objid, int special)
 			segnum = bfs_list[segindex];
 
 			objnum = exists_in_mine_2(segnum, objtype, objid, special);
-			if (objnum != -1)
+			if (objnum != -1) {
+				delete[] bfs_list;
 				return objnum;
+			}
 
 		}
 	}
@@ -696,17 +702,23 @@ int exists_in_mine(int start_seg, int objtype, int objid, int special)
 	//	which the buddybot doesn't understand.
 	if (objtype == FUELCEN_CHECK) {
 		for (segnum=0; segnum<=Highest_segment_index; segnum++)
-			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN)
+			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN) {
+				delete[] bfs_list;
 				return -2;
+			}
 	} else {
 		for (segnum=0; segnum<=Highest_segment_index; segnum++) {
 			int	objnum;
 
 			objnum = exists_in_mine_2(segnum, objtype, objid, special);
-			if (objnum != -1)
+			if (objnum != -1) {
+				delete[] bfs_list;
 				return -2;
+			}
 		}
 	}
+
+	delete[] bfs_list;
 
 	return -1;
 }

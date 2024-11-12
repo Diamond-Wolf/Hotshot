@@ -2442,8 +2442,13 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 	slide_textures();
 	flicker_lights();
 
-	if (objectGCReady)
+	if (objectGCReady) {
 		doObjectGC();
+#ifdef NETWORK
+		if (Game_mode & GM_MULTI)
+			DoRemoteToLocalGC();
+#endif
+	}
 
 	//!!hoard_light_pulse();		//do cool hoard light pulsing
 
@@ -2473,7 +2478,7 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 //!!}
 
 
-uint8_t	Slide_segs[MAX_SEGMENTS];
+std::vector<uint8_t> Slide_segs(MAX_SEGMENTS);
 int	Slide_segs_computed;
 
 void compute_slide_segs(void)

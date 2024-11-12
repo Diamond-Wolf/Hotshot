@@ -103,8 +103,9 @@ int multi_message_index = 0;
 
 char multibuf[MAX_MULTI_MESSAGE_LEN + 4];                // This is where multiplayer message are built
 
-std::vector<short> local_to_remote(MAX_OBJECTS);
 std::vector<int8_t>  object_owner(MAX_OBJECTS);   // Who created each object in my universe, -1 = loaded at start
+std::vector<short> local_to_remote(MAX_OBJECTS);
+
 // [DW] It's an array! Of vectors!
 std::vector<short> remote_to_local[MAX_NUM_NET_PLAYERS];  // Remote object number for each local object
 
@@ -231,6 +232,7 @@ int message_length[MULTI_MAX_TYPE + 1] = {
    2, // MULTI_GOT_ORB
 	12, // MULTI_DROP_ORB
 	4,  // MULTI_PLAY_BY_PLAY
+	1 + sizeof(uint32_t) + (sizeof(uint32_t) * MAX_MULTI_OBJ_REMAPS * 2) //MULTI_REMAP_REMOTE_OBJECTS
 };
 
 char PowerupsInMine[MAX_POWERUP_TYPES], MaxPowerupsAllowed[MAX_POWERUP_TYPES];
@@ -283,8 +285,40 @@ void multi_apply_goal_textures();
 void multi_bad_restore();
 
 void InitRemoteToLocal(size_t initialSize) {
-	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++) {
+	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++) 
 		remote_to_local[i] = std::vector<short>(initialSize);
+}
+
+void RemapRemoteObjects(char* buf) {
+
+	size_t pos = 1;
+
+	uint16_t playernum = *reinterpret_cast<uint16_t*>(buf + 1);
+	int32_t vectorSize = *reinterpret_cast<int32_t*>(buf + 1 + sizeof(int16_t));
+	uint32_t amount = *reinterpret_cast<uint32_t*>(buf + 1 + sizeof(uint16_t) + sizeof(uint32_t));
+
+	if (amount > MAX_MULTI_OBJ_REMAPS) {
+		Error("Bad remap request: Attempting to remap %d objects, but only %d allowed", amount, MAX_MULTI_OBJ_REMAPS);
+	}
+
+	if (vectorSize >= 0) {
+		remote_to_local[playernum].resize(vectorSize);
+	}
+
+	uint32_t* remapBuffer = reinterpret_cast<uint32_t*>(buf + 1 + sizeof(uint32_t));
+
+	for (int i = 0; i < amount; i += 2) {
+		if (remapBuffer[i+1] > remote_to_local[playernum].size())
+			Error("Bad remap request: Remapping to object %d when max object is %d");
+		remote_to_local[playernum][remapBuffer[i]] = remote_to_local[playernum][remapBuffer[i+1]];
+	}
+
+}
+
+void DoRemoteToLocalGC() {
+	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++) {
+		if (remote_to_local[i].size() * 2.5 < remote_to_local[i].capacity())
+			remote_to_local[i].shrink_to_fit();
 	}
 }
 
@@ -376,7 +410,13 @@ map_objnum_local_to_remote(int local_objnum, int remote_objnum, int owner)
 	Assert(owner > -1);
 	Assert(owner != Player_num);
 	Assert(local_objnum < local_to_remote.size());
-	Assert(remote_objnum < local_to_remote.size());
+	//Assert(remote_objnum < local_to_remote.size());
+	if (remote_objnum >= remote_to_local[owner].size()) {
+		size_t off = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		remote_to_local[owner].resize(remote_objnum + 1);
+		size_t newsize = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		memset(reinterpret_cast<int8_t*>(remote_to_local[Player_num].data()) + off, -1, newsize);
+	}
 
 	object_owner[local_objnum] = owner;
 
@@ -392,6 +432,13 @@ void map_objnum_local_to_local(int local_objnum)
 
 	Assert(local_objnum > -1);
 	Assert(local_objnum < local_to_remote.size());
+
+	if (local_objnum >= remote_to_local[Player_num].size()) {
+		size_t off = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		remote_to_local[Player_num].resize(local_objnum + 1);
+		size_t newsize = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		memset(reinterpret_cast<int8_t*>(remote_to_local[Player_num].data()) + off, -1, newsize);
+	}
 
 	object_owner[local_objnum] = Player_num;
 	remote_to_local[Player_num][local_objnum] = local_objnum;
@@ -959,6 +1006,49 @@ multi_send_data(char* buf, int len, int repeat)
 }
 
 extern void AdjustMineSpawn();
+
+void multi_send_remote_remap(size_t finalSize, const std::vector<std::pair<uint32_t, uint32_t>>& maps) {
+	
+	int numMaps = maps.size();
+	int mapReached = 0;
+	int numLoops = numMaps / MAX_MULTI_OBJ_REMAPS;
+	const size_t bufferLen = 1 + sizeof(uint16_t) + sizeof(uint32_t) + (sizeof(uint32_t) * MAX_MULTI_OBJ_REMAPS);
+	char buffer[bufferLen];
+
+	for (int i = 0; i < numLoops; i++) {
+		memset(buffer, 0, bufferLen);
+		buffer[0] = MULTI_REMOTE_OBJECT_REMAP;
+		*reinterpret_cast<uint16_t*>(buffer + 1) = (uint16_t)Player_num;
+		*reinterpret_cast<int32_t*>(buffer + 1 + sizeof(uint16_t)) = -1;
+		*reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(uint32_t)) = MAX_MULTI_OBJ_REMAPS;
+		for (int j = 0; j < MAX_MULTI_OBJ_REMAPS; j++) {
+			uint32_t* write = reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(int32_t) + sizeof(uint32_t) + (2 * j * sizeof(uint32_t)));
+			auto& map = maps[i * MAX_MULTI_OBJ_REMAPS + j];
+			write[0] = map.first;
+			write[1] = map.second;
+			mapReached++;
+		}
+
+		multi_send_data(buffer, bufferLen, 1);
+	}
+
+	//send trailing data
+	memset(buffer, 0, bufferLen);
+	buffer[0] = MULTI_REMOTE_OBJECT_REMAP;
+	*reinterpret_cast<uint16_t*>(buffer + 1) = (uint16_t)Player_num;
+	*reinterpret_cast<int32_t*>(buffer + 1 + sizeof(uint16_t)) = finalSize;
+	*reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(uint32_t)) = numMaps - mapReached;
+	for (int j = 0; j < MAX_MULTI_OBJ_REMAPS; j++) {
+		uint32_t* write = reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(int32_t) + sizeof(uint32_t) + (2 * j * sizeof(uint32_t)));
+		auto& map = maps[numLoops * MAX_MULTI_OBJ_REMAPS + j];
+		write[0] = map.first;
+		write[1] = map.second;
+		mapReached++;
+	}
+
+	multi_send_data(buffer, bufferLen, 1);
+
+}
 
 void
 multi_leave_game(void)
@@ -2554,6 +2644,8 @@ multi_process_data(char* buf, int len)
 		if (!Endlevel_sequence) multi_do_req_player(buf); break;
 	case MULTI_SEND_PLAYER:
 		if (!Endlevel_sequence) multi_do_send_player(buf); break;
+	case MULTI_REMOTE_OBJECT_REMAP:
+		RemapRemoteObjects(buf);
 
 	default:
 		mprintf((1, "Invalid type in multi_process_input().\n"));

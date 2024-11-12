@@ -17,6 +17,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
 
+#include <vector>
+
 // Version 1 - Initial version
 // Version 2 - Mike changed some shorts to bytes in segments, so incompatible!
 
@@ -153,14 +155,14 @@ typedef struct
 {
 	int		num_segments;
 	int		num_vertices;
-	short		segments[MAX_SEGMENTS];
-	short		vertices[MAX_VERTICES];
+	short	segments[MAX_SEGMENTS];
+	short	vertices[MAX_VERTICES];
 } group;
 
 // Globals from mglobal.c
 extern	vms_vector	Vertices[];
-extern	segment		Segments[];
-extern	segment2	Segment2s[];
+extern std::vector<segment> Segments;
+extern std::vector<segment2> Segment2s;
 extern	lsegment	Lsegments[];
 extern	int			Num_segments;
 extern	int			Num_vertices;
@@ -169,7 +171,7 @@ extern	int8_t		Side_to_verts[MAX_SIDES_PER_SEGMENT][4];	// Side_to_verts[my_side
 extern	int		Side_to_verts_int[MAX_SIDES_PER_SEGMENT][4];	// Side_to_verts[my_side] is list of vertices forming side my_side.
 extern	char		Side_opposite[];									// Side_opposite[my_side] returns side opposite cube from my_side.
 
-#define SEG_PTR_2_NUM(segptr) (Assert((unsigned) (segptr-Segments)<MAX_SEGMENTS),(segptr)-Segments)
+#define SEG_PTR_2_NUM(segptr) (Assert((unsigned) (segptr-Segments.data())<Segments.size()),(segptr)-Segments.data())
 
 //	New stuff, 10/14/95: For shooting out lights and monitors.
 //	Light cast upon vert_light vertices in segnum:sidenum by some light
@@ -199,12 +201,14 @@ extern	dl_index		Dl_indices[MAX_DL_INDICES];
 extern	delta_light Delta_lights[MAX_DELTA_LIGHTS];
 extern	int			Num_static_lights;
 
+void ResizeSegmentVectors(size_t newSize);
+
 extern int subtract_light(int segnum, int sidenum);
 extern int add_light(int segnum, int sidenum);
 extern void restore_all_lights_in_mine(void);
 extern void clear_light_subtracted(void);
 
-extern uint8_t Light_subtracted[MAX_SEGMENTS];
+extern std::vector<uint8_t> Light_subtracted;
 
 // ----------------------------------------------------------------------------------------------------------
 // --------------------------  Segment interrogation functions ------------------------

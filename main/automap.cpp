@@ -140,7 +140,7 @@ void init_automap_colors(void)
 }
 
 // Segment visited list
-uint8_t Automap_visited[MAX_SEGMENTS];
+std::vector<uint8_t> Automap_visited(MAX_SEGMENTS);
 
 // Edge list variables
 static int Num_edges = 0;
@@ -388,7 +388,7 @@ void ClearMarkers()
 void automap_clear_visited()
 {
 	int i;
-	for (i = 0; i < MAX_SEGMENTS; i++)
+	for (i = 0; i < Automap_visited.size(); i++)
 		Automap_visited[i] = 0;
 	ClearMarkers();
 }
@@ -675,7 +675,7 @@ void modex_print_message(int x, int y, char* str)
 }
 
 extern void GameLoop(int, int);
-extern int set_segment_depths(int start_seg, uint8_t* segbuf);
+extern int set_segment_depths(int start_seg, std::vector<uint8_t> segbuf);
 
 int Automap_active = 0;
 
@@ -1365,7 +1365,7 @@ void add_segment_edges(segment* seg)
 	int 	is_grate, no_fade;
 	uint8_t	color;
 	int	sn;
-	int	segnum = seg - Segments;
+	int	segnum = seg - Segments.data();
 	int	hidden_flag;
 	int ttype, trigger_num;
 
@@ -1456,7 +1456,7 @@ void add_segment_edges(segment* seg)
 				{
 					color = Wall_normal_color;
 					hidden_flag = 1;
-					//mprintf((0, "Wall at seg:side %i:%i is hidden.\n", seg-Segments, sn));
+					//mprintf((0, "Wall at seg:side %i:%i is hidden.\n", seg-Segments.data(), sn));
 				}
 				break;
 			case WALL_CLOSED:
@@ -1506,7 +1506,7 @@ void add_segment_edges(segment* seg)
 void add_unknown_segment_edges(segment* seg)
 {
 	int sn;
-	int segnum = seg - Segments;
+	int segnum = seg - Segments.data();
 
 	for (sn = 0; sn < MAX_SIDES_PER_SEGMENT; sn++)
 	{

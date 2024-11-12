@@ -31,9 +31,11 @@ fix GameTime = 0;			//	Time in game, in seconds
 int FrameCount = 0;
 
 //	This is the global mine which create_new_mine returns.
-segment	Segments[MAX_SEGMENTS];
-segment2	Segment2s[MAX_SEGMENTS];
+
 //lsegment	Lsegments[MAX_SEGMENTS];
+
+std::vector<segment> Segments(MAX_SEGMENTS);
+std::vector<segment2> Segment2s(MAX_SEGMENTS);
 
 // Number of vertices in current mine (ie, Vertices, pointed to by Vp)
 int		Num_vertices = 0;

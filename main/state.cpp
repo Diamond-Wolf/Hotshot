@@ -1063,7 +1063,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		ai_save_state(fp);
 
 		// Save the automap visited info
-		fwrite(Automap_visited, sizeof(uint8_t) * MAX_SEGMENTS, 1, fp);
+		fwrite(Automap_visited.data(), sizeof(uint8_t) * Automap_visited.size(), 1, fp);
 
 	}
 	file_write_int(fp, state_game_id);
@@ -1101,7 +1101,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 	file_write_int(fp, PaletteGreenAdd);
 	file_write_int(fp, PaletteBlueAdd);
 
-	fwrite(Light_subtracted, sizeof(Light_subtracted[0]), MAX_SEGMENTS, fp);
+	fwrite(Light_subtracted.data(), sizeof(Light_subtracted[0]), Light_subtracted.size(), fp);
 
 	//fwrite(&First_secret_visit, sizeof(First_secret_visit), 1, fp);
 	file_write_int(fp, First_secret_visit);
@@ -1713,7 +1713,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		ai_restore_state(fp, version);
 
 		// Restore the automap visited info
-		fread(Automap_visited, sizeof(uint8_t) * MAX_SEGMENTS, 1, fp);
+		fread(Automap_visited.data(), sizeof(uint8_t) * Automap_visited.size(), 1, fp);
 
 		//	Restore hacked up weapon system stuff.
 		Fusion_next_sound_time = GameTime;
@@ -1792,7 +1792,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	//	Load Light_subtracted
 	if (version >= 16)
 	{
-		fread(Light_subtracted, sizeof(Light_subtracted[0]), MAX_SEGMENTS, fp);
+		fread(Light_subtracted.data(), sizeof(Light_subtracted[0]), Light_subtracted.size(), fp);
 		apply_all_changed_light();
 		compute_all_static_light();	//	set static_light field in segment struct.  See note at that function.
 	}

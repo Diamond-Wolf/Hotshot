@@ -482,7 +482,7 @@ void render_side(segment* segp, int sidenum)
 		// -- Old, slow way --	else
 		// -- Old, slow way --		vm_vec_normalized_dir(&tvec, &Viewer_eye, &Vertices[segp->verts[Side_to_verts[sidenum][0]]]);
 
-		get_side_verts(vertnum_list, segp - Segments, sidenum);
+		get_side_verts(vertnum_list, segp - Segments.data(), sidenum);
 		v_dot_n0 = vm_vec_dot(&tvec, &normals[0]);
 
 		// -- flare creates point -- {
@@ -527,9 +527,9 @@ void render_side(segment* segp, int sidenum)
 
 		if (v_dot_n0 >= 0)
 		{
-			render_face(segp - Segments, sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
 #ifdef EDITOR
-			check_face(segp - Segments, sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+			check_face(segp - Segments.data(), sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 		}
 	}
@@ -541,7 +541,7 @@ void render_side(segment* segp, int sidenum)
 		else
 			vm_vec_normalized_dir_quick(&tvec, &Viewer_eye, &Vertices[segp->verts[Side_to_verts[sidenum][0]]]);
 
-		get_side_verts(vertnum_list, segp - Segments, sidenum);
+		get_side_verts(vertnum_list, segp - Segments.data(), sidenum);
 
 		v_dot_n0 = vm_vec_dot(&tvec, &normals[0]);
 
@@ -565,7 +565,7 @@ void render_side(segment* segp, int sidenum)
 		}
 
 		//	Determine whether to detriangulate side: (speed hack, assumes Tulate_min_ratio == F1_0*2, should fixmul(min_dot, Tulate_min_ratio))
-		if (Detriangulation_on && ((min_dot + F1_0 / 256 > max_dot) || ((Viewer->segnum != segp - Segments) && (min_dot > Tulate_min_dot) && (max_dot < min_dot * 2)))) {
+		if (Detriangulation_on && ((min_dot + F1_0 / 256 > max_dot) || ((Viewer->segnum != segp - Segments.data()) && (min_dot > Tulate_min_dot) && (max_dot < min_dot * 2)))) {
 			fix	n0_dot_n1;
 
 			//	The other detriangulation code doesn't deal well with badly non-planar sides.
@@ -573,50 +573,50 @@ void render_side(segment* segp, int sidenum)
 			if (n0_dot_n1 < Min_n0_n1_dot)
 				goto im_so_ashamed;
 
-			render_face(segp - Segments, sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
 #ifdef EDITOR
-			check_face(segp - Segments, sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+			check_face(segp - Segments.data(), sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 		}
 		else {
 		im_so_ashamed:;
 			if (sidep->type == SIDE_IS_TRI_02) {
 				if (v_dot_n0 >= 0) {
-					render_face(segp - Segments, sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 
 				if (v_dot_n1 >= 0) {
 					temp_uvls[0] = sidep->uvls[0];		temp_uvls[1] = sidep->uvls[2];		temp_uvls[2] = sidep->uvls[3];
 					vertnum_list[1] = vertnum_list[2];	vertnum_list[2] = vertnum_list[3];	// want to render from vertices 0, 2, 3 on side
-					render_face(segp - Segments, sidenum, 3, &vertnum_list[0], sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[1]);
+					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[0], sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[1]);
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 1, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 1, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 			}
 			else if (sidep->type == SIDE_IS_TRI_13) {
 				if (v_dot_n1 >= 0) {
-					render_face(segp - Segments, sidenum, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, &sidep->uvls[1], wid_flags, &normals[1]);	// rendering 1,2,3, so just skip 0
+					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, &sidep->uvls[1], wid_flags, &normals[1]);	// rendering 1,2,3, so just skip 0
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 1, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 1, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 
 				if (v_dot_n0 >= 0) {
 					temp_uvls[0] = sidep->uvls[0];		temp_uvls[1] = sidep->uvls[1];		temp_uvls[2] = sidep->uvls[3];
 					vertnum_list[2] = vertnum_list[3];		// want to render from vertices 0,1,3
-					render_face(segp - Segments, sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[0]);
+					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[0]);
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 
 			}
 			else
-				Error("Illegal side type in render_side, type = %i, segment # = %i, side # = %i\n", sidep->type, segp - Segments, sidenum);
+				Error("Illegal side type in render_side, type = %i, segment # = %i, side # = %i\n", sidep->type, segp - Segments.data(), sidenum);
 		}
 	}
 
@@ -961,16 +961,16 @@ void draw_window_box(int color, short left, short top, short right, short bot)
 int matt_find_connect_side(int seg0, int seg1);
 
 #ifndef NDEBUG
-char visited2[MAX_SEGMENTS];
+std::vector<char> visited2(MAX_SEGMENTS);
 #endif
 
-char visited[MAX_SEGMENTS];
+std::vector<char> visited(MAX_SEGMENTS);
 short Render_list[MAX_RENDER_SEGS];
 short Seg_depth[MAX_RENDER_SEGS];		//depth for each seg in Render_list
 uint8_t processed[MAX_RENDER_SEGS];		//whether each entry has been processed
 int	lcnt_save, scnt_save;
 //@@short *persp_ptr;
-short render_pos[MAX_SEGMENTS];	//where in render_list does this segment appear?
+std::vector<short> render_pos(MAX_SEGMENTS);	//where in render_list does this segment appear?
 //uint8_t no_render_flag[MAX_RENDER_SEGS];
 window render_windows[MAX_RENDER_SEGS];
 
@@ -1581,13 +1581,13 @@ int build_segment_list(int start_seg_num, int window_num)
 	int	l, c;
 	int	ch;
 
-	memset(visited, 0, sizeof(visited[0]) * (Highest_segment_index + 1));
-	memset(render_pos, -1, sizeof(render_pos[0]) * (Highest_segment_index + 1));
+	memset(visited.data(), 0, sizeof(visited[0]) * (Highest_segment_index + 1));
+	memset(render_pos.data(), -1, sizeof(render_pos[0]) * (Highest_segment_index + 1));
 	//memset(no_render_flag, 0, sizeof(no_render_flag[0])*(MAX_RENDER_SEGS));
 	memset(processed, 0, sizeof(processed));
 
 #ifndef NDEBUG
-	memset(visited2, 0, sizeof(visited2[0]) * (Highest_segment_index + 1));
+	memset(visited2.data(), 0, sizeof(visited2[0]) * (Highest_segment_index + 1));
 #endif
 
 	lcnt = scnt = 0;

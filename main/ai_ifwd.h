@@ -22,7 +22,7 @@ extern fix	Prev_boss_shields;
 #endif
 
 extern int      Robot_sound_volume;
-extern int8_t	New_awareness[MAX_SEGMENTS];
+extern std::vector<int8_t>	New_awareness;
 
 extern void move_around_player(object *objp, vms_vector *vec_to_player, int fast_flag);
 extern void set_next_fire_time(object *objp, ai_local *ailp, robot_info *robptr, int gun_num);

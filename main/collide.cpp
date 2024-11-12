@@ -603,10 +603,10 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 				//note: this must get called before the texture changes, 
 				//because we use the light value of the texture to change
 				//the static light in the segment
-				subtract_light(seg - Segments, side);
+				subtract_light(seg - Segments.data(), side);
 
 				if (Newdemo_state == ND_STATE_RECORDING)
-					newdemo_record_effect_blowup(seg - Segments, side, pnt);
+					newdemo_record_effect_blowup(seg - Segments.data(), side, pnt);
 
 				if (ec != -1) {
 					dest_size = activeBMTable->eclips[ec].dest_size;
@@ -617,15 +617,15 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 					vc = 3;
 				}
 
-				object_create_explosion(seg - Segments, pnt, dest_size, vc);
+				object_create_explosion(seg - Segments.data(), pnt, dest_size, vc);
 
 				if (ec != -1 && db != -1 && !(activeBMTable->eclips[ec].flags & EF_ONE_SHOT)) {
 
 					if ((sound_num = activeBMTable->vclips[vc].sound_num) != -1)
-						digi_link_sound_to_pos(sound_num, seg - Segments, 0, pnt, 0, F1_0);
+						digi_link_sound_to_pos(sound_num, seg - Segments.data(), 0, pnt, 0, F1_0);
 
 					if ((sound_num = activeBMTable->eclips[ec].sound_num) != -1)		//kill sound
-						digi_kill_sound_linked_to_segment(seg - Segments, side, sound_num);
+						digi_kill_sound_linked_to_segment(seg - Segments.data(), side, sound_num);
 
 					if (activeBMTable->eclips[ec].dest_eclip != -1 && activeBMTable->eclips[activeBMTable->eclips[ec].dest_eclip].segnum == -1) {
 						int bm_num;
@@ -638,7 +638,7 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 
 						new_ec->time_left = new_ec->vc.frame_time;
 						new_ec->frame_count = 0;
-						new_ec->segnum = seg - Segments;
+						new_ec->segnum = seg - Segments.data();
 						new_ec->sidenum = side;
 						new_ec->flags |= EF_ONE_SHOT;
 						new_ec->dest_bm_num = activeBMTable->eclips[ec].dest_bm_num;
@@ -656,7 +656,7 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 					seg->sides[side].tmap_num2 = activeBMTable->tmaps[tm].destroyed | tmf;
 
 					//assume this is a light, and play light sound
-					digi_link_sound_to_pos(SOUND_LIGHT_BLOWNUP, seg - Segments, 0, pnt, 0, F1_0);
+					digi_link_sound_to_pos(SOUND_LIGHT_BLOWNUP, seg - Segments.data(), 0, pnt, 0, F1_0);
 				}
 
 

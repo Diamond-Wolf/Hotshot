@@ -2126,7 +2126,7 @@ void dump_segments()
 	FILE* fp;
 
 	fp = fopen("TEST.DMP", "wb");
-	fwrite(Segments, sizeof(segment) * (Highest_segment_index + 1), 1, fp);
+	fwrite(Segments.data(), sizeof(segment) * (Highest_segment_index + 1), 1, fp);
 	fclose(fp);
 	mprintf((0, "SS=%d\n", sizeof(segment)));
 }

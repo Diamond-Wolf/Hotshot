@@ -24,11 +24,13 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 // What version of the multiplayer protocol is this?
 
-#ifdef SHAREWARE
+/*#ifdef SHAREWARE
 # define MULTI_PROTO_VERSION	3
 #else
 # define MULTI_PROTO_VERSION	4
-#endif
+#endif*/
+
+#define MULTI_PROTO_VERSION 80 //XL uses 5, Rebirth 10, and Retro above 2000; 80 should be a safe middle
 
 // Protocol versions:
 //   1 Descent Shareware
@@ -105,17 +107,19 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MULTI_FINISH_GAME					 56
 #define MULTI_RANK							 57
 #define MULTI_MODEM_PING					 58
-#define MULTI_MODEM_PING_RETURN			 59
-#define MULTI_ORB_BONUS						 60
-#define MULTI_GOT_ORB						 61
-#define MULTI_DROP_ORB						 62
-#define MULTI_PLAY_BY_PLAY					 63
+#define MULTI_MODEM_PING_RETURN			 	59
+#define MULTI_ORB_BONUS						60
+#define MULTI_GOT_ORB						61
+#define MULTI_DROP_ORB						62
+#define MULTI_PLAY_BY_PLAY					63
+#define MULTI_REMOTE_OBJECT_REMAP			64
 
-#define MULTI_MAX_TYPE 63
+#define MULTI_MAX_TYPE 64
 
 #define MAX_NET_CREATE_OBJECTS 40
 
 #define MAX_MULTI_MESSAGE_LEN 120
+#define MAX_MULTI_OBJ_REMAPS 32
 
 // Exported functions
 
@@ -174,6 +178,7 @@ void multi_new_game(void);
 void multi_sort_kill_list(void);
 int multi_choose_mission(int *anarchy_only);
 void multi_reset_stuff(void);
+void multi_send_remote_remap(size_t finalSize, const std::vector<std::pair<uint32_t, uint32_t>>& maps);
 
 void multi_send_data(char* buf, int len, int repeat);
 void multi_send_got_orb(char pnum);
@@ -404,5 +409,6 @@ void change_playernum_to(int new_pnum);
 #define FLARE_ADJUST		127
 
 void InitRemoteToLocal(size_t initialSize);
+void DoRemoteToLocalGC();
 
 #endif

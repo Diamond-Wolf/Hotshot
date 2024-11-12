@@ -445,9 +445,9 @@ int pick_connected_segment(object *objp, int max_depth)
 	int		start_seg;
 	int		head, tail;
 	int		seg_queue[QUEUE_SIZE*2];
-	int8_t		visited[MAX_SEGMENTS];
-	int8_t		depth[MAX_SEGMENTS];
-	int8_t		side_rand[MAX_SIDES_PER_SEGMENT];
+	int8_t* visited = new int8_t[Segments.size()];
+	int8_t* depth = new int8_t[Segments.size()];
+	int8_t side_rand[MAX_SIDES_PER_SEGMENT];
 
 //	mprintf((0, "Finding a segment %i segments away from segment %i: ", max_depth, objp->segnum));
 
@@ -481,6 +481,8 @@ int pick_connected_segment(object *objp, int max_depth)
 
 		if (cur_depth >= max_depth) {
 //			mprintf((0, "selected segment %i\n", seg_queue[tail]));
+			delete[] visited;
+			delete[] depth;
 			return seg_queue[tail];
 		}
 
@@ -522,12 +524,16 @@ int pick_connected_segment(object *objp, int max_depth)
 		}
 		if ((seg_queue[tail] < 0) || (seg_queue[tail] > Highest_segment_index)) {
 			// -- Int3();	//	Something bad has happened.  Queue is trashed.  --MK, 12/13/94
+			delete[] visited;
+			delete[] depth;
 			return -1;
 		}
 		cur_depth = depth[seg_queue[tail]];
 	}
 
 	mprintf((0, "...failed at depth %i, returning -1\n", cur_depth));
+	delete[] visited;
+	delete[] depth;
 	return -1;
 }
 

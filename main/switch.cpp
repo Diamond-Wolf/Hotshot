@@ -275,11 +275,11 @@ int do_change_walls(int8_t trigger_num)
 					{
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
-						digi_link_sound_to_pos( SOUND_FORCEFIELD_OFF, segp-Segments, side, &pos, 0, F1_0 );
+						digi_link_sound_to_pos( SOUND_FORCEFIELD_OFF, segp-Segments.data(), side, &pos, 0, F1_0 );
 						Walls[segp->sides[side].wall_num].type = new_wall_type;
 						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
-						digi_kill_sound_linked_to_segment(segp-Segments,side,SOUND_FORCEFIELD_HUM);
-						digi_kill_sound_linked_to_segment(csegp-Segments,cside,SOUND_FORCEFIELD_HUM);
+						digi_kill_sound_linked_to_segment(segp-Segments.data(),side,SOUND_FORCEFIELD_HUM);
+						digi_kill_sound_linked_to_segment(csegp-Segments.data(),cside,SOUND_FORCEFIELD_HUM);
 					}
 					else
 						start_wall_cloak(segp,side);
@@ -295,7 +295,7 @@ int do_change_walls(int8_t trigger_num)
 					{
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
-						digi_link_sound_to_pos(SOUND_FORCEFIELD_HUM,segp-Segments,side,&pos,1, F1_0/2);
+						digi_link_sound_to_pos(SOUND_FORCEFIELD_HUM,segp-Segments.data(),side,&pos,1, F1_0/2);
 						Walls[segp->sides[side].wall_num].type = new_wall_type;
 						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
 					}
@@ -389,7 +389,7 @@ void do_il_off(int8_t trigger_num)
 				trigger_num, Triggers[trigger_num].seg[i], Triggers[trigger_num].side[i]));
 
 			compute_center_point_on_side(&cp, seg, side );
-			digi_link_sound_to_pos( SOUND_WALL_REMOVED, seg-Segments, side, &cp, 0, F1_0 );
+			digi_link_sound_to_pos( SOUND_WALL_REMOVED, seg-Segments.data(), side, &cp, 0, F1_0 );
 
   		}
   	}
@@ -607,7 +607,7 @@ void check_trigger(segment *seg, short side, short objnum,int shot)
 	{
 
 		if ( Newdemo_state == ND_STATE_RECORDING )
-			newdemo_record_trigger( seg-Segments, side, objnum,shot);
+			newdemo_record_trigger( seg-Segments.data(), side, objnum,shot);
 
 		wall_num = seg->sides[side].wall_num;
 		if ( wall_num == -1 ) return;

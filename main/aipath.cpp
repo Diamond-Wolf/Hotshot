@@ -279,9 +279,9 @@ int create_path_points(object *objp, int start_seg, int end_seg, point_seg *pseg
 	int		sidenum;
 	int		qtail = 0, qhead = 0;
 	int		i;
-	int8_t		visited[MAX_SEGMENTS];
-	seg_seg	seg_queue[MAX_SEGMENTS];
-	short		depth[MAX_SEGMENTS];
+	int8_t*	visited = new int8_t[Segments.size()];
+	seg_seg* seg_queue = new seg_seg[Segments.size()];
+	short* depth = new short[Segments.size()];
 	int		cur_depth;
 	int8_t		random_xlate[MAX_SIDES_PER_SEGMENT];
 	point_seg	*original_psegs = psegs;
@@ -538,6 +538,11 @@ cpp_done1: ;
 #endif
 
 	*num_points = l_num_points;
+
+	delete[] visited;
+	delete[] seg_queue;
+	delete[] depth;
+
 	return 0;
 }
 

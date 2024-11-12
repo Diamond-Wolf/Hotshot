@@ -488,13 +488,6 @@ struct RelinkCache {
 	}
 };
 
-/*
-#define PREPARE_RELINK(viewer, missile, save, guideds) {\
-	printf("\nPreparing relink\n");\
-	
-	printf("Relinked\n");\
-}*/
-
 void ResizeObjectVectors(int newSize, bool shrinkToFit);
 void RelinkSpecialObjectPointers(const RelinkCache& cache);
 void doObjectGC();

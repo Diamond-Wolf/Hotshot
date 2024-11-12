@@ -1029,7 +1029,7 @@ Here:
 		switch (Function_mode) 
 		{
 		case FMODE_MENU:
-			SwitchGame(2);
+			//SwitchGame(2);
 
 			set_screen_mode(SCREEN_MENU);
 

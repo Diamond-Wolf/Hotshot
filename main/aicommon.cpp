@@ -101,7 +101,7 @@ int				Boss_been_hit = 0;
 fix				Boss_hit_time;
 int8_t			unused123, unused234;
 
-int8_t			New_awareness[MAX_SEGMENTS];
+std::vector<int8_t> New_awareness(MAX_SEGMENTS);
 
 int				ai_evaded = 0;
 
@@ -405,7 +405,7 @@ int create_gated_robot( int segnum, int object_id, vms_vector *pos)
 
 	compute_segment_center(&object_pos, segp);
 	if (pos == NULL)
-		pick_random_point_in_seg(&object_pos, segp-Segments);
+		pick_random_point_in_seg(&object_pos, segp-Segments.data());
 	else
 		object_pos = *pos;
 
@@ -597,7 +597,6 @@ if (size_check)
 		object		*boss_objp = &Objects[boss_objnum];
 		int			head, tail;
 		int			seg_queue[AI_QUEUE_SIZE];
-//ALREADY IN RENDER.H		int8_t			visited[MAX_SEGMENTS];
 		fix			boss_size_save;
 
 		boss_size_save = boss_objp->size;
@@ -1930,7 +1929,7 @@ void process_awareness_events(void)
 	int	i;
 
 	if (!(Game_mode & GM_MULTI) || (Game_mode & GM_MULTI_ROBOTS)) {
-		memset(New_awareness, 0, sizeof(New_awareness[0]) * (Highest_segment_index + 1));
+		memset(New_awareness.data(), 0, sizeof(New_awareness[0]) * (Highest_segment_index + 1));
 
 		for (i = 0; i < Num_awareness_events; i++)
 			pae_aux(Awareness_events[i].segnum, Awareness_events[i].type, 1);

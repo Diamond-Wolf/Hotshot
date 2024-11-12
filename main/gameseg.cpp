@@ -46,6 +46,29 @@ int	Num_static_lights;
 // ------------------------------------------------------------------------------------------
 // Compute the center point of a side of a segment.
 //	The center point is defined to be the average of the 4 points defining the side.
+
+void ResizeSegmentVectors(size_t newSize) {
+	extern std::vector<int8_t> New_awareness;
+	extern std::vector<uint8_t> Automap_visited;
+	extern std::vector<uint8_t> Slide_segs;
+	extern std::vector<char> visited;
+	extern std::vector<short> render_pos;
+
+	New_awareness.resize(newSize);
+	Automap_visited.resize(newSize);
+	Slide_segs.resize(newSize);
+	Light_subtracted.resize(newSize);
+	Segments.resize(newSize);
+	Segment2s.resize(newSize);
+	visited.resize(newSize);
+	render_pos.resize(newSize);
+
+	#ifndef NDEBUG
+	extern std::vector<char> visited2;
+	visited2.resize(newSize);
+	#endif
+}
+
 void compute_center_point_on_side(vms_vector *vp,segment *sp,int side)
 {
 	int			v;
@@ -79,7 +102,7 @@ void compute_segment_center(vms_vector *vp,segment *sp)
 int find_connect_side(segment *base_seg, segment *con_seg)
 {
 	int	s;
-	short	base_seg_num = base_seg - Segments;
+	short	base_seg_num = base_seg - Segments.data();
 	short *childs = con_seg->children;
 
 	for (s=0; s<MAX_SIDES_PER_SEGMENT; s++) {
@@ -995,9 +1018,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 	int		sidenum;
 	int		qtail = 0, qhead = 0;
 	int		i;
-	int8_t		visited[MAX_SEGMENTS];
-	seg_seg	seg_queue[MAX_SEGMENTS];
-	short		depth[MAX_SEGMENTS];
+	int8_t*		visited = new int8_t[Segments.size()];
+	seg_seg*	seg_queue = new seg_seg[Segments.size()];
+	short*		depth = new short[Segments.size()];
 	int		cur_depth;
 	int		num_points;
 	point_seg	point_segs[MAX_LOC_POINT_SEGS];
@@ -1015,6 +1038,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 
 	if (seg0 == seg1) {
 		Connected_segment_distance = 0;
+		delete[] visited;
+		delete[] seg_queue;
+		delete[] depth;
 		return vm_vec_dist_quick(p0, p1);
 	} else {
 		int	conn_side;
@@ -1022,6 +1048,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 			if (WALL_IS_DOORWAY(&Segments[seg1], conn_side) & wid_flag) {
 				Connected_segment_distance = 1;
 				//mprintf((0, "\n"));
+				delete[] visited;
+				delete[] seg_queue;
+				delete[] depth;
 				return vm_vec_dist_quick(p0, p1);
 			}
 		}
@@ -1038,6 +1067,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 		if ((Fcd_cache[i].seg0 == seg0) && (Fcd_cache[i].seg1 == seg1)) {
 			Connected_segment_distance = Fcd_cache[i].csd;
 			// -- mprintf((0, "In cache, seg0=%i, seg1=%i.  Returning.\n", seg0, seg1));
+			delete[] visited;
+			delete[] seg_queue;
+			delete[] depth;
 			return Fcd_cache[i].dist;
 		}
 
@@ -1069,6 +1101,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 						if (depth[qtail-1] == max_depth) {
 							Connected_segment_distance = 1000;
 							add_to_fcd_cache(seg0, seg1, Connected_segment_distance, F1_0*1000);
+							delete[] visited;
+							delete[] seg_queue;
+							delete[] depth;
 							return -1;
 						}
 					} else if (this_seg == seg1) {
@@ -1082,6 +1117,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 		if (qhead >= qtail) {
 			Connected_segment_distance = 1000;
 			add_to_fcd_cache(seg0, seg1, Connected_segment_distance, F1_0*1000);
+			delete[] visited;
+			delete[] seg_queue;
+			delete[] depth;
 			return -1;
 		}
 
@@ -1097,6 +1135,9 @@ fcd_done1: ;
 		if (qtail < 0) {
 			Connected_segment_distance = 1000;
 			add_to_fcd_cache(seg0, seg1, Connected_segment_distance, F1_0*1000);
+			delete[] visited;
+			delete[] seg_queue;
+			delete[] depth;
 			return -1;
 		}
 
@@ -1122,6 +1163,9 @@ fcd_done1: ;
 
 	if (num_points == 1) {
 		Connected_segment_distance = num_points;
+		delete[] visited;
+		delete[] seg_queue;
+		delete[] depth;
 		return vm_vec_dist_quick(p0, p1);
 	} else {
 		dist = vm_vec_dist_quick(p1, &point_segs[1].point);
@@ -1138,6 +1182,9 @@ fcd_done1: ;
 	Connected_segment_distance = num_points;
 	add_to_fcd_cache(seg0, seg1, num_points, dist);
 
+	delete[] visited;
+	delete[] seg_queue;
+	delete[] depth;
 	return dist;
 
 }
@@ -1536,7 +1583,7 @@ void create_walls_on_side(segment *sp, int sidenum)
 			int			vertnum;
 			side			*s;
 
-			create_abs_vertex_lists( &num_faces, vertex_list, sp-Segments, sidenum);
+			create_abs_vertex_lists( &num_faces, vertex_list, sp-Segments.data(), sidenum);
 
 			Assert(num_faces == 2);
 
@@ -1662,7 +1709,7 @@ int find_ncache_element( int segnum, int sidenum, int face_flags )
 void get_side_normal(segment *sp, int sidenum, int face_num, vms_vector * vm )
 {
 	int i;
-	i = find_ncache_element( sp - Segments, sidenum, 1 << face_num );
+	i = find_ncache_element( sp - Segments.data(), sidenum, 1 << face_num );
 	*vm = ncache[i].normals[face_num];
 	if (0) {
 		vms_vector tmp;
@@ -1676,7 +1723,7 @@ void get_side_normal(segment *sp, int sidenum, int face_num, vms_vector * vm )
 void get_side_normals(segment *sp, int sidenum, vms_vector * vm1, vms_vector * vm2 )
 {
 	int i;
-	i = find_ncache_element( sp - Segments, sidenum, 3 );
+	i = find_ncache_element( sp - Segments.data(), sidenum, 3 );
 	*vm1 = ncache[i].normals[0];
 	*vm2 = ncache[i].normals[1];
 
@@ -1858,11 +1905,11 @@ void pick_random_point_in_seg(vms_vector *new_pos, int segnum)
 //	----------------------------------------------------------------------------------------------------------
 //	Set the segment depth of all segments from start_seg in *segbuf.
 //	Returns maximum depth value.
-int set_segment_depths(int start_seg, uint8_t *segbuf)
+int set_segment_depths(int start_seg, std::vector<uint8_t> segbuf)
 {
 	int	i, curseg;
-	uint8_t	visited[MAX_SEGMENTS];
-	int	queue[MAX_SEGMENTS];
+	uint8_t* visited = new uint8_t[Segments.size()];
+	int* queue = new int[Segments.size()];
 	int	head, tail;
 	int	depth;
 	int	parent_depth;
@@ -1902,6 +1949,9 @@ int set_segment_depths(int start_seg, uint8_t *segbuf)
 		}
 	}
 
+	delete[] visited;
+	delete[] queue;
+
 	return parent_depth+1;
 }
 
@@ -1919,7 +1969,7 @@ void apply_light_to_segment(segment *segp,vms_vector *segment_center, fix light_
 {
 	vms_vector	r_segment_center;
 	fix			dist_to_rseg;
-	int 			i,segnum=segp-Segments,sidenum;
+	int 			i,segnum=segp-Segments.data(),sidenum;
 
 	for (i=0;i<n_changed_segs;i++)
 		if (changed_segs[i] == segnum)
@@ -2072,7 +2122,7 @@ int add_light(int segnum, int sidenum)
 
 //	Light_subtracted[i] contains bit indicators for segment #i.
 //	If bit n (1 << n) is set, then side #n in segment #i has had light subtracted from original (editor-computed) value.
-uint8_t	Light_subtracted[MAX_SEGMENTS];
+std::vector<uint8_t> Light_subtracted(MAX_SEGMENTS);
 
 //	Parse the Light_subtracted array, turning on or off all lights.
 void apply_all_changed_light(void)
@@ -2167,7 +2217,7 @@ void ambient_mark_bfs(int segnum, int8_t *marked_segs, int depth)
 void set_ambient_sound_flags_common(int tmi_bit, int s2f_bit)
 {
 	int	i, j;
-	int8_t	marked_segs[MAX_SEGMENTS];
+	int8_t* marked_segs = new int8_t[Segments.size()];
 
 	//	Now, all segments containing ambient lava or water sound makers are flagged.
 	//	Additionally flag all segments which are within range of them.
@@ -2210,6 +2260,8 @@ void set_ambient_sound_flags_common(int tmi_bit, int s2f_bit)
 	for (i=0; i<=Highest_segment_index; i++)
 		if (marked_segs[i])
 			Segment2s[i].s2_flags |= s2f_bit;
+
+	delete[] marked_segs;
 
 }
 

@@ -221,8 +221,6 @@ void ResizeObjectVectors(int newSize, bool shrinkToFit) {
 #ifdef NETWORK
 	local_to_remote.resize(newSize);
 	object_owner.resize(newSize);
-	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++)
-		remote_to_local[i].resize(newSize);
 #endif
 
 	if (shrinkToFit) {
@@ -239,8 +237,6 @@ void ResizeObjectVectors(int newSize, bool shrinkToFit) {
 #ifdef NETWORK
 		local_to_remote.shrink_to_fit();
 		object_owner.shrink_to_fit();
-		for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++)
-			remote_to_local[i].shrink_to_fit();
 #endif
 		
 	}
@@ -831,7 +827,7 @@ void init_objects()
 	for (i = 0; i < free_obj_list.size(); i++)
 		free_obj_list[i] = i;
 
-	for (i = 0; i < MAX_SEGMENTS; i++)
+	for (i = 0; i < Segments.size(); i++)
 		Segments[i].objects = -1;
 
 	ConsoleObject = Viewer = &Objects[0];
@@ -1131,6 +1127,11 @@ int obj_allocate(void)
 		object_sig.push_back(0);
 		WasRecorded.push_back(0);
 		ViewWasRecorded.push_back(0);
+
+		#ifdef NETWORK
+		local_to_remote.push_back(-1);
+		object_owner.push_back(-1);
+		#endif
 		
 		num_objects++;
 
@@ -2202,8 +2203,6 @@ void object_move_all()
 //make object array non-sparse
 void compress_objects(void)
 {
-	int start_i;	//,last_i;
-
 	extern object* Missile_viewer;
 	extern object* Viewer_save;
 	extern object* Guided_missile[MAX_PLAYERS];
@@ -2211,10 +2210,17 @@ void compress_objects(void)
 	extern object* prev_obj;
 	extern object* slew_obj;
 
+	int start_i;	//,last_i;
+
+#ifdef NETWORK
+	std::vector<std::pair<uint32_t, uint32_t>> netRemaps;
+	if (Game_mode && GM_MULTI) 
+		netRemaps.reserve(Objects.size());
+#endif
+
 	//	Note: It's proper to do < (rather than <=) Highest_object_index here because we
 	//	are just removing gaps, and the last object can't be a gap.
-	for (start_i = 0; start_i < Highest_object_index; start_i++)
-
+	for (start_i = 0; start_i < Highest_object_index; start_i++) {
 		if (Objects[start_i].type == OBJ_NONE) {
 
 			object** specialRelink = NULL;
@@ -2227,12 +2233,12 @@ void compress_objects(void)
 					specialRelink = &Missile_viewer;
 				else if (&Objects[Highest_object_index] == Viewer_save)
 					specialRelink = &Viewer_save;
+				else if (&Objects[Highest_object_index] == Dead_player_camera)
+					specialRelink = &Dead_player_camera;
 				else if (&Objects[Highest_object_index] == old_viewer)
 					specialRelink = &old_viewer;
 				else if (&Objects[Highest_object_index] == prev_obj)
 					specialRelink = &prev_obj;
-				else if (&Objects[Highest_object_index] == Dead_player_camera)
-					specialRelink = &Dead_player_camera;
 				else if (&Objects[Highest_object_index] == slew_obj)
 					specialRelink = &slew_obj;
 				else {
@@ -2298,6 +2304,19 @@ void compress_objects(void)
 			WasRecorded[start_i] = WasRecorded[Highest_object_index];
 			ViewWasRecorded[start_i] = ViewWasRecorded[Highest_object_index];
 
+#ifdef NETWORK
+			object_owner[start_i] = object_owner[Highest_object_index];
+
+			uint32_t remoteLow = local_to_remote[start_i];
+			uint16_t remoteHigh = local_to_remote[Highest_object_index];
+
+			local_to_remote[start_i] = remoteHigh;
+
+			remote_to_local[Player_num][remoteLow] = remote_to_local[Player_num][remoteHigh];
+			remote_to_local[Player_num][remoteHigh] = -1;
+			netRemaps.push_back(std::pair(remoteLow, remoteHigh));
+#endif
+
 #ifdef EDITOR
 			if (Cur_object_index == Highest_object_index)
 				Cur_object_index = start_i;
@@ -2310,12 +2329,26 @@ void compress_objects(void)
 			if (specialRelink)
 				*specialRelink = &Objects[start_i];
 
-			while (Objects[--Highest_object_index].type == OBJ_NONE)
-				;
+			while (Objects[--Highest_object_index].type == OBJ_NONE) 
+				{}
 
 			//last_i = find_last_obj(last_i);
 
 		}
+	}
+
+#ifdef NETWORK
+	if (Game_mode & GM_MULTI) {
+		int maxIndex;
+
+		for (maxIndex = remote_to_local[Player_num].size() - 1; maxIndex == -1 && maxIndex >= 0; maxIndex--) 
+			{}
+		
+		remote_to_local[Player_num].resize(maxIndex + 1);
+
+		multi_send_remote_remap(remote_to_local[Player_num].size(), netRemaps);
+	}
+#endif
 
 	reset_objects(num_objects, true);
 	verify_console_object();

@@ -141,7 +141,7 @@ int wall_is_doorway(segment * seg, int side)
 	//--Covered by macro	if (seg->sides[side].wall_num == -1)
 	//--Covered by macro		return WID_NO_WALL;
 
-	Assert(seg - Segments >= 0 && seg - Segments <= Highest_segment_index);
+	Assert(seg - Segments.data() >= 0 && seg - Segments.data() <= Highest_segment_index);
 	Assert(side >= 0 && side < 6);
 
 	type = Walls[seg->sides[side].wall_num].type;
@@ -223,7 +223,7 @@ void wall_reset(segment* seg, int side)
 		return;
 	}
 
-	Walls[i].segnum = seg - Segments;
+	Walls[i].segnum = seg - Segments.data();
 	Walls[i].sidenum = side;
 	Walls[i].type = WALL_NORMAL;
 	Walls[i].flags = 0;
@@ -245,13 +245,13 @@ void wall_set_tmap_num(segment* seg, int side, segment* csegp, int cside, int an
 	if (anim->flags & WCF_TMAP1) {
 		seg->sides[side].tmap_num = csegp->sides[cside].tmap_num = tmap;
 		if (Newdemo_state == ND_STATE_RECORDING)
-			newdemo_record_wall_set_tmap_num1(seg - Segments, side, csegp - Segments, cside, tmap);
+			newdemo_record_wall_set_tmap_num1(seg - Segments.data(), side, csegp - Segments.data(), cside, tmap);
 	}
 	else {
 		Assert(tmap != 0 && seg->sides[side].tmap_num2 != 0);
 		seg->sides[side].tmap_num2 = csegp->sides[cside].tmap_num2 = tmap;
 		if (Newdemo_state == ND_STATE_RECORDING)
-			newdemo_record_wall_set_tmap_num2(seg - Segments, side, csegp - Segments, cside, tmap);
+			newdemo_record_wall_set_tmap_num2(seg - Segments.data(), side, csegp - Segments.data(), cside, tmap);
 	}
 }
 
@@ -277,7 +277,7 @@ void blast_blastable_wall(segment* seg, int side)
 
 	//if this is an exploding wall, explode it
 	if (activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].flags & WCF_EXPLODES) {
-		explode_wall(seg - Segments, side);
+		explode_wall(seg - Segments.data(), side);
 	} else {
 		//if not exploding, set final frame, and make door passable
 		a = Walls[seg->sides[side].wall_num].clip_num;
@@ -295,7 +295,7 @@ void blast_blastable_wall(segment* seg, int side)
 void wall_destroy(segment* seg, int side)
 {
 	Assert(seg->sides[side].wall_num != -1);
-	Assert(seg - Segments != 0);
+	Assert(seg - Segments.data() != 0);
 
 	if (Walls[seg->sides[side].wall_num].type == WALL_BLASTABLE)
 		blast_blastable_wall(seg, side);
@@ -336,7 +336,7 @@ void wall_damage(segment* seg, int side, fix damage)
 			blast_blastable_wall(seg, side);
 #ifdef NETWORK
 			if (Game_mode & GM_MULTI)
-				multi_send_door_open(seg - Segments, side, Walls[seg->sides[side].wall_num].flags);
+				multi_send_door_open(seg - Segments.data(), side, Walls[seg->sides[side].wall_num].flags);
 #endif
 		}
 		else
@@ -418,10 +418,10 @@ void wall_open_door(segment* seg, int side)
 	d->front_wallnum[0] = seg->sides[side].wall_num;
 	d->back_wallnum[0] = csegp->sides[Connectside].wall_num;
 
-	Assert(seg - Segments != -1);
+	Assert(seg - Segments.data() != -1);
 
 	if (Newdemo_state == ND_STATE_RECORDING) {
-		newdemo_record_door_opening(seg - Segments, side);
+		newdemo_record_door_opening(seg - Segments.data(), side);
 	}
 
 	if (w->linked_wall != -1) {
@@ -455,7 +455,7 @@ void wall_open_door(segment* seg, int side)
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
 		if (activeBMTable->wclips[w->clip_num].open_sound > -1)
-			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments, side, &cp, 0, F1_0);
+			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments.data(), side, &cp, 0, F1_0);
 
 	}
 }
@@ -525,14 +525,14 @@ void start_wall_cloak(segment* seg, int side)
 	d->front_wallnum = seg->sides[side].wall_num;
 	d->back_wallnum = csegp->sides[Connectside].wall_num;
 
-	Assert(seg - Segments != -1);
+	Assert(seg - Segments.data() != -1);
 
 	Assert(w->linked_wall == -1);
 
 	if (Newdemo_state != ND_STATE_PLAYBACK) {
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
-		digi_link_sound_to_pos(SOUND_WALL_CLOAK_ON, seg - Segments, side, &cp, 0, F1_0);
+		digi_link_sound_to_pos(SOUND_WALL_CLOAK_ON, seg - Segments.data(), side, &cp, 0, F1_0);
 	}
 
 	for (i = 0; i < 4; i++) {
@@ -608,14 +608,14 @@ void start_wall_decloak(segment* seg, int side)
 	d->front_wallnum = seg->sides[side].wall_num;
 	d->back_wallnum = csegp->sides[Connectside].wall_num;
 
-	Assert(seg - Segments != -1);
+	Assert(seg - Segments.data() != -1);
 
 	Assert(w->linked_wall == -1);
 
 	if (Newdemo_state != ND_STATE_PLAYBACK) {
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
-		digi_link_sound_to_pos(SOUND_WALL_CLOAK_OFF, seg - Segments, side, &cp, 0, F1_0);
+		digi_link_sound_to_pos(SOUND_WALL_CLOAK_OFF, seg - Segments.data(), side, &cp, 0, F1_0);
 	}
 
 	for (i = 0; i < 4; i++) {
@@ -693,11 +693,11 @@ int is_door_free(segment* seg, int side)
 	//it pokes into the connecting seg
 
 	for (objnum = seg->objects; objnum != -1; objnum = Objects[objnum].next)
-		if ((currentGame == G_DESCENT_1 || (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL)) && check_poke(objnum, seg - Segments, side))
+		if ((currentGame == G_DESCENT_1 || (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL)) && check_poke(objnum, seg - Segments.data(), side))
 			return 0;	//not free
 
 	for (objnum = csegp->objects; objnum != -1; objnum = Objects[objnum].next)
-		if ((currentGame == G_DESCENT_1 || (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL)) && check_poke(objnum, csegp - Segments, Connectside))
+		if ((currentGame == G_DESCENT_1 || (Objects[objnum].type != OBJ_WEAPON && Objects[objnum].type != OBJ_FIREBALL)) && check_poke(objnum, csegp - Segments.data(), Connectside))
 			return 0;	//not free
 
 	return 1; 	//doorway is free!
@@ -769,10 +769,10 @@ void wall_close_door(segment* seg, int side)
 	d->front_wallnum[0] = seg->sides[side].wall_num;
 	d->back_wallnum[0] = csegp->sides[Connectside].wall_num;
 
-	Assert(seg - Segments != -1);
+	Assert(seg - Segments.data() != -1);
 
 	if (Newdemo_state == ND_STATE_RECORDING) {
-		newdemo_record_door_opening(seg - Segments, side);
+		newdemo_record_door_opening(seg - Segments.data(), side);
 	}
 
 	if (w->linked_wall != -1) {
@@ -788,7 +788,7 @@ void wall_close_door(segment* seg, int side)
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
 		if (activeBMTable->wclips[w->clip_num].open_sound > -1)
-			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments, side, &cp, 0, F1_0);
+			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments.data(), side, &cp, 0, F1_0);
 
 	}
 }
@@ -926,7 +926,7 @@ void do_door_close(int door_num)
 					vms_vector cp;
 					compute_center_point_on_side(&cp, seg, side);
 					if (activeBMTable->wclips[w->clip_num].close_sound > -1)
-						digi_link_sound_to_pos(activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments, side, &cp, 0, F1_0);
+						digi_link_sound_to_pos(activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments.data(), side, &cp, 0, F1_0);
 				}
 
 		d->time += FrameTime;
@@ -1026,7 +1026,7 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 	wall* w;
 	fix	show_message;
 
-	Assert(seg - Segments != -1);
+	Assert(seg - Segments.data() != -1);
 
 	// If it is not a "wall" then just return.
 	if (seg->sides[side].wall_num < 0)
@@ -1035,7 +1035,7 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 	w = &Walls[seg->sides[side].wall_num];
 
 	if (Newdemo_state == ND_STATE_RECORDING)
-		newdemo_record_wall_hit_process(seg - Segments, side, damage, playernum);
+		newdemo_record_wall_hit_process(seg - Segments.data(), side, damage, playernum);
 
 	if (w->type == WALL_BLASTABLE) 
 	{
@@ -1085,7 +1085,7 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 		}
 
 	if (w->type == WALL_DOOR)
-		if ((w->flags & WALL_DOOR_LOCKED) && !(special_boss_opening_allowed(seg - Segments, side))) {
+		if ((w->flags & WALL_DOOR_LOCKED) && !(special_boss_opening_allowed(seg - Segments.data(), side))) {
 			if (playernum == Player_num)
 				if (show_message)
 					HUD_init_message(TXT_CANT_OPEN_DOOR);
@@ -1097,7 +1097,7 @@ int wall_hit_process(segment* seg, int side, fix damage, int playernum, object* 
 				wall_open_door(seg, side);
 #ifdef NETWORK
 				if (Game_mode & GM_MULTI)
-					multi_send_door_open(seg - Segments, side, w->flags);
+					multi_send_door_open(seg - Segments.data(), side, w->flags);
 #endif
 			}
 			return WHP_DOOR;
@@ -1113,7 +1113,7 @@ void wall_toggle(segment* seg, int side)
 {
 	int wall_num;
 
-	Assert(seg - Segments <= Highest_segment_index);
+	Assert(seg - Segments.data() <= Highest_segment_index);
 	Assert(side < MAX_SIDES_PER_SEGMENT);
 
 	wall_num = seg->sides[side].wall_num;
@@ -1124,7 +1124,7 @@ void wall_toggle(segment* seg, int side)
 	}
 
 	if (Newdemo_state == ND_STATE_RECORDING)
-		newdemo_record_wall_toggle(seg - Segments, side);
+		newdemo_record_wall_toggle(seg - Segments.data(), side);
 
 	if (Walls[wall_num].type == WALL_BLASTABLE)
 		wall_destroy(seg, side);
@@ -1494,7 +1494,7 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 				compute_center_point_on_side(&pnt, segp, sidenum);
 				dist = vm_vec_dist_quick(&pnt, &objp->pos);
 				if (dist < damage / 2) {
-					dist = find_connected_distance(&pnt, segp - Segments, &objp->pos, objp->segnum, MAX_BLAST_GLASS_DEPTH, WID_RENDPAST_FLAG);
+					dist = find_connected_distance(&pnt, segp - Segments.data(), &objp->pos, objp->segnum, MAX_BLAST_GLASS_DEPTH, WID_RENDPAST_FLAG);
 					if ((dist > 0) && (dist < damage / 2))
 						check_effect_blowup(segp, sidenum, &pnt, &Objects[objp->ctype.laser_info.parent_num], 1);
 				}
@@ -1522,7 +1522,7 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 void blast_nearby_glass(object* objp, fix damage)
 {
 	int		i;
-	int8_t		visited[MAX_SEGMENTS];
+	int8_t*	visited = new int8_t[Segments.size()];
 	segment* cursegp;
 
 	cursegp = &Segments[objp->segnum];
@@ -1531,57 +1531,14 @@ void blast_nearby_glass(object* objp, fix damage)
 
 	visited[objp->segnum] = 1;
 	bng_process_segment(objp, damage, cursegp, 0, visited);
+
+	delete[] visited;
 }
 
 void validate_walls() {
 	for (int i = 0; i < Num_walls; i++)
 		Walls[i].linked_wall = -1; //que?
 }
-
-/*
-void validate_walls() {
-	for (int i = 0; i < Num_walls; i++) {
-
-		bool maybeFix = false;
-
-		if (Walls[i].linked_wall >= 0 && Walls[i].linked_wall < Num_walls) {
-			if (Walls[Walls[i].linked_wall].linked_wall != i) {
-				mprintf((0, "Walls[%d].linked = %d != %d\n", Walls[i].linked_wall, Walls[Walls[i].linked_wall], i));
-				maybeFix = true;
-			}
-		} else {
-			mprintf((0, "%d out of range 0..<%d\n", Walls[i].linked_wall, Num_walls));
-			maybeFix = true;
-		}
-
-		if (maybeFix) {
-			//mprintf((0, "Maybe fix wall %d? Detected one of (%d out of range 0..<%d | (%d linked to) %d != %d)\n", i, Walls[i].linked_wall, Num_walls, Walls[i].linked_wall, Walls[Walls[i].linked_wall].linked_wall, i));
-			short segnum = Walls[i].segnum;
-
-			short backID = Segments[segnum].children[Walls[i].sidenum];
-			if (backID > 0 && backID < Num_segments) {
-				auto& other = Segments[backID];
-
-				for (int j = 0; j < 6; j++) {
-					if (other.children[j] == segnum) {
-						if (other.sides[j].wall_num > 0 && other.sides[j].wall_num < Num_walls) {
-							short otherWall = other.sides[j].wall_num;
-							mprintf((0, "Relinking walls %d and %d (had links %d and %d)\n", i, otherWall, Walls[i].linked_wall, Walls[otherWall].linked_wall));
-							Walls[i].linked_wall = otherWall;
-							Walls[otherWall].linked_wall = i;
-						}
-
-						break;
-					}
-				}
-
-			}
-
-		}
-
-	}
-}
-*/
 
 #include "cfile/cfile.h"
 

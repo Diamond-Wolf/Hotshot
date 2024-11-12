@@ -988,7 +988,7 @@ void LoadLevel(int level_num, int page_in_textures)
 	load_robot_replacements(level_name);
 
 #ifdef NETWORK
-	my_segments_checksum = netmisc_calc_checksum(Segments, sizeof(segment) * (Highest_segment_index + 1));
+	my_segments_checksum = netmisc_calc_checksum(Segments.data(), sizeof(segment) * (Highest_segment_index + 1));
 #endif
 
 	reset_network_objects();

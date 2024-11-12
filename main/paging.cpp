@@ -290,7 +290,7 @@ void paging_touch_side( segment * segp, int sidenum )
 
 void paging_touch_robot_maker( segment * segp )
 {
-	segment2	*seg2p = &Segment2s[segp-Segments];
+	segment2	*seg2p = &Segment2s[segp-Segments.data()];
 
 	if ( seg2p->special == SEGMENT_IS_ROBOTMAKER )	{
 		paging_touch_vclip(&activeBMTable->vclips[VCLIP_MORPHING_ROBOT]);
@@ -320,7 +320,7 @@ void paging_touch_segment(segment * segp)
 {
 	int sn;
 	int objnum;
-	segment2	*seg2p = &Segment2s[segp-Segments];
+	segment2	*seg2p = &Segment2s[segp-Segments.data()];
 
 	if ( seg2p->special == SEGMENT_IS_ROBOTMAKER )	
 		paging_touch_robot_maker(segp);
