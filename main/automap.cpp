@@ -94,7 +94,7 @@ typedef struct Edge_info {
 // THE following was determined by John by loading levels 1-14 and recording
 // numbers on 10/26/94. 
 //#define MAX_EDGES_FROM_VERTS(v)   (((v)*21)/10)
-#define MAX_EDGES_FROM_VERTS(v)		((v)*4)
+#define MAX_EDGES_FROM_VERTS(v)		((v)*8)
 //#define MAX_EDGES (MAX_EDGES_FROM_VERTS(MAX_VERTICES))
 
 #define MAX_EDGES 6000		// Determined by loading all the levels by John & Mike, Feb 9, 1995
@@ -146,8 +146,8 @@ std::vector<uint8_t> Automap_visited(MAX_SEGMENTS);
 static int Num_edges = 0;
 static int Max_edges;		//set each frame
 static int Highest_edge_index = -1;
-static Edge_info Edges[MAX_EDGES];
-static short DrawingListBright[MAX_EDGES];
+static std::vector<Edge_info> Edges;
+static std::vector<short> DrawingListBright;
 
 //static short DrawingListBright[MAX_EDGES];
 //static short Edge_used_list[MAX_EDGES];				//which entries in edge_list have been used
@@ -725,10 +725,13 @@ void do_automap(int key_code)
 		digi_pause_digi_sounds();
 	}
 
-	Max_edges = std::min(MAX_EDGES_FROM_VERTS(Num_vertices), MAX_EDGES);			//make maybe smaller than max
+	Max_edges = MAX_EDGES_FROM_VERTS(Num_vertices);
+	
+	Edges.resize(Max_edges);
+	DrawingListBright.resize(Max_edges);
 
-	mprintf((0, "Num_vertices=%d, Max_edges=%d, (MAX:%d)\n", Num_vertices, Max_edges, MAX_EDGES));
-	mprintf((0, "Allocated %d K for automap edge list\n", (sizeof(Edge_info) + sizeof(short)) * Max_edges / 1024));
+	mprintf((0, "Num_vertices=%d, Max_edges=%d, (Vector capacity: %d)\n", Num_vertices, Max_edges, Edges.capacity()));
+	mprintf((0, "Allocated %d K for automap edge list (Capacity %d)\n", (sizeof(Edge_info) + sizeof(short)) * Max_edges / 1024, (sizeof(Edge_info) + sizeof(short)) * Edges.capacity() / 1024));
 
 	if ((Current_display_mode != 0 && Current_display_mode != 2) || (Automap_always_hires && MenuHiresAvailable)) 
 	{
@@ -1153,7 +1156,7 @@ void draw_all_edges()
 
 			if (nfacing && nnfacing) {
 				// a contour line
-				DrawingListBright[nbright++] = e - Edges;
+				DrawingListBright[nbright++] = i;
 			}
 			else if (e->flags & (EF_DEFINING | EF_GRATE)) {
 				if (nfacing == 0) {
@@ -1164,7 +1167,7 @@ void draw_all_edges()
 					g3_draw_line(&Segment_points[e->verts[0]], &Segment_points[e->verts[1]]);
 				}
 				else {
-					DrawingListBright[nbright++] = e - Edges;
+					DrawingListBright[nbright++] = i;
 				}
 			}
 		}
@@ -1259,8 +1262,10 @@ static int automap_find_edge(int v0, int v1, Edge_info** edge_ptr)
 		if (Edges[hash].num_faces == 0) ret = 0;
 		else if (evv == vv) ret = 1;
 		else {
-			if (++hash == Max_edges) hash = 0;
-			if (hash == oldhash) Error("Edge list full!");
+			if (++hash == Max_edges) 
+				hash = 0;
+			if (hash == oldhash) 
+				Error("Edge list full!");
 		}
 	}
 
@@ -1310,8 +1315,8 @@ void add_one_edge(short va, short vb, uint8_t color, uint8_t side, short segnum,
 		e->sides[0] = side;
 		e->segnum[0] = segnum;
 		//Edge_used_list[Num_edges] = e-Edges;
-		if ((e - Edges) > Highest_edge_index)
-			Highest_edge_index = e - Edges;
+		if ((e - Edges.data()) > Highest_edge_index)
+			Highest_edge_index = e - Edges.data();
 		Num_edges++;
 	}
 	else 
