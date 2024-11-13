@@ -53,6 +53,7 @@ void ResizeSegmentVectors(size_t newSize) {
 	extern std::vector<uint8_t> Slide_segs;
 	extern std::vector<char> visited;
 	extern std::vector<short> render_pos;
+	extern std::vector<fix> Dynamic_light;
 
 	New_awareness.resize(newSize);
 	Automap_visited.resize(newSize);
@@ -62,6 +63,7 @@ void ResizeSegmentVectors(size_t newSize) {
 	Segment2s.resize(newSize);
 	visited.resize(newSize);
 	render_pos.resize(newSize);
+	Dynamic_light.resize(newSize);
 
 	#ifndef NDEBUG
 	extern std::vector<char> visited2;
