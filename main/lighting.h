@@ -28,7 +28,6 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define BEAM_CUTOFF	0xa000		//what is out of beam?
 
 extern fix	Beam_brightness;
-//extern fix	Dynamic_light[MAX_VERTICES];
 extern std::vector<fix> Dynamic_light;
 
 extern void set_dynamic_light(void);

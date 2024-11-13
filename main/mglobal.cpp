@@ -21,9 +21,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "game.h"
 
 // Global array of vertices, common to one mine.
-//vms_vector Vertices[MAX_VERTICES];
-//g3s_point Segment_points[MAX_VERTICES];
-
 std::vector<vms_vector> Vertices(MAX_VERTICES);
 std::vector<g3s_point> Segment_points(MAX_VERTICES);
 

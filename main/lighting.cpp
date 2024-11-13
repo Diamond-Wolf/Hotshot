@@ -39,7 +39,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 int	Do_dynamic_light = 1;
 //int	Use_fvi_lighting = 0;
 
-//fix	Dynamic_light[MAX_VERTICES];
 std::vector<fix> Dynamic_light(MAX_VERTICES);
 
 #define	LIGHTING_CACHE_SIZE	4096	//	Must be power of 2!

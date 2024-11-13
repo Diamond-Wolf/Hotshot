@@ -63,7 +63,6 @@ int	Clear_window_color = -1;
 int	Clear_window = 2;			//	1 = Clear whole background window, 2 = clear view portals into rest of world, 0 = no clear
 
 int RL_framecount = -1;
-//short Rotated_last[MAX_VERTICES];
 std::vector<short> Rotated_last(MAX_VERTICES);
 
 // When any render function needs to know what's looking at it, it should 
