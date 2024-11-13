@@ -69,6 +69,15 @@ void ResizeSegmentVectors(size_t newSize) {
 	#endif
 }
 
+void ResizeVertexVectors(size_t newSize) {
+	extern std::vector<short> Rotated_last;
+	extern std::vector<g3s_point> Segment_points;
+
+	Vertices.resize(newSize);
+	Segment_points.resize(newSize);
+	Rotated_last.resize(newSize);
+}
+
 void compute_center_point_on_side(vms_vector *vp,segment *sp,int side)
 {
 	int			v;

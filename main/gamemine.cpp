@@ -746,8 +746,9 @@ int LoadMineD1(CFILE* LoadFile)
 	//	Error("Got mine version %d when reading level file, expected %d.", version, COMPILED_MINE_VERSION);
 
 	Num_vertices = cfile_read_short(LoadFile);					// 2 bytes = Num_vertices
-	if (Num_vertices > MAX_VERTICES)
-		Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	//if (Num_vertices > MAX_VERTICES)
+	//	Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	ResizeVertexVectors(Num_vertices);
 
 	Num_segments = cfile_read_short(LoadFile);					// 2 bytes = Num_segments
 	//if (Num_segments > MAX_SEGMENTS)
@@ -907,8 +908,9 @@ int LoadMineD2(CFILE *LoadFile)
 	//	Error("Got mine version %d when reading level file, expected %d.", version, COMPILED_MINE_VERSION);
 
 	Num_vertices = cfile_read_short(LoadFile);					// 2 bytes = Num_vertices
-	if (Num_vertices > MAX_VERTICES)
-		Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	//if (Num_vertices > MAX_VERTICES)
+	//	Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	ResizeVertexVectors(Num_vertices);
 
 	Num_segments = cfile_read_short(LoadFile);					// 2 bytes = Num_segments
 	//if (Num_segments > MAX_SEGMENTS)

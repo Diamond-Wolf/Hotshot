@@ -151,6 +151,7 @@ typedef struct {
 	short	special_segment;						// if special_type indicates repair center, this is the base of the repair center
 } lsegment;
 
+#ifdef EDITOR
 typedef struct 
 {
 	int		num_segments;
@@ -158,9 +159,10 @@ typedef struct
 	short	segments[MAX_SEGMENTS];
 	short	vertices[MAX_VERTICES];
 } group;
+#endif
 
 // Globals from mglobal.c
-extern	vms_vector	Vertices[];
+extern std::vector<vms_vector> Vertices;
 extern std::vector<segment> Segments;
 extern std::vector<segment2> Segment2s;
 extern	lsegment	Lsegments[];
@@ -202,6 +204,7 @@ extern	delta_light Delta_lights[MAX_DELTA_LIGHTS];
 extern	int			Num_static_lights;
 
 void ResizeSegmentVectors(size_t newSize);
+void ResizeVertexVectors(size_t newSize);
 
 extern int subtract_light(int segnum, int sidenum);
 extern int add_light(int segnum, int sidenum);

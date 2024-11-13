@@ -39,7 +39,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 int	Do_dynamic_light = 1;
 //int	Use_fvi_lighting = 0;
 
-fix	Dynamic_light[MAX_VERTICES];
+//fix	Dynamic_light[MAX_VERTICES];
+std::vector<fix> Dynamic_light(MAX_VERTICES);
 
 #define	LIGHTING_CACHE_SIZE	4096	//	Must be power of 2!
 #define	LIGHTING_FRAME_DELTA	256	//	Recompute cache value every 8 frames.
@@ -435,18 +436,18 @@ fix compute_light_intensity(int objnum)
 // ----------------------------------------------------------------------------------------------
 void set_dynamic_light(void)
 {
+	if (!Do_dynamic_light)
+		return;
+
 	int	vv;
 	int	objnum;
 	int	n_render_vertices;
-	short	render_vertices[MAX_VERTICES];
-	int8_t	render_vertex_flags[MAX_VERTICES];
+	short*	render_vertices = new short[Vertices.size()];
+	int8_t*	render_vertex_flags = new int8_t[Vertices.size()];
 	int	render_seg, segnum, v;
 	std::vector<int8_t> new_lighting_objects(Objects.size());
 
 	Num_headlights = 0;
-
-	if (!Do_dynamic_light)
-		return;
 
 	//if (Use_fvi_lighting)
 	//	mprintf((0, "hits = %8i, misses = %8i, lookups = %8i, hit ratio = %7.4f\n", Cache_hits, Cache_lookups - Cache_hits, Cache_lookups, (float) Cache_hits / Cache_lookups));
@@ -563,6 +564,9 @@ void set_dynamic_light(void)
 			Lighting_objects[objnum] = new_lighting_objects[objnum];
 		}
 	}
+
+	delete[] render_vertices;
+	delete[] render_vertex_flags;
 }
 
 // ---------------------------------------------------------

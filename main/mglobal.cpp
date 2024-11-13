@@ -21,8 +21,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "game.h"
 
 // Global array of vertices, common to one mine.
-vms_vector Vertices[MAX_VERTICES];
-g3s_point Segment_points[MAX_VERTICES];
+//vms_vector Vertices[MAX_VERTICES];
+//g3s_point Segment_points[MAX_VERTICES];
+
+std::vector<vms_vector> Vertices(MAX_VERTICES);
+std::vector<g3s_point> Segment_points(MAX_VERTICES);
 
 fix FrameTime = 0x1000;	// Time since last frame, in seconds
 fix GameTime = 0;			//	Time in game, in seconds
