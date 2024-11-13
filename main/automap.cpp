@@ -147,7 +147,7 @@ static int Num_edges = 0;
 static int Max_edges;		//set each frame
 static int Highest_edge_index = -1;
 static std::vector<Edge_info> Edges;
-static std::vector<short> DrawingListBright;
+static std::vector<size_t> DrawingListBright;
 
 //static short DrawingListBright[MAX_EDGES];
 //static short Edge_used_list[MAX_EDGES];				//which entries in edge_list have been used
@@ -1105,7 +1105,8 @@ void adjust_segment_limit(int SegmentLimit)
 void draw_all_edges()
 {
 	g3s_codes cc;
-	int i, j, nbright;
+	size_t i, nbright;
+	long j; // [DW] must be signed
 	uint8_t nfacing, nnfacing;
 	Edge_info* e;
 	vms_vector* tv1;
@@ -1179,8 +1180,8 @@ void draw_all_edges()
 
 	// Sort the bright ones using a shell sort
 	{
-		int t;
-		int i, j, incr, v1, v2;
+		size_t t;
+		size_t i, incr, v1, v2;
 
 		incr = nbright / 2;
 		while (incr > 0) {
@@ -1246,12 +1247,12 @@ void draw_all_edges()
 static int automap_find_edge(int v0, int v1, Edge_info** edge_ptr)
 {
 	int32_t vv, evv;
-	short hash, oldhash;
+	size_t hash, oldhash;
 	int ret, ev0, ev1;
 
 	vv = (v1 << 16) + v0;
 
-	oldhash = hash = ((v0 * 5 + v1) % Max_edges);
+	oldhash = hash = (((size_t)v0 * 5 + v1) % Max_edges);
 
 	ret = -1;
 
