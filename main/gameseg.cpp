@@ -53,7 +53,6 @@ void ResizeSegmentVectors(size_t newSize) {
 	extern std::vector<uint8_t> Slide_segs;
 	extern std::vector<char> visited;
 	extern std::vector<short> render_pos;
-	extern std::vector<fix> Dynamic_light;
 
 	New_awareness.resize(newSize);
 	Automap_visited.resize(newSize);
@@ -62,8 +61,7 @@ void ResizeSegmentVectors(size_t newSize) {
 	Segments.resize(newSize);
 	Segment2s.resize(newSize);
 	visited.resize(newSize);
-	render_pos.resize(newSize);
-	Dynamic_light.resize(newSize);
+	render_pos.resize(newSize); 
 
 	#ifndef NDEBUG
 	extern std::vector<char> visited2;
@@ -74,10 +72,12 @@ void ResizeSegmentVectors(size_t newSize) {
 void ResizeVertexVectors(size_t newSize) {
 	extern std::vector<short> Rotated_last;
 	extern std::vector<g3s_point> Segment_points;
+	extern std::vector<fix> Dynamic_light;
 
 	Vertices.resize(newSize);
 	Segment_points.resize(newSize);
 	Rotated_last.resize(newSize);
+	Dynamic_light.resize(newSize);
 }
 
 void compute_center_point_on_side(vms_vector *vp,segment *sp,int side)
