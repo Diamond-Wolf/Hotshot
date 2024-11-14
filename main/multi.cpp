@@ -4519,7 +4519,7 @@ void multi_send_drop_blobs(char pnum)
 void multi_do_drop_blob(char* buf)
 {
 	char pnum = buf[1];
-	drop_afterburner_blobs(&Objects[Players[pnum].objnum], 2, i2f(5) / 2, -1);
+	drop_afterburner_blobs(Players[pnum].objnum, 2, i2f(5) / 2, -1);
 }
 
 void multi_send_powerup_update()

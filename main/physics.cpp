@@ -328,7 +328,7 @@ void do_physics_sim_rot(object *obj)
 
 //	-----------------------------------------------------------------------------------------------------------
 //Simulate a physics object for this frame
-void do_physics_sim(object *obj)
+void do_physics_sim(size_t objnum)
 {
 	int ignore_obj_list[MAX_IGNORE_OBJS],n_ignore_objs;
 	int iseg;
@@ -337,7 +337,6 @@ void do_physics_sim(object *obj)
 	vms_vector frame_vec;			//movement in this frame
 	vms_vector new_pos,ipos;		//position after this frame
 	int count=0;
-	int objnum;
 	int WallHitSeg, WallHitSide;
 	fvi_info hit_info;
 	fvi_query fq;
@@ -350,6 +349,9 @@ void do_physics_sim(object *obj)
 	fix moved_time;			//how long objected moved before hit something
 	vms_vector save_p0,save_p1;
 	physics_info *pi;
+
+	object* obj = &Objects[objnum];
+
 	int orig_segnum = obj->segnum;
 	int bounced=0;
 
@@ -368,8 +370,6 @@ if (Dont_move_ai_objects)
 
 	if (!(pi->velocity.x || pi->velocity.y || pi->velocity.z || pi->thrust.x || pi->thrust.y || pi->thrust.z))
 		return;
-
-	objnum = obj-Objects.data();
 
 	n_phys_segs = 0;
 
@@ -536,7 +536,7 @@ save_p1 = *fq.p1;
 
 		#ifndef NDEBUG
 		if (fate == HIT_BAD_P0) {
-			mprintf((0,"Warning: Bad p0 in physics!  Object = %i, type = %i [%s]\n", obj-Objects.data(), obj->type, Object_type_names[obj->type]));
+			mprintf((0,"Warning: Bad p0 in physics!  Object = %i, type = %i [%s]\n", objnum, obj->type, Object_type_names[obj->type]));
 			Int3();
 		}
 		#endif
@@ -694,6 +694,8 @@ save_p1 = *fq.p1;
 				else
 					scrape_object_on_wall(obj, WallHitSeg, WallHitSide, &hit_info.hit_pnt );
 
+				obj = &Objects[objnum]; //in case of object reallocation
+
 				Assert( WallHitSeg > -1 );
 				Assert( WallHitSide > -1 );
 
@@ -797,6 +799,8 @@ save_p1 = *fq.p1;
 					old_vel = obj->mtype.phys_info.velocity;
 
 					collide_two_objects( obj, &Objects[hit_info.hit_object], &pos_hit);
+
+					obj = &Objects[objnum];
 
 				}
 

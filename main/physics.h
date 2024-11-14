@@ -29,7 +29,7 @@ extern int phys_seglist[MAX_FVI_SEGS],n_phys_segs;
 void read_flying_controls( object * obj );
 
 //Simulate a physics object for this frame
-void do_physics_sim(object *obj);
+void do_physics_sim(size_t objnum);
 
 //tell us what the given object will do (as far as hiting walls) in
 //the given time (in seconds) t.  Igores acceleration (sorry) 

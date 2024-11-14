@@ -1463,8 +1463,10 @@ void do_exploding_wall_frame()
 
 
 //creates afterburner blobs behind the specified object
-void drop_afterburner_blobs(object *obj, int count, fix size_scale, fix lifetime)
+void drop_afterburner_blobs(int objnum, int count, fix size_scale, fix lifetime)
 {
+	object* obj = &Objects[objnum];
+
 	vms_vector pos_left,pos_right;
 	int segnum;
 
@@ -1476,8 +1478,10 @@ void drop_afterburner_blobs(object *obj, int count, fix size_scale, fix lifetime
 		vm_vec_avg(&pos_left, &pos_left, &pos_right);
 
 	segnum = find_point_seg(&pos_left, obj->segnum);
-	if (segnum != -1)
+	if (segnum != -1) {
 		object_create_explosion(segnum, &pos_left, size_scale, VCLIP_AFTERBURNER_BLOB );
+		obj = &Objects[objnum];
+	}
 
 	if (count > 1) {
 		segnum = find_point_seg(&pos_right, obj->segnum);

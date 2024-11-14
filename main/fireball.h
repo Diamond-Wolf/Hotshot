@@ -60,4 +60,4 @@ extern int get_explosion_vclip(object *obj,int stage);
 extern int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *pos, int segnum);
 
 //creates afterburner blobs behind the specified object
-void drop_afterburner_blobs(object *obj, int count, fix size_scale, fix lifetime);
+void drop_afterburner_blobs(int objnum, int count, fix size_scale, fix lifetime);

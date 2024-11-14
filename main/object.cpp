@@ -1927,9 +1927,11 @@ std::vector<fix> Last_afterburner_time(MAX_OBJECTS);
 
 //--------------------------------------------------------------------
 //move an object for the current frame
-void object_move_one(object* obj)
+void object_move_one(int objnum)
 {
 #ifndef DEMO_ONLY
+
+	object* obj = &Objects[objnum];
 
 	int	previous_segment = obj->segnum;
 
@@ -2019,15 +2021,20 @@ void object_move_one(object* obj)
 
 	}
 
+	obj = &Objects[objnum]; //reset in case any object creations caused a reallocation
+
 	if (obj->lifeleft < 0) {		// We died of old age
 		obj->flags |= OF_SHOULD_BE_DEAD;
 		if (obj->type == OBJ_WEAPON) {
 			if (activeBMTable->weapons[obj->id].damage_radius)
 				explode_badass_weapon(obj, &obj->pos);
-			create_smart_children(obj, NUM_SMART_CHILDREN);
+			create_smart_children(&Objects[objnum], NUM_SMART_CHILDREN); //just grab object inline in case explosion caused reallocation
+			obj = &Objects[objnum]; //smart children call might have caused yet another reallocation
 		}
-		else if (obj->type == OBJ_ROBOT)	//make robots explode
-			explode_object(obj, 0);
+		else if (obj->type == OBJ_ROBOT) {	//make robots explode
+			explode_object(obj, 0);	
+			obj = &Objects[objnum]; 
+		}
 	}
 
 	if (obj->type == OBJ_NONE || obj->flags & OF_SHOULD_BE_DEAD)
@@ -2035,11 +2042,17 @@ void object_move_one(object* obj)
 
 	switch (obj->movement_type) {
 
-	case MT_NONE:			break;								//this doesn't move
+	case MT_NONE:			
+		break;	//this doesn't move
 
-	case MT_PHYSICS:		do_physics_sim(obj);	break;	//move by physics
+	case MT_PHYSICS:		
+		do_physics_sim(objnum);	
+		obj = &Objects[objnum]; 
+		break;	//move by physics
 
-	case MT_SPINNING:		spin_object(obj); break;
+	case MT_SPINNING:		
+		spin_object(obj); 
+		break;
 
 	}
 
@@ -2116,7 +2129,8 @@ void object_move_one(object* obj)
 
 	if (Drop_afterburner_blob_flag) {
 		Assert(obj == ConsoleObject);
-		drop_afterburner_blobs(obj, 2, i2f(5) / 2, -1);	//	-1 means use default lifetime
+		drop_afterburner_blobs(objnum, 2, i2f(5) / 2, -1);	//	-1 means use default lifetime
+		obj = &Objects[objnum]; 
 #ifdef NETWORK
 		if (Game_mode & GM_MULTI)
 			multi_send_drop_blobs(Player_num);
@@ -2125,7 +2139,6 @@ void object_move_one(object* obj)
 	}
 
 	if ((obj->type == OBJ_WEAPON) && (activeBMTable->weapons[obj->id].afterburner_size)) {
-		int	objnum = obj - Objects.data();
 		fix	vel = vm_vec_mag_quick(&obj->mtype.phys_info.velocity);
 		fix	delay, lifetime;
 
@@ -2143,7 +2156,8 @@ void object_move_one(object* obj)
 		}
 
 		if ((Last_afterburner_time[objnum] + delay < GameTime) || (Last_afterburner_time[objnum] > GameTime)) {
-			drop_afterburner_blobs(obj, 1, i2f(activeBMTable->weapons[obj->id].afterburner_size) / 16, lifetime);
+			drop_afterburner_blobs(objnum, 1, i2f(activeBMTable->weapons[obj->id].afterburner_size) / 16, lifetime);
+			obj = &Objects[objnum]; 
 			Last_afterburner_time[objnum] = GameTime;
 		}
 	}
@@ -2186,7 +2200,7 @@ void object_move_all()
 	for (i = 0; i <= Highest_object_index; i++) {
 		objp = &Objects[i];
 		if ((objp->type != OBJ_NONE) && (!(objp->flags & OF_SHOULD_BE_DEAD))) {
-			object_move_one(objp);
+			object_move_one(i);
 		}
 		//objp++;
 	}
