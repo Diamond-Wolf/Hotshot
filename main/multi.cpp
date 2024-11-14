@@ -1640,7 +1640,7 @@ multi_do_fire(char* buf)
 	//  mprintf((0,"multi_do_fire, weapon = %d\n",weapon));
 
 	if (weapon == FLARE_ADJUST)
-		Laser_player_fire(&Objects[Players[pnum].objnum], FLARE_ID, 6, 1, 0);
+		Laser_player_fire(Players[pnum].objnum, FLARE_ID, 6, 1, 0);
 	else if (weapon >= MISSILE_ADJUST) {
 		int weapon_id, weapon_gun;
 
@@ -1654,7 +1654,7 @@ multi_do_fire(char* buf)
 			Multi_is_guided = 1;
 		}
 
-		Laser_player_fire(&Objects[Players[pnum].objnum], weapon_id, weapon_gun, 1, 0);
+		Laser_player_fire(Players[pnum].objnum, weapon_id, weapon_gun, 1, 0);
 	}
 	else {
 		fix save_charge = Fusion_charge;

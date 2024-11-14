@@ -411,7 +411,7 @@ if (Dont_move_ai_objects)
 	Assert(obj->mtype.phys_info.brakes==0);		//brakes not used anymore?
 
 		//if uses thrust, cannot have zero drag
-	Assert(!(obj->mtype.phys_info.flags&PF_USES_THRUST) || obj->mtype.phys_info.drag!=0);
+	Assert(!(obj->mtype.phys_info.flags & PF_USES_THRUST) || obj->mtype.phys_info.drag != 0);
 
 //mprintf((0,"thrust=%x  speed=%x\n",vm_vec_mag(&obj->mtype.phys_info.thrust),vm_vec_mag(&obj->mtype.phys_info.velocity)));
 
@@ -675,7 +675,6 @@ save_p1 = *fq.p1;
 
 		}
 
-
 		switch( fate )		{
 
 			case HIT_WALL:		{
@@ -690,7 +689,7 @@ save_p1 = *fq.p1;
 				wall_part = vm_vec_dot(&moved_v,&hit_info.hit_wallnorm);
 
 				if (wall_part != 0 && moved_time>0 && (hit_speed=-fixdiv(wall_part,moved_time))>0)
-					collide_object_with_wall( obj, hit_speed, WallHitSeg, WallHitSide, &hit_info.hit_pnt );
+					collide_object_with_wall(obj, hit_speed, WallHitSeg, WallHitSide, &hit_info.hit_pnt );
 				else
 					scrape_object_on_wall(obj, WallHitSeg, WallHitSide, &hit_info.hit_pnt );
 

@@ -100,8 +100,8 @@ extern object *Guided_missile[];
 extern int Guided_missile_sig[];
 
 void Laser_render( object *obj );
-void Laser_player_fire( object * obj, int type, int gun_num, int make_sound, int harmless_flag );
-void Laser_player_fire_spread(object *obj, int laser_type, int gun_num, fix spreadr, fix spreadu, int make_sound, int harmless);
+void Laser_player_fire(size_t objnum, int type, int gun_num, int make_sound, int harmless_flag );
+void Laser_player_fire_spread(size_t objnum, int laser_type, int gun_num, fix spreadr, fix spreadu, int make_sound, int harmless);
 void Laser_do_weapon_sequence( object *obj );
 void Flare_create(object *obj);
 int laser_are_related( int o1, int o2 );

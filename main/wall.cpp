@@ -1368,12 +1368,18 @@ void remove_obsolete_stuck_objects(void)
 
 	objnum = FrameCount % MAX_STUCK_OBJECTS;
 
-	if (Stuck_objects[objnum].wallnum != -1)
-		if ((Walls[Stuck_objects[objnum].wallnum].state != WALL_DOOR_CLOSED) || (Objects[Stuck_objects[objnum].objnum].signature != Stuck_objects[objnum].signature)) {
-			Num_stuck_objects--;
-			Objects[Stuck_objects[objnum].objnum].lifeleft = F1_0 / 8;
-			Stuck_objects[objnum].wallnum = -1;
-		}
+	if (Stuck_objects[objnum].objnum < Objects.size()) {
+		if (Stuck_objects[objnum].wallnum != -1)
+			if ((Walls[Stuck_objects[objnum].wallnum].state != WALL_DOOR_CLOSED) || (Objects[Stuck_objects[objnum].objnum].signature != Stuck_objects[objnum].signature)) {
+				Num_stuck_objects--;
+				Objects[Stuck_objects[objnum].objnum].lifeleft = F1_0 / 8;
+				Stuck_objects[objnum].wallnum = -1;
+			}
+	} else {
+		Num_stuck_objects--;
+		Stuck_objects[objnum].wallnum = -1;
+		Stuck_objects[objnum].objnum = -1;
+	}
 
 }
 

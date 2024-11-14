@@ -1375,7 +1375,18 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 
 	segnum = find_point_seg(pos, segnum);		//find correct segment
 
-	Assert(segnum != -1);
+	//Assert(segnum != -1);
+	if (segnum == -1) {
+		obj->type = OBJ_NONE;		//unused!
+		obj->signature = -1;
+		obj->segnum = -1;				// zero it!
+
+		obj_free(objnum);
+
+		mprintf((1, "New object outside of mine!"));
+
+		return -1;
+	}
 
 	obj->segnum = -1;					//set to zero by memset, above
 	obj_link(objnum, segnum);
