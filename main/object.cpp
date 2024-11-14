@@ -1375,7 +1375,6 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 
 	segnum = find_point_seg(pos, segnum);		//find correct segment
 
-	
 	Assert(segnum != -1);
 
 	obj->segnum = -1;					//set to zero by memset, above
@@ -2305,16 +2304,18 @@ void compress_objects(void)
 			ViewWasRecorded[start_i] = ViewWasRecorded[Highest_object_index];
 
 #ifdef NETWORK
-			object_owner[start_i] = object_owner[Highest_object_index];
+			if (Game_mode & GM_MULTI) {
+				object_owner[start_i] = object_owner[Highest_object_index];
 
-			uint32_t remoteLow = local_to_remote[start_i];
-			uint16_t remoteHigh = local_to_remote[Highest_object_index];
+				uint32_t remoteLow = local_to_remote[start_i];
+				uint16_t remoteHigh = local_to_remote[Highest_object_index];
 
-			local_to_remote[start_i] = remoteHigh;
+				local_to_remote[start_i] = remoteHigh;
 
-			remote_to_local[Player_num][remoteLow] = remote_to_local[Player_num][remoteHigh];
-			remote_to_local[Player_num][remoteHigh] = -1;
-			netRemaps.push_back(std::pair(remoteLow, remoteHigh));
+				remote_to_local[Player_num][remoteLow] = remote_to_local[Player_num][remoteHigh];
+				remote_to_local[Player_num][remoteHigh] = -1;
+				netRemaps.push_back(std::pair(remoteLow, remoteHigh));
+			}
 #endif
 
 #ifdef EDITOR

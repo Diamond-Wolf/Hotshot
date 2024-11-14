@@ -2237,45 +2237,14 @@ void create_smart_children(object *objp, int num_smart_children)
 			}
 		}
 
-// -- 		//determine what kind of blob to drop
-// -- 		//	Note: parent_type is not the type of the weapon's parent.  It is actually the type of the weapon's
-// -- 		//	earliest ancestor.  This deals with the issue of weapons spewing weapons which spew weapons.
-// -- 		switch (parent_type) {
-// -- 			case OBJ_WEAPON:
-// -- 				Int3();	//	Should this ever happen?
-// -- 				switch (objp->id) {
-// -- 					case SUPERPROX_ID:			blob_id = SMART_MINE_HOMING_ID; break;
-// -- 					case ROBOT_SUPERPROX_ID:	blob_id = ROBOT_SMART_MINE_HOMING_ID; break;
-// -- 					case EARTHSHAKER_ID:			blob_id = EARTHSHAKER_MEGA_ID; break;
-// -- 					default:							Int3();	//bogus id for weapon  
-// -- 				}
-// -- 				break;
-// -- 			case OBJ_PLAYER:
-// -- 				switch (objp->id) {
-// -- 					case SUPERPROX_ID:			blob_id = SMART_MINE_HOMING_ID; break;
-// -- 					case ROBOT_SUPERPROX_ID:	Int3();	break;
-// -- 					case EARTHSHAKER_ID:			blob_id = EARTHSHAKER_MEGA_ID; break;
-// -- 					case SMART_ID:					blob_id = PLAYER_SMART_HOMING_ID; break;
-// -- 					default:							Int3();	//bogus id for weapon  
-// -- 				}
-// -- 				break;
-// -- 			case OBJ_ROBOT:
-// -- 				switch (objp->id) {
-// -- 					case ROBOT_SUPERPROX_ID:	blob_id = ROBOT_SMART_MINE_HOMING_ID; break;
-// -- 					// -- case EARTHSHAKER_ID:			blob_id = EARTHSHAKER_MEGA_ID; break;
-// -- 					case SMART_ID:					blob_id = ROBOT_SMART_HOMING_ID; break;
-// -- 					default:							blob_id = ROBOT_SMART_HOMING_ID; break;
-// -- 				}
-// -- 				break;
-// -- 			default:					Int3();	//bogus type for parent object
-// -- 		}
+		int thisObjnum = objp - Objects.data(); // [DW] Below operation can reallocate object vector, invalidating objp
 
 		make_sound = 1;
 		for (i=0; i<num_smart_children; i++) 
 		{
 			int objnum;
 			objnum = (numobjs==0)?-1:objlist[(P_Rand() * numobjs) >> 15];
-			create_homing_missile(objp, objnum, blob_id, make_sound);
+			create_homing_missile(&Objects[thisObjnum], objnum, blob_id, make_sound);
 			make_sound = 0;
 		}
 	}
