@@ -660,7 +660,7 @@ void maybe_drop_net_powerup(int powerup_type)
 //--old-- 			segnum /= 2;
 
 		Net_create_loc = 0;
-		objnum = call_object_create_egg(&Objects[Players[Player_num].objnum], 1, OBJ_POWERUP, powerup_type);
+		objnum = call_object_create_egg(Players[Player_num].objnum, 1, OBJ_POWERUP, powerup_type);
 
 		if (objnum < 0)
 			return;
@@ -989,9 +989,11 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 //	------------------------------------------------------------------------------------------------------
 //	Returns created object number.
 //	If object dropped by player, set flag.
-int object_create_egg(object *objp)
+int object_create_egg(size_t objnum)
 {
 	int	rval;
+
+	object* objp = &Objects[objnum];
 
 	if (!(Game_mode & GM_MULTI) & (objp->type != OBJ_PLAYER))
 		if (objp->contains_type == OBJ_POWERUP)
@@ -1022,6 +1024,7 @@ int object_create_egg(object *objp)
 			}
 
 	rval = drop_powerup(objp->contains_type, objp->contains_id, objp->contains_count, &objp->mtype.phys_info.velocity, &objp->pos, objp->segnum);
+	objp = &Objects[objnum];
 
 	if (rval != -1)
     {
@@ -1043,7 +1046,7 @@ int object_create_egg(object *objp)
 //	-------------------------------------------------------------------------------------------------------
 //	Put count objects of type type (eg, powerup), id = id (eg, energy) into *objp, then drop them!  Yippee!
 //	Returns created object number.
-int call_object_create_egg(object *objp, int count, int type, int id)
+int call_object_create_egg(size_t objnum, int count, int type, int id)
 {
 // -- 	if (!(Game_mode & GM_MULTI) && (objp == ConsoleObject))
 // -- 		if (P_Rand() < 32767/6) {
@@ -1052,10 +1055,10 @@ int call_object_create_egg(object *objp, int count, int type, int id)
 // -- 		}
 
 	if (count > 0) {
-		objp->contains_count = count;
-		objp->contains_type = type;
-		objp->contains_id = id;
-		return object_create_egg(objp);
+		Objects[objnum].contains_count = count;
+		Objects[objnum].contains_type = type;
+		Objects[objnum].contains_id = id;
+		return object_create_egg(objnum);
 	}
 
 	return -1;
@@ -1083,6 +1086,8 @@ void explode_model(object *obj)
 {
 	Assert(obj->render_type == RT_POLYOBJ);
 
+	size_t objnum = obj - Objects.data();
+
 	if (activeBMTable->dyingModels[obj->rtype.pobj_info.model_num] != -1)
 		obj->rtype.pobj_info.model_num = activeBMTable->dyingModels[obj->rtype.pobj_info.model_num];
 
@@ -1090,8 +1095,10 @@ void explode_model(object *obj)
 		int i;
 
 		for (i=1;i<activeBMTable->models[obj->rtype.pobj_info.model_num].n_models;i++)
-			if (!(obj->type == OBJ_ROBOT && obj->id == 44 && i == 5)) 	//energy sucker energy part
+			if (!(obj->type == OBJ_ROBOT && obj->id == 44 && i == 5)) { 	//energy sucker energy part
 				object_create_debris(obj,i);
+				obj = &Objects[objnum];
+			}
 
 		//make parent object only draw center part
 		obj->rtype.pobj_info.subobj_flags=1;
@@ -1117,6 +1124,8 @@ void maybe_delete_object(object *del_obj)
 //blow up an object.  Takes the object to destroy, and the point of impact
 void explode_object(object *hitobj,fix delay_time)
 {
+	size_t hobjnum = hitobj - Objects.data();
+
 	if (hitobj->flags & OF_EXPLODING) return;
 
 	if (delay_time) {		//wait a little while before creating explosion
@@ -1125,12 +1134,10 @@ void explode_object(object *hitobj,fix delay_time)
 
 		//create a placeholder object to do the delay, with id==-1
 
-		size_t tempID = hitobj - Objects.data();
-
 		objnum = obj_create( OBJ_FIREBALL,-1,hitobj->segnum,&hitobj->pos,&vmd_identity_matrix,0,
 						CT_EXPLOSION,MT_NONE,RT_NONE);
 
-		hitobj = &Objects[tempID];
+		hitobj = &Objects[hobjnum];
 	
 		if (objnum < 0 ) {
 			maybe_delete_object(hitobj);		//no explosion, die instantly
@@ -1160,7 +1167,8 @@ void explode_object(object *hitobj,fix delay_time)
 		vclip_num = get_explosion_vclip(hitobj,0);
 
 		expl_obj = object_create_explosion(hitobj->segnum, &hitobj->pos, fixmul(hitobj->size,EXPLOSION_SCALE), vclip_num );
-	
+		hitobj = &Objects[hobjnum];
+
 		if (! expl_obj) {
 			maybe_delete_object(hitobj);		//no explosion, die instantly
 			mprintf((0,"Couldn't start explosion, deleting object now\n"));
@@ -1175,8 +1183,10 @@ void explode_object(object *hitobj,fix delay_time)
 			expl_obj->mtype.phys_info = hitobj->mtype.phys_info;
 		}
 	
-		if (hitobj->render_type==RT_POLYOBJ && hitobj->type!=OBJ_DEBRIS)
+		if (hitobj->render_type==RT_POLYOBJ && hitobj->type!=OBJ_DEBRIS) {
 			explode_model(hitobj);
+			hitobj = &Objects[hobjnum];
+		}
 
 		maybe_delete_object(hitobj);
 	}
@@ -1202,6 +1212,9 @@ extern void drop_stolen_items(object *objp);
 //do whatever needs to be done for this explosion for this frame
 void do_explosion_sequence(object *obj)
 {
+
+	size_t eobjnum = obj - Objects.data();
+
 	Assert(obj->control_type == CT_EXPLOSION);
 
 	//mprintf( 0, "Object %d life left is %d\n", obj-Objects.data(), obj->lifeleft );
@@ -1240,11 +1253,13 @@ void do_explosion_sequence(object *obj)
 		else
 			expl_obj = object_create_explosion( del_obj->segnum, spawn_pos, fixmul(del_obj->size, EXPLOSION_SCALE), vclip_num );
 
+		del_obj = &Objects[obj->ctype.expl_info.delete_objnum];
+
 		if ((del_obj->contains_count > 0) && !(Game_mode & GM_MULTI)) { // Multiplayer handled outside of this code!!
 			//	If dropping a weapon that the player has, drop energy instead, unless it's vulcan, in which case drop vulcan ammo.
 			if (del_obj->contains_type == OBJ_POWERUP)
 				maybe_replace_powerup_with_energy(del_obj);
-			object_create_egg(del_obj);
+			object_create_egg(obj->ctype.expl_info.delete_objnum);
 		} else if ((del_obj->type == OBJ_ROBOT) && !(Game_mode & GM_MULTI)) { // Multiplayer handled outside this code!!
 			robot_info	*robptr = &activeBMTable->robots[del_obj->id];
 			if (robptr->contains_count) {
@@ -1253,7 +1268,7 @@ void do_explosion_sequence(object *obj)
 					del_obj->contains_type = robptr->contains_type;
 					del_obj->contains_id = robptr->contains_id;
 					maybe_replace_powerup_with_energy(del_obj);
-					object_create_egg(del_obj);
+					object_create_egg(obj->ctype.expl_info.delete_objnum);
 				}
 			}
 
@@ -1264,6 +1279,8 @@ void do_explosion_sequence(object *obj)
 				DropBuddyMarker(del_obj);
 			}
 		}
+
+		obj = &Objects[eobjnum];
 
 		if ( activeBMTable->robots[del_obj->id].exp2_sound_num > -1 )
 			digi_link_sound_to_pos( activeBMTable->robots[del_obj->id].exp2_sound_num, del_obj->segnum, 0, spawn_pos, 0, F1_0 );

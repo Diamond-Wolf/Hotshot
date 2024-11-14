@@ -414,7 +414,10 @@ void draw_morph_object(object *obj)
 	morph_data *md;
 
 	md = find_morph_data(obj);
-	Assert(md != NULL);
+	
+	//Assert(md != NULL);
+	if (md == NULL)
+		return;
 
 	Assert(obj->rtype.pobj_info.model_num < activeBMTable->models.size());
 

@@ -74,7 +74,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define vm_angvec_zero(v) (v)->p=(v)->b=(v)->h=0
 
 void reset_player_object(void); // In object.c but not in object.h
-void drop_player_eggs(object* player); // from collide.c
+void drop_player_eggs(size_t pobjnum); // from collide.c
 void GameLoop(int, int); // From game.c
 
 //
@@ -1067,7 +1067,7 @@ multi_leave_game(void)
 		Net_create_loc = 0;
 		AdjustMineSpawn();
 		multi_cap_objects();
-		drop_player_eggs(ConsoleObject);
+		drop_player_eggs(ConsoleObject - Objects.data());
 		multi_send_position(Players[Player_num].objnum);
 		multi_send_player_explode(MULTI_PLAYER_DROP);
 	}
@@ -1830,7 +1830,7 @@ multi_do_player_explode(char* buf)
 
 	multi_adjust_remote_cap(pnum);
 
-	objp = &Objects[Players[pnum].objnum];
+	size_t pobjnum = Players[pnum].objnum;
 
 	//      objp->phys_info.velocity = *(vms_vector *)(buf+16); // 12 bytes
 	//      objp->pos = *(vms_vector *)(buf+28);                // 12 bytes
@@ -1839,7 +1839,9 @@ multi_do_player_explode(char* buf)
 
 	Net_create_loc = 0;
 
-	drop_player_eggs(objp);
+	drop_player_eggs(pobjnum);
+
+	objp = &Objects[Players[pnum].objnum];
 
 	// Create mapping from remote to local numbering system
 
@@ -2218,7 +2220,7 @@ multi_do_create_powerup(char* buf)
 #endif
 
 	Net_create_loc = 0;
-	my_objnum = call_object_create_egg(&Objects[Players[pnum].objnum], 1, OBJ_POWERUP, powerup_type);
+	my_objnum = call_object_create_egg(Players[pnum].objnum, 1, OBJ_POWERUP, powerup_type);
 
 	if (my_objnum < 0) {
 		mprintf((0, "Could not create new powerup!\n"));
@@ -3829,7 +3831,7 @@ int multi_delete_extra_objects()
 			//	Before deleting object, if it's a robot, drop it's special powerup, if any
 			if (objp->type == OBJ_ROBOT)
 				if (objp->contains_count && (objp->contains_type == OBJ_POWERUP))
-					object_create_egg(objp);
+					object_create_egg(i);
 			obj_delete(i);
 		}
 		//objp++;

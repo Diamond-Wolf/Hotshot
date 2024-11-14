@@ -270,13 +270,13 @@ void RelinkSpecialObjectPointers(const RelinkCache& cache) {
 		old_viewer = &Objects[cache.old];
 
 	if (cache.prev < Objects.size())
-		old_viewer = &Objects[cache.prev];
+		prev_obj = &Objects[cache.prev];
 
 	if (cache.deadcam < Objects.size())
-		old_viewer = &Objects[cache.deadcam];
+		Dead_player_camera = &Objects[cache.deadcam];
 
 	if (cache.slew < Objects.size())
-		old_viewer = &Objects[cache.slew];
+		slew_obj = &Objects[cache.slew];
 
 }
 
@@ -640,6 +640,8 @@ void create_small_fireball_on_object(object* objp, fix size_scale, int sound_fla
 	vms_vector	pos, rand_vec;
 	int			segnum;
 
+	size_t objnum = objp - Objects.data();
+
 	pos = objp->pos;
 	make_random_vector(&rand_vec);
 
@@ -656,6 +658,7 @@ void create_small_fireball_on_object(object* objp, fix size_scale, int sound_fla
 		expl_obj = object_create_explosion(segnum, &pos, size, VCLIP_SMALL_EXPLOSION);
 		if (!expl_obj)
 			return;
+		objp = &Objects[objnum];
 		obj_attach(objp, expl_obj);
 		if (P_Rand() < 8192) 
 		{
@@ -1605,7 +1608,7 @@ void set_camera_pos(vms_vector* camera_pos, object* objp)
 	}
 }
 
-extern void drop_player_eggs(object* objp);
+extern void drop_player_eggs(size_t pobjnum);
 extern int get_explosion_vclip(object* obj, int stage);
 extern void multi_cap_objects();
 extern int Proximity_dropped, Smartmines_dropped;
@@ -1694,7 +1697,7 @@ void dead_player_frame(void)
 #endif
 					}
 
-					drop_player_eggs(ConsoleObject);
+					drop_player_eggs(ConsoleObject - Objects.data());
 					Player_eggs_dropped = 1;
 #ifdef NETWORK
 					if (Game_mode & GM_MULTI)
@@ -1740,7 +1743,7 @@ void dead_player_frame(void)
 #endif
 					}
 
-					drop_player_eggs(ConsoleObject);
+					drop_player_eggs(ConsoleObject - Objects.data());
 					Player_eggs_dropped = 1;
 #ifdef NETWORK
 					if (Game_mode & GM_MULTI)

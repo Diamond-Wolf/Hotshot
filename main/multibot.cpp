@@ -888,7 +888,7 @@ multi_explode_robot_sub(int botnum, int killer,char isthief)
 	// Drop non-random KEY powerups locally only!
 	if ((robot->contains_count > 0) && (robot->contains_type == OBJ_POWERUP) && (Game_mode & GM_MULTI_COOP) && (robot->contains_id >= POW_KEY_BLUE) && (robot->contains_id <= POW_KEY_GOLD))
 	{
-		object_create_egg(robot);
+		object_create_egg(botnum);
 	}
 	else if (robot->ctype.ai_info.REMOTE_OWNER == Player_num) 
 	{
@@ -900,6 +900,8 @@ multi_explode_robot_sub(int botnum, int killer,char isthief)
 		multi_drop_robot_powerups(robot-Objects.data());
 		//multi_delete_controlled_robot(robot-Objects.data());
 	}
+
+	robot = &Objects[botnum];
 
    if (isthief || activeBMTable->robots[robot->id].thief)
 	 drop_stolen_items(robot);
@@ -1148,7 +1150,7 @@ multi_do_create_robot_powerups(char *buf)
 	Net_create_loc = 0;
 	srand(1245L);
 
-	egg_objnum = object_create_egg(&del_obj);
+	egg_objnum = object_create_egg(&del_obj - Objects.data()); //This needs fixed badly
 
 	if (egg_objnum == -1)
 		return; // Object buffer full
@@ -1211,7 +1213,7 @@ multi_drop_robot_powerups(int objnum)
 		}
 		srand(1245L);
 		if (del_obj->contains_count > 0)
-			egg_objnum = object_create_egg(del_obj);
+			egg_objnum = object_create_egg(objnum);
 	}
 		
 	else if (del_obj->ctype.ai_info.REMOTE_OWNER == -1) // No random goodies for robots we weren't in control of
@@ -1232,7 +1234,7 @@ multi_drop_robot_powerups(int objnum)
 		
 			srand(1245L);
 			if (del_obj->contains_count > 0)
-				egg_objnum = object_create_egg(del_obj);
+				egg_objnum = object_create_egg(objnum);
 		}
 	}
 

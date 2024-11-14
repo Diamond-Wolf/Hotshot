@@ -455,14 +455,14 @@ int create_gated_robot( int segnum, int object_id, vms_vector *pos)
 
 	object_create_explosion(segnum, &object_pos, i2f(10), VCLIP_MORPHING_ROBOT );
 	digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, segnum, 0, &object_pos, 0 , F1_0);
-	morph_start(objp);
+	morph_start(&Objects[objnum]);
 
 	Last_gate_time = GameTime;
 
 	Players[Player_num].num_robots_level++;
 	Players[Player_num].num_robots_total++;
 
-	return objp-Objects.data();
+	return objnum;
 }
 
 

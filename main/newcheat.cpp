@@ -150,7 +150,7 @@ void InitializeCheats() {
     allCheats[i++] = NewCheat("ahayweh", 7); 
     allCheats[i++] = NewCheat("vertigo", 7); //Drunk shader
     allCheats[i++] = NewCheat("firebrand", 9); 
-    //allCheats[i++] = NewCheat("shrapnel", 8); // [DW] Stress tests with this cheat code revealed errors that make no sense whatsoever, such as an object pointer being invalidated by perfectly well-contained math code
+    allCheats[i++] = NewCheat("whosyodaddy", 11);
 
     Assert(i == CI_TOTAL);
 
@@ -742,31 +742,29 @@ bool CheckCheats(char newKeyIn) {
             return true;    
         break;
 
-        /*case CI_EXPLODE_FLARES:
+        case CI_EXPLODE_FLARES:
             cheatValues[CI_EXPLODE_FLARES] = !cheatValues[CI_EXPLODE_FLARES];
-            if (!cheatValues[CI_EXPLODE_FLARES]) {
-                if (cheatValues[CI_EXPLODE_FLARES]) {
-                    do_cheat_penalty();
-                    weaponChildren.resize(activeBMTable->weapons.size());
-                    for (i = 0; i < activeBMTable->weapons.size(); i++)
-                    {
-                        weaponChildren[i] = activeBMTable->weapons[i].children;
-                        if (activeBMTable->weapons[i].children < 0 && i != FLARE_ID)
-                        activeBMTable->weapons[i].children = FLARE_ID;
-                    }
-                    HUD_init_message("Crazy fraggy!");
-                } else {
-                    Assert(weaponChildren.size() == activeBMTable->weapons.size());
-                    for (i = 0; i < activeBMTable->weapons.size(); i++)
-                    {
-                        activeBMTable->weapons[i].children = weaponChildren[i];
-                    }
-                    HUD_init_message("Nevermind.");
+            if (cheatValues[CI_EXPLODE_FLARES]) {
+                do_cheat_penalty();
+                weaponChildren.resize(activeBMTable->weapons.size());
+                for (i = 0; i < activeBMTable->weapons.size(); i++)
+                {
+                    weaponChildren[i] = activeBMTable->weapons[i].children;
+                    if (activeBMTable->weapons[i].children < 0 && i != FLARE_ID)
+                    activeBMTable->weapons[i].children = FLARE_ID;
                 }
+                HUD_init_message("Crazy fraggy!");
+            } else {
+                Assert(weaponChildren.size() == activeBMTable->weapons.size());
+                for (i = 0; i < activeBMTable->weapons.size(); i++)
+                {
+                    activeBMTable->weapons[i].children = weaponChildren[i];
+                }
+                HUD_init_message("Nevermind.");
             }
 
             return true;
-        break;*/
+        break;
 
         case CI_LAVA_WALLS:
             cheatValues[CI_LAVA_WALLS] = !cheatValues[CI_LAVA_WALLS];

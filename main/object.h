@@ -409,10 +409,10 @@ extern int find_object_seg(object * obj );
 void fix_object_segs();
 
 //	Drops objects contained in objp.
-int object_create_egg(object *objp);
+int object_create_egg(size_t objnum);
 
 //	Interface to object_create_egg, puts count objects of type type, id = id in objp and then drops them.
-int call_object_create_egg(object *objp, int count, int type, int id);
+int call_object_create_egg(size_t objnum, int count, int type, int id);
 
 extern void dead_player_end(void);
 

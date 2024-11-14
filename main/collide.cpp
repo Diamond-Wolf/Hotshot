@@ -711,6 +711,7 @@ int ok_to_do_omega_damage(object * weapon)
 
 void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short hitwall, vms_vector* hitpt)
 {
+	size_t wobjnum = weapon - Objects.data();
 	segment* seg = &Segments[hitseg];
 	int blew_up;
 	int wall_type;
@@ -771,6 +772,8 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 	}
 
 	blew_up = check_effect_blowup(seg, hitwall, hitpt, weapon, 0);
+	if (blew_up)
+		weapon = &Objects[wobjnum];
 
 	//if ((seg->sides[hitwall].tmap_num2==0) && (activeBMTable->tmaps[seg->sides[hitwall].tmap_num].flags & TMI_VOLATILE)) {
 
@@ -844,6 +847,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 				wi->strength[Difficulty_level] / 2 + VOLATILE_WALL_DAMAGE_FORCE,
 				weapon->ctype.laser_info.parent_num);
 		}
+		weapon = &Objects[wobjnum];
 
 		//create_smart_children(weapon, NUM_SMART_CHILDREN);
 
@@ -882,6 +886,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 			object_create_explosion(weapon->segnum, &weapon->pos, activeBMTable->weapons[weapon->id].impact_size, VCLIP_WATER_HIT);
 		}
 
+		weapon = &Objects[wobjnum];
 		weapon->flags |= OF_SHOULD_BE_DEAD;		//make flares die in water
 
 	}
@@ -908,6 +913,7 @@ void collide_weapon_and_wall(object* weapon, fix hitspeed, short hitseg, short h
 
 			}
 
+			weapon = &Objects[wobjnum];
 			//create_smart_children(weapon, NUM_SMART_CHILDREN);
 		}
 	}
@@ -1594,8 +1600,12 @@ int do_boss_weapon_collision(object* robot, object* weapon, vms_vector* collisio
 			//	Cause weapon to bounce.
 			//	Make a copy of this weapon, because the physics wants to destroy it.
 			if (!activeBMTable->weapons[weapon->id].matter) {
+				size_t wobjnum = weapon - Objects.data();
+
 				new_obj = obj_create(weapon->type, weapon->id, weapon->segnum, &weapon->pos,
 					&weapon->orient, weapon->size, weapon->control_type, weapon->movement_type, weapon->render_type);
+				
+				weapon = &Objects[wobjnum];
 
 				if (new_obj != -1) {
 					vms_vector	vec_to_point;
@@ -1862,54 +1872,55 @@ void collide_player_and_player(object* player1, object* player2, vms_vector* col
 	return;
 }
 
-int maybe_drop_primary_weapon_egg(object* playerobj, int weapon_index)
+int maybe_drop_primary_weapon_egg(size_t pobjnum, int weapon_index)
 {
 	int weapon_flag = HAS_FLAG(weapon_index);
 	int powerup_num;
 
 	powerup_num = Primary_weapon_to_powerup[weapon_index];
 
-	if (Players[playerobj->id].primary_weapon_flags & weapon_flag)
-		return call_object_create_egg(playerobj, 1, OBJ_POWERUP, powerup_num);
+	if (Players[Objects[pobjnum].id].primary_weapon_flags & weapon_flag)
+		return call_object_create_egg(pobjnum, 1, OBJ_POWERUP, powerup_num);
 	else
 		return -1;
 }
 
-void maybe_drop_secondary_weapon_egg(object* playerobj, int weapon_index, int count)
+void maybe_drop_secondary_weapon_egg(size_t pobjnum, int weapon_index, int count)
 {
 	//int weapon_flag = HAS_FLAG(weapon_index);
 	int powerup_num;
 
 	powerup_num = Secondary_weapon_to_powerup[weapon_index];
 
-	if (Players[playerobj->id].secondary_ammo[weapon_index] > 0) {
+	if (Players[Objects[pobjnum].id].secondary_ammo[weapon_index] > 0) {
 		int	i, max_count;
 
 		max_count = std::min(count, 3);
 		for (i = 0; i < max_count; i++)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, powerup_num);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, powerup_num);
 	}
 }
 
-void drop_missile_1_or_4(object* playerobj, int missile_index)
+void drop_missile_1_or_4(size_t pobjnum, int missile_index)
 {
 	int num_missiles, powerup_id;
 
-	num_missiles = Players[playerobj->id].secondary_ammo[missile_index];
+	num_missiles = Players[Objects[pobjnum].id].secondary_ammo[missile_index];
 	powerup_id = Secondary_weapon_to_powerup[missile_index];
 
 	if (num_missiles > 10)
 		num_missiles = 10;
 
-	call_object_create_egg(playerobj, num_missiles / 4, OBJ_POWERUP, powerup_id + 1);
-	call_object_create_egg(playerobj, num_missiles % 4, OBJ_POWERUP, powerup_id);
+	call_object_create_egg(pobjnum, num_missiles / 4, OBJ_POWERUP, powerup_id + 1);
+	call_object_create_egg(pobjnum, num_missiles % 4, OBJ_POWERUP, powerup_id);
 }
 
 // -- int	Items_destroyed = 0;
 
-void drop_player_eggs(object* playerobj)
+void drop_player_eggs(size_t pobjnum)
 {
 	//	mprintf((0, "In drop_player_eggs...\n"));
+	object* playerobj = &Objects[pobjnum];
 
 	if ((playerobj->type == OBJ_PLAYER) || (playerobj->type == OBJ_GHOST)) {
 		int	rthresh;
@@ -1941,8 +1952,10 @@ void drop_player_eggs(object* playerobj)
 			rthresh /= 2;
 			vm_vec_add(&tvec, &playerobj->pos, &randvec);
 			newseg = find_point_seg(&tvec, playerobj->segnum);
-			if (newseg != -1)
-				Laser_create_new(&randvec, &tvec, newseg, playerobj - Objects.data(), SUPERPROX_ID, 0);
+			if (newseg != -1) {
+				Laser_create_new(&randvec, &tvec, newseg, pobjnum, SUPERPROX_ID, 0);
+				playerobj = &Objects[pobjnum];
+			}
 		}
 
 		//	If the player had proximity bombs, maybe arm one of them.
@@ -1958,8 +1971,10 @@ void drop_player_eggs(object* playerobj)
 				rthresh /= 2;
 				vm_vec_add(&tvec, &playerobj->pos, &randvec);
 				newseg = find_point_seg(&tvec, playerobj->segnum);
-				if (newseg != -1)
-					Laser_create_new(&randvec, &tvec, newseg, playerobj - Objects.data(), PROXIMITY_ID, 0);
+				if (newseg != -1) {
+					Laser_create_new(&randvec, &tvec, newseg, pobjnum, PROXIMITY_ID, 0);
+					playerobj = &Objects[pobjnum];
+				}
 
 			}
 		}
@@ -1967,40 +1982,40 @@ void drop_player_eggs(object* playerobj)
 		//	If the player dies and he has powerful lasers, create the powerups here.
 
 		if (Players[pnum].laser_level > MAX_LASER_LEVEL)
-			call_object_create_egg(playerobj, Players[pnum].laser_level - MAX_LASER_LEVEL, OBJ_POWERUP, POW_SUPER_LASER);
+			call_object_create_egg(pobjnum, Players[pnum].laser_level - MAX_LASER_LEVEL, OBJ_POWERUP, POW_SUPER_LASER);
 		else if (Players[pnum].laser_level >= 1)
-			call_object_create_egg(playerobj, Players[pnum].laser_level, OBJ_POWERUP, POW_LASER);	// Note: laser_level = 0 for laser level 1.
+			call_object_create_egg(pobjnum, Players[pnum].laser_level, OBJ_POWERUP, POW_LASER);	// Note: laser_level = 0 for laser level 1.
 
 		//	Drop quad laser if appropos
 		if (Players[pnum].flags & PLAYER_FLAGS_QUAD_LASERS)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_QUAD_FIRE);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_QUAD_FIRE);
 
 		if (Players[pnum].flags & PLAYER_FLAGS_CLOAKED)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_CLOAK);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_CLOAK);
 
 		if (Players[pnum].flags & PLAYER_FLAGS_MAP_ALL)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_FULL_MAP);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FULL_MAP);
 
 		if (Players[pnum].flags & PLAYER_FLAGS_AFTERBURNER)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_AFTERBURNER);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_AFTERBURNER);
 
 		if (Players[pnum].flags & PLAYER_FLAGS_AMMO_RACK)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_AMMO_RACK);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_AMMO_RACK);
 
 		if (Players[pnum].flags & PLAYER_FLAGS_CONVERTER)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_CONVERTER);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_CONVERTER);
 
 		if (Players[pnum].flags & PLAYER_FLAGS_HEADLIGHT)
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_HEADLIGHT);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_HEADLIGHT);
 
 		// drop the other enemies flag if you have it
 
 		if ((Game_mode & GM_CAPTURE) && (Players[pnum].flags & PLAYER_FLAGS_FLAG))
 #ifdef NETWORK
 			if ((get_team(pnum) == TEAM_RED))
-				call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_FLAG_BLUE);
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FLAG_BLUE);
 			else
-				call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_FLAG_RED);
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FLAG_RED);
 #endif
 
 		if (Game_mode & GM_HOARD)
@@ -2013,7 +2028,7 @@ void drop_player_eggs(object* playerobj)
 
 			max_count = std::min(Players[pnum].secondary_ammo[PROXIMITY_INDEX], (uint16_t)12);
 			for (i = 0; i < max_count; i++)
-				call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_HOARD_ORB);
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_HOARD_ORB);
 		}
 
 		//Drop the vulcan, gauss, and ammo
@@ -2022,22 +2037,22 @@ void drop_player_eggs(object* playerobj)
 			vulcan_ammo /= 2;		//if both vulcan & gauss, each gets half
 		if (vulcan_ammo < VULCAN_AMMO_AMOUNT)
 			vulcan_ammo = VULCAN_AMMO_AMOUNT;	//make sure gun has at least as much as a powerup
-		objnum = maybe_drop_primary_weapon_egg(playerobj, VULCAN_INDEX);
+		objnum = maybe_drop_primary_weapon_egg(pobjnum, VULCAN_INDEX);
 		if (objnum != -1)
 			Objects[objnum].ctype.powerup_info.count = vulcan_ammo;
-		objnum = maybe_drop_primary_weapon_egg(playerobj, GAUSS_INDEX);
+		objnum = maybe_drop_primary_weapon_egg(pobjnum, GAUSS_INDEX);
 		if (objnum != -1)
 			Objects[objnum].ctype.powerup_info.count = vulcan_ammo;
 
 		//	Drop the rest of the primary weapons
-		maybe_drop_primary_weapon_egg(playerobj, SPREADFIRE_INDEX);
-		maybe_drop_primary_weapon_egg(playerobj, PLASMA_INDEX);
-		maybe_drop_primary_weapon_egg(playerobj, FUSION_INDEX);
+		maybe_drop_primary_weapon_egg(pobjnum, SPREADFIRE_INDEX);
+		maybe_drop_primary_weapon_egg(pobjnum, PLASMA_INDEX);
+		maybe_drop_primary_weapon_egg(pobjnum, FUSION_INDEX);
 
-		maybe_drop_primary_weapon_egg(playerobj, HELIX_INDEX);
-		maybe_drop_primary_weapon_egg(playerobj, PHOENIX_INDEX);
+		maybe_drop_primary_weapon_egg(pobjnum, HELIX_INDEX);
+		maybe_drop_primary_weapon_egg(pobjnum, PHOENIX_INDEX);
 
-		objnum = maybe_drop_primary_weapon_egg(playerobj, OMEGA_INDEX);
+		objnum = maybe_drop_primary_weapon_egg(pobjnum, OMEGA_INDEX);
 		if (objnum != -1)
 			Objects[objnum].ctype.powerup_info.count = (playerobj->id == Player_num) ? Omega_charge : MAX_OMEGA_CHARGE;
 
@@ -2045,20 +2060,20 @@ void drop_player_eggs(object* playerobj)
 		//	Note, proximity weapon only comes in packets of 4.  So drop n/2, but a max of 3 (handled inside maybe_drop..)  Make sense?
 
 		if (!(Game_mode & GM_HOARD))
-			maybe_drop_secondary_weapon_egg(playerobj, PROXIMITY_INDEX, (Players[playerobj->id].secondary_ammo[PROXIMITY_INDEX]) / 4);
+			maybe_drop_secondary_weapon_egg(pobjnum, PROXIMITY_INDEX, (Players[playerobj->id].secondary_ammo[PROXIMITY_INDEX]) / 4);
 
-		maybe_drop_secondary_weapon_egg(playerobj, SMART_INDEX, Players[playerobj->id].secondary_ammo[SMART_INDEX]);
-		maybe_drop_secondary_weapon_egg(playerobj, MEGA_INDEX, Players[playerobj->id].secondary_ammo[MEGA_INDEX]);
+		maybe_drop_secondary_weapon_egg(pobjnum, SMART_INDEX, Players[playerobj->id].secondary_ammo[SMART_INDEX]);
+		maybe_drop_secondary_weapon_egg(pobjnum, MEGA_INDEX, Players[playerobj->id].secondary_ammo[MEGA_INDEX]);
 
-		maybe_drop_secondary_weapon_egg(playerobj, SMART_MINE_INDEX, (Players[playerobj->id].secondary_ammo[SMART_MINE_INDEX]) / 4);
-		maybe_drop_secondary_weapon_egg(playerobj, SMISSILE5_INDEX, Players[playerobj->id].secondary_ammo[SMISSILE5_INDEX]);
+		maybe_drop_secondary_weapon_egg(pobjnum, SMART_MINE_INDEX, (Players[playerobj->id].secondary_ammo[SMART_MINE_INDEX]) / 4);
+		maybe_drop_secondary_weapon_egg(pobjnum, SMISSILE5_INDEX, Players[playerobj->id].secondary_ammo[SMISSILE5_INDEX]);
 
 		//	Drop the player's missiles in packs of 1 and/or 4
-		drop_missile_1_or_4(playerobj, HOMING_INDEX);
-		drop_missile_1_or_4(playerobj, GUIDED_INDEX);
-		drop_missile_1_or_4(playerobj, CONCUSSION_INDEX);
-		drop_missile_1_or_4(playerobj, SMISSILE1_INDEX);
-		drop_missile_1_or_4(playerobj, SMISSILE4_INDEX);
+		drop_missile_1_or_4(pobjnum, HOMING_INDEX);
+		drop_missile_1_or_4(pobjnum, GUIDED_INDEX);
+		drop_missile_1_or_4(pobjnum, CONCUSSION_INDEX);
+		drop_missile_1_or_4(pobjnum, SMISSILE1_INDEX);
+		drop_missile_1_or_4(pobjnum, SMISSILE4_INDEX);
 
 		//	If player has vulcan ammo, but no vulcan cannon, drop the ammo.
 		if (!(Players[playerobj->id].primary_weapon_flags & HAS_VULCAN_FLAG)) {
@@ -2068,15 +2083,15 @@ void drop_player_eggs(object* playerobj)
 				amount = 200;
 			}
 			while (amount > 0) {
-				call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_VULCAN_AMMO);
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_VULCAN_AMMO);
 				amount -= VULCAN_AMMO_AMOUNT;
 			}
 		}
 
 		//	Always drop a shield and energy powerup.
 		if (Game_mode & GM_MULTI) {
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_SHIELD_BOOST);
-			call_object_create_egg(playerobj, 1, OBJ_POWERUP, POW_ENERGY);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_SHIELD_BOOST);
+			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_ENERGY);
 		}
 
 		//--		//	Drop all the keys.
