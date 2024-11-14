@@ -68,7 +68,7 @@ enum CheatsIndex {
     CI_TROLL,
     CI_DRUNK,
     CI_LAVA_WALLS,
-    CI_EXPLODE_FLARES,
+    //CI_EXPLODE_FLARES,
 
     CI_TOTAL
 };

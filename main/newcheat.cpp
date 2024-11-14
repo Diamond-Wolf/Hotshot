@@ -150,7 +150,7 @@ void InitializeCheats() {
     allCheats[i++] = NewCheat("ahayweh", 7); 
     allCheats[i++] = NewCheat("vertigo", 7); //Drunk shader
     allCheats[i++] = NewCheat("firebrand", 9); 
-    allCheats[i++] = NewCheat("shrapnel", 8); 
+    //allCheats[i++] = NewCheat("shrapnel", 8); // [DW] Stress tests with this cheat code revealed errors that make no sense whatsoever, such as an object pointer being invalidated by perfectly well-contained math code
 
     Assert(i == CI_TOTAL);
 
@@ -742,9 +742,9 @@ bool CheckCheats(char newKeyIn) {
             return true;    
         break;
 
-        case CI_EXPLODE_FLARES:
+        /*case CI_EXPLODE_FLARES:
+            cheatValues[CI_EXPLODE_FLARES] = !cheatValues[CI_EXPLODE_FLARES];
             if (!cheatValues[CI_EXPLODE_FLARES]) {
-                cheatValues[CI_EXPLODE_FLARES] = !cheatValues[CI_EXPLODE_FLARES];
                 if (cheatValues[CI_EXPLODE_FLARES]) {
                     do_cheat_penalty();
                     weaponChildren.resize(activeBMTable->weapons.size());
@@ -766,7 +766,7 @@ bool CheckCheats(char newKeyIn) {
             }
 
             return true;
-        break;
+        break;*/
 
         case CI_LAVA_WALLS:
             cheatValues[CI_LAVA_WALLS] = !cheatValues[CI_LAVA_WALLS];
