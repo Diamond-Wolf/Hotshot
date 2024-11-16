@@ -1063,6 +1063,9 @@ fix Last_thief_hit_time;
 
 void collide_robot_and_player(object* robot, object* playerobj, vms_vector* collision_point)
 {
+	size_t robjnum = robot - Objects.data();
+	size_t pobjnum = playerobj - Objects.data();
+
 	int	steal_attempt = 0;
 	int	collision_seg;
 
@@ -1072,8 +1075,11 @@ void collide_robot_and_player(object* robot, object* playerobj, vms_vector* coll
 	if (CurrentLogicVersion != LogicVer::SHAREWARE)
 	{
 		collision_seg = find_point_seg(collision_point, playerobj->segnum);
-		if (collision_seg != -1)
+		if (collision_seg != -1) {
 			object_create_explosion(collision_seg, collision_point, activeBMTable->weapons[0].impact_size, activeBMTable->weapons[0].wall_hit_vclip);
+			robot = &Objects[robjnum];
+			playerobj = &Objects[pobjnum];
+		}
 	}
 
 	if (playerobj->id == Player_num) {
@@ -1099,8 +1105,14 @@ void collide_robot_and_player(object* robot, object* playerobj, vms_vector* coll
 		}
 
 		create_awareness_event(playerobj, PA_PLAYER_COLLISION);			// object robot can attract attention to player
+
 		do_ai_robot_hit_attack(robot, playerobj, collision_point);
+		robot = &Objects[robjnum];
+		playerobj = &Objects[pobjnum];
+
 		do_ai_robot_hit(robot, PA_WEAPON_ROBOT_COLLISION);
+		robot = &Objects[robjnum];
+		playerobj = &Objects[pobjnum];
 	}
 #ifdef NETWORK
 	else
@@ -2313,7 +2325,9 @@ void collide_player_and_nasty_robot(object* playerobj, object* robot, vms_vector
 	//	if (!(activeBMTable->robots[robot->id].energy_drain && Players[playerobj->id].energy))
 	digi_link_sound_to_pos(activeBMTable->robots[robot->id].claw_sound, playerobj->segnum, 0, collision_point, 0, F1_0);
 
+	size_t pobjnum = playerobj - Objects.data();
 	object_create_explosion(playerobj->segnum, collision_point, i2f(10) / 2, VCLIP_PLAYER_HIT);
+	playerobj = &Objects[pobjnum];
 
 	bump_two_objects(playerobj, robot, 0);	//no damage from bump
 

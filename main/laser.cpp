@@ -2254,7 +2254,11 @@ void create_smart_children(object *objp, int num_smart_children)
 		{
 			int objnum;
 			objnum = (numobjs==0)?-1:objlist[(P_Rand() * numobjs) >> 15];
-			create_homing_missile(&Objects[thisObjnum], objnum, blob_id, make_sound);
+			auto newObj = create_homing_missile(&Objects[thisObjnum], objnum, blob_id, make_sound);
+
+			if (cheatValues[CI_EXPLODE_FLARES] && Objects[newObj].id == FLARE_ID)
+				Objects[newObj].lifeleft = F1_0; //Cheat flares only last one second to prevent rendering problems
+
 			make_sound = 0;
 		}
 	}
