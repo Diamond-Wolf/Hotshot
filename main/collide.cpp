@@ -1662,6 +1662,9 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 {
 	int	damage_flag = 1;
 	int	boss_invul_flag = 0;
+	
+	size_t robjnum = robot - Objects.data();
+	size_t wobjnum = weapon - Objects.data();
 
 	if (weapon->id == OMEGA_ID)
 		if (!ok_to_do_omega_damage(weapon))
@@ -1675,6 +1678,9 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 			boss_invul_flag = !damage_flag;
 		}
 	}
+
+	robot = &Objects[robjnum];
+	weapon = &Objects[wobjnum];
 
 	//	Put in at request of Jasen (and Adam) because the Buddy-Bot gets in their way.
 	//	MK has so much fun whacking his butt around the mine he never cared...
@@ -1712,8 +1718,11 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 			if (2 * P_Rand() < (probval & 0xffff))
 				num_blobs++;
 
-			if (num_blobs)
+			if (num_blobs) {
 				create_smart_children(robot, num_blobs);
+				robot = &Objects[robjnum];
+				weapon = &Objects[wobjnum];
+			}
 		}
 
 	//	Note: If weapon hits an invulnerable boss, it will still do badass damage, including to the boss,
@@ -1736,7 +1745,10 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 			explode_badass_weapon(weapon, collision_point);
 	}
 
-	create_smart_children(weapon, NUM_SMART_CHILDREN);
+	create_smart_children(&Objects[wobjnum], NUM_SMART_CHILDREN);
+
+	robot = &Objects[robjnum];
+	weapon = &Objects[wobjnum];
 
 	if (((weapon->ctype.laser_info.parent_type == OBJ_PLAYER) || cheatValues[CI_INFIGHTING]) && !(robot->flags & OF_EXPLODING)) {
 		object* expl_obj = NULL;
@@ -1744,6 +1756,8 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 		if (weapon->ctype.laser_info.parent_num == Players[Player_num].objnum) {
 			create_awareness_event(weapon, PA_WEAPON_ROBOT_COLLISION);			// object "weapon" can attract attention to player
 			do_ai_robot_hit(robot, PA_WEAPON_ROBOT_COLLISION);
+			robot = &Objects[robjnum];
+			weapon = &Objects[wobjnum];
 		}
 #ifdef NETWORK
 		else
@@ -1754,6 +1768,9 @@ void collide_robot_and_weapon(object* robot, object* weapon, vms_vector* collisi
 			expl_obj = object_create_explosion(weapon->segnum, collision_point, (robot->size / 2 * 3) / 4, activeBMTable->robots[robot->id].exp1_vclip_num);
 		else if (activeBMTable->weapons[weapon->id].robot_hit_vclip > -1)
 			expl_obj = object_create_explosion(weapon->segnum, collision_point, activeBMTable->weapons[weapon->id].impact_size, activeBMTable->weapons[weapon->id].robot_hit_vclip);
+
+		robot = &Objects[robjnum];
+		weapon = &Objects[wobjnum];
 
 		if (expl_obj)
 			obj_attach(robot, expl_obj);

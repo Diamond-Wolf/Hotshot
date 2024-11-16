@@ -1386,7 +1386,7 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 
 		obj_free(objnum);
 
-		mprintf((1, "New object outside of mine!"));
+		mprintf((1, "New object outside of mine!\n"));
 
 		return -1;
 	}

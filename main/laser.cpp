@@ -567,6 +567,9 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 	fix volume;
 	fix laser_length=0;
 
+	vms_vector pcopy = *position; // [DW] Hack! Make sure position is valid after do_muzzle_stuff() call
+	position = &pcopy;
+
 	Assert( weapon_type < activeBMTable->weapons.size() );
 
 	if ( (weapon_type<0) || (weapon_type>=activeBMTable->weapons.size()) )
@@ -580,7 +583,7 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 
 	if ( objnum < 0 ) 
 	{
-		mprintf((1, "Can't create laser - Out of objects!\n" ));
+		mprintf((1, "Can't create laser!\n" ));
 		return -1;
 	}
 
@@ -2256,7 +2259,9 @@ void create_smart_children(object *objp, int num_smart_children)
 			objnum = (numobjs==0)?-1:objlist[(P_Rand() * numobjs) >> 15];
 			auto newObj = create_homing_missile(&Objects[thisObjnum], objnum, blob_id, make_sound);
 
-			if (cheatValues[CI_EXPLODE_FLARES] && Objects[newObj].id == FLARE_ID)
+			if (newObj < 0)
+				mprintf((1, "Smart child could not be created!\n"));
+			else if (cheatValues[CI_EXPLODE_FLARES] && Objects[newObj].id == FLARE_ID)
 				Objects[newObj].lifeleft = F1_0; //Cheat flares only last one second to prevent rendering problems
 
 			make_sound = 0;

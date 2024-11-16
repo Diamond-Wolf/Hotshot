@@ -1397,7 +1397,10 @@ void kill_stuck_objects(int wallnum)
 
 	Num_stuck_objects = 0;
 
-	for (i = 0; i < MAX_STUCK_OBJECTS; i++)
+	for (i = 0; i < MAX_STUCK_OBJECTS; i++) {
+		if (Stuck_objects[i].objnum > Highest_object_index)
+			continue; //Trying to kill a nonexistant object!
+
 		if (Stuck_objects[i].wallnum == wallnum) {
 			if (Objects[Stuck_objects[i].objnum].type == OBJ_WEAPON) {
 				Objects[Stuck_objects[i].objnum].lifeleft = F1_0 / 8;
@@ -1410,6 +1413,7 @@ void kill_stuck_objects(int wallnum)
 		else if (Stuck_objects[i].wallnum != -1) {
 			Num_stuck_objects++;
 		}
+	}
 	//	Ok, this is awful, but we need to do things whenever a door opens/closes/disappears, etc.
 	flush_fcd_cache();
 
