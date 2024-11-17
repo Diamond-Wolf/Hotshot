@@ -1404,79 +1404,83 @@ void add_segment_edges(segment* seg)
 			break;
 		}
 
-		if (seg->sides[sn].wall_num > -1)
+		if (seg->sides[sn].wall_num >= 0)
 		{
 
 			trigger_num = Walls[seg->sides[sn].wall_num].trigger;
-			ttype = Triggers[trigger_num].type;
-			if (ttype == TT_SECRET_EXIT)
-			{
-				color = BM_XRGB(29, 0, 31);
-				no_fade = 1;
-				goto Here;
-			}
+			if (trigger_num >= 0) {
 
-			switch (Walls[seg->sides[sn].wall_num].type) 
-			{
-			case WALL_DOOR:
-				if (Walls[seg->sides[sn].wall_num].keys == KEY_BLUE)
+				ttype = Triggers[trigger_num].type;
+				if (ttype == TT_SECRET_EXIT)
 				{
+					color = BM_XRGB(29, 0, 31);
 					no_fade = 1;
-					color = Wall_door_blue;
-					//mprintf((0, "Seg %i, side %i has BLUE wall\n", segnum, sn));
+					goto Here;
 				}
-				else if (Walls[seg->sides[sn].wall_num].keys == KEY_GOLD) 
-				{
-					no_fade = 1;
-					color = Wall_door_gold;
-					//mprintf((0, "Seg %i, side %i has GOLD wall\n", segnum, sn));
-				}
-				else if (Walls[seg->sides[sn].wall_num].keys == KEY_RED) 
-				{
-					no_fade = 1;
-					color = Wall_door_red;
-					//mprintf((0, "Seg %i, side %i has RED wall\n", segnum, sn));
-				}
-				else if (!(activeBMTable->wclips[Walls[seg->sides[sn].wall_num].clip_num].flags & WCF_HIDDEN))
-				{
-					int	connected_seg = seg->children[sn];
-					if (connected_seg != -1) {
-						int connected_side = find_connect_side(seg, &Segments[connected_seg]);
-						int	keytype = Walls[Segments[connected_seg].sides[connected_side].wall_num].keys;
-						if ((keytype != KEY_BLUE) && (keytype != KEY_GOLD) && (keytype != KEY_RED))
-							color = Wall_door_color;
-						else {
-							switch (Walls[Segments[connected_seg].sides[connected_side].wall_num].keys) 
-							{
-							case KEY_BLUE:	color = Wall_door_blue;	no_fade = 1; break;
-							case KEY_GOLD:	color = Wall_door_gold;	no_fade = 1; break;
-							case KEY_RED:	color = Wall_door_red;	no_fade = 1; break;
-							default:	Error("Inconsistent data.  Supposed to be a colored wall, but not blue, gold or red.\n");
-							}
-							//mprintf((0, "Seg %i, side %i has a colored door on the other side.\n", segnum, sn));
-						}
 
+				switch (Walls[seg->sides[sn].wall_num].type)
+				{
+				case WALL_DOOR:
+					if (Walls[seg->sides[sn].wall_num].keys == KEY_BLUE)
+					{
+						no_fade = 1;
+						color = Wall_door_blue;
+						//mprintf((0, "Seg %i, side %i has BLUE wall\n", segnum, sn));
 					}
-				}
-				else 
-				{
+					else if (Walls[seg->sides[sn].wall_num].keys == KEY_GOLD)
+					{
+						no_fade = 1;
+						color = Wall_door_gold;
+						//mprintf((0, "Seg %i, side %i has GOLD wall\n", segnum, sn));
+					}
+					else if (Walls[seg->sides[sn].wall_num].keys == KEY_RED)
+					{
+						no_fade = 1;
+						color = Wall_door_red;
+						//mprintf((0, "Seg %i, side %i has RED wall\n", segnum, sn));
+					}
+					else if (!(activeBMTable->wclips[Walls[seg->sides[sn].wall_num].clip_num].flags & WCF_HIDDEN))
+					{
+						int	connected_seg = seg->children[sn];
+						if (connected_seg != -1) {
+							int connected_side = find_connect_side(seg, &Segments[connected_seg]);
+							int	keytype = Walls[Segments[connected_seg].sides[connected_side].wall_num].keys;
+							if ((keytype != KEY_BLUE) && (keytype != KEY_GOLD) && (keytype != KEY_RED))
+								color = Wall_door_color;
+							else {
+								switch (Walls[Segments[connected_seg].sides[connected_side].wall_num].keys)
+								{
+								case KEY_BLUE:	color = Wall_door_blue;	no_fade = 1; break;
+								case KEY_GOLD:	color = Wall_door_gold;	no_fade = 1; break;
+								case KEY_RED:	color = Wall_door_red;	no_fade = 1; break;
+								default:	Error("Inconsistent data.  Supposed to be a colored wall, but not blue, gold or red.\n");
+								}
+								//mprintf((0, "Seg %i, side %i has a colored door on the other side.\n", segnum, sn));
+							}
+
+						}
+					}
+					else
+					{
+						color = Wall_normal_color;
+						hidden_flag = 1;
+						//mprintf((0, "Wall at seg:side %i:%i is hidden.\n", seg-Segments.data(), sn));
+					}
+					break;
+				case WALL_CLOSED:
+					// Make grates draw properly
+					if (WALL_IS_DOORWAY(seg, sn) & WID_RENDPAST_FLAG)
+						is_grate = 1;
+					else
+						hidden_flag = 1;
 					color = Wall_normal_color;
-					hidden_flag = 1;
-					//mprintf((0, "Wall at seg:side %i:%i is hidden.\n", seg-Segments.data(), sn));
+					break;
+				case WALL_BLASTABLE:
+					// Hostage doors
+					color = Wall_door_color;
+					break;
 				}
-				break;
-			case WALL_CLOSED:
-				// Make grates draw properly
-				if (WALL_IS_DOORWAY(seg, sn) & WID_RENDPAST_FLAG)
-					is_grate = 1;
-				else
-					hidden_flag = 1;
-				color = Wall_normal_color;
-				break;
-			case WALL_BLASTABLE:
-				// Hostage doors
-				color = Wall_door_color;
-				break;
+
 			}
 		}
 
