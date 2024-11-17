@@ -1591,7 +1591,7 @@ void kill_and_so_forth(void)
 	{
 		if (Triggers[i].type == TT_EXIT)
 		{
-			for (j = 0; j < Num_walls; j++)
+			for (j = 0; j < Walls.size(); j++)
 			{
 				if (Walls[j].trigger == i)
 				{

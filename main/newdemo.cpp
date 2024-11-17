@@ -1405,15 +1405,15 @@ void newdemo_set_new_level(int level_num)
 
 	if (JustStartedRecording == 1)
 	{
-		nd_write_int(Num_walls);
-		for (i = 0; i < Num_walls; i++)
+		nd_write_int(Walls.size());
+		for (auto& wall : Walls)
 		{
-			nd_write_byte(Walls[i].type);
-			nd_write_byte(Walls[i].flags);
-			nd_write_byte(Walls[i].state);
+			nd_write_byte(wall.type);
+			nd_write_byte(wall.flags);
+			nd_write_byte(wall.state);
 
-			seg = &Segments[Walls[i].segnum];
-			side = Walls[i].sidenum;
+			seg = &Segments[wall.segnum];
+			side = wall.sidenum;
 			nd_write_short(seg->sides[side].tmap_num);
 			nd_write_short(seg->sides[side].tmap_num2);
 			JustStartedRecording = 0;
@@ -2498,6 +2498,7 @@ int newdemo_read_frame_information()
 
 			if (JustStartedPlayback)
 			{
+				int Num_walls;
 				nd_read_int(&Num_walls);
 				for (i = 0; i < Num_walls; i++)    // restore the walls
 				{

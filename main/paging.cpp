@@ -344,15 +344,15 @@ void paging_touch_segment(segment * segp)
 
 void paging_touch_walls()
 {
-	int i,j;
+	int j;
 	wclip *anim;
 
-	for (i=0;i<Num_walls;i++)
+	for (auto& wall : Walls)
 	{
 //		paging_draw_orb();
-		if ( Walls[i].clip_num > -1 )	
+		if ( wall.clip_num > -1 )	
 		{
-			anim = &activeBMTable->wclips[Walls[i].clip_num];
+			anim = &activeBMTable->wclips[wall.clip_num];
 			for (j=0; j < anim->num_frames; j++ )	
 			{
 				PIGGY_PAGE_IN( activeBMTable->textures

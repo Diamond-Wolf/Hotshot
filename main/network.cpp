@@ -876,11 +876,9 @@ void network_send_door_updates(int pnum)
 
 	int i;
 
-	pnum = pnum;
-
 	//   Assert (pnum>-1 && pnum<N_players);
 
-	for (i = 0; i < Num_walls; i++)
+	for (i = 0; i < Walls.size(); i++)
 	{
 		if ((Walls[i].type == WALL_DOOR) && ((Walls[i].state == WALL_DOOR_OPENING) || (Walls[i].state == WALL_DOOR_WAITING) || (Walls[i].state == WALL_DOOR_OPEN)))
 			multi_send_door_open_specific(pnum, Walls[i].segnum, Walls[i].sidenum, Walls[i].flags);

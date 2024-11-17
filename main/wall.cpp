@@ -49,8 +49,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	BOSS_LOCKED_DOOR_SEG		595
 #define	BOSS_LOCKED_DOOR_SIDE	5
 
-wall Walls[MAX_WALLS];					// Master walls array
-int Num_walls = 0;							// Number of walls
+std::vector<wall> Walls(MAX_WALLS);					// Master walls array
+//int Num_walls = 0;							// Number of walls
 
 //door Doors[MAX_DOORS];					//	Master doors array
 
@@ -378,7 +378,7 @@ void wall_open_door(segment* seg, int side)
 
 			d = &ActiveDoors[i];
 
-			if (d->front_wallnum[0] == w - Walls || d->back_wallnum[0] == w - Walls || (d->n_parts == 2 && (d->front_wallnum[1] == w - Walls || d->back_wallnum[1] == w - Walls)))
+			if (d->front_wallnum[0] == w - Walls.data() || d->back_wallnum[0] == w - Walls.data() || (d->n_parts == 2 && (d->front_wallnum[1] == w - Walls.data() || d->back_wallnum[1] == w - Walls.data())))
 				break;
 		}
 
@@ -493,7 +493,7 @@ void start_wall_cloak(segment* seg, int side)
 
 			d = &CloakingWalls[i];
 
-			if (d->front_wallnum == w - Walls || d->back_wallnum == w - Walls)
+			if (d->front_wallnum == w - Walls.data() || d->back_wallnum == w - Walls.data())
 				break;
 		}
 
@@ -570,7 +570,7 @@ void start_wall_decloak(segment* seg, int side)
 
 			d = &CloakingWalls[i];
 
-			if (d->front_wallnum == w - Walls || d->back_wallnum == w - Walls)
+			if (d->front_wallnum == w - Walls.data() || d->back_wallnum == w - Walls.data())
 				break;
 		}
 
@@ -736,7 +736,7 @@ void wall_close_door(segment* seg, int side)
 
 			d = &ActiveDoors[i];
 
-			if (d->front_wallnum[0] == w - Walls || d->back_wallnum[0] == w - Walls || (d->n_parts == 2 && (d->front_wallnum[1] == w - Walls || d->back_wallnum[1] == w - Walls)))
+			if (d->front_wallnum[0] == w - Walls.data() || d->back_wallnum[0] == w - Walls.data() || (d->n_parts == 2 && (d->front_wallnum[1] == w - Walls.data() || d->back_wallnum[1] == w - Walls.data())))
 				break;
 		}
 
@@ -1134,27 +1134,6 @@ void wall_toggle(segment* seg, int side)
 
 }
 
-
-//-----------------------------------------------------------------
-// Tidy up Walls array for load/save purposes.
-void reset_walls()
-{
-	int i;
-
-	if (Num_walls < 0) {
-		mprintf((0, "Illegal Num_walls\n"));
-		return;
-	}
-
-	for (i = Num_walls; i < MAX_WALLS; i++) {
-		Walls[i].type = WALL_NORMAL;
-		Walls[i].flags = 0;
-		Walls[i].hps = 0;
-		Walls[i].trigger = -1;
-		Walls[i].clip_num = -1;
-	}
-}
-
 void do_cloaking_wall_frame(int cloaking_wall_num)
 {
 	cloaking_wall* d;
@@ -1546,8 +1525,8 @@ void blast_nearby_glass(object* objp, fix damage)
 }
 
 void validate_walls() {
-	for (int i = 0; i < Num_walls; i++)
-		Walls[i].linked_wall = -1; //que?
+	for (auto& wall : Walls)
+		wall.linked_wall = -1; // [DW] que?
 }
 
 #include "cfile/cfile.h"

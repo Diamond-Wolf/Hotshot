@@ -165,8 +165,9 @@ extern char	Wall_names[7][10];
 
 #define WALL_IS_DOORWAY(seg,side) (((seg)->children[(side)] == -1) ? WID_RENDER_FLAG : ((seg)->children[(side)] == -2) ? WID_EXTERNAL_FLAG : ((seg)->sides[(side)].wall_num == -1) ? (WID_FLY_FLAG|WID_RENDPAST_FLAG) : wall_is_doorway((seg), (side)))
 
-extern wall Walls[MAX_WALLS];			// Master walls array
-extern int Num_walls;					// Number of walls
+//extern wall Walls[MAX_WALLS];			// Master walls array
+//extern int Num_walls;					// Number of walls
+extern std::vector<wall> Walls;
 
 extern active_door ActiveDoors[MAX_DOORS];	//	Master doors array
 extern int Num_open_doors;				// Number of open doors
@@ -216,9 +217,6 @@ extern int wall_hit_process(segment *seg, int side, fix damage, int playernum, o
 
 // Opens/destroys specified door.
 extern void wall_toggle(segment *seg, int side);
-
-// Tidy up Walls array for load/save purposes.
-extern void reset_walls();
 
 // Called once per frame..
 void wall_frame_process();

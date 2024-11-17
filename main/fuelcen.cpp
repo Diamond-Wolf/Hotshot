@@ -243,7 +243,7 @@ void trigger_matcen(int segnum)
 		return;
 
 	//	MK: 11/18/95, At insane, matcens work forever!
-	if (Difficulty_level + 1 < NDL)
+	if (Difficulty_level + 1 < NDL || currentGame == G_DESCENT_1)
 		robotcen->Lives--;
 
 	robotcen->Timer = F1_0 * 1000;	//	Make sure the first robot gets emitted right away.

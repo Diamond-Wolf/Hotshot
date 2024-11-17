@@ -2343,7 +2343,7 @@ void multi_do_hostage_door_status(char* buf)
 	wallnum = (*(short*)(buf + count));                count += 2;
 	hps = (fix)(*(int*)(buf + count));              count += 4;
 
-	if ((wallnum < 0) || (wallnum > Num_walls) || (hps < 0) || (Walls[wallnum].type != WALL_BLASTABLE))
+	if ((wallnum < 0) || (wallnum > Walls.size()) || (hps < 0) || (Walls[wallnum].type != WALL_BLASTABLE))
 	{
 		Int3(); // Non-terminal, see Rob
 		return;

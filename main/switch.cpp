@@ -204,7 +204,7 @@ void flag_wall_switched_doors(void)
 {
 	int	i;
 
-	for (i=0; i<Num_walls; i++)
+	for (i=0; i<Walls.size(); i++)
 	{
 		if (door_is_wall_switched(i))
 			Walls[i].flags |= WALL_WALL_SWITCH;

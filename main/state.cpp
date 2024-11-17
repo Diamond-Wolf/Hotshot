@@ -972,7 +972,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 
 		//Save wall info
 
-		i = Num_walls;
+		i = Walls.size();
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
 		{
@@ -1579,12 +1579,13 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//fread(&i, sizeof(int), 1, fp);
 		//Num_walls = i;
 
-		Num_walls = file_read_int(fp);
-		if (Num_walls > MAX_WALLS)
+		auto Num_walls = file_read_int(fp);
+		/*if (Num_walls > MAX_WALLS)
 		{
 			Error("state_restore_all_sub: Too many walls in save file.\n");
 			return 0;
-		}
+		}*/
+		Walls.resize(Num_walls);
 		for (i = 0; i < Num_walls; i++)
 		{
 			read_wall(&Walls[i], fp);
@@ -1593,10 +1594,10 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 
 		//now that we have the walls, check if any sounds are linked to
 		//walls that are now open
-		for (i = 0; i < Num_walls; i++)
+		for (auto& wall : Walls)
 		{
-			if (Walls[i].type == WALL_OPEN)
-				digi_kill_sound_linked_to_segment(Walls[i].segnum, Walls[i].sidenum, -1);	//-1 means kill any sound
+			if (wall.type == WALL_OPEN)
+				digi_kill_sound_linked_to_segment(wall.segnum, wall.sidenum, -1);	//-1 means kill any sound
 		}
 
 		//Restore exploding wall info

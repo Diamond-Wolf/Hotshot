@@ -1256,9 +1256,9 @@ int LoadGameDataD1(CFILE* LoadFile)
 	{
 		if (!cfseek(LoadFile, game_fileinfo.walls_offset, SEEK_SET)) 
 		{
-			if (game_fileinfo.walls_howmany >= MAX_WALLS)
-				Error("Level contains over MAX_WALLS(%d) walls.", MAX_WALLS);
-
+			//if (game_fileinfo.walls_howmany >= MAX_WALLS)
+			//	Error("Level contains over MAX_WALLS(%d) walls.", MAX_WALLS);
+			
 			for (i = 0; i < game_fileinfo.walls_howmany; i++) 
 			{
 				if (game_top_fileinfo.fileinfo_version >= 20) 
@@ -1419,8 +1419,9 @@ int LoadGameDataD1(CFILE* LoadFile)
 		}
 
 
-	Num_walls = game_fileinfo.walls_howmany;
-	reset_walls();
+	auto Num_walls = game_fileinfo.walls_howmany;
+	//reset_walls();
+	Walls.resize(Num_walls);
 
 	Num_open_doors = game_fileinfo.doors_howmany;
 	Num_triggers = game_fileinfo.triggers_howmany;
@@ -1646,8 +1647,8 @@ int LoadGameDataD2(CFILE* LoadFile)
 	{
 		if (!cfseek(LoadFile, game_fileinfo.walls_offset, SEEK_SET))
 		{
-			if (game_fileinfo.walls_howmany > MAX_WALLS)
-				Error("Level contains over MAX_WALLS(%d) walls.", MAX_WALLS);
+			//if (game_fileinfo.walls_howmany > MAX_WALLS)
+			//	Error("Level contains over MAX_WALLS(%d) walls.", MAX_WALLS);
 
 			for (i = 0; i < game_fileinfo.walls_howmany; i++) 
 			{
@@ -2012,8 +2013,9 @@ int LoadGameDataD2(CFILE* LoadFile)
 		}
 
 
-	Num_walls = game_fileinfo.walls_howmany;
-	reset_walls();
+	auto Num_walls = game_fileinfo.walls_howmany;
+	//reset_walls();
+	Walls.resize(Num_walls);
 
 	Num_open_doors = game_fileinfo.doors_howmany;
 	Num_triggers = game_fileinfo.triggers_howmany;
