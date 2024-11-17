@@ -1587,7 +1587,7 @@ void kill_and_so_forth(void)
 
 	do_controlcen_destroyed_stuff(NULL);
 
-	for (i = 0; i < Num_triggers; i++)
+	for (i = 0; i < Triggers.size(); i++)
 	{
 		if (Triggers[i].type == TT_EXIT)
 		{

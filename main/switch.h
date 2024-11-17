@@ -84,10 +84,10 @@ typedef struct trigger {
 //	short		side[MAX_WALLS_PER_LINK];
 //	} link;
 
-extern trigger Triggers[MAX_TRIGGERS];
+extern std::vector<trigger> Triggers;
 //extern link Links[MAX_WALL_LINKS];
 
-extern int Num_triggers;
+//extern int Num_triggers;
 //extern int Num_links;
 
 extern void trigger_init();

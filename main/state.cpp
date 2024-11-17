@@ -1018,8 +1018,8 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//fwrite(&Num_triggers, sizeof(int), 1, fp);
 		//fwrite(Triggers, sizeof(trigger) * Num_triggers, 1, fp);
 
-		file_write_int(fp, Num_triggers);
-		for (elem = 0; elem < Num_triggers; elem++)
+		file_write_int(fp, Triggers.size());
+		for (elem = 0; elem < Triggers.size(); elem++)
 		{
 			write_trigger(&Triggers[elem], fp);
 		}
@@ -1652,12 +1652,13 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//fread(&Num_triggers, sizeof(int), 1, fp);
 		//fread(Triggers, sizeof(trigger) * Num_triggers, 1, fp);
 
-		Num_triggers = file_read_int(fp);
-		if (Num_triggers > MAX_TRIGGERS)
+		auto Num_triggers = file_read_int(fp);
+		/*if (Num_triggers > MAX_TRIGGERS)
 		{
 			Error("state_restore_all_sub: Too many triggers in save file.\n");
 			return 0;
-		}
+		}*/
+		Triggers.resize(Num_triggers);
 		for (i = 0; i < Num_triggers; i++)
 		{
 			read_trigger(&Triggers[i], fp);

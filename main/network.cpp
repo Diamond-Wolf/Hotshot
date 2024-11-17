@@ -5034,7 +5034,6 @@ void network_send_smash_lights(int pnum)
 			multi_send_light_specific(pnum, i, Light_subtracted[i]);
 }
 
-extern int Num_triggers;
 extern void multi_send_trigger_specific(char pnum, char);
 
 void network_send_fly_thru_triggers(int pnum)
@@ -5043,7 +5042,7 @@ void network_send_fly_thru_triggers(int pnum)
 
 	char i;
 
-	for (i = 0; i < Num_triggers; i++)
+	for (i = 0; i < Triggers.size(); i++)
 		if (Triggers[i].flags & TF_DISABLED)
 			multi_send_trigger_specific(pnum, i);
 }

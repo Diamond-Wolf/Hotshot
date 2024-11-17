@@ -43,8 +43,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "editor\editor.h"
 #endif
 
-trigger Triggers[MAX_TRIGGERS];
-int Num_triggers;
+std::vector<trigger> Triggers(MAX_TRIGGERS);
 
 //link Links[MAX_WALL_LINKS];
 //int Num_links;
@@ -186,7 +185,7 @@ int door_is_wall_switched(int wall_num)
 {
 	int i, t;
 
-	for (t=0; t<Num_triggers; t++) 
+	for (t=0; t<Triggers.size(); t++) 
 	{
 		for (i=0; i<Triggers[t].num_links; i++) 
 		{
@@ -653,7 +652,7 @@ void triggers_frame_process()
 {
 	int i;
 
-	for (i=0;i<Num_triggers;i++)
+	for (i=0;i<Triggers.size();i++)
 		if (Triggers[i].time >= 0)
 			Triggers[i].time -= FrameTime;
 }
