@@ -1340,7 +1340,12 @@ void do_endlevel_flythrough(int n)
 		vm_vec_scale(&flydata->step,flydata->speed);
 
 		compute_segment_center(&curcenter,pseg);
-		compute_segment_center(&nextcenter,&Segments[pseg->children[exit_side]]);
+		if (pseg->children[exit_side] >= 0)
+			compute_segment_center(&nextcenter, &Segments[pseg->children[exit_side]]);
+		else if (pseg->children[exit_side] == -2)
+			vm_vec_zero(&nextcenter);
+		else
+			Int3();
 		vm_vec_sub(&flydata->headvec,&nextcenter,&curcenter);
 
 		#ifdef COMPACT_SEGS	
@@ -1658,7 +1663,12 @@ try_again:
 				break;
 			}
 
-	Assert(exit_segnum!=-1);
+	//Assert(exit_segnum!=-1);
+	if (exit_segnum < 0) {
+		cfclose(ifile);
+		endlevel_data_loaded = 0;
+		return;
+	}
 
 	compute_segment_center(&mine_exit_point,&Segments[exit_segnum]);
 	extract_orient_from_segment(&mine_exit_orient,&Segments[exit_segnum]);

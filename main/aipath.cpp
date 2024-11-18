@@ -1064,13 +1064,11 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 			//--Int3_if((aip->path_length != 0));
 		}
 
-	//D1 seems to prefer to manually set hide index to the free index, which is not good for this check
-	if ((aip->hide_index + aip->path_length > Point_segs_free_ptr - Point_segs) && (aip->path_length>0) && currentGame != G_DESCENT_1) {
-		Int3();	//	Contact Mike: Bad.  Path goes into what is believed to be free space.
-		//	This is debugging code.  Figure out why garbage collection
-		//	didn't compress this object's path information.
+	if (((size_t)aip->hide_index + aip->path_length > Point_segs_free_ptr - Point_segs) && (aip->path_length>0)) {
+		if (currentGame == G_DESCENT_2)
+			Int3();	// [DW] In D1, this never tripped.
+		
 		ai_path_garbage_collect();
-		//force_dump_ai_objects_all("Error in ai_follow_path");
 		ai_reset_all_paths();
 	}
 
