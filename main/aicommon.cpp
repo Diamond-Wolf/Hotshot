@@ -1932,7 +1932,10 @@ void process_awareness_events(void)
 		memset(New_awareness.data(), 0, sizeof(New_awareness[0]) * (Highest_segment_index + 1));
 
 		for (i = 0; i < Num_awareness_events; i++)
-			pae_aux(Awareness_events[i].segnum, Awareness_events[i].type, 1);
+			if (i < MAX_AWARENESS_EVENTS)
+				pae_aux(Awareness_events[i].segnum, Awareness_events[i].type, 1);
+			else
+				mprintf((1, "Too many awareness events! Attempting %d", i));
 
 	}
 
@@ -2008,7 +2011,7 @@ void do_ai_frame_all(void)
 			for (i = 0; i <= Highest_object_index; i++)
 				if (Objects[i].type == OBJ_ROBOT)
 					if (activeBMTable->robots[Objects[i].id].boss_flag)
-						do_boss_dying_frame(&Objects[i]);
+						do_boss_dying_frame(i);
 		}
 
 	}
@@ -2102,14 +2105,14 @@ void do_ai_robot_hit(object *objp, int type) {
 		Int3();
 }
 
-extern void do_boss_dying_frame_d1(object *objp);
-extern void do_boss_dying_frame_d2(object *objp);
+extern void do_boss_dying_frame_d1(size_t objnum);
+extern void do_boss_dying_frame_d2(size_t objnum);
 
-void do_boss_dying_frame(object *objp) {
+void do_boss_dying_frame(size_t objnum) {
 	if (currentGame == G_DESCENT_1)
-		do_boss_dying_frame_d1(objp);
+		do_boss_dying_frame_d1(objnum);
 	else if (currentGame == G_DESCENT_2)
-		do_boss_dying_frame_d2(objp);
+		do_boss_dying_frame_d2(objnum);
 	else
 		Int3();
 }
@@ -2126,14 +2129,14 @@ void do_boss_stuff(object *objp, int player_visibility) {
 		Int3();
 }
 
-extern void do_ai_frame_d1(object *objp);
-extern void do_ai_frame_d2(object *objp);
+extern void do_ai_frame_d1(size_t objnum);
+extern void do_ai_frame_d2(size_t objnum);
 
-void do_ai_frame(object *objp) {
+void do_ai_frame(size_t objnum) {
 	if (currentGame == G_DESCENT_1)
-		do_ai_frame_d1(objp);
+		do_ai_frame_d1(objnum);
 	else if (currentGame == G_DESCENT_2)
-		do_ai_frame_d2(objp);
+		do_ai_frame_d2(objnum);
 	else
 		Int3();
 }

@@ -1762,8 +1762,8 @@ void dead_player_frame(void)
 				DoPlayerDead();		//kill_player();
 			}
 		}
-			}
-		}
+	}
+}
 
 
 
@@ -2000,7 +2000,7 @@ void object_move_one(int objnum)
 #if !defined(NDEBUG) && !defined(NMONO)
 		if (print_object_info > 1) mprintf((0, "AI: Moving robot object #%d\n", obj - Objects.data()));
 #endif
-		do_ai_frame(obj);
+		do_ai_frame(objnum);
 		break;
 
 	case CT_WEAPON:		Laser_do_weapon_sequence(obj); break;

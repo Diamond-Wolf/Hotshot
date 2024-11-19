@@ -1080,7 +1080,7 @@ void do_escort_frame(object *objp, fix dist_to_player, int player_visibility)
 	ai_static	*aip = &objp->ctype.ai_info;
 	ai_local		*ailp = &Ai_local_info[objnum];
 
-	Buddy_objnum = objp-Objects.data();
+	Buddy_objnum = objnum;
 
 	if (player_visibility) {
 		Buddy_last_seen_player = GameTime;
@@ -1092,8 +1092,10 @@ void do_escort_frame(object *objp, fix dist_to_player, int player_visibility)
 
 	}
 
-	if (cheatValues[CI_WINGNUT])
+	if (cheatValues[CI_WINGNUT]) {
 		do_buddy_dude_stuff();
+		objp = &Objects[objnum];
+	}
 
 	if (Buddy_sorry_time + F1_0 > GameTime) {
 		Last_buddy_message_time = 0;	//	Force this message to get through.

@@ -502,7 +502,7 @@ void init_ai_for_ship(void)
 //	General purpose robot-dies-with-death-roll-and-groan code.
 //	Return true if object just died.
 //	scale: F1_0*4 for boss, much smaller for much smaller guys
-int do_robot_dying_frame(object *objp, fix start_time, fix roll_duration, int *dying_sound_playing, int death_sound, fix expl_scale, fix sound_scale)
+int do_robot_dying_frame(object* objp, fix start_time, fix roll_duration, int *dying_sound_playing, int death_sound, fix expl_scale, fix sound_scale)
 {
 	fix	roll_val, temp;
 	fix	sound_duration;
@@ -559,16 +559,16 @@ void start_robot_death_sequence(object *objp)
 }
 
 //	----------------------------------------------------------------------
-void do_boss_dying_frame_d2(object *objp)
+void do_boss_dying_frame_d2(size_t objnum)
 {
 	int	rval;
 
-	rval = do_robot_dying_frame(objp, Boss_dying_start_time, BOSS_DEATH_DURATION, &Boss_dying_sound_playing, activeBMTable->robots[objp->id].deathroll_sound, F1_0*4, F1_0*4);
-
+	rval = do_robot_dying_frame(&Objects[objnum], Boss_dying_start_time, BOSS_DEATH_DURATION, &Boss_dying_sound_playing, activeBMTable->robots[Objects[objnum].id].deathroll_sound, F1_0*4, F1_0*4);
+	
 	if (rval) {
 		do_controlcen_destroyed_stuff(NULL);
-		explode_object(objp, F1_0/4);
-		digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objp-Objects.data(), 0, F2_0, F1_0*512);
+		explode_object(&Objects[objnum], F1_0/4);
+		digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objnum, 0, F2_0, F1_0*512);
 	}
 }
 
@@ -577,17 +577,22 @@ extern void recreate_thief(object *objp);
 //	----------------------------------------------------------------------
 int do_any_robot_dying_frame(object *objp)
 {
+
 	if (objp->ctype.ai_info.dying_start_time) {
+		size_t robjnum = objp - Objects.data();
 		int	rval, death_roll;
 
 		death_roll = activeBMTable->robots[objp->id].death_roll;
 		rval = do_robot_dying_frame(objp, objp->ctype.ai_info.dying_start_time, std::min(death_roll/2+1,6)*F1_0, &objp->ctype.ai_info.dying_sound_playing, activeBMTable->robots[objp->id].deathroll_sound, death_roll*F1_0/8, death_roll*F1_0/2);
 
 		if (rval) {
-			explode_object(objp, F1_0/4);
-			digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objp-Objects.data(), 0, F2_0, F1_0*512);
-			if ((Current_level_num < 0) && (activeBMTable->robots[objp->id].thief))
-				recreate_thief(objp);
+			explode_object(&Objects[robjnum], F1_0/4);
+			digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, robjnum, 0, F2_0, F1_0*512);
+			if (Current_level_num < 0) { 
+				objp = &Objects[robjnum];
+				if (activeBMTable->robots[objp->id].thief)
+					recreate_thief(objp);
+			}
 		}
 
 		return 1;

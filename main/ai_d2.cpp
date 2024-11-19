@@ -165,9 +165,9 @@ void make_nearby_robot_snipe(void)
 int	Ai_last_missile_camera;
 
 // --------------------------------------------------------------------------------------------------------------------
-void do_ai_frame_d2(object* obj)
+void do_ai_frame_d2(size_t objnum)
 {
-	int			objnum = obj - Objects.data();
+	object* obj = &Objects[objnum];
 	ai_static* aip = &obj->ctype.ai_info;
 	ai_local* ailp = &Ai_local_info[objnum];
 	fix			dist_to_player;
@@ -220,7 +220,7 @@ void do_ai_frame_d2(object* obj)
 		return;
 
 	if (Break_on_object != -1)
-		if ((obj - Objects.data()) == Break_on_object)
+		if (objnum == Break_on_object)
 			Int3();	//	Contact Mike: This is a debug break
 #endif
 
@@ -549,6 +549,7 @@ void do_ai_frame_d2(object* obj)
 		}
 
 		do_boss_stuff(obj, pv);
+		obj = &Objects[objnum];
 	}
 			 break;
 	}
@@ -656,6 +657,7 @@ void do_ai_frame_d2(object* obj)
 
 		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 		do_escort_frame(obj, dist_to_player, player_visibility);
+		obj = &Objects[objnum];
 
 		if (obj->ctype.ai_info.danger_laser_num > 0 && obj->ctype.ai_info.danger_laser_num < Objects.size()) { //How did they get away with only checking -1?
 			object* dobjp = &Objects[obj->ctype.ai_info.danger_laser_num];
@@ -685,6 +687,7 @@ void do_ai_frame_d2(object* obj)
 
 			if (do_stuff) {
 				Laser_create_new_easy(&obj->orient.fvec, &obj->pos, obj - Objects.data(), FLARE_ID, 1);
+				obj = &Objects[objnum];
 				ailp->next_fire = F1_0 / 2;
 				if (!Buddy_allowed_to_talk && CurrentLogicVersion > LogicVer::SHAREWARE)	//	If buddy not talking, make him fire flares less often.
 					ailp->next_fire += P_Rand() * 4;
@@ -710,6 +713,7 @@ void do_ai_frame_d2(object* obj)
 			if (do_stuff) {
 				//	@mk, 05/08/95: Firing flare from center of object, this is dumb...
 				Laser_create_new_easy(&obj->orient.fvec, &obj->pos, obj - Objects.data(), FLARE_ID, 1);
+				obj = &Objects[objnum];
 				ailp->next_fire = F1_0 / 2;
 				if (Stolen_item_index == 0 && CurrentLogicVersion > LogicVer::SHAREWARE)		//	If never stolen an item, fire flares less often (bad: Stolen_item_index wraps, but big deal)
 					ailp->next_fire += P_Rand() * 4;
@@ -802,6 +806,7 @@ void do_ai_frame_d2(object* obj)
 				ai_multi_send_robot_position(objnum, -1);
 
 			do_firing_stuff(obj, player_visibility, &vec_to_player);
+			obj = &Objects[objnum];
 		}
 		break;
 	}
@@ -848,6 +853,8 @@ void do_ai_frame_d2(object* obj)
 				Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects.data(), ROBOT_SUPERPROX_ID, 1);
 			else
 				Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects.data(), PROXIMITY_ID, 1);
+
+			obj = &Objects[objnum];
 
 			ailp->next_fire = (F1_0 / 2) * (NDL + 5 - Difficulty_level);		//	Drop a proximity bomb every 5 seconds.
 
@@ -906,8 +913,10 @@ void do_ai_frame_d2(object* obj)
 		else if (aip->CURRENT_STATE == AIS_FLIN)
 			aip->GOAL_STATE = AIS_LOCK;
 
-		if (aip->behavior != AIB_RUN_FROM)
+		if (aip->behavior != AIB_RUN_FROM) {
 			do_firing_stuff(obj, player_visibility, &vec_to_player);
+			obj = &Objects[objnum];
+		}
 
 		if ((player_visibility == 2) && (aip->behavior != AIB_SNIPE) && (aip->behavior != AIB_FOLLOW) && (aip->behavior != AIB_RUN_FROM) && (obj->id != ROBOT_BRAIN) && (robptr->companion != 1) && (robptr->thief != 1)) {
 			if (robptr->attack_type == 0)
@@ -975,6 +984,7 @@ void do_ai_frame_d2(object* obj)
 			move_towards_vector(obj, &vec_to_goal, 0);
 			ai_turn_towards_vector(&vec_to_player, obj, robptr->turn_time[Difficulty_level]);
 			ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+			obj = &Objects[objnum];
 		}
 
 		if (aip->GOAL_STATE != AIS_FLIN)
@@ -1093,6 +1103,8 @@ void do_ai_frame_d2(object* obj)
 		break;
 	}		// end:	switch (ailp->mode) {
 
+	obj = &Objects[objnum];
+
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -
 	//	If the robot can see you, increase his awareness of you.
 	//	This prevents the problem of a robot looking right at you but doing nothing.
@@ -1207,7 +1219,7 @@ void do_ai_frame_d2(object* obj)
 
 			//	Fire at player, if appropriate.
 			ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
-
+			obj = &Objects[objnum];
 			break;
 		case	AIS_RECO:
 			if (!(obj_ref & 3)) {
@@ -1244,7 +1256,7 @@ void do_ai_frame_d2(object* obj)
 }
 
 
-extern void do_boss_dying_frame(object* objp);
+extern void do_boss_dying_frame(size_t objnum);
 
 int ai_save_state_d2(FILE* fp)
 {

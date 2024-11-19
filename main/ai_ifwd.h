@@ -31,7 +31,7 @@ extern void move_away_from_player(object *objp, vms_vector *vec_to_player, int a
 extern void ai_move_relative_to_player(object *objp, ai_local *ailp, fix dist_to_player, vms_vector *vec_to_player, fix circle_distance, int evade_only, int player_visibility);
 extern void move_object_to_legal_spot(object *objp);
 extern void teleport_boss(object* objp);
-extern void do_boss_dying_frame(object* objp);
+extern void do_boss_dying_frame(size_t objnum);
 extern void do_boss_stuff(object* objp, int player_visibility);
 extern void set_player_awareness_all();
 

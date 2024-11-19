@@ -533,8 +533,11 @@ int get_random_child(int segnum)
 }
 
 //	----------------------------------------------------------------------
-void do_boss_dying_frame_d1(object* objp)
+void do_boss_dying_frame_d1(size_t objnum)
 {
+
+	object* objp = &Objects[objnum];
+
 	fix	boss_roll_val, temp;
 
 	boss_roll_val = fixdiv(GameTime - Boss_dying_start_time, BOSS_DEATH_DURATION);
@@ -553,16 +556,20 @@ void do_boss_dying_frame_d1(object* objp)
 			Boss_dying_sound_playing = 1;
 			digi_link_sound_to_object2(SOUND_BOSS_SHARE_DIE, objp - Objects.data(), 0, F1_0 * 4, F1_0 * 1024);	//	F1_0*512 means play twice as loud
 		}
-		else if (P_Rand() < FrameTime * 16)
+		else if (P_Rand() < FrameTime * 16) {
 			create_small_fireball_on_object(objp, (F1_0 + P_Rand()) * 8, 0);
+			objp = &Objects[objnum];
+		}
 	}
-	else if (P_Rand() < FrameTime * 8)
+	else if (P_Rand() < FrameTime * 8) {
 		create_small_fireball_on_object(objp, (F1_0 / 2 + P_Rand()) * 8, 1);
+		objp = &Objects[objnum];
+	}
 
 	if (Boss_dying_start_time + BOSS_DEATH_DURATION < GameTime) {
 		do_controlcen_destroyed_stuff(NULL);
 		explode_object(objp, F1_0 / 4);
-		digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objp - Objects.data(), 0, F2_0, F1_0 * 512);
+		digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objnum, 0, F2_0, F1_0 * 512);
 	}
 }
 
@@ -619,7 +626,7 @@ void do_boss_stuff_d1(object* objp)
 		}
 	}
 	else
-		do_boss_dying_frame(objp);
+		do_boss_dying_frame(objp - Objects.data());
 
 }
 
@@ -690,9 +697,9 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 #endif
 
 // --------------------------------------------------------------------------------------------------------------------
-void do_ai_frame_d1(object* obj)
+void do_ai_frame_d1(size_t objnum)
 {
-	int			objnum = obj - Objects.data();
+	object* obj = &Objects[objnum];
 	ai_static* aip = &obj->ctype.ai_info;
 	ai_local* ailp = &Ai_local_info[objnum];
 	fix			dist_to_player;
@@ -744,7 +751,7 @@ void do_ai_frame_d1(object* obj)
 		return;
 
 	if (Break_on_object != -1)
-		if ((obj - Objects.data()) == Break_on_object)
+		if (objnum == Break_on_object)
 			Int3();	//	Contact Mike: This is a debug break
 #endif
 
@@ -994,6 +1001,7 @@ void do_ai_frame_d1(object* obj)
 		dist_to_player /= 4;
 
 		do_boss_stuff(obj, 0);
+		obj = &Objects[objnum];
 		dist_to_player *= 4;
 		break;
 #ifndef SHAREWARE
@@ -1014,6 +1022,7 @@ void do_ai_frame_d1(object* obj)
 		}
 
 		do_super_boss_stuff(obj, dtp, pv);
+		obj = &Objects[objnum];
 		}
 		break;
 #endif
@@ -1224,14 +1233,15 @@ void do_ai_frame_d1(object* obj)
 			vm_vec_negate(&fire_vec);
 			vm_vec_add(&fire_pos, &obj->pos, &fire_vec);
 
-			Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects.data(), PROXIMITY_ID, 1);
+			Laser_create_new_easy(&fire_vec, &fire_pos, objnum, PROXIMITY_ID, 1);
+			obj = &Objects[objnum];
 			ailp->next_fire = F1_0 * 5;		//	Drop a proximity bomb every 5 seconds.
 
 #ifdef NETWORK
 			if (Game_mode & GM_MULTI)
 			{
-				ai_multi_send_robot_position(obj - Objects.data(), -1);
-				multi_send_robot_fire(obj - Objects.data(), -1, &fire_vec);
+				ai_multi_send_robot_position(objnum, -1);
+				multi_send_robot_fire(objnum, -1, &fire_vec);
 			}
 #endif	
 		}
@@ -1270,8 +1280,10 @@ void do_ai_frame_d1(object* obj)
 		else if (aip->CURRENT_STATE == AIS_FLIN)
 			aip->GOAL_STATE = AIS_LOCK;
 
-		if ((aip->behavior != AIB_FOLLOW_PATH) && (aip->behavior != AIB_RUN_FROM))
+		if ((aip->behavior != AIB_FOLLOW_PATH) && (aip->behavior != AIB_RUN_FROM)) {
 			do_firing_stuff(obj, player_visibility, &vec_to_player);
+			obj = &Objects[objnum];
+		}
 
 		if ((player_visibility == 2) && (aip->behavior != AIB_FOLLOW_PATH) && (aip->behavior != AIB_RUN_FROM) && (obj->id != ROBOT_BRAIN)) {
 			if (robptr->attack_type == 0)
@@ -1326,6 +1338,7 @@ void do_ai_frame_d1(object* obj)
 			}
 
 			do_firing_stuff(obj, player_visibility, &vec_to_player);
+			obj = &Objects[objnum];
 			//	This is debugging code!  Remove it!  It's to make the green guy attack without doing other kinds of movement.
 			if (player_visibility) {		//	Change, MK, 01/03/94 for Multiplayer reasons.  If robots can't see you (even with eyes on back of head), then don't do evasion.
 				if (robptr->attack_type == 1) {
@@ -1390,10 +1403,12 @@ void do_ai_frame_d1(object* obj)
 	}
 
 	default:
-		mprintf((0, "Unknown mode = %i in robot %i, behavior = %i\n", ailp->mode, obj - Objects.data(), aip->behavior));
+		mprintf((0, "Unknown mode = %i in robot %i, behavior = %i\n", ailp->mode, objnum, aip->behavior));
 		ailp->mode = AIM_CHASE_OBJECT;
 		break;
 	}		// end:	switch (ailp->mode) {
+
+	obj = &Objects[objnum];
 
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -
 	//	If the robot can see you, increase his awareness of you.
@@ -1516,6 +1531,7 @@ void do_ai_frame_d1(object* obj)
 
 			//	Fire at player, if appropriate.
 			ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+			obj = &Objects[objnum];
 
 			break;
 		case	AIS_RECO:
