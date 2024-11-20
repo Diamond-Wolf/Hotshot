@@ -603,7 +603,7 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 				object_create_muzzle_flash( obj->segnum, &obj->pos, activeBMTable->weapons[obj->id].flash_size, activeBMTable->weapons[obj->id].flash_vclip );
 		}
 
-		do_omega_stuff(&Objects[parent], position, obj);
+		do_omega_stuff(&Objects[parent], position, &Objects[objnum]);
 
 		return objnum;
 	}
@@ -691,8 +691,10 @@ int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum,
 	if (( &Objects[parent] != Viewer ) && (Objects[parent].type != OBJ_WEAPON))	
 	{
 		// Muzzle flash		
-		if (activeBMTable->weapons[obj->id].flash_vclip > -1 )
+		if (activeBMTable->weapons[obj->id].flash_vclip > -1 ) {
 			object_create_muzzle_flash( obj->segnum, &obj->pos, activeBMTable->weapons[obj->id].flash_size, activeBMTable->weapons[obj->id].flash_vclip );
+			obj = &Objects[objnum];
+		}
 	}
 
 	volume = F1_0;
