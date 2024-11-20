@@ -1866,8 +1866,8 @@ int LoadGameDataD2(CFILE* LoadFile)
 
 		if (!cfseek(LoadFile, game_fileinfo.matcen_offset, SEEK_SET)) 
 		{
-			if (game_fileinfo.matcen_howmany >= MAX_ROBOT_CENTERS)
-				Error("Level contains over MAX_ROBOT_CENTERS(%d) matcens.", MAX_ROBOT_CENTERS);
+			if (game_fileinfo.matcen_howmany > MAX_ROBOT_CENTERS)
+				Error("Level contains over MAX_ROBOT_CENTERS(%d) matcens (found %d).", MAX_ROBOT_CENTERS, game_fileinfo.matcen_howmany);
 
 			// mprintf((0, "Reading %i materialization centers.\n", game_fileinfo.matcen_howmany));
 			for (i = 0; i < game_fileinfo.matcen_howmany; i++) 
