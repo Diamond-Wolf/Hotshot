@@ -62,19 +62,20 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 	int objnum;
 	object *obj;
 
-	size_t tempID = objp - Objects.data();
+	size_t iobjnum = objp - Objects.data();
+	bool objpValid = (objp != NULL);
 
 	objnum = obj_create( OBJ_FIREBALL,vclip_type,segnum,position,&vmd_identity_matrix,size,
 					CT_EXPLOSION,MT_NONE,RT_FIREBALL);
-
-	if (objp != NULL)
-		objp = &Objects[tempID];
 
 	if (objnum < 0 ) 
 	{
 		mprintf((1, "Can't create object in object_create_explosion_sub.\n"));
 		return NULL;
 	}
+
+	if (objpValid)
+		objp = &Objects[iobjnum];
 
 	obj = &Objects[objnum];
 
@@ -97,12 +98,13 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 		vms_vector pos_hit, vforce;
 		fix damage;
 		int i;
-		object * obj0p = &Objects[0];
+		object* obj0p;
 			  
 		// -- now legal for badass explosions on a wall. Assert(objp != NULL);
 
 		for (i=0; i<=Highest_object_index; i++ )	
 		{
+			obj0p = &Objects[i];
 			//	Weapons used to be affected by badass explosions, but this introduces serious problems.
 			//	When a smart bomb blows up, if one of its children goes right towards a nearby wall, it will
 			//	blow up, blowing up all the children.  So I remove it.  MK, 09/11/94
@@ -134,8 +136,11 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 									{
 										obj0p->flags |= OF_SHOULD_BE_DEAD;
 										explode_badass_weapon(obj0p,&obj0p->pos);
-										if (objp) // [DW] Exploding robots can trigger this with a null objp. How this never tripped before is a mystery.
+										if (objpValid) {  // [DW] Exploding robots can trigger this with a null objp. How this never tripped before is a mystery.
+											objp = &Objects[iobjnum];
 											create_smart_children(objp, NUM_SMART_CHILDREN);
+											objp = &Objects[iobjnum];
+										}
 									}
 								}
 								break;
@@ -360,15 +365,13 @@ object *object_create_debris(object *parent, int subobj_num)
 				&parent->orient,activeBMTable->models[parent->rtype.pobj_info.model_num].submodel_rads[subobj_num],
 				CT_DEBRIS,MT_PHYSICS,RT_POLYOBJ);
 
-	parent = &Objects[tempID];
-
 	if (objnum < 0) {
 		mprintf((1, "Can't create object in object_create_debris.\n"));
 		Int3();
 		return NULL;
 	}
-	if ( objnum < 0 )
-		return NULL;				// Not enough debris slots!
+
+	parent = &Objects[tempID];
 	obj = &Objects[objnum];
 
 	Assert(subobj_num < 32);
@@ -1280,8 +1283,7 @@ void do_explosion_sequence(object *obj)
 
 			if (robptr->thief)
 				drop_stolen_items(del_obj);
-
-			if (robptr->companion) {
+			else if (robptr->companion) {
 				DropBuddyMarker(del_obj);
 			}
 		}
@@ -1305,6 +1307,7 @@ void do_explosion_sequence(object *obj)
 		//make debris
 		if (del_obj->render_type == RT_POLYOBJ) {
 			explode_model(del_obj);		//explode a polygon model
+			obj = &Objects[iobjnum];
 			del_obj = &Objects[dobjnum];
 		}
 
@@ -1508,11 +1511,10 @@ void drop_afterburner_blobs(int objnum, int count, fix size_scale, fix lifetime)
 	segnum = find_point_seg(&pos_left, obj->segnum);
 	if (segnum != -1) {
 		object_create_explosion(segnum, &pos_left, size_scale, VCLIP_AFTERBURNER_BLOB );
-		obj = &Objects[objnum];
 	}
 
 	if (count > 1) {
-		segnum = find_point_seg(&pos_right, obj->segnum);
+		segnum = find_point_seg(&pos_right, Objects[objnum].segnum);
 		if (segnum != -1) {
 			object	*blob_obj;
 			blob_obj = object_create_explosion(segnum, &pos_right, size_scale, VCLIP_AFTERBURNER_BLOB );
