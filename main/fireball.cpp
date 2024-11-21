@@ -134,7 +134,8 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 									{
 										obj0p->flags |= OF_SHOULD_BE_DEAD;
 										explode_badass_weapon(obj0p,&obj0p->pos);
-										create_smart_children(objp, NUM_SMART_CHILDREN);
+										if (objp) // [DW] Exploding robots can trigger this with a null objp. How this never tripped before is a mystery.
+											create_smart_children(objp, NUM_SMART_CHILDREN);
 									}
 								}
 								break;
@@ -1213,7 +1214,7 @@ extern void drop_stolen_items(object *objp);
 void do_explosion_sequence(object *obj)
 {
 
-	size_t eobjnum = obj - Objects.data();
+	size_t iobjnum = obj - Objects.data();
 
 	Assert(obj->control_type == CT_EXPLOSION);
 
@@ -1237,7 +1238,8 @@ void do_explosion_sequence(object *obj)
 			return;
 		}
 
-		del_obj = &Objects[obj->ctype.expl_info.delete_objnum];
+		auto dobjnum = obj->ctype.expl_info.delete_objnum;
+		del_obj = &Objects[dobjnum];
 
 		spawn_pos = &del_obj->pos;
 
@@ -1253,7 +1255,10 @@ void do_explosion_sequence(object *obj)
 		else
 			expl_obj = object_create_explosion( del_obj->segnum, spawn_pos, fixmul(del_obj->size, EXPLOSION_SCALE), vclip_num );
 
-		del_obj = &Objects[obj->ctype.expl_info.delete_objnum];
+		size_t eobjnum = expl_obj - Objects.data();
+
+		del_obj = &Objects[dobjnum];
+		obj = &Objects[iobjnum];
 
 		if ((del_obj->contains_count > 0) && !(Game_mode & GM_MULTI)) { // Multiplayer handled outside of this code!!
 			//	If dropping a weapon that the player has, drop energy instead, unless it's vulcan, in which case drop vulcan ammo.
@@ -1269,6 +1274,7 @@ void do_explosion_sequence(object *obj)
 					del_obj->contains_id = robptr->contains_id;
 					maybe_replace_powerup_with_energy(del_obj);
 					object_create_egg(obj->ctype.expl_info.delete_objnum);
+					del_obj = &Objects[dobjnum];
 				}
 			}
 
@@ -1280,7 +1286,8 @@ void do_explosion_sequence(object *obj)
 			}
 		}
 
-		obj = &Objects[eobjnum];
+		obj = &Objects[iobjnum];
+		del_obj = &Objects[dobjnum];
 
 		if ( activeBMTable->robots[del_obj->id].exp2_sound_num > -1 )
 			digi_link_sound_to_pos( activeBMTable->robots[del_obj->id].exp2_sound_num, del_obj->segnum, 0, spawn_pos, 0, F1_0 );
@@ -1296,8 +1303,12 @@ void do_explosion_sequence(object *obj)
 		obj->ctype.expl_info.spawn_time = -1;
 
 		//make debris
-		if (del_obj->render_type==RT_POLYOBJ)
+		if (del_obj->render_type == RT_POLYOBJ) {
 			explode_model(del_obj);		//explode a polygon model
+			del_obj = &Objects[dobjnum];
+		}
+
+		expl_obj = &Objects[eobjnum];
 
 		//set some parm in explosion
 		if (expl_obj) {
@@ -1308,7 +1319,7 @@ void do_explosion_sequence(object *obj)
 			}
 
 			expl_obj->ctype.expl_info.delete_time = expl_obj->lifeleft/2;
-			expl_obj->ctype.expl_info.delete_objnum = del_obj-Objects.data();
+			expl_obj->ctype.expl_info.delete_objnum = dobjnum;
 #ifndef NDEBUG
 			if (obj->ctype.expl_info.delete_objnum < 0)
 		  		Int3(); // See Rob!

@@ -937,7 +937,8 @@ void ai_frame_animation(object *objp)
 //	If player is cloaked, then robot probably didn't actually collide, deal with that here.
 void do_ai_robot_hit_attack(object *robot, object *playerobj, vms_vector *collision_point)
 {
-	ai_local		*ailp = &Ai_local_info[robot-Objects.data()];
+	size_t robjnum = robot - Objects.data();
+	ai_local		*ailp = &Ai_local_info[robjnum];
 	robot_info *robptr = &activeBMTable->robots[robot->id];
 
 //#ifndef NDEBUG
@@ -954,6 +955,7 @@ void do_ai_robot_hit_attack(object *robot, object *playerobj, vms_vector *collis
 			if (!(Players[Player_num].flags & PLAYER_FLAGS_CLOAKED))
 				if (vm_vec_dist_quick(&ConsoleObject->pos, &robot->pos) < robot->size + ConsoleObject->size + F1_0*2) {
 					collide_player_and_nasty_robot( playerobj, robot, collision_point );
+					robot = &Objects[robjnum];
 					if (robptr->energy_drain && Players[Player_num].energy) {
 						Players[Player_num].energy -= robptr->energy_drain * F1_0;
 						if (Players[Player_num].energy < 0)
@@ -1674,6 +1676,7 @@ vms_vector	Last_fired_upon_player_pos;
 void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robot_info *robptr, vms_vector *vec_to_player, fix dist_to_player, vms_vector *gun_point, int player_visibility, int object_animates, int gun_num)
 {
 	fix	dot;
+	size_t objnum = obj - Objects.data();
 
 	if ((player_visibility == 2) || (currentGame == G_DESCENT_2 && Dist_to_last_fired_upon_player_pos < FIRE_AT_NEARBY_PLAYER_THRESHOLD )) {
 		vms_vector	fire_pos;
@@ -1697,6 +1700,7 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 							if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION-2))
 								return;
 							do_ai_robot_hit_attack(obj, ConsoleObject, &obj->pos);
+							obj = &Objects[objnum];
 						} else {
 							// mprintf((0, "Green won't fire: Too far: dist = %7.3f, threshold = %7.3f\n", f2fl(dist_to_player), f2fl(obj->size + ConsoleObject->size + F1_0*2)));
 							return;
@@ -1712,21 +1716,25 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 								if (gun_num != 0) {
 									if (ailp->next_fire <= 0) {
 										ai_fire_laser_at_player(obj, gun_point, gun_num, &fire_pos);
+										obj = &Objects[objnum];
 										Last_fired_upon_player_pos = fire_pos;
 									}
 
 									if ((ailp->next_fire2 <= 0) && (robptr->weapon_type2 != -1)) {
 										calc_gun_point(gun_point, obj, 0);
 										ai_fire_laser_at_player(obj, gun_point, 0, &fire_pos);
+										obj = &Objects[objnum];
 										Last_fired_upon_player_pos = fire_pos;
 									}
 
 								} else if (ailp->next_fire <= 0) {
 									ai_fire_laser_at_player(obj, gun_point, gun_num, &fire_pos);
+									obj = &Objects[objnum];
 									Last_fired_upon_player_pos = fire_pos;
 								}
 							} else {
 								ai_fire_laser_at_player(obj, gun_point, 0, nullptr);
+								obj = &Objects[objnum];
 							}
 
 						}
@@ -1762,6 +1770,7 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 			if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION))
 				return;
 			ai_fire_laser_at_player(obj, gun_point, gun_num, &Believed_player_pos);
+			obj = &Objects[objnum];
 
 			aip->GOAL_STATE = AIS_RECO;
 			ailp->goal_state[aip->CURRENT_GUN] = AIS_RECO;
@@ -1784,58 +1793,64 @@ void ai_do_actual_firing_stuff(object *obj, ai_static *aip, ai_local *ailp, robo
 		vms_vector	vec_to_last_pos;
 
 		if (P_Rand()/2 < fixmul(FrameTime, (Difficulty_level << 12) + 0x4000)) {
-		if ((!object_animates || ready_to_fire(robptr, ailp)) && (Dist_to_last_fired_upon_player_pos < FIRE_AT_NEARBY_PLAYER_THRESHOLD)) {
-			vm_vec_normalized_dir_quick(&vec_to_last_pos, &Believed_player_pos, &obj->pos);
-			dot = vm_vec_dot(&obj->orient.fvec, &vec_to_last_pos);
-			if (dot >= 7*F1_0/8) {
+			if ((!object_animates || ready_to_fire(robptr, ailp)) && (Dist_to_last_fired_upon_player_pos < FIRE_AT_NEARBY_PLAYER_THRESHOLD)) {
+				vm_vec_normalized_dir_quick(&vec_to_last_pos, &Believed_player_pos, &obj->pos);
+				dot = vm_vec_dot(&obj->orient.fvec, &vec_to_last_pos);
+				if (dot >= 7*F1_0/8) {
 
-				if (aip->CURRENT_GUN < activeBMTable->robots[obj->id].n_guns) {
-					if (robptr->attack_type == 1) {
-						if (!Player_exploded && (dist_to_player < obj->size + ConsoleObject->size + F1_0*2)) {		// robptr->circle_distance[Difficulty_level] + ConsoleObject->size) {
-							if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION-2))
+					if (aip->CURRENT_GUN < activeBMTable->robots[obj->id].n_guns) {
+						if (robptr->attack_type == 1) {
+							if (!Player_exploded && (dist_to_player < obj->size + ConsoleObject->size + F1_0*2)) {		// robptr->circle_distance[Difficulty_level] + ConsoleObject->size) {
+								if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION-2))
+									return;
+								do_ai_robot_hit_attack(obj, ConsoleObject, &obj->pos);
+								obj = &Objects[objnum];
+							} else {
+								// mprintf((0, "Green won't fire: Too far: dist = %7.3f, threshold = %7.3f\n", f2fl(dist_to_player), f2fl(obj->size + ConsoleObject->size + F1_0*2)));
 								return;
-							do_ai_robot_hit_attack(obj, ConsoleObject, &obj->pos);
+							}
 						} else {
-							// mprintf((0, "Green won't fire: Too far: dist = %7.3f, threshold = %7.3f\n", f2fl(dist_to_player), f2fl(obj->size + ConsoleObject->size + F1_0*2)));
-							return;
-						}
-					} else {
-						if ((gun_point->x == 0) && (gun_point->y == 0) && (gun_point->z == 0)) {
-							; //mprintf((0, "Would like to fire gun, but gun not selected.\n"));
-						} else {
-							if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION))
-								return;
-							//	New, multi-weapon-type system, 06/05/95 (life is slipping away...)
-							if (gun_num != 0) {
-								if (ailp->next_fire <= 0)
+							if ((gun_point->x == 0) && (gun_point->y == 0) && (gun_point->z == 0)) {
+								; //mprintf((0, "Would like to fire gun, but gun not selected.\n"));
+							} else {
+								if (!ai_multiplayer_awareness(obj, ROBOT_FIRE_AGITATION))
+									return;
+								//	New, multi-weapon-type system, 06/05/95 (life is slipping away...)
+								if (gun_num != 0) {
+									if (ailp->next_fire <= 0) {
+										ai_fire_laser_at_player(obj, gun_point, gun_num, &Last_fired_upon_player_pos);
+										obj = &Objects[objnum];
+									}
+
+									if ((ailp->next_fire2 <= 0) && (robptr->weapon_type2 != -1)) {
+										calc_gun_point(gun_point, obj, 0);
+										ai_fire_laser_at_player(obj, gun_point, 0, &Last_fired_upon_player_pos);
+										obj = &Objects[objnum];
+									}
+
+								} else if (ailp->next_fire <= 0) {
 									ai_fire_laser_at_player(obj, gun_point, gun_num, &Last_fired_upon_player_pos);
-
-								if ((ailp->next_fire2 <= 0) && (robptr->weapon_type2 != -1)) {
-									calc_gun_point(gun_point, obj, 0);
-									ai_fire_laser_at_player(obj, gun_point, 0, &Last_fired_upon_player_pos);
+									obj = &Objects[objnum];
 								}
-
-							} else if (ailp->next_fire <= 0)
-								ai_fire_laser_at_player(obj, gun_point, gun_num, &Last_fired_upon_player_pos);
+							}
 						}
+
+						//	Wants to fire, so should go into chase mode, probably.
+						if ( (aip->behavior != AIB_RUN_FROM) && (aip->behavior != AIB_STILL) && (aip->behavior != AIB_SNIPE) && (aip->behavior != AIB_FOLLOW) && ((ailp->mode == AIM_FOLLOW_PATH) || (ailp->mode == AIM_STILL)))
+							ailp->mode = AIM_CHASE_OBJECT;
 					}
+					aip->GOAL_STATE = AIS_RECO;
+					ailp->goal_state[aip->CURRENT_GUN] = AIS_RECO;
 
-					//	Wants to fire, so should go into chase mode, probably.
-					if ( (aip->behavior != AIB_RUN_FROM) && (aip->behavior != AIB_STILL) && (aip->behavior != AIB_SNIPE) && (aip->behavior != AIB_FOLLOW) && ((ailp->mode == AIM_FOLLOW_PATH) || (ailp->mode == AIM_STILL)))
-						ailp->mode = AIM_CHASE_OBJECT;
+					// Switch to next gun for next fire.
+					aip->CURRENT_GUN++;
+					if (aip->CURRENT_GUN >= activeBMTable->robots[obj->id].n_guns)
+						if (activeBMTable->robots[obj->id].n_guns == 1)
+							aip->CURRENT_GUN = 0;
+						else
+							aip->CURRENT_GUN = 1;
 				}
-				aip->GOAL_STATE = AIS_RECO;
-				ailp->goal_state[aip->CURRENT_GUN] = AIS_RECO;
-
-				// Switch to next gun for next fire.
-				aip->CURRENT_GUN++;
-				if (aip->CURRENT_GUN >= activeBMTable->robots[obj->id].n_guns)
-					if (activeBMTable->robots[obj->id].n_guns == 1)
-						aip->CURRENT_GUN = 0;
-					else
-						aip->CURRENT_GUN = 1;
 			}
-		}
 		}
 
 

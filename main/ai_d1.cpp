@@ -428,6 +428,7 @@ void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num
 	//#endif
 
 	Laser_create_new_easy(&fire_vec, fire_point, obj - Objects.data(), robptr->weapon_type, 1);
+	obj = &Objects[objnum];
 
 #ifndef SHAREWARE
 #ifdef NETWORK
@@ -641,6 +642,8 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 	static int eclip_state = 0;
 	do_boss_stuff(objp, 0);
 
+	size_t objnum = objp - Objects.data();
+
 	// Only master player can cause gating to occur.
 #ifdef NETWORK
 	if ((Game_mode & GM_MULTI) && !network_i_am_master())
@@ -664,7 +667,7 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 #ifndef SHAREWARE
 #ifdef NETWORK
 			if (eclip_state == 1) {
-				multi_send_boss_actions(objp - Objects.data(), 5, 0, 0);
+				multi_send_boss_actions(objnum, 5, 0, 0);
 				eclip_state = 0;
 			}
 #endif
@@ -685,7 +688,7 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 #ifdef NETWORK
 				if (rtval && (Game_mode & GM_MULTI))
 				{
-					multi_send_boss_actions(objp - Objects.data(), 3, randtype, Net_create_objnums[0]);
+					multi_send_boss_actions(objnum, 3, randtype, Net_create_objnums[0]);
 					map_objnum_local_to_local(Net_create_objnums[0]);
 				}
 #endif
@@ -1192,6 +1195,7 @@ void do_ai_frame_d1(size_t objnum)
 				ai_multi_send_robot_position(objnum, -1);
 
 			do_firing_stuff(obj, player_visibility, &vec_to_player);
+			obj = &Objects[objnum];
 		}
 		break;
 	}
@@ -1407,8 +1411,6 @@ void do_ai_frame_d1(size_t objnum)
 		ailp->mode = AIM_CHASE_OBJECT;
 		break;
 	}		// end:	switch (ailp->mode) {
-
-	obj = &Objects[objnum];
 
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -
 	//	If the robot can see you, increase his awareness of you.

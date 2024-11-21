@@ -2343,8 +2343,10 @@ void collide_player_and_nasty_robot(object* playerobj, object* robot, vms_vector
 	digi_link_sound_to_pos(activeBMTable->robots[robot->id].claw_sound, playerobj->segnum, 0, collision_point, 0, F1_0);
 
 	size_t pobjnum = playerobj - Objects.data();
+	size_t robjnum = robot - Objects.data();
 	object_create_explosion(playerobj->segnum, collision_point, i2f(10) / 2, VCLIP_PLAYER_HIT);
 	playerobj = &Objects[pobjnum];
+	robot = &Objects[robjnum];
 
 	bump_two_objects(playerobj, robot, 0);	//no damage from bump
 
@@ -2359,10 +2361,13 @@ void collide_player_and_materialization_center(object* objp)
 	vms_vector	exit_dir;
 	segment* segp = &Segments[objp->segnum];
 
+	size_t objnum = objp - Objects.data();
+
 	digi_link_sound_to_pos(SOUND_PLAYER_GOT_HIT, objp->segnum, 0, &objp->pos, 0, F1_0);
 	//	digi_play_sample( SOUND_PLAYER_GOT_HIT, F1_0 );
 
 	object_create_explosion(objp->segnum, &objp->pos, i2f(10) / 2, VCLIP_PLAYER_HIT);
+	objp = &Objects[objnum];
 
 	if (objp->id != Player_num)
 		return;

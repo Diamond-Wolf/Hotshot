@@ -2197,8 +2197,8 @@ void object_move_all()
 	//	check_duplicate_objects();
 	//	remove_incorrect_objects();
 
-	if (Highest_object_index > Max_used_objects)
-		free_object_slots(Max_used_objects);		//	Free all possible object slots.
+	//if (Highest_object_index > Max_used_objects)
+	//	free_object_slots(Max_used_objects);		//	Free all possible object slots.
 
 	obj_delete_all_that_should_be_dead();
 

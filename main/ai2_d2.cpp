@@ -234,7 +234,7 @@ int lead_player(object *objp, vms_vector *fire_point, vms_vector *believed_playe
 //	When this routine is complete, the parameter vec_to_player should not be necessary.
 void ai_fire_laser_at_player_d2(object *obj, vms_vector *fire_point, int gun_num, vms_vector *believed_player_pos)
 {
-	int			objnum = obj-Objects.data();
+	size_t			objnum = obj-Objects.data();
 	ai_local		*ailp = &Ai_local_info[objnum];
 	robot_info	*robptr = &activeBMTable->robots[obj->id];
 	vms_vector	fire_vec;
@@ -307,7 +307,7 @@ void ai_fire_laser_at_player_d2(object *obj, vms_vector *fire_point, int gun_num
 			fq.p0						= &obj->pos;
 			fq.p1						= fire_point;
 			fq.rad					= 0;
-			fq.thisobjnum			= obj-Objects.data();
+			fq.thisobjnum			= objnum;
 			fq.ignore_obj_list	= NULL;
 			fq.flags					= FQ_TRANSWALL;
 
@@ -362,7 +362,8 @@ player_led: ;
 		if (gun_num == 0)
 			weapon_type = robptr->weapon_type2;
 
-	Laser_create_new_easy( &fire_vec, fire_point, obj-Objects.data(), weapon_type, 1);
+	Laser_create_new_easy( &fire_vec, fire_point, objnum, weapon_type, 1);
+	obj = &Objects[objnum];
 
 #ifdef NETWORK
 	if (Game_mode & GM_MULTI) 
@@ -440,6 +441,8 @@ int boss_spew_robot(object *objp, vms_vector *pos)
 	int		objnum, segnum;
 	int		boss_index;
 
+	size_t bobjnum = objp - Objects.data();
+
 	int8_t bossFlag = activeBMTable->robots[objp->id].boss_flag;
 
 	if (bossFlag < BOSS_D2)
@@ -461,6 +464,7 @@ int boss_spew_robot(object *objp, vms_vector *pos)
 	//	Make spewed robot come tumbling out as if blasted by a flash missile.
 	if (objnum != -1) 
 	{
+		objp = &Objects[bobjnum];
 		object	*newobjp = &Objects[objnum];
 		int		force_val;
 
@@ -617,6 +621,8 @@ void do_boss_stuff_d2(object *objp, int player_visibility)
 		boss_index = boss_id - BOSS_D2 + 2;
 	else
 		boss_index = boss_id - 1;
+
+	Assert(boss_index < NUM_D2_BOSSES + 2);
 
 #ifndef NDEBUG
 	if (objp->shields != Prev_boss_shields)
