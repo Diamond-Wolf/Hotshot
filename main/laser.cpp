@@ -1793,12 +1793,12 @@ int create_lightning_blobs(vms_vector direction, vms_vector start_pos, int start
 		return -1;
 	}
 
-	norm_dir = *direction;
+	norm_dir = direction;
 
 	vm_vec_normalize_quick(&norm_dir);
-	vm_vec_scale_add(&end_pos, start_pos, &norm_dir, MAX_LIGHTNING_DISTANCE);
+	vm_vec_scale_add(&end_pos, &start_pos, &norm_dir, MAX_LIGHTNING_DISTANCE);
 
-	fq.p0 = start_pos;
+	fq.p0 = &start_pos;
 	fq.startseg = start_segnum;
 	fq.p1 = &end_pos;
 	fq.rad = 0;
@@ -1812,7 +1812,7 @@ int create_lightning_blobs(vms_vector direction, vms_vector start_pos, int start
 		return -1;
 	}
 
-	dist_to_hit_point = vm_vec_mag(vm_vec_sub(&tvec, &hit_data.hit_pnt, start_pos));
+	dist_to_hit_point = vm_vec_mag(vm_vec_sub(&tvec, &hit_data.hit_pnt, &start_pos));
 	num_blobs = dist_to_hit_point / LIGHTNING_BLOB_DISTANCE;
 
 	if (num_blobs > MAX_LIGHTNING_BLOBS)
@@ -1839,7 +1839,7 @@ int create_lightning_blobs(vms_vector direction, vms_vector start_pos, int start
 		if (point_seg == -1)	//	Hey, we thought we were creating points on a line, but we left the mine!
 			continue;
 
-		objnum = Laser_create_new(direction, &point_pos, point_seg, parent, LIGHTNING_BLOB_ID, 0);
+		objnum = Laser_create_new(&direction, &point_pos, point_seg, parent, LIGHTNING_BLOB_ID, 0);
 
 		if (objnum < 0) {
 			mprintf((1, "Can't create lightning blob - Out of objects!\n"));
