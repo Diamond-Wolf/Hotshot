@@ -1412,7 +1412,6 @@ void Flare_create(object *obj)
 		}
 
 		Laser_player_fire(objnum, FLARE_ID, 6, 1, 0);
-		obj = &Objects[objnum];
 
 		#ifdef NETWORK
 		if (Game_mode & GM_MULTI) 
@@ -1452,6 +1451,8 @@ void Laser_do_weapon_sequence(object *obj)
 {
 	Assert(obj->control_type == CT_WEAPON);
 
+	size_t iobjnum = obj - Objects.data();
+
 	//	Ok, this is a big hack by MK.
 	//	If you want an object to last for exactly one frame, then give it a lifeleft of ONE_FRAME_TIME
 	if (obj->lifeleft == ONE_FRAME_TIME) 
@@ -1468,7 +1469,7 @@ void Laser_do_weapon_sequence(object *obj)
 		obj->flags |= OF_SHOULD_BE_DEAD;
 		if ( activeBMTable->weapons[obj->id].damage_radius )
 			explode_badass_weapon(obj,&obj->pos);
-		create_smart_children(obj, NUM_SMART_CHILDREN);
+		create_smart_children(&Objects[iobjnum], NUM_SMART_CHILDREN);
 		return;
 	}
 
@@ -1766,7 +1767,7 @@ fix	Lightning_start_time = -F1_0 * 10, Lightning_last_time;
 
 //	--------------------------------------------------------------------------------------------------
 //	Return -1 if failed to create at least one blob.  Else return index of last blob created.
-int create_lightning_blobs(vms_vector* direction, vms_vector* start_pos, int start_segnum, int parent)
+int create_lightning_blobs(vms_vector direction, vms_vector start_pos, int start_segnum, int parent)
 {
 	int			i;
 	fvi_query	fq;
@@ -1869,7 +1870,7 @@ void lightning_frame(void)
 {
 	if ((GameTime - Lightning_start_time < LIGHTNING_TIME) && (GameTime - Lightning_start_time > 0)) {
 		if (GameTime - Lightning_last_time > LIGHTNING_DELAY) {
-			create_lightning_blobs(&ConsoleObject->orient.fvec, &ConsoleObject->pos, ConsoleObject->segnum, ConsoleObject - Objects.data());
+			create_lightning_blobs(ConsoleObject->orient.fvec, ConsoleObject->pos, ConsoleObject->segnum, ConsoleObject - Objects.data());
 			Lightning_last_time = GameTime;
 		}
 	}
@@ -2053,7 +2054,7 @@ int do_laser_firing(int objnum, int weapon_num, int level, int flags, int nfires
 				Laser_player_fire( objnum, OMEGA_ID, 1, 1, 0);
 			else
 			{
-				create_lightning_blobs(&objp->orient.fvec, &objp->pos, objp->segnum, objnum);
+				create_lightning_blobs(objp->orient.fvec, objp->pos, objp->segnum, objnum);
 				Lightning_start_time = Lightning_last_time = GameTime;
 			}
 			break;
