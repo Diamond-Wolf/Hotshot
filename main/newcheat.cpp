@@ -40,6 +40,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "ai.h"
 #include "bm.h"
+#include "controls.h"
 #include "misc/error.h"
 #include "game.h"
 #include "gameseq.h"
@@ -321,7 +322,7 @@ bool CheckCheats(char newKeyIn) {
 
     }
 
-    if (!Cheats_enabled) { 
+    if (!Cheats_enabled || Game_mode & GM_MULTI) { 
         return false;
     } 
 
@@ -487,6 +488,8 @@ bool CheckCheats(char newKeyIn) {
                 Players[Player_num].flags |= PLAYER_FLAGS_AFTERBURNER;
                 Players[Player_num].flags |= PLAYER_FLAGS_AMMO_RACK;
                 Players[Player_num].flags |= PLAYER_FLAGS_CONVERTER;
+
+                Afterburner_charge = f1_0;
 
                 HUD_init_message("Accessories!!");
             } else {
