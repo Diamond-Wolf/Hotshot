@@ -1459,7 +1459,7 @@ void clear_stuck_objects(void)
 // -----------------------------------------------------------------------------------
 #define	MAX_BLAST_GLASS_DEPTH	5
 
-void bng_process_segment(object * objp, fix damage, segment * segp, int depth, int8_t * visited)
+void bng_process_segment(size_t objnum, fix damage, segment * segp, int depth, int8_t * visited)
 {
 	int	i, sidenum;
 
@@ -1467,6 +1467,8 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 		return;
 
 	depth++;
+
+	object* objp = &Objects[objnum];
 
 	for (sidenum = 0; sidenum < MAX_SIDES_PER_SEGMENT; sidenum++) {
 		int			tm;
@@ -1484,8 +1486,10 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 				dist = vm_vec_dist_quick(&pnt, &objp->pos);
 				if (dist < damage / 2) {
 					dist = find_connected_distance(&pnt, segp - Segments.data(), &objp->pos, objp->segnum, MAX_BLAST_GLASS_DEPTH, WID_RENDPAST_FLAG);
-					if ((dist > 0) && (dist < damage / 2))
-						check_effect_blowup(segp, sidenum, &pnt, &Objects[objp->ctype.laser_info.parent_num], 1);
+					if ((dist > 0) && (dist < damage / 2)) {
+						check_effect_blowup(segp, sidenum, &pnt, objp, 1);
+						objp = &Objects[objnum];
+					}
 				}
 			}
 		}
@@ -1498,7 +1502,7 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 			if (!visited[segnum]) {
 				if (WALL_IS_DOORWAY(segp, i) & WID_FLY_FLAG) {
 					visited[segnum] = 1;
-					bng_process_segment(objp, damage, &Segments[segnum], depth, visited);
+					bng_process_segment(objnum, damage, &Segments[segnum], depth, visited);
 				}
 			}
 		}
@@ -1508,18 +1512,20 @@ void bng_process_segment(object * objp, fix damage, segment * segp, int depth, i
 // -----------------------------------------------------------------------------------
 //	objp is going to detonate
 //	blast nearby monitors, lights, maybe other things
-void blast_nearby_glass(object* objp, fix damage)
+void blast_nearby_glass(size_t objnum, fix damage)
 {
 	int		i;
 	int8_t*	visited = new int8_t[Segments.size()];
 	segment* cursegp;
 
-	cursegp = &Segments[objp->segnum];
+	auto segnum = Objects[objnum].segnum;
+
+	cursegp = &Segments[segnum];
 	for (i = 0; i <= Highest_segment_index; i++)
 		visited[i] = 0;
 
-	visited[objp->segnum] = 1;
-	bng_process_segment(objp, damage, cursegp, 0, visited);
+	visited[segnum] = 1;
+	bng_process_segment(objnum, damage, cursegp, 0, visited);
 
 	delete[] visited;
 }

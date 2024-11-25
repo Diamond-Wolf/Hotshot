@@ -553,15 +553,15 @@ int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower,
 	//	If this wall has a trigger and the blower-upper is not the player or the buddy, abort!
 	if (currentGame == G_DESCENT_2 && parent_num >= 0 && parent_num < Objects.size()) {
 		auto objid = Objects[parent_num].id;
-		if (objid < activeBMTable->robots.size()) {
+		if (force_blowup_flag || objid < activeBMTable->robots.size()) {
 
 			int	ok_to_blow = 0;
 
-			if (blower->ctype.laser_info.parent_type == OBJ_ROBOT)
+			if (!force_blowup_flag && blower->ctype.laser_info.parent_type == OBJ_ROBOT)
 				if (activeBMTable->robots[objid].companion)
 					ok_to_blow = 1;
 
-			if (!(ok_to_blow || (blower->ctype.laser_info.parent_type == OBJ_PLAYER))) {
+			if (force_blowup_flag || !(ok_to_blow || (blower->ctype.laser_info.parent_type == OBJ_PLAYER))) {
 				int	trigger_num, wall_num;
 
 				wall_num = seg->sides[side].wall_num;

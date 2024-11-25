@@ -2117,7 +2117,7 @@ int create_homing_missile(object *objp, int goal_obj, int objtype, int make_soun
 	return objnum;
 }
 
-extern void blast_nearby_glass(object *objp, fix damage);
+extern void blast_nearby_glass(size_t objnum, fix damage);
 
 //	-------------------------------------------------------------------------------------------
 //	Create the children of a smart bomb, which is a bunch of homing missiles.
@@ -2128,6 +2128,8 @@ void create_smart_children(object *objp, int num_smart_children)
 	int		parent_type, parent_num;
 	int		objlist[MAX_OBJDISTS];
 	int		blob_id;
+
+	size_t iobjnum = objp - Objects.data();
 
 	if (objp->type == OBJ_WEAPON)
 	{
@@ -2144,13 +2146,15 @@ void create_smart_children(object *objp, int num_smart_children)
 		else
 		{
 			parent_type = OBJ_ROBOT;
-			parent_num = objp - Objects.data();
+			parent_num = iobjnum;
 		}
 	} else
 		Int3();	//	Hey, what kind of object is this!?
 
-	if (CurrentLogicVersion >= LogicVer::FULL_1_0 && objp->id == EARTHSHAKER_ID)
-		blast_nearby_glass(objp, activeBMTable->weapons[EARTHSHAKER_ID].strength[Difficulty_level]);
+	if (CurrentLogicVersion >= LogicVer::FULL_1_0 && objp->id == EARTHSHAKER_ID) {
+		blast_nearby_glass(iobjnum, activeBMTable->weapons[EARTHSHAKER_ID].strength[Difficulty_level]);
+		objp = &Objects[iobjnum];
+	}
 
 // -- DEBUG --
 	if (CurrentDataVersion != DataVer::DEMO && ((objp->type == OBJ_WEAPON) && ((objp->id == SMART_ID) || (objp->id == SUPERPROX_ID) || (objp->id == ROBOT_SUPERPROX_ID) || (objp->id == EARTHSHAKER_ID))))
@@ -2253,14 +2257,12 @@ void create_smart_children(object *objp, int num_smart_children)
 			}
 		}
 
-		int thisObjnum = objp - Objects.data(); // [DW] Below operation can reallocate object vector, invalidating objp
-
 		make_sound = 1;
 		for (i=0; i<num_smart_children; i++) 
 		{
 			int objnum;
 			objnum = (numobjs==0)?-1:objlist[(P_Rand() * numobjs) >> 15];
-			auto newObj = create_homing_missile(&Objects[thisObjnum], objnum, blob_id, make_sound);
+			auto newObj = create_homing_missile(&Objects[iobjnum], objnum, blob_id, make_sound);
 
 			if (newObj < 0)
 				mprintf((1, "Smart child could not be created!\n"));
