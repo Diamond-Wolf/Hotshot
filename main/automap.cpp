@@ -298,7 +298,7 @@ void DropMarker(int player_marker_num)
 	if (MarkerObject[marker_num] != -1)
 		obj_delete(MarkerObject[marker_num]);
 
-	MarkerObject[marker_num] = drop_marker_object(playerp->pos, playerp->segnum, &playerp->orient, marker_num);
+	MarkerObject[marker_num] = drop_marker_object(playerp->pos, playerp->segnum, playerp->orient, marker_num);
 
 #ifdef NETWORK
 	if (Game_mode & GM_MULTI)
@@ -325,7 +325,7 @@ void DropBuddyMarker(object* objp)
 	if (MarkerObject[marker_num] != -1 && MarkerObject[marker_num] != 0)
 		obj_delete(MarkerObject[marker_num]);
 
-	MarkerObject[marker_num] = drop_marker_object(objp->pos, objp->segnum, &objp->orient, marker_num);
+	MarkerObject[marker_num] = drop_marker_object(objp->pos, objp->segnum, objp->orient, marker_num);
 
 }
 

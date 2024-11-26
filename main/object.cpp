@@ -475,7 +475,7 @@ void draw_cloaked_object(object * obj, fix light, fix * glow, fix cloak_start_ti
 		new_light = fixmul(light, light_scale);
 		save_glow = glow[0];
 		glow[0] = fixmul(glow[0], light_scale);
-		draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, new_light, glow, alt_textures);
+		draw_polygon_model(obj->pos, obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, new_light, glow, alt_textures);
 		glow[0] = save_glow;
 	}
 	else 
@@ -483,7 +483,7 @@ void draw_cloaked_object(object * obj, fix light, fix * glow, fix cloak_start_ti
 		Gr_scanline_darkening_level = cloak_value;
 		gr_setcolor(BM_XRGB(0, 0, 0));	//set to black (matters for s3)
 		g3_set_special_render(draw_tmap_flat, NULL, NULL);		//use special flat drawer
-		draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, glow, NULL);
+		draw_polygon_model(obj->pos, obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, glow, NULL);
 		g3_set_special_render(NULL, NULL, NULL);
 		Gr_scanline_darkening_level = GR_FADE_LEVELS;
 	}
@@ -563,7 +563,7 @@ void draw_polygon_object(object* obj)
 			bm_ptrs[i] = activeBMTable->textures
 [obj->rtype.pobj_info.tmap_override];
 
-		draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, bm_ptrs);
+		draw_polygon_model(obj->pos, obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, bm_ptrs);
 	}
 	else
 	{
@@ -592,12 +592,12 @@ void draw_polygon_object(object* obj)
 					light = 2 * light + F1_0;
 		}
 
-			draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
+			draw_polygon_model(obj->pos, obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
 			if (obj->type == OBJ_WEAPON && (activeBMTable->weapons[obj->id].model_num_inner > -1)) 
 			{
 				fix dist_to_eye = vm_vec_dist_quick(&Viewer->pos, &obj->pos);
 				if (dist_to_eye < Simple_model_threshhold_scale * F1_0 * 2)
-					draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], activeBMTable->weapons[obj->id].model_num_inner, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
+					draw_polygon_model(obj->pos, obj->orient, &obj->rtype.pobj_info.anim_angles[0], activeBMTable->weapons[obj->id].model_num_inner, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
 			}
 	}
 }
@@ -1297,10 +1297,12 @@ int free_object_slots(int num_used)
 //searches for the correct segment
 //returns the object number
 int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector pos,
-	vms_matrix* orient, fix size, uint8_t ctype, uint8_t mtype, uint8_t rtype)
+	vms_matrix* orient_in, fix size, uint8_t ctype, uint8_t mtype, uint8_t rtype)
 {
 	int objnum;
 	object* obj;
+
+	vms_matrix orient = orient_in ? *orient_in : vmd_identity_matrix;
 
 	Assert(segnum <= Highest_segment_index);
 	Assert(segnum >= 0);
@@ -1343,7 +1345,7 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector pos,
 	//@@if (orient != NULL) 
 	//@@	obj->orient 			= *orient;
 
-	obj->orient = orient ? *orient : vmd_identity_matrix;
+	obj->orient = orient;
 
 	obj->control_type = ctype;
 	obj->movement_type = mtype;
@@ -2543,13 +2545,13 @@ void obj_detach_all(object* parent)
 }
 
 //creates a marker object in the world.  returns the object number
-int drop_marker_object(vms_vector pos, int segnum, vms_matrix* orient, int marker_num)
+int drop_marker_object(vms_vector pos, int segnum, vms_matrix orient, int marker_num)
 {
 	int objnum;
 
 	Assert(activeBMTable->markerModel != -1);
 
-	objnum = obj_create(OBJ_MARKER, marker_num, segnum, pos, orient, activeBMTable->models[activeBMTable->markerModel].rad, CT_NONE, MT_NONE, RT_POLYOBJ);
+	objnum = obj_create(OBJ_MARKER, marker_num, segnum, pos, &orient, activeBMTable->models[activeBMTable->markerModel].rad, CT_NONE, MT_NONE, RT_POLYOBJ);
 
 	if (objnum >= 0) {
 		object* obj = &Objects[objnum];

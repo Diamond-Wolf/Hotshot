@@ -450,7 +450,7 @@ void obj_attach(object *parent,object *sub);
 extern void create_small_fireball_on_object(object *objp, fix size_scale, int sound_flag);
 
 //returns object number
-int drop_marker_object(vms_vector pos,int segnum,vms_matrix *orient,int marker_num);
+int drop_marker_object(vms_vector pos,int segnum,vms_matrix orient,int marker_num);
 
 extern void wake_up_rendered_objects(object *gmissp, int window_num);
 

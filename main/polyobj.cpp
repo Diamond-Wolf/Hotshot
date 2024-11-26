@@ -472,7 +472,7 @@ int Simple_model_threshhold_scale = 5;		//switch when this times radius far away
 
 //draw a polygon model
 
-void draw_polygon_model(vms_vector pos, vms_matrix* orient, vms_angvec* anim_angles, int model_num, int flags, fix light, fix* glow_values, bitmap_index alt_textures[])
+void draw_polygon_model(vms_vector pos, vms_matrix orient, vms_angvec* anim_angles, int model_num, int flags, fix light, fix* glow_values, bitmap_index alt_textures[])
 {
 	polymodel* po;
 	int i;
@@ -540,7 +540,7 @@ void draw_polygon_model(vms_vector pos, vms_matrix* orient, vms_angvec* anim_ang
 	Assert(piggy_page_flushed == 0);
 #endif
 
-	g3_start_instance_matrix(&pos, orient);
+	g3_start_instance_matrix(&pos, &orient);
 
 	g3_set_interp_points(robot_points);
 
@@ -727,7 +727,7 @@ void init_polygon_models()
 //more-or-less fill the canvas.  Note that this routine actually renders
 //into an off-screen canvas that it creates, then copies to the current
 //canvas.
-void draw_model_picture(int mn, vms_angvec * orient_angles)
+void draw_model_picture(int mn, vms_angvec* orient_angles)
 {
 	vms_vector	temp_pos = ZERO_VECTOR;
 	vms_matrix	temp_orient = IDENTITY_MATRIX;
@@ -752,7 +752,7 @@ void draw_model_picture(int mn, vms_angvec * orient_angles)
 
 	//PA_DFX(save_light = Lighting_on);
 	//PA_DFX(Lighting_on = 0);
-	draw_polygon_model(temp_pos, &temp_orient, NULL, mn, 0, f1_0, NULL, NULL);
+	draw_polygon_model(temp_pos, temp_orient, NULL, mn, 0, f1_0, NULL, NULL);
 	//PA_DFX (Lighting_on = save_light);
 
 	gr_set_current_canvas(save_canv);

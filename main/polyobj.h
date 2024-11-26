@@ -61,7 +61,7 @@ void init_polygon_models();
 int load_polygon_model(char *filename,int n_textures,int first_texture,robot_info *r);
 
 //draw a polygon model
-void draw_polygon_model(vms_vector pos,vms_matrix *orient,vms_angvec *anim_angles,int model_num,int flags,fix light,fix *glow_values,bitmap_index alt_textures[]);
+void draw_polygon_model(vms_vector pos,vms_matrix orient,vms_angvec* anim_angles,int model_num,int flags,fix light,fix *glow_values,bitmap_index alt_textures[]);
 
 //fills in arrays gun_points & gun_dirs, returns the number of guns read
 int read_model_guns(char *filename,vms_vector *gun_points, vms_vector *gun_dirs, int *gun_submodels);
@@ -70,7 +70,7 @@ int read_model_guns(char *filename,vms_vector *gun_points, vms_vector *gun_dirs,
 //more-or-less fill the canvas.  Note that this routine actually renders
 //into an off-screen canvas that it creates, then copies to the current
 //canvas.
-void draw_model_picture(int mn,vms_angvec *orient_angles);
+void draw_model_picture(int mn,vms_angvec* orient_angles);
 
 #define MAX_POLYOBJ_TEXTURES_D1 50
 #define MAX_POLYOBJ_TEXTURES_D2 100

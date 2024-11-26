@@ -1000,7 +1000,7 @@ void draw_exit_model()
 	vm_vec_scale_add(&model_pos,&mine_exit_point,&mine_exit_orient.fvec,i2f(f));
 	vm_vec_scale_add2(&model_pos,&mine_exit_orient.uvec,i2f(u));
 
-	draw_polygon_model(model_pos,&mine_exit_orient,NULL,(mine_destroyed)?activeBMTable->destroyedExitModel:activeBMTable->exitModel,0,f1_0,NULL,NULL);
+	draw_polygon_model(model_pos,mine_exit_orient,NULL,(mine_destroyed)?activeBMTable->destroyedExitModel:activeBMTable->exitModel,0,f1_0,NULL,NULL);
 
 }
 
