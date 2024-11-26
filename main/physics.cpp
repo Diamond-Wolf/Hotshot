@@ -387,7 +387,7 @@ if (Dont_move_ai_objects)
 	}
 
 	//check for correct object segment 
-	if(!get_seg_masks(&obj->pos,obj->segnum,0).centermask==0) {
+	if(!get_seg_masks(obj->pos,obj->segnum,0).centermask==0) {
 		#ifndef NDEBUG
 		mprintf((0,"Warning: object %d not in given seg!\n",objnum));
 		#endif
@@ -595,12 +595,12 @@ save_p1 = *fq.p1;
 			obj_relink(objnum, iseg );
 
 		//if start point not in segment, move object to center of segment
-		if (get_seg_masks(&obj->pos,obj->segnum,0).centermask!=0) {
+		if (get_seg_masks(obj->pos,obj->segnum,0).centermask!=0) {
 			int n;
 
 			if ((n=find_object_seg(obj))==-1) {
 				//Int3();
-				if (obj->type==OBJ_PLAYER && (n=find_point_seg(&obj->last_pos,obj->segnum))!=-1) {
+				if (obj->type==OBJ_PLAYER && (n=find_point_seg(obj->last_pos,obj->segnum))!=-1) {
 					obj->pos = obj->last_pos;
 					obj_relink(objnum, n );
 				}
@@ -689,9 +689,9 @@ save_p1 = *fq.p1;
 				wall_part = vm_vec_dot(&moved_v,&hit_info.hit_wallnorm);
 
 				if (wall_part != 0 && moved_time>0 && (hit_speed=-fixdiv(wall_part,moved_time))>0)
-					collide_object_with_wall(obj, hit_speed, WallHitSeg, WallHitSide, &hit_info.hit_pnt );
+					collide_object_with_wall(obj, hit_speed, WallHitSeg, WallHitSide, hit_info.hit_pnt );
 				else
-					scrape_object_on_wall(obj, WallHitSeg, WallHitSide, &hit_info.hit_pnt );
+					scrape_object_on_wall(obj, WallHitSeg, WallHitSide, hit_info.hit_pnt );
 
 				obj = &Objects[objnum]; //in case of object reallocation
 
@@ -797,7 +797,7 @@ save_p1 = *fq.p1;
 
 					old_vel = obj->mtype.phys_info.velocity;
 
-					collide_two_objects( obj, &Objects[hit_info.hit_object], &pos_hit);
+					collide_two_objects( obj, &Objects[hit_info.hit_object], pos_hit);
 
 					obj = &Objects[objnum];
 
@@ -935,12 +935,12 @@ save_p1 = *fq.p1;
 
 //--WE ALWYS WANT THIS IN, MATT AND MIKE DECISION ON 12/10/94, TWO MONTHS AFTER FINAL 	#ifndef NDEBUG
 	//if end point not in segment, move object to last pos, or segment center
-	if (get_seg_masks(&obj->pos,obj->segnum,0).centermask!=0) {
+	if (get_seg_masks(obj->pos,obj->segnum,0).centermask!=0) {
 		if (find_object_seg(obj)==-1) {
 			int n;
 
 			//Int3();
-			if (obj->type==OBJ_PLAYER && (n=find_point_seg(&obj->last_pos,obj->segnum))!=-1) {
+			if (obj->type==OBJ_PLAYER && (n=find_point_seg(obj->last_pos,obj->segnum))!=-1) {
 				obj->pos = obj->last_pos;
 				obj_relink(objnum, n );
 			}
@@ -1000,7 +1000,7 @@ save_p1 = *fq.p1;
 
 //Applies an instantaneous force on an object, resulting in an instantaneous
 //change in velocity.
-void phys_apply_force(object *obj,vms_vector *force_vec)
+void phys_apply_force(object *obj,vms_vector force_vec)
 {
 
 	//	Put in by MK on 2/13/96 for force getting applied to Omega blobs, which have 0 mass,
@@ -1017,7 +1017,7 @@ void phys_apply_force(object *obj,vms_vector *force_vec)
 #endif
  
 	//Add in acceleration due to force
-	vm_vec_scale_add2(&obj->mtype.phys_info.velocity,force_vec,fixdiv(f1_0,obj->mtype.phys_info.mass));
+	vm_vec_scale_add2(&obj->mtype.phys_info.velocity, &force_vec, fixdiv(f1_0,obj->mtype.phys_info.mass));
 
 
 }
@@ -1044,7 +1044,7 @@ void physics_set_rotvel_and_saturate(fix *dest, fix delta)
 //	------------------------------------------------------------------------------------------------------
 //	Note: This is the old ai_turn_towards_vector code.
 //	phys_apply_rot used to call ai_turn_towards_vector until I fixed it, which broke phys_apply_rot.
-void physics_turn_towards_vector(vms_vector *goal_vector, object *obj, fix rate)
+void physics_turn_towards_vector(vms_vector goal_vector, object *obj, fix rate)
 {
 	vms_angvec	dest_angles, cur_angles;
 	fix			delta_p, delta_h;
@@ -1054,14 +1054,14 @@ void physics_turn_towards_vector(vms_vector *goal_vector, object *obj, fix rate)
 	// If no one moves, will be facing goal_vector in 1 second.
 
 	//	Detect null vector.
-	if ((goal_vector->x == 0) && (goal_vector->y == 0) && (goal_vector->z == 0))
+	if ((goal_vector.x == 0) && (goal_vector.y == 0) && (goal_vector.z == 0))
 		return;
 
 	//	Make morph objects turn more slowly.
 	if (obj->control_type == CT_MORPH)
 		rate *= 2;
 
-	vm_extract_angles_vector(&dest_angles, goal_vector);
+	vm_extract_angles_vector(&dest_angles, &goal_vector);
 	vm_extract_angles_vector(&cur_angles, &obj->orient.fvec);
 
 	delta_p = (dest_angles.p - cur_angles.p);
@@ -1086,14 +1086,14 @@ void physics_turn_towards_vector(vms_vector *goal_vector, object *obj, fix rate)
 //	-----------------------------------------------------------------------------
 //	Applies an instantaneous whack on an object, resulting in an instantaneous
 //	change in orientation.
-void phys_apply_rot(object *obj,vms_vector *force_vec)
+void phys_apply_rot(object *obj,vms_vector force_vec)
 {
 	fix	rate, vecmag;
 
 	if (obj->movement_type != MT_PHYSICS)
 		return;
 
-	vecmag = vm_vec_mag(force_vec)/8;
+	vecmag = vm_vec_mag(&force_vec)/8;
 	if (vecmag < F1_0/256)
 		rate = 4*F1_0;
 	else if (vecmag < obj->mtype.phys_info.mass >> 14)

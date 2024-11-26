@@ -64,7 +64,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <time.h>
 #endif
 
-extern object * create_morph_robot( segment *segp, vms_vector *object_pos, int object_id);
+extern object* create_morph_robot( segment *segp, vms_vector object_pos, int object_id);
 
 // --------------------------------------------------------------------------------------------------------------------
 //	Create a Buddy bot.
@@ -86,7 +86,7 @@ void create_buddy_bot(void)
 
 	compute_segment_center(&object_pos, &Segments[ConsoleObject->segnum]);
 
-	create_morph_robot( &Segments[ConsoleObject->segnum], &object_pos, buddy_id);
+	create_morph_robot( &Segments[ConsoleObject->segnum], object_pos, buddy_id);
 }
 
 int boss_fits_in_seg(object* boss_objp, int segnum); //[ISB] I really like how watcom c apparently didn't require you to have prototypes for functions. 
@@ -102,10 +102,10 @@ extern void init_buddy_for_level(void);
 #define	BABY_SPIDER_ID	14
 #define	FIRE_AT_NEARBY_PLAYER_THRESHOLD	(F1_0*40)
 
-extern void physics_turn_towards_vector(vms_vector *goal_vector, object *obj, fix rate);
+extern void physics_turn_towards_vector(vms_vector goal_vector, object *obj, fix rate);
 extern fix Seismic_tremor_magnitude;
 
-extern int create_gated_robot( int segnum, int object_id, vms_vector *pos);
+extern int create_gated_robot( int segnum, int object_id, vms_vector* pos);
 
 //	Overall_agitation affects:
 //		Widens field of view.  Field of view is in range 0..1 (specified in bitmaps.tbl as N/360 degrees).
@@ -158,7 +158,7 @@ fix compute_lead_component(fix player_pos, fix robot_pos, fix player_vel, fix el
 //		Player not farther away than MAX_LEAD_DISTANCE
 //		dot(vector_to_player, player_direction) must be in -LEAD_RANGE..LEAD_RANGE
 //		if firing a matter weapon, less leading, based on skill level.
-int lead_player(object *objp, vms_vector *fire_point, vms_vector *believed_player_pos, int gun_num, vms_vector *fire_vec)
+int lead_player(object *objp, vms_vector fire_point, vms_vector believed_player_pos, int gun_num, vms_vector* fire_vec)
 {
 	fix			dot, player_speed, dist_to_player, max_weapon_speed, projected_time;
 	vms_vector	player_movement_dir, vec_to_player;
@@ -175,7 +175,7 @@ int lead_player(object *objp, vms_vector *fire_point, vms_vector *believed_playe
 	if (player_speed < MIN_LEAD_SPEED)
 		return 0;
 
-	vm_vec_sub(&vec_to_player, believed_player_pos, fire_point);
+	vm_vec_sub(&vec_to_player, &believed_player_pos, &fire_point);
 	dist_to_player = vm_vec_normalize_quick(&vec_to_player);
 	if (dist_to_player > MAX_LEAD_DISTANCE)
 		return 0;
@@ -208,9 +208,9 @@ int lead_player(object *objp, vms_vector *fire_point, vms_vector *believed_playe
 
 	projected_time = fixdiv(dist_to_player, max_weapon_speed);
 
-	fire_vec->x = compute_lead_component(believed_player_pos->x, fire_point->x, ConsoleObject->mtype.phys_info.velocity.x, projected_time);
-	fire_vec->y = compute_lead_component(believed_player_pos->y, fire_point->y, ConsoleObject->mtype.phys_info.velocity.y, projected_time);
-	fire_vec->z = compute_lead_component(believed_player_pos->z, fire_point->z, ConsoleObject->mtype.phys_info.velocity.z, projected_time);
+	fire_vec->x = compute_lead_component(believed_player_pos.x, fire_point.x, ConsoleObject->mtype.phys_info.velocity.x, projected_time);
+	fire_vec->y = compute_lead_component(believed_player_pos.y, fire_point.y, ConsoleObject->mtype.phys_info.velocity.y, projected_time);
+	fire_vec->z = compute_lead_component(believed_player_pos.z, fire_point.z, ConsoleObject->mtype.phys_info.velocity.z, projected_time);
 
 	vm_vec_normalize_quick(fire_vec);
 
@@ -232,7 +232,7 @@ int lead_player(object *objp, vms_vector *fire_point, vms_vector *believed_playe
 //	Note: Parameter vec_to_player is only passed now because guns which aren't on the forward vector from the
 //	center of the robot will not fire right at the player.  We need to aim the guns at the player.  Barring that, we cheat.
 //	When this routine is complete, the parameter vec_to_player should not be necessary.
-void ai_fire_laser_at_player_d2(object *obj, vms_vector *fire_point, int gun_num, vms_vector *believed_player_pos)
+void ai_fire_laser_at_player_d2(object *obj, vms_vector fire_point, int gun_num, vms_vector believed_player_pos)
 {
 	size_t			objnum = obj-Objects.data();
 	ai_local		*ailp = &Ai_local_info[objnum];
@@ -305,7 +305,7 @@ void ai_fire_laser_at_player_d2(object *obj, vms_vector *fire_point, int gun_num
 
 			fq.startseg				= obj->segnum;
 			fq.p0						= &obj->pos;
-			fq.p1						= fire_point;
+			fq.p1						= &fire_point;
 			fq.rad					= 0;
 			fq.thisobjnum			= objnum;
 			fq.ignore_obj_list	= NULL;
@@ -347,11 +347,11 @@ void ai_fire_laser_at_player_d2(object *obj, vms_vector *fire_point, int gun_num
 	dot = 0;
 	count = 0;			//	Don't want to sit in this loop forever...
 	while ((count < 4) && (dot < F1_0/4)) {
-		bpp_diff.x = believed_player_pos->x + fixmul((P_Rand()-16384) * (NDL-Difficulty_level-1) * 4, aim);
-		bpp_diff.y = believed_player_pos->y + fixmul((P_Rand()-16384) * (NDL-Difficulty_level-1) * 4, aim);
-		bpp_diff.z = believed_player_pos->z + fixmul((P_Rand()-16384) * (NDL-Difficulty_level-1) * 4, aim);
+		bpp_diff.x = believed_player_pos.x + fixmul((P_Rand()-16384) * (NDL-Difficulty_level-1) * 4, aim);
+		bpp_diff.y = believed_player_pos.y + fixmul((P_Rand()-16384) * (NDL-Difficulty_level-1) * 4, aim);
+		bpp_diff.z = believed_player_pos.z + fixmul((P_Rand()-16384) * (NDL-Difficulty_level-1) * 4, aim);
 
-		vm_vec_normalized_dir_quick(&fire_vec, &bpp_diff, fire_point);
+		vm_vec_normalized_dir_quick(&fire_vec, &bpp_diff, &fire_point);
 		dot = vm_vec_dot(&obj->orient.fvec, &fire_vec);
 		count++;
 	}
@@ -362,7 +362,7 @@ player_led: ;
 		if (gun_num == 0)
 			weapon_type = robptr->weapon_type2;
 
-	Laser_create_new_easy( &fire_vec, fire_point, objnum, weapon_type, 1);
+	Laser_create_new_easy( fire_vec, fire_point, objnum, weapon_type, 1);
 	obj = &Objects[objnum];
 
 #ifdef NETWORK
@@ -436,7 +436,7 @@ int	Max_spew_bots[NUM_D2_BOSSES + 2] = {0, 3, 2, 1, 2, 3, 3, 3,  3, 3};
 
 //	----------------------------------------------------------------------------------------------------------
 //	objp points at a boss.  He was presumably just hit and he's supposed to create a bot at the hit location *pos.
-int boss_spew_robot(object *objp, vms_vector *pos)
+int boss_spew_robot(object *objp, vms_vector pos)
 {
 	int		objnum, segnum;
 	int		boss_index;
@@ -459,7 +459,7 @@ int boss_spew_robot(object *objp, vms_vector *pos)
 		return -1;
 	}	
 
-	objnum = create_gated_robot( segnum, Spew_bots[boss_index][(Max_spew_bots[boss_index] * P_Rand()) >> 15], pos);
+	objnum = create_gated_robot( segnum, Spew_bots[boss_index][(Max_spew_bots[boss_index] * P_Rand()) >> 15], &pos);
  
 	//	Make spewed robot come tumbling out as if blasted by a flash missile.
 	if (objnum != -1) 
@@ -479,7 +479,7 @@ int boss_spew_robot(object *objp, vms_vector *pos)
 			newobjp->mtype.phys_info.flags |= PF_USES_THRUST;
 
 			//	Now, give a big initial velocity to get moving away from boss.
-			vm_vec_sub(&newobjp->mtype.phys_info.velocity, pos, &objp->pos);
+			vm_vec_sub(&newobjp->mtype.phys_info.velocity, &pos, &objp->pos);
 			vm_vec_normalize_quick(&newobjp->mtype.phys_info.velocity);
 			vm_vec_scale(&newobjp->mtype.phys_info.velocity, F1_0*128);
 		}

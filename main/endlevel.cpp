@@ -323,7 +323,7 @@ void start_endlevel_sequence()
 	for (i=0; i<=Highest_object_index; i++)
 		if (Objects[i].type == OBJ_ROBOT)
 			if (activeBMTable->robots[Objects[i].id].companion) {
-				object_create_explosion(Objects[i].segnum, &Objects[i].pos, F1_0*7/2, VCLIP_POWERUP_DISAPPEARANCE );
+				object_create_explosion(Objects[i].segnum, Objects[i].pos, F1_0*7/2, VCLIP_POWERUP_DISAPPEARANCE );
 				Objects[i].flags |= OF_SHOULD_BE_DEAD;
 			}
 
@@ -617,7 +617,7 @@ void do_endlevel_frame()
 
 				outside_mine = 1;
 
-				tobj = object_create_explosion(exit_segnum,&mine_side_exit_point,i2f(50),VCLIP_BIG_PLAYER_EXPLOSION);
+				tobj = object_create_explosion(exit_segnum,mine_side_exit_point,i2f(50),VCLIP_BIG_PLAYER_EXPLOSION);
 
 				if (tobj)
 				{
@@ -632,7 +632,7 @@ void do_endlevel_frame()
 					ext_expl_playing = 1;
 				}
 	
-				digi_link_sound_to_pos( SOUND_BIG_ENDLEVEL_EXPLOSION, exit_segnum, 0, &mine_side_exit_point, 0, i2f(3)/4 );
+				digi_link_sound_to_pos( SOUND_BIG_ENDLEVEL_EXPLOSION, exit_segnum, 0, mine_side_exit_point, 0, i2f(3)/4 );
 			}
 		}
 
@@ -648,12 +648,12 @@ void do_endlevel_frame()
 			vm_vec_scale_add2(&tpnt,&ConsoleObject->orient.rvec,(P_Rand()-PRAND_MAX/2)*15);
 			vm_vec_scale_add2(&tpnt,&ConsoleObject->orient.uvec,(P_Rand()-PRAND_MAX/2)*15);
 
-			segnum = find_point_seg(&tpnt,ConsoleObject->segnum);
+			segnum = find_point_seg(tpnt,ConsoleObject->segnum);
 
 			if (segnum != -1) {
-				expl = object_create_explosion(segnum,&tpnt,i2f(20),VCLIP_BIG_PLAYER_EXPLOSION);
+				expl = object_create_explosion(segnum,tpnt,i2f(20),VCLIP_BIG_PLAYER_EXPLOSION);
 				if (P_Rand()<10000 || ++sound_count==7) {		//pseudo-random
-					digi_link_sound_to_pos( SOUND_TUNNEL_EXPLOSION, segnum, 0, &tpnt, 0, F1_0 );
+					digi_link_sound_to_pos( SOUND_TUNNEL_EXPLOSION, segnum, 0, tpnt, 0, F1_0 );
 					sound_count=0;
 				}
 			}
@@ -695,7 +695,7 @@ void do_endlevel_frame()
 			find_vector_intersection(&fq,&hit_data);
 
 			if (hit_data.hit_type==HIT_WALL && hit_data.hit_seg!=-1)
-				object_create_explosion(hit_data.hit_seg,&hit_data.hit_pnt,i2f(3)+P_Rand()*6,VCLIP_SMALL_EXPLOSION);
+				object_create_explosion(hit_data.hit_seg,hit_data.hit_pnt,i2f(3)+P_Rand()*6,VCLIP_SMALL_EXPLOSION);
 			
 			explosion_wait2 = (0xa00 + P_Rand()/8)/2;
 		}
@@ -725,7 +725,7 @@ void do_endlevel_frame()
 				Endlevel_sequence = EL_LOOKBACK;
 
 				objnum = obj_create(OBJ_CAMERA, 0, 
-					ConsoleObject->segnum,&ConsoleObject->pos,&ConsoleObject->orient,0,
+					ConsoleObject->segnum,ConsoleObject->pos,&ConsoleObject->orient,0,
 					CT_NONE,MT_NONE,RT_NONE);
 
 				if (objnum == -1) {				//can't get object, so abort
@@ -1000,7 +1000,7 @@ void draw_exit_model()
 	vm_vec_scale_add(&model_pos,&mine_exit_point,&mine_exit_orient.fvec,i2f(f));
 	vm_vec_scale_add2(&model_pos,&mine_exit_orient.uvec,i2f(u));
 
-	draw_polygon_model(&model_pos,&mine_exit_orient,NULL,(mine_destroyed)?activeBMTable->destroyedExitModel:activeBMTable->exitModel,0,f1_0,NULL,NULL);
+	draw_polygon_model(model_pos,&mine_exit_orient,NULL,(mine_destroyed)?activeBMTable->destroyedExitModel:activeBMTable->exitModel,0,f1_0,NULL,NULL);
 
 }
 
@@ -1058,7 +1058,7 @@ void render_external_scene(fix eye_offset)
 	draw_polygon_model(&station_pos,&vmd_identity_matrix,NULL,station_modelnum,0,f1_0,NULL,NULL);
 	#endif
 
-	render_terrain(&mine_ground_exit_point,exit_point_bmx,exit_point_bmy);
+	render_terrain(mine_ground_exit_point,exit_point_bmx,exit_point_bmy);
 
 	draw_exit_model();
 	if (ext_expl_playing)
@@ -1158,7 +1158,7 @@ void endlevel_render_mine(fix eye_offset)
 		start_seg_num = exit_segnum;
 	}
 	else {
-		start_seg_num = find_point_seg(&Viewer_eye,Viewer->segnum);
+		start_seg_num = find_point_seg(Viewer_eye,Viewer->segnum);
 
 		if (start_seg_num==-1)
 			start_seg_num = Viewer->segnum;

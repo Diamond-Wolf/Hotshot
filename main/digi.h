@@ -43,11 +43,11 @@ extern void digi_close();
 extern void digi_play_sample( int sndnum, fix max_volume );
 extern void digi_play_sample_once( int sndnum, fix max_volume );
 extern int digi_link_sound_to_object( int soundnum, short objnum, int forever, fix max_volume );
-extern int digi_link_sound_to_pos( int soundnum, short segnum, short sidenum, vms_vector * pos, int forever, fix max_volume );
+extern int digi_link_sound_to_pos( int soundnum, short segnum, short sidenum, vms_vector pos, int forever, fix max_volume );
 // Same as above, but you pass the max distance sound can be heard.  The old way uses f1_0*256 for max_distance.
 extern int digi_link_sound_to_object2( int soundnum, short objnum, int forever, fix max_volume, fix  max_distance );
 extern int digi_link_sound_to_object3( int soundnum, short objnum, int forever, fix max_volume, fix  max_distance, int loop_start, int loop_end );
-extern int digi_link_sound_to_pos2( int soundnum, short segnum, short sidenum, vms_vector * pos, int forever, fix max_volume, fix max_distance );
+extern int digi_link_sound_to_pos2( int soundnum, short segnum, short sidenum, vms_vector pos, int forever, fix max_volume, fix max_distance );
 
 extern void digi_play_midi_song( char * filename, char * melodic_bank, char * drum_bank, int loop );
 

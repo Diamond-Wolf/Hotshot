@@ -455,7 +455,7 @@ void wall_open_door(segment* seg, int side)
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
 		if (activeBMTable->wclips[w->clip_num].open_sound > -1)
-			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments.data(), side, &cp, 0, F1_0);
+			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments.data(), side, cp, 0, F1_0);
 
 	}
 }
@@ -532,7 +532,7 @@ void start_wall_cloak(segment* seg, int side)
 	if (Newdemo_state != ND_STATE_PLAYBACK) {
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
-		digi_link_sound_to_pos(SOUND_WALL_CLOAK_ON, seg - Segments.data(), side, &cp, 0, F1_0);
+		digi_link_sound_to_pos(SOUND_WALL_CLOAK_ON, seg - Segments.data(), side, cp, 0, F1_0);
 	}
 
 	for (i = 0; i < 4; i++) {
@@ -615,7 +615,7 @@ void start_wall_decloak(segment* seg, int side)
 	if (Newdemo_state != ND_STATE_PLAYBACK) {
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
-		digi_link_sound_to_pos(SOUND_WALL_CLOAK_OFF, seg - Segments.data(), side, &cp, 0, F1_0);
+		digi_link_sound_to_pos(SOUND_WALL_CLOAK_OFF, seg - Segments.data(), side, cp, 0, F1_0);
 	}
 
 	for (i = 0; i < 4; i++) {
@@ -671,7 +671,7 @@ int check_poke(int objnum, int segnum, int side)
 
 	//note: don't let objects with zero size block door
 
-	if (obj->size && get_seg_masks(&obj->pos, segnum, obj->size).sidemask & (1 << side))
+	if (obj->size && get_seg_masks(obj->pos, segnum, obj->size).sidemask & (1 << side))
 		return 1;		//pokes through side!
 	else
 		return 0;		//does not!
@@ -788,7 +788,7 @@ void wall_close_door(segment* seg, int side)
 		vms_vector cp;
 		compute_center_point_on_side(&cp, seg, side);
 		if (activeBMTable->wclips[w->clip_num].open_sound > -1)
-			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments.data(), side, &cp, 0, F1_0);
+			digi_link_sound_to_pos(activeBMTable->wclips[w->clip_num].open_sound, seg - Segments.data(), side, cp, 0, F1_0);
 
 	}
 }
@@ -926,7 +926,7 @@ void do_door_close(int door_num)
 					vms_vector cp;
 					compute_center_point_on_side(&cp, seg, side);
 					if (activeBMTable->wclips[w->clip_num].close_sound > -1)
-						digi_link_sound_to_pos(activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments.data(), side, &cp, 0, F1_0);
+						digi_link_sound_to_pos(activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments.data(), side, cp, 0, F1_0);
 				}
 
 		d->time += FrameTime;
@@ -1485,9 +1485,9 @@ void bng_process_segment(size_t objnum, fix damage, segment * segp, int depth, i
 				compute_center_point_on_side(&pnt, segp, sidenum);
 				dist = vm_vec_dist_quick(&pnt, &objp->pos);
 				if (dist < damage / 2) {
-					dist = find_connected_distance(&pnt, segp - Segments.data(), &objp->pos, objp->segnum, MAX_BLAST_GLASS_DEPTH, WID_RENDPAST_FLAG);
+					dist = find_connected_distance(pnt, segp - Segments.data(), objp->pos, objp->segnum, MAX_BLAST_GLASS_DEPTH, WID_RENDPAST_FLAG);
 					if ((dist > 0) && (dist < damage / 2)) {
-						check_effect_blowup(segp, sidenum, &pnt, objp, 1);
+						check_effect_blowup(segp, sidenum, pnt, objp, 1);
 						objp = &Objects[objnum];
 					}
 				}

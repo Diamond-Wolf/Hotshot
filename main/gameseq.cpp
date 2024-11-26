@@ -643,7 +643,7 @@ void set_sound_sources()
 						}
 
 						compute_center_point_on_side(&pnt, seg, sidenum);
-						digi_link_sound_to_pos(sn, segnum, sidenum, &pnt, 1, F1_0 / 2);
+						digi_link_sound_to_pos(sn, segnum, sidenum, pnt, 1, F1_0 / 2);
 					}
 		}
 
@@ -674,7 +674,7 @@ void create_player_appearance_effect(object* player_obj)
 	else
 		pos = player_obj->pos;
 
-	effect_obj = object_create_explosion(player_obj->segnum, &pos, player_obj->size, VCLIP_PLAYER_APPEARANCE);
+	effect_obj = object_create_explosion(player_obj->segnum, pos, player_obj->size, VCLIP_PLAYER_APPEARANCE);
 
 	if (effect_obj)
 	{
@@ -2397,7 +2397,7 @@ void InitPlayerPosition(int random_flag)
 			{
 				if ((i != Player_num) && (Objects[Players[i].objnum].type == OBJ_PLAYER))
 				{
-					dist = find_connected_distance(&Objects[Players[i].objnum].pos, Objects[Players[i].objnum].segnum, &Player_init[NewPlayer].pos, Player_init[NewPlayer].segnum, 10, WID_FLY_FLAG);	//	Used to be 5, search up to 10 segments
+					dist = find_connected_distance(Objects[Players[i].objnum].pos, Objects[Players[i].objnum].segnum, Player_init[NewPlayer].pos, Player_init[NewPlayer].segnum, 10, WID_FLY_FLAG);	//	Used to be 5, search up to 10 segments
 					// -- mprintf((0, "Distance from start location %d to player %d is %f.\n", NewPlayer, i, f2fl(dist)));
 					if ((dist < closest_dist) && (dist >= 0)) {
 						closest_dist = dist;

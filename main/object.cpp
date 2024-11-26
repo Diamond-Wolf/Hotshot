@@ -475,7 +475,7 @@ void draw_cloaked_object(object * obj, fix light, fix * glow, fix cloak_start_ti
 		new_light = fixmul(light, light_scale);
 		save_glow = glow[0];
 		glow[0] = fixmul(glow[0], light_scale);
-		draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, new_light, glow, alt_textures);
+		draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, new_light, glow, alt_textures);
 		glow[0] = save_glow;
 	}
 	else 
@@ -483,7 +483,7 @@ void draw_cloaked_object(object * obj, fix light, fix * glow, fix cloak_start_ti
 		Gr_scanline_darkening_level = cloak_value;
 		gr_setcolor(BM_XRGB(0, 0, 0));	//set to black (matters for s3)
 		g3_set_special_render(draw_tmap_flat, NULL, NULL);		//use special flat drawer
-		draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, glow, NULL);
+		draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, glow, NULL);
 		g3_set_special_render(NULL, NULL, NULL);
 		Gr_scanline_darkening_level = GR_FADE_LEVELS;
 	}
@@ -563,7 +563,7 @@ void draw_polygon_object(object* obj)
 			bm_ptrs[i] = activeBMTable->textures
 [obj->rtype.pobj_info.tmap_override];
 
-		draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, bm_ptrs);
+		draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, bm_ptrs);
 	}
 	else
 	{
@@ -592,12 +592,12 @@ void draw_polygon_object(object* obj)
 					light = 2 * light + F1_0;
 		}
 
-			draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
+			draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], obj->rtype.pobj_info.model_num, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
 			if (obj->type == OBJ_WEAPON && (activeBMTable->weapons[obj->id].model_num_inner > -1)) 
 			{
 				fix dist_to_eye = vm_vec_dist_quick(&Viewer->pos, &obj->pos);
 				if (dist_to_eye < Simple_model_threshhold_scale * F1_0 * 2)
-					draw_polygon_model(&obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], activeBMTable->weapons[obj->id].model_num_inner, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
+					draw_polygon_model(obj->pos, &obj->orient, &obj->rtype.pobj_info.anim_angles[0], activeBMTable->weapons[obj->id].model_num_inner, obj->rtype.pobj_info.subobj_flags, light, engine_glow_value, alt_textures);
 			}
 	}
 }
@@ -651,11 +651,11 @@ void create_small_fireball_on_object(object* objp, fix size_scale, int sound_fla
 
 	size = fixmul(size_scale, F1_0 / 2 + P_Rand() * 4 / 2);
 
-	segnum = find_point_seg(&pos, objp->segnum);
+	segnum = find_point_seg(pos, objp->segnum);
 	if (segnum != -1) 
 	{
 		object* expl_obj;
-		expl_obj = object_create_explosion(segnum, &pos, size, VCLIP_SMALL_EXPLOSION);
+		expl_obj = object_create_explosion(segnum, pos, size, VCLIP_SMALL_EXPLOSION);
 		if (!expl_obj)
 			return;
 		objp = &Objects[objnum];
@@ -687,10 +687,10 @@ void create_vclip_on_object(object* objp, fix size_scale, int vclip_num)
 
 	size = fixmul(size_scale, F1_0 + P_Rand() * 4);
 
-	segnum = find_point_seg(&pos, objp->segnum);
+	segnum = find_point_seg(pos, objp->segnum);
 	if (segnum != -1) {
 		object* expl_obj;
-		expl_obj = object_create_explosion(segnum, &pos, size, vclip_num);
+		expl_obj = object_create_explosion(segnum, pos, size, vclip_num);
 		if (!expl_obj)
 			return;
 
@@ -1296,7 +1296,7 @@ int free_object_slots(int num_used)
 //note that segnum is really just a suggestion, since this routine actually
 //searches for the correct segment
 //returns the object number
-int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
+int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector pos,
 	vms_matrix* orient, fix size, uint8_t ctype, uint8_t mtype, uint8_t rtype)
 {
 	int objnum;
@@ -1336,8 +1336,8 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 	obj->signature = Object_next_signature++;
 	obj->type = type;
 	obj->id = id;
-	obj->last_pos = *pos;
-	obj->pos = *pos;
+	obj->last_pos = pos;
+	obj->pos = pos;
 	obj->size = size;
 	obj->flags = 0;
 	//@@if (orient != NULL) 
@@ -1423,7 +1423,7 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector* pos,
 
 #ifdef EDITOR
 //create a copy of an object. returns new object number
-int obj_create_copy(int objnum, vms_vector* new_pos, int newsegnum)
+int obj_create_copy(int objnum, vms_vector new_pos, int newsegnum)
 {
 	int newobjnum;
 	object* obj;
@@ -1641,7 +1641,7 @@ void dead_player_frame(void)
 			int		objnum;
 			object* player = &Objects[Players[Player_num].objnum];
 
-			objnum = obj_create(OBJ_CAMERA, 0, player->segnum, &player->pos, &player->orient, 0, CT_NONE, MT_NONE, RT_NONE);
+			objnum = obj_create(OBJ_CAMERA, 0, player->segnum, player->pos, &player->orient, 0, CT_NONE, MT_NONE, RT_NONE);
 
 			mprintf((0, "Creating new dead player camera.\n"));
 			if (objnum != -1)
@@ -1825,7 +1825,7 @@ void start_player_death_sequence(object* player)
 	Player_time_of_death = GameTime;
 
 	size_t tempID = player - Objects.data();
-	objnum = obj_create(OBJ_CAMERA, 0, player->segnum, &player->pos, &player->orient, 0, CT_NONE, MT_NONE, RT_NONE);
+	objnum = obj_create(OBJ_CAMERA, 0, player->segnum, player->pos, &player->orient, 0, CT_NONE, MT_NONE, RT_NONE);
 	player = &Objects[tempID];
 
 	Viewer_save = Viewer;
@@ -1902,7 +1902,7 @@ void obj_relink(int objnum, int newsegnum)
 	obj_link(objnum, newsegnum);
 
 #ifndef NDEBUG
-	if (get_seg_masks(&Objects[objnum].pos, Objects[objnum].segnum, 0).centermask != 0)
+	if (get_seg_masks(Objects[objnum].pos, Objects[objnum].segnum, 0).centermask != 0)
 		mprintf((1, "obj_relink violates seg masks.\n"));
 #endif
 }
@@ -1933,7 +1933,7 @@ extern void fuelcen_check_for_goal(segment*);
 
 //see if wall is volatile, and if so, cause damage to player  
 //returns true if player is in lava
-int check_volatile_wall(object* obj, int segnum, int sidenum, vms_vector* hitpt);
+int check_volatile_wall(object* obj, int segnum, int sidenum, vms_vector hitpt);
 
 //	Time at which this object last created afterburner blobs.
 
@@ -2041,7 +2041,7 @@ void object_move_one(int objnum)
 		obj->flags |= OF_SHOULD_BE_DEAD;
 		if (obj->type == OBJ_WEAPON) {
 			if (activeBMTable->weapons[obj->id].damage_radius)
-				explode_badass_weapon(obj, &obj->pos);
+				explode_badass_weapon(obj, obj->pos);
 			create_smart_children(&Objects[objnum], NUM_SMART_CHILDREN); //just grab object inline in case explosion caused reallocation
 			obj = &Objects[objnum]; //smart children call might have caused yet another reallocation
 		}
@@ -2098,14 +2098,14 @@ void object_move_one(int objnum)
 			int sidemask, under_lavafall = 0;
 			static int lavafall_hiss_playing[MAX_PLAYERS] = { 0 };
 
-			sidemask = get_seg_masks(&obj->pos, obj->segnum, obj->size).sidemask;
+			sidemask = get_seg_masks(obj->pos, obj->segnum, obj->size).sidemask;
 			if (sidemask) {
 				int sidenum, bit, wall_num;
 
 				for (sidenum = 0, bit = 1; sidenum < 6; bit <<= 1, sidenum++)
 					if ((sidemask & bit) && ((wall_num = Segments[obj->segnum].sides[sidenum].wall_num) != -1) && Walls[wall_num].type == WALL_ILLUSION) {
 						int type;
-						if ((type = check_volatile_wall(obj, obj->segnum, sidenum, &obj->pos)) != 0) {
+						if ((type = check_volatile_wall(obj, obj->segnum, sidenum, obj->pos)) != 0) {
 							int sound = (type == 1) ? SOUND_LAVAFALL_HISS : SOUND_SHIP_IN_WATERFALL;
 							under_lavafall = 1;
 							if (!lavafall_hiss_playing[obj->id]) {
@@ -2414,7 +2414,7 @@ void reset_objects(int n_objs, bool inLevel)
 //Tries to find a segment for an object, using find_point_seg()
 int find_object_seg(object* obj)
 {
-	return find_point_seg(&obj->pos, obj->segnum);
+	return find_point_seg(obj->pos, obj->segnum);
 }
 
 
@@ -2543,7 +2543,7 @@ void obj_detach_all(object* parent)
 }
 
 //creates a marker object in the world.  returns the object number
-int drop_marker_object(vms_vector* pos, int segnum, vms_matrix* orient, int marker_num)
+int drop_marker_object(vms_vector pos, int segnum, vms_matrix* orient, int marker_num)
 {
 	int objnum;
 

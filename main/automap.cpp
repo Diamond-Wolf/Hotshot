@@ -298,7 +298,7 @@ void DropMarker(int player_marker_num)
 	if (MarkerObject[marker_num] != -1)
 		obj_delete(MarkerObject[marker_num]);
 
-	MarkerObject[marker_num] = drop_marker_object(&playerp->pos, playerp->segnum, &playerp->orient, marker_num);
+	MarkerObject[marker_num] = drop_marker_object(playerp->pos, playerp->segnum, &playerp->orient, marker_num);
 
 #ifdef NETWORK
 	if (Game_mode & GM_MULTI)
@@ -325,7 +325,7 @@ void DropBuddyMarker(object* objp)
 	if (MarkerObject[marker_num] != -1 && MarkerObject[marker_num] != 0)
 		obj_delete(MarkerObject[marker_num]);
 
-	MarkerObject[marker_num] = drop_marker_object(&objp->pos, objp->segnum, &objp->orient, marker_num);
+	MarkerObject[marker_num] = drop_marker_object(objp->pos, objp->segnum, &objp->orient, marker_num);
 
 }
 
@@ -1109,7 +1109,7 @@ void draw_all_edges()
 	long j; // [DW] must be signed
 	uint8_t nfacing, nnfacing;
 	Edge_info* e;
-	vms_vector* tv1;
+	vms_vector tv1;
 	fix distance;
 	fix min_distance = 0x7fffffff;
 	g3s_point* p1, * p2;
@@ -1139,7 +1139,7 @@ void draw_all_edges()
 		if (!cc.high) //all off screen?
 		{
 			nfacing = nnfacing = 0;
-			tv1 = &Vertices[e->verts[0]];
+			tv1 = Vertices[e->verts[0]];
 			j = 0;
 			while (j < e->num_faces && (nfacing == 0 || nnfacing == 0)) {
 #ifdef COMPACT_SEGS
@@ -1147,7 +1147,7 @@ void draw_all_edges()
 				get_side_normal(&Segments[e->segnum[j]], e->sides[j], 0, &temp_v);
 				if (!g3_check_normal_facing(tv1, &temp_v))
 #else
-				if (!g3_check_normal_facing(tv1, &Segments[e->segnum[j]].sides[e->sides[j]].normals[0]))
+				if (!g3_check_normal_facing(&tv1, &Segments[e->segnum[j]].sides[e->sides[j]].normals[0]))
 #endif
 					nfacing++;
 				else

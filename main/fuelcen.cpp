@@ -255,7 +255,7 @@ void trigger_matcen(int segnum)
 	pos = robotcen->Center;
 	vm_vec_sub(&delta, &Vertices[Segments[segnum].verts[0]], &robotcen->Center);
 	vm_vec_scale_add2(&pos, &delta, F1_0 / 2);
-	objnum = obj_create(OBJ_LIGHT, 0, segnum, &pos, NULL, 0, CT_LIGHT, MT_NONE, RT_NONE);
+	objnum = obj_create(OBJ_LIGHT, 0, segnum, pos, NULL, 0, CT_LIGHT, MT_NONE, RT_NONE);
 	if (objnum != -1) {
 		Objects[objnum].lifeleft = MATCEN_LIFE;
 		Objects[objnum].ctype.light_info.intensity = i2f(8);	//	Light cast by a fuelcen.
@@ -318,7 +318,7 @@ Restart:;
 
 #define	ROBOT_GEN_TIME (i2f(5))
 
-object* create_morph_robot(segment* segp, vms_vector* object_pos, int object_id)
+object* create_morph_robot(segment* segp, vms_vector object_pos, int object_id)
 {
 	short		objnum;
 	object* obj;
@@ -508,14 +508,14 @@ void robotmaker_proc(FuelCenter* robotcen)
 
 			compute_segment_center(&cur_object_loc, &Segments[robotcen->segnum]);
 			// HACK!!! The 10 under here should be something equal to the 1/2 the size of the segment.
-			obj = object_create_explosion(robotcen->segnum, &cur_object_loc, i2f(10), VCLIP_MORPHING_ROBOT);
+			obj = object_create_explosion(robotcen->segnum, cur_object_loc, i2f(10), VCLIP_MORPHING_ROBOT);
 
 			if (obj)
 				extract_orient_from_segment(&obj->orient, &Segments[robotcen->segnum]);
 
 			if (activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num > -1)
 			{
-				digi_link_sound_to_pos(activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, &cur_object_loc, 0, F1_0);
+				digi_link_sound_to_pos(activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, cur_object_loc, 0, F1_0);
 			}
 			robotcen->Flag = 1;
 			robotcen->Timer = 0;
@@ -561,7 +561,7 @@ void robotmaker_proc(FuelCenter* robotcen)
 					type = legal_types[(P_Rand() * num_types) / 32768];
 
 				mprintf((0, "Morph: (type = %i) (seg = %i) (capacity = %08x)\n", type, robotcen->segnum, robotcen->Capacity));
-				obj = create_morph_robot(&Segments[robotcen->segnum], &cur_object_loc, type);
+				obj = create_morph_robot(&Segments[robotcen->segnum], cur_object_loc, type);
 				if (obj != NULL) {
 #ifndef SHAREWARE
 #ifdef NETWORK

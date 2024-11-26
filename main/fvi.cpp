@@ -728,7 +728,7 @@ int find_vector_intersection(fvi_query *fq,fvi_info *hit_data)
 	//Assert(check_point_in_seg(p0,startseg,0).centermask==0);	//start point not in seg
 
 	// Viewer is not in segment as claimed, so say there is no hit.
-	if(!(get_seg_masks(fq->p0,fq->startseg,0).centermask==0)) {
+	if(!(get_seg_masks(*fq->p0,fq->startseg,0).centermask==0)) {
 
 		hit_data->hit_type = HIT_BAD_P0;
 		hit_data->hit_pnt = *fq->p0;
@@ -749,14 +749,14 @@ int find_vector_intersection(fvi_query *fq,fvi_info *hit_data)
 
 	hit_type = fvi_sub(&hit_pnt,&hit_seg2,fq->p0,fq->startseg,fq->p1,fq->rad,fq->thisobjnum,fq->ignore_obj_list,fq->flags,hit_data->seglist,&hit_data->n_segs,-2);
 	//!!hit_seg = find_point_seg(&hit_pnt,fq->startseg);
-	if (hit_seg2!=-1 && !get_seg_masks(&hit_pnt,hit_seg2,0).centermask)
+	if (hit_seg2!=-1 && !get_seg_masks(hit_pnt,hit_seg2,0).centermask)
 		hit_seg = hit_seg2;
 	else
-		hit_seg = find_point_seg(&hit_pnt,fq->startseg);
+		hit_seg = find_point_seg(hit_pnt,fq->startseg);
 
 //MATT: TAKE OUT THIS HACK AND FIX THE BUGS!
 	if (hit_type == HIT_WALL && hit_seg==-1)
-		if (fvi_hit_seg2!=-1 && get_seg_masks(&hit_pnt,fvi_hit_seg2,0).centermask==0)
+		if (fvi_hit_seg2!=-1 && get_seg_masks(hit_pnt,fvi_hit_seg2,0).centermask==0)
 			hit_seg = fvi_hit_seg2;
 
 	if (hit_seg == -1) {
@@ -947,9 +947,9 @@ int fvi_sub(vms_vector *intp,int *ints,vms_vector *p0,int startseg,vms_vector *p
 
 	//now, check segment walls
 
-	startmask = get_seg_masks(p0,startseg,rad).facemask;
+	startmask = get_seg_masks(*p0,startseg,rad).facemask;
 
-	masks = get_seg_masks(p1,startseg,rad);    //on back of which faces?
+	masks = get_seg_masks(*p1,startseg,rad);    //on back of which faces?
 	endmask = masks.facemask;
 	//@@sidemask = masks.sidemask;
 	centermask = masks.centermask;
@@ -1094,7 +1094,7 @@ int fvi_sub(vms_vector *intp,int *ints,vms_vector *p0,int startseg,vms_vector *p
 									#endif
 									
 	
-									if (get_seg_masks(&hit_point,startseg,rad).centermask==0)
+									if (get_seg_masks(hit_point,startseg,rad).centermask==0)
 										hit_seg = startseg;             //hit in this segment
 									else
 										fvi_hit_seg2 = startseg;
@@ -1338,7 +1338,7 @@ int sphere_intersects_wall(vms_vector *pnt,int segnum,fix rad)
 
 	segs_visited[n_segs_visited++] = segnum;
 
-	facemask = get_seg_masks(pnt,segnum,rad).facemask;
+	facemask = get_seg_masks(*pnt,segnum,rad).facemask;
 
 	seg = &Segments[segnum];
 

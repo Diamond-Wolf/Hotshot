@@ -26,7 +26,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 //given an object and a gun number, return position in 3-space of gun
 //fills in gun_point
-void calc_gun_point(vms_vector *gun_point,object *obj,int gun_num)
+void calc_gun_point(vms_vector* gun_point,object *obj,int gun_num)
 {
 	polymodel *pm;
 	robot_info *r;

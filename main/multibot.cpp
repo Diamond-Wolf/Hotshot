@@ -842,11 +842,11 @@ multi_do_robot_fire(char *buf)
 	robptr = &activeBMTable->robots[Objects[botnum].id];
 	
 	if (gun_num == -1) 
-		Laser_create_new_easy( &fire, &gun_point, botnum, PROXIMITY_ID, 1);
+		Laser_create_new_easy( fire, gun_point, botnum, PROXIMITY_ID, 1);
 	else if (gun_num == -2)
-		Laser_create_new_easy( &fire, &gun_point, botnum, SUPERPROX_ID, 1);
+		Laser_create_new_easy( fire, gun_point, botnum, SUPERPROX_ID, 1);
 	else	
-		Laser_create_new_easy( &fire, &gun_point, botnum, robptr->weapon_type, 1);
+		Laser_create_new_easy( fire, gun_point, botnum, robptr->weapon_type, 1);
 }
 
 extern void drop_stolen_items (object *);
@@ -957,7 +957,7 @@ multi_do_robot_explode(char *buf)
 }
 
 extern fix EnergyToCreateOneRobot; // From fuelcen.c 
-extern object *create_morph_robot(segment *segp, vms_vector *object_pos, int object_id); // from fuelcen.c
+extern object *create_morph_robot(segment *segp, vms_vector object_pos, int object_id); // from fuelcen.c
 
 void
 multi_do_create_robot(char *buf)
@@ -985,11 +985,11 @@ multi_do_create_robot(char *buf)
 	// Play effect and sound
 
 	compute_segment_center(&cur_object_loc, &Segments[robotcen->segnum]);
-	obj = object_create_explosion(robotcen->segnum, &cur_object_loc, i2f(10), VCLIP_MORPHING_ROBOT);
+	obj = object_create_explosion(robotcen->segnum, cur_object_loc, i2f(10), VCLIP_MORPHING_ROBOT);
 	if (obj)
 		extract_orient_from_segment(&obj->orient, &Segments[robotcen->segnum]);
 	if (activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num > -1)
-		digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, &cur_object_loc, 0, F1_0 );
+		digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, cur_object_loc, 0, F1_0 );
 
 	// Set robot center flags, in case we become the master for the next one
 
@@ -997,7 +997,7 @@ multi_do_create_robot(char *buf)
 	robotcen->Capacity -= EnergyToCreateOneRobot;
 	robotcen->Timer = 0;
 
-	obj = create_morph_robot(&Segments[robotcen->segnum], &cur_object_loc, type);
+	obj = create_morph_robot(&Segments[robotcen->segnum], cur_object_loc, type);
 	if (obj == NULL)
 		return; // Cannot create object!
 	
@@ -1074,7 +1074,7 @@ multi_do_boss_actions(char *buf)
 				vm_vec_sub(&boss_dir, &Objects[Players[pnum].objnum].pos, &boss_obj->pos);
 				vm_vector_2_matrix(&boss_obj->orient, &boss_dir, NULL, NULL);
 
-				digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, teleport_segnum, 0, &boss_obj->pos, 0 , F1_0);
+				digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, teleport_segnum, 0, boss_obj->pos, 0 , F1_0);
 				digi_kill_sound_linked_to_object( boss_obj-Objects.data());
 				digi_link_sound_to_object2( SOUND_BOSS_SHARE_SEE, boss_obj-Objects.data(), 1, F1_0, F1_0*512 );	//	F1_0*512 means play twice as loud
 				Ai_local_info[boss_obj-Objects.data()].next_fire = 0;

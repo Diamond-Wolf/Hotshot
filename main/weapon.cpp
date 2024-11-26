@@ -1030,9 +1030,7 @@ void process_super_mines_frame(void)
 			Super_mines_yes = 1;
 			if (Objects[i].lifeleft + F1_0 * 2 < activeBMTable->weapons[SUPERPROX_ID].lifetime)
 			{
-				vms_vector* bombpos;
-
-				bombpos = &Objects[i].pos;
+				vms_vector bombpos = Objects[i].pos;
 
 				for (j = 0; j <= Highest_object_index; j++)
 				{
@@ -1040,7 +1038,7 @@ void process_super_mines_frame(void)
 					{
 						fix	dist;
 
-						dist = vm_vec_dist_quick(bombpos, &Objects[j].pos);
+						dist = vm_vec_dist_quick(&bombpos, &Objects[j].pos);
 
 						if (j != parent_num)
 						{
@@ -1128,7 +1126,7 @@ int spit_powerup(object * spitter, int id, int seed)
 	}
 
 	size_t tempID = spitter - Objects.data();
-	objnum = obj_create(OBJ_POWERUP, id, spitter->segnum, &new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+	objnum = obj_create(OBJ_POWERUP, id, spitter->segnum, new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
 	spitter = &Objects[tempID];
 
 	if (objnum < 0)

@@ -2071,7 +2071,7 @@ int newdemo_read_frame_information()
 			nd_read_byte(&side);
 			nd_read_vector(&pnt);
 			if (Newdemo_vcr_state != ND_STATE_PAUSED)
-				check_effect_blowup(&(Segments[segnum]), side, &pnt, &dummy, 0);
+				check_effect_blowup(&(Segments[segnum]), side, pnt, &dummy, 0);
 			break;
 		}
 

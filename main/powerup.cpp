@@ -83,7 +83,7 @@ void do_powerup_frame(object* obj)
 
 	if (obj->lifeleft <= 0)
 	{
-		object_create_explosion(obj->segnum, &obj->pos, F1_0 * 7 / 2, VCLIP_POWERUP_DISAPPEARANCE);
+		object_create_explosion(obj->segnum, obj->pos, F1_0 * 7 / 2, VCLIP_POWERUP_DISAPPEARANCE);
 
 		if (activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num > -1)
 			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num, obj - Objects.data(), 0, F1_0);

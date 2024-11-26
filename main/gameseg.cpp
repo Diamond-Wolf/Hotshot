@@ -80,7 +80,7 @@ void ResizeVertexVectors(size_t newSize) {
 	Dynamic_light.resize(newSize);
 }
 
-void compute_center_point_on_side(vms_vector *vp,segment *sp,int side)
+void compute_center_point_on_side(vms_vector* vp,segment *sp,int side)
 {
 	int			v;
 
@@ -95,7 +95,7 @@ void compute_center_point_on_side(vms_vector *vp,segment *sp,int side)
 // ------------------------------------------------------------------------------------------
 // Compute segment center.
 //	The center point is defined to be the average of the 8 points defining the segment.
-void compute_segment_center(vms_vector *vp,segment *sp)
+void compute_segment_center(vms_vector* vp,segment *sp)
 {
 	int			v;
 
@@ -339,7 +339,7 @@ void create_abs_vertex_lists(int *num_faces, int *vertices, int segnum, int side
 
 //returns 3 different bitmasks with info telling if this sphere is in
 //this segment.  See segmasks structure for info on fields   
-segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
+segmasks get_seg_masks(vms_vector checkp,int segnum,fix rad)
 {
 	int			sn,facebit,sidebit;
 	segmasks		masks;
@@ -408,9 +408,9 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
 			for (fn=0;fn<2;fn++,facebit<<=1) {
 
 				#ifdef COMPACT_SEGS
-					dist = vm_dist_to_plane(checkp, &normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &normals[fn], &Vertices[vertnum]);
 				#else
-					dist = vm_dist_to_plane(checkp, &s->normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &s->normals[fn], &Vertices[vertnum]);
 				#endif
 
 				if (dist < -PLANE_DIST_TOLERANCE)	//in front of face
@@ -459,9 +459,9 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
 
 			#ifdef COMPACT_SEGS
 				get_side_normal(seg, sn, 0, &normal );
-				dist = vm_dist_to_plane(checkp, &normal, &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &normal, &Vertices[vertnum]);
 			#else
-				dist = vm_dist_to_plane(checkp, &s->normals[0], &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &s->normals[0], &Vertices[vertnum]);
 			#endif
 
 	
@@ -485,7 +485,7 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
 //this was converted from get_seg_masks()...it fills in an array of 6
 //elements for the distace behind each side, or zero if not behind
 //only gets centermask, and assumes zero rad 
-uint8_t get_side_dists(vms_vector *checkp,int segnum,fix *side_dists)
+uint8_t get_side_dists(vms_vector checkp,int segnum,fix *side_dists)
 {
 	int			sn,facebit,sidebit;
 	uint8_t			mask;
@@ -557,9 +557,9 @@ uint8_t get_side_dists(vms_vector *checkp,int segnum,fix *side_dists)
 			for (fn=0;fn<2;fn++,facebit<<=1) {
 
 				#ifdef COMPACT_SEGS
-					dist = vm_dist_to_plane(checkp, &normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &normals[fn], &Vertices[vertnum]);
 				#else
-					dist = vm_dist_to_plane(checkp, &s->normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &s->normals[fn], &Vertices[vertnum]);
 				#endif
 
 				if (dist < -PLANE_DIST_TOLERANCE) {	//in front of face
@@ -607,9 +607,9 @@ uint8_t get_side_dists(vms_vector *checkp,int segnum,fix *side_dists)
 
 			#ifdef COMPACT_SEGS
 				get_side_normal(seg, sn, 0, &normal );
-				dist = vm_dist_to_plane(checkp, &normal, &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &normal, &Vertices[vertnum]);
 			#else
-				dist = vm_dist_to_plane(checkp, &s->normals[0], &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &s->normals[0], &Vertices[vertnum]);
 			#endif
 	
 			if (dist < -PLANE_DIST_TOLERANCE) {
@@ -776,7 +776,7 @@ int	Doing_lighting_hack_flag=0;
 
 //figure out what seg the given point is in, tracing through segments
 //returns segment number, or -1 if can't find segment
-int trace_segs(vms_vector *p0,int oldsegnum, int trace_segs_iterations)
+int trace_segs(vms_vector p0,int oldsegnum, int trace_segs_iterations)
 {
 	int centermask;
 	segment *seg;
@@ -859,7 +859,7 @@ int	Exhaustive_count=0, Exhaustive_failed_count=0;
 // 2. Recursively trace through attached segments
 // 3. Check all the segmentns
 //Returns segnum if found, or -1
-int find_point_seg(vms_vector *p,int segnum)
+int find_point_seg(vms_vector p,int segnum)
 {
 	int newseg;
 
@@ -1023,7 +1023,7 @@ void add_to_fcd_cache(int seg0, int seg1, int depth, fix dist)
 //	Determine whether seg0 and seg1 are reachable in a way that allows sound to pass.
 //	Search up to a maximum depth of max_depth.
 //	Return the distance.
-fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, int max_depth, int wid_flag)
+fix find_connected_distance(vms_vector p0, int seg0, vms_vector p1, int seg1, int max_depth, int wid_flag)
 {
 	int		cur_seg;
 	int		sidenum;
@@ -1052,7 +1052,7 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 		delete[] visited;
 		delete[] seg_queue;
 		delete[] depth;
-		return vm_vec_dist_quick(p0, p1);
+		return vm_vec_dist_quick(&p0, &p1);
 	} else {
 		int	conn_side;
 		if ((conn_side = find_connect_side(&Segments[seg0], &Segments[seg1])) != -1) {
@@ -1062,7 +1062,7 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 				delete[] visited;
 				delete[] seg_queue;
 				delete[] depth;
-				return vm_vec_dist_quick(p0, p1);
+				return vm_vec_dist_quick(&p0, &p1);
 			}
 		}
 	}
@@ -1177,10 +1177,10 @@ fcd_done1: ;
 		delete[] visited;
 		delete[] seg_queue;
 		delete[] depth;
-		return vm_vec_dist_quick(p0, p1);
+		return vm_vec_dist_quick(&p0, &p1);
 	} else {
-		dist = vm_vec_dist_quick(p1, &point_segs[1].point);
-		dist += vm_vec_dist_quick(p0, &point_segs[num_points-2].point);
+		dist = vm_vec_dist_quick(&p1, &point_segs[1].point);
+		dist += vm_vec_dist_quick(&p0, &point_segs[num_points-2].point);
 
 		for (i=1; i<num_points-2; i++) {
 			fix	ndist;
@@ -1379,7 +1379,7 @@ void extract_up_vector_from_segment(segment *sp,vms_vector *vp)
 }
 #endif
 
-void add_side_as_quad(segment *sp, int sidenum, vms_vector *normal)
+void add_side_as_quad(segment *sp, int sidenum, vms_vector normal)
 {
 	side	*sidep = &sp->sides[sidenum];
 
@@ -1388,8 +1388,8 @@ void add_side_as_quad(segment *sp, int sidenum, vms_vector *normal)
 	#ifdef COMPACT_SEGS
 		normal = normal;		//avoid compiler warning
 	#else
-	sidep->normals[0] = *normal;
-	sidep->normals[1] = *normal;
+	sidep->normals[0] = normal;
+	sidep->normals[1] = normal;
 	#endif
 
 	//	If there is a connection here, we only formed the faces for the purpose of determining segment boundaries,
@@ -1579,7 +1579,7 @@ void create_walls_on_side(segment *sp, int sidenum)
 		vm_vec_negate(&vn);
 
 	if (dist_to_plane <= PLANE_DIST_TOLERANCE)
-		add_side_as_quad(sp, sidenum, &vn);
+		add_side_as_quad(sp, sidenum, vn);
 	else {
 		add_side_as_2_triangles(sp, sidenum);
 
@@ -1976,7 +1976,7 @@ int n_changed_segs;
 
 //	------------------------------------------------------------------------------------------
 //cast static light from a segment to nearby segments
-void apply_light_to_segment(segment *segp,vms_vector *segment_center, fix light_intensity,int recursion_depth)
+void apply_light_to_segment(segment *segp,vms_vector segment_center, fix light_intensity,int recursion_depth)
 {
 	vms_vector	r_segment_center;
 	fix			dist_to_rseg;
@@ -1988,7 +1988,7 @@ void apply_light_to_segment(segment *segp,vms_vector *segment_center, fix light_
 
 	if (i == n_changed_segs) {
 		compute_segment_center(&r_segment_center, segp);
-		dist_to_rseg = vm_vec_dist_quick(&r_segment_center, segment_center);
+		dist_to_rseg = vm_vec_dist_quick(&r_segment_center, &segment_center);
 	
 		if (dist_to_rseg <= LIGHT_DISTANCE_THRESHOLD) {
 			fix	light_at_point;
@@ -2043,7 +2043,7 @@ void change_segment_light(int segnum,int sidenum,int dir)
 		if (light_intensity) {
 			vms_vector	segment_center;
 			compute_segment_center(&segment_center, segp);
-			apply_light_to_segment(segp,&segment_center,light_intensity,0);
+			apply_light_to_segment(segp,segment_center,light_intensity,0);
 		}
 	}
 
@@ -2197,7 +2197,7 @@ fix find_connected_distance_segments( int seg0, int seg1, int depth, int wid_fla
 	compute_segment_center(&p0, &Segments[seg0]);
 	compute_segment_center(&p1, &Segments[seg1]);
 
-	return find_connected_distance(&p0, seg0, &p1, seg1, depth, wid_flag);
+	return find_connected_distance(p0, seg0, p1, seg1, depth, wid_flag);
 }
 
 #define	AMBIENT_SEGMENT_DEPTH		5

@@ -2407,7 +2407,7 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 					if (Fusion_charge > F1_0*2)
 						bump_amount = Fusion_charge*4;
 
-					bump_one_object(ConsoleObject, &rand_vec, bump_amount);
+					bump_one_object(ConsoleObject, rand_vec, bump_amount);
 				}
 			}
 
@@ -2751,7 +2751,7 @@ void powerup_grab_cheat(object *player, int objnum)
 		vms_vector	collision_point;
 
 		vm_vec_avg(&collision_point, &Objects[objnum].pos, &player->pos);
-		collide_player_and_powerup(player, &Objects[objnum], &collision_point);
+		collide_player_and_powerup(player, &Objects[objnum], collision_point);
 	}
 }
 
@@ -2822,7 +2822,7 @@ int mark_player_path_to_segment(int segnum)
 		mprintf((0, "%3i ", segnum));
 		seg_center = Point_segs[player_hide_index+i].point;
 
-		objnum = obj_create( OBJ_POWERUP, POW_ENERGY, segnum, &seg_center, &vmd_identity_matrix, activeBMTable->powerups[POW_ENERGY].size, CT_POWERUP, MT_NONE, RT_POWERUP);
+		objnum = obj_create( OBJ_POWERUP, POW_ENERGY, segnum, seg_center, &vmd_identity_matrix, activeBMTable->powerups[POW_ENERGY].size, CT_POWERUP, MT_NONE, RT_POWERUP);
 		if (objnum == -1) 
 		{
 			Int3();		//	Unable to drop energy powerup for path

@@ -111,7 +111,7 @@ extern void net_missile_firing(int player, int weapon, int flags);
 
 extern void do_missile_firing(int do_autoselect);
 
-int Laser_create_new( vms_vector * direction, vms_vector * position, int segnum, int parent, int type, int make_sound );
+int Laser_create_new( vms_vector direction, vms_vector position, int segnum, int parent, int type, int make_sound );
 
 //	Fires a laser-type weapon (a Primary weapon)
 //	Fires from object objnum, weapon type weapon_id.
@@ -124,10 +124,10 @@ extern int do_laser_firing(int objnum, int weapon_id, int level, int flags, int 
 //	and deals with it being stuck in an object or through a wall.
 //	Fires a laser of type "weapon_type" from an object (parent) in the direction "direction" from the position "position"
 //	Returns object number of laser fired or -1 if not possible to fire laser.
-int Laser_create_new_easy( vms_vector * direction, vms_vector * position, int parent, int weapon_type, int make_sound );
+int Laser_create_new_easy( vms_vector direction, vms_vector position, int parent, int weapon_type, int make_sound );
 
 //creates a weapon object
-int create_weapon_object(int weapon_type,int segnum,vms_vector *position);
+int create_weapon_object(int weapon_type,int segnum,vms_vector position);
 
 //give up control of the guided missile
 void release_guided_missile(int player_num);

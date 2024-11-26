@@ -2185,7 +2185,7 @@ multi_do_controlcen_fire(char* buf)
 	gun_num = buf[count];                                   count += 1;
 	objnum = (*(short*)(buf + count));         count += 2;
 
-	Laser_create_new_easy(&to_target, &activeBMTable->reactorGunPos[gun_num], objnum, CONTROLCEN_WEAPON_NUM, 1);
+	Laser_create_new_easy(to_target, activeBMTable->reactorGunPos[gun_num], objnum, CONTROLCEN_WEAPON_NUM, 1);
 }
 
 void
@@ -2241,7 +2241,7 @@ multi_do_create_powerup(char* buf)
 
 	map_objnum_local_to_remote(my_objnum, objnum, pnum);
 
-	object_create_explosion(segnum, &new_pos, i2f(5), VCLIP_POWERUP_DISAPPEARANCE);
+	object_create_explosion(segnum, new_pos, i2f(5), VCLIP_POWERUP_DISAPPEARANCE);
 	mprintf((0, "Creating powerup type %d in segment %i.\n", powerup_type, segnum));
 
 	if (Game_mode & GM_NETWORK)
@@ -2326,7 +2326,7 @@ void multi_do_drop_marker(char* buf)
 	if (MarkerObject[(pnum * 2) + mesnum] != -1 && Objects[MarkerObject[(pnum * 2) + mesnum]].type != OBJ_NONE && MarkerObject[(pnum * 2) + mesnum] != 0)
 		obj_delete(MarkerObject[(pnum * 2) + mesnum]);
 
-	MarkerObject[(pnum * 2) + mesnum] = drop_marker_object(&position, Objects[Players[Player_num].objnum].segnum, &Objects[Players[Player_num].objnum].orient, (pnum * 2) + mesnum);
+	MarkerObject[(pnum * 2) + mesnum] = drop_marker_object(position, Objects[Players[Player_num].objnum].segnum, &Objects[Players[Player_num].objnum].orient, (pnum * 2) + mesnum);
 	strcpy(MarkerOwner[(pnum * 2) + mesnum], Players[pnum].callsign);
 	mprintf((0, "Dropped player %d message: %s\n", pnum, MarkerMessage[(pnum * 2) + mesnum]));
 }
@@ -3543,7 +3543,7 @@ void multi_prep_level(void)
 
 		if ((Objects[i].type == OBJ_HOSTAGE) && !(Game_mode & GM_MULTI_COOP))
 		{
-			objnum = obj_create(OBJ_POWERUP, POW_SHIELD_BOOST, Objects[i].segnum, &Objects[i].pos, &vmd_identity_matrix, activeBMTable->powerups[POW_SHIELD_BOOST].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+			objnum = obj_create(OBJ_POWERUP, POW_SHIELD_BOOST, Objects[i].segnum, Objects[i].pos, &vmd_identity_matrix, activeBMTable->powerups[POW_SHIELD_BOOST].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
 			obj_delete(i);
 			if (objnum != -1)
 			{

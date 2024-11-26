@@ -274,7 +274,7 @@ int do_change_walls(int8_t trigger_num)
 					{
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
-						digi_link_sound_to_pos( SOUND_FORCEFIELD_OFF, segp-Segments.data(), side, &pos, 0, F1_0 );
+						digi_link_sound_to_pos( SOUND_FORCEFIELD_OFF, segp-Segments.data(), side, pos, 0, F1_0 );
 						Walls[segp->sides[side].wall_num].type = new_wall_type;
 						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
 						digi_kill_sound_linked_to_segment(segp-Segments.data(),side,SOUND_FORCEFIELD_HUM);
@@ -294,7 +294,7 @@ int do_change_walls(int8_t trigger_num)
 					{
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
-						digi_link_sound_to_pos(SOUND_FORCEFIELD_HUM,segp-Segments.data(),side,&pos,1, F1_0/2);
+						digi_link_sound_to_pos(SOUND_FORCEFIELD_HUM,segp-Segments.data(),side,pos,1, F1_0/2);
 						Walls[segp->sides[side].wall_num].type = new_wall_type;
 						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
 					}
@@ -388,7 +388,7 @@ void do_il_off(int8_t trigger_num)
 				trigger_num, Triggers[trigger_num].seg[i], Triggers[trigger_num].side[i]));
 
 			compute_center_point_on_side(&cp, seg, side );
-			digi_link_sound_to_pos( SOUND_WALL_REMOVED, seg-Segments.data(), side, &cp, 0, F1_0 );
+			digi_link_sound_to_pos( SOUND_WALL_REMOVED, seg-Segments.data(), side, cp, 0, F1_0 );
 
   		}
   	}

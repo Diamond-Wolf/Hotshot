@@ -283,7 +283,7 @@ void flash_frame()
 //	hideously hacked in headlight system.
 //	vp is a pointer to vertex ids.
 //	tmap1, tmap2 are texture map ids.  tmap2 is the pasty one.
-void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap2, uvl* uvlp, int wid_flags, vms_vector* norm)
+void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap2, uvl* uvlp, int wid_flags, vms_vector norm)
 {
 	fix			face_light;
 	grs_bitmap* bm;
@@ -315,7 +315,7 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 		return;
 	}
 
-	face_light = -vm_vec_dot(&Viewer->orient.fvec,norm);
+	face_light = -vm_vec_dot(&Viewer->orient.fvec, &norm);
 
 	if (tmap1 >= activeBMTable->textures.size()
 )
@@ -368,7 +368,7 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 
 			//add in light from player's headlight
 			if (CurrentLogicVersion < LogicVer::FULL_1_0 || currentGame == G_DESCENT_1)
-				uvl_copy[i].l += compute_headlight_light(&Segment_points[vp[i]].p3_vec,face_light);
+				uvl_copy[i].l += compute_headlight_light(Segment_points[vp[i]].p3_vec,face_light);
 
 			//saturate at max value
 			if (uvl_copy[i].l > MAX_LIGHT)
@@ -527,7 +527,7 @@ void render_side(segment* segp, int sidenum)
 
 		if (v_dot_n0 >= 0)
 		{
-			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, normals[0]);
 #ifdef EDITOR
 			check_face(segp - Segments.data(), sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
@@ -573,7 +573,7 @@ void render_side(segment* segp, int sidenum)
 			if (n0_dot_n1 < Min_n0_n1_dot)
 				goto im_so_ashamed;
 
-			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, normals[0]);
 #ifdef EDITOR
 			check_face(segp - Segments.data(), sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
@@ -582,7 +582,7 @@ void render_side(segment* segp, int sidenum)
 		im_so_ashamed:;
 			if (sidep->type == SIDE_IS_TRI_02) {
 				if (v_dot_n0 >= 0) {
-					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, normals[0]);
 #ifdef EDITOR
 					check_face(segp - Segments.data(), sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
@@ -591,7 +591,7 @@ void render_side(segment* segp, int sidenum)
 				if (v_dot_n1 >= 0) {
 					temp_uvls[0] = sidep->uvls[0];		temp_uvls[1] = sidep->uvls[2];		temp_uvls[2] = sidep->uvls[3];
 					vertnum_list[1] = vertnum_list[2];	vertnum_list[2] = vertnum_list[3];	// want to render from vertices 0, 2, 3 on side
-					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[0], sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[1]);
+					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[0], sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, normals[1]);
 #ifdef EDITOR
 					check_face(segp - Segments.data(), sidenum, 1, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
@@ -599,7 +599,7 @@ void render_side(segment* segp, int sidenum)
 			}
 			else if (sidep->type == SIDE_IS_TRI_13) {
 				if (v_dot_n1 >= 0) {
-					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, &sidep->uvls[1], wid_flags, &normals[1]);	// rendering 1,2,3, so just skip 0
+					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, &sidep->uvls[1], wid_flags, normals[1]);	// rendering 1,2,3, so just skip 0
 #ifdef EDITOR
 					check_face(segp - Segments.data(), sidenum, 1, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
@@ -608,7 +608,7 @@ void render_side(segment* segp, int sidenum)
 				if (v_dot_n0 >= 0) {
 					temp_uvls[0] = sidep->uvls[0];		temp_uvls[1] = sidep->uvls[1];		temp_uvls[2] = sidep->uvls[3];
 					vertnum_list[2] = vertnum_list[3];		// want to render from vertices 0,1,3
-					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[0]);
+					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, normals[0]);
 #ifdef EDITOR
 					check_face(segp - Segments.data(), sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
@@ -1347,7 +1347,7 @@ void build_object_lists(int n_segs)
 
 						did_migrate = 0;
 
-						m = get_seg_masks(&obj->pos, new_segnum, obj->size);
+						m = get_seg_masks(obj->pos, new_segnum, obj->size);
 
 						if (m.sidemask)
 						{
@@ -1500,7 +1500,7 @@ void render_frame(fix eye_offset, int window_num)
 		Viewer_eye = Viewer->pos;
 #endif
 
-	start_seg_num = find_point_seg(&Viewer_eye, Viewer->segnum);
+	start_seg_num = find_point_seg(Viewer_eye, Viewer->segnum);
 
 	if (start_seg_num == -1)
 		start_seg_num = Viewer->segnum;

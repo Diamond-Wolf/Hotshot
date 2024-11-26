@@ -47,7 +47,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //	LINT:  Function prototypes
 int validate_path(int debug_flag, point_seg* psegs, int num_points);
 void validate_all_paths(void);
-void ai_path_set_orient_and_vel(object *objp, vms_vector* goal_point, int player_visibility, vms_vector *vec_to_player);
+void ai_path_set_orient_and_vel(object *objp, vms_vector goal_point, int player_visibility, vms_vector* vec_to_player);
 void maybe_ai_path_garbage_collect(void);
 
 
@@ -97,11 +97,11 @@ void insert_center_points(point_seg *psegs, int *num_points)
 		new_point.y /= 16;
 		new_point.z /= 16;
 		vm_vec_sub(&psegs[2*i-1].point, &center_point, &new_point);
-		temp_segnum = find_point_seg(&psegs[2*i-1].point, psegs[2*i].segnum);
+		temp_segnum = find_point_seg(psegs[2*i-1].point, psegs[2*i].segnum);
 		if (temp_segnum == -1) {
 			mprintf((1, "Warning: point not in ANY segment in aipath.c/insert_center_points.\n"));
 			psegs[2*i-1].point = center_point;
-			find_point_seg(&psegs[2*i-1].point, psegs[2*i].segnum);
+			find_point_seg(psegs[2*i-1].point, psegs[2*i].segnum);
 		}
 
 		psegs[2*i-1].segnum = psegs[2*i].segnum;
@@ -161,7 +161,7 @@ void move_towards_outside(point_seg *psegs, int *num_points, object *objp, int r
 		int			temp_segnum;
 
 		// -- psegs[i].segnum = find_point_seg(&psegs[i].point, psegs[i].segnum);
-		temp_segnum = find_point_seg(&psegs[i].point, psegs[i].segnum);
+		temp_segnum = find_point_seg(psegs[i].point, psegs[i].segnum);
 		Assert(temp_segnum != -1);
 		psegs[i].segnum = temp_segnum;
 		segnum = psegs[i].segnum;
@@ -245,7 +245,7 @@ if (vm_vec_mag_quick(&e) < F1_0/2)
 		}
 
 		//	Only move towards outside if remained inside segment.
-		new_segnum = find_point_seg(&goal_pos, psegs[i].segnum);
+		new_segnum = find_point_seg(goal_pos, psegs[i].segnum);
 		if (new_segnum == psegs[i].segnum) {
 			new_psegs[i].point = goal_pos;
 			new_psegs[i].segnum = new_segnum;
@@ -932,7 +932,7 @@ extern int Connected_segment_distance;
 #define Int3_if(cond) if (!cond) Int3();
 
 //	----------------------------------------------------------------------------------------------------
-void move_object_to_goal(object *objp, vms_vector *goal_point, int goal_seg)
+void move_object_to_goal(object *objp, vms_vector goal_point, int goal_seg)
 {
 	ai_static	*aip = &objp->ctype.ai_info;
 	int			segnum;
@@ -948,7 +948,7 @@ void move_object_to_goal(object *objp, vms_vector *goal_point, int goal_seg)
 	if (objp->segnum != goal_seg)
 		if (find_connect_side(&Segments[objp->segnum], &Segments[goal_seg]) == -1) {
 			fix	dist;
-			dist = find_connected_distance(&objp->pos, objp->segnum, goal_point, goal_seg, 30, WID_FLY_FLAG);
+			dist = find_connected_distance(objp->pos, objp->segnum, goal_point, goal_seg, 30, WID_FLY_FLAG);
 			if (Connected_segment_distance > 2) {	//	This global is set in find_connected_distance
 				// -- Int3();
 				mprintf((1, "Warning: Object %i hopped across %i segments, a distance of %7.3f.\n", objp-Objects.data(), Connected_segment_distance, f2fl(dist)));
@@ -987,7 +987,7 @@ void move_object_to_goal(object *objp, vms_vector *goal_point, int goal_seg)
 
 	//--Int3_if(((aip->cur_path_index >= 0) && (aip->cur_path_index < aip->path_length)));
 
-	objp->pos = *goal_point;
+	objp->pos = goal_point;
 	segnum = find_object_seg(objp);
 	if (segnum != goal_seg)
 		mprintf((1, "Object #%i goal supposed to be in segment #%i, but in segment #%i\n", objp-Objects.data(), goal_seg, segnum));
@@ -1035,7 +1035,7 @@ void ai_path_garbage_collect(void);
 
 //	----------------------------------------------------------------------------------------------------------
 //	Optimization: If current velocity will take robot near goal, don't change velocity
-void ai_follow_path(object *objp, int player_visibility, int previous_visibility, vms_vector *vec_to_player)
+void ai_follow_path(object *objp, int player_visibility, int previous_visibility, vms_vector vec_to_player)
 {
 	ai_static		*aip = &objp->ctype.ai_info;
 
@@ -1117,7 +1117,7 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 	//	Efficiency hack: If far away from player, move in big quantized jumps.
 	if ((currentGame == G_DESCENT_1 && !(player_visibility || previous_visibility)) && (dist_to_player > F1_0*200) && !(Game_mode & GM_MULTI)) {
 		if (dist_to_goal < F1_0*2) {
-			move_object_to_goal(objp, &goal_point, goal_seg);
+			move_object_to_goal(objp, goal_point, goal_seg);
 			return;
 		} else {
 			robot_info	*robptr = &activeBMTable->robots[objp->id];
@@ -1130,13 +1130,13 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 			// -- bah, this isn't good enough, buddy will fail to get through any door! if (WALL_IS_DOORWAY(&Segments]objp->segnum], connect_side) & WID_FLY_FLAG) {
 			if (!activeBMTable->robots[objp->id].companion && !activeBMTable->robots[objp->id].thief) {
 				if (distance_travellable >= dist_to_goal) {
-					move_object_to_goal(objp, &goal_point, goal_seg);
+					move_object_to_goal(objp, goal_point, goal_seg);
 				} else {
 					fix	prob = fixdiv(distance_travellable, dist_to_goal);
 	
 					int	rand_num = P_Rand();
 					if ( (rand_num >> 1) < prob) {
-						move_object_to_goal(objp, &goal_point, goal_seg);
+						move_object_to_goal(objp, goal_point, goal_seg);
 					}
 				}
 				return;
@@ -1342,7 +1342,7 @@ void ai_follow_path(object *objp, int player_visibility, int previous_visibility
 
 	//	Set velocity (objp->mtype.phys_info.velocity) and orientation (objp->orient) for this object.
 	//--Int3_if(((aip->cur_path_index >= 0) && (aip->cur_path_index < aip->path_length)));
-	ai_path_set_orient_and_vel(objp, &goal_point, player_visibility, vec_to_player);
+	ai_path_set_orient_and_vel(objp, goal_point, player_visibility, &vec_to_player);
 	//--Int3_if(((aip->cur_path_index >= 0) && (aip->cur_path_index < aip->path_length)));
 
 }
@@ -1363,7 +1363,7 @@ int path_index_compare(obj_path *i1, obj_path *i2)
 
 //	----------------------------------------------------------------------------------------------------------
 //	Set orientation matrix and velocity for objp based on its desire to get to a point.
-void ai_path_set_orient_and_vel(object *objp, vms_vector *goal_point, int player_visibility, vms_vector *vec_to_player)
+void ai_path_set_orient_and_vel(object *objp, vms_vector goal_point, int player_visibility, vms_vector* vec_to_player)
 {
 	vms_vector	cur_vel = objp->mtype.phys_info.velocity;
 	vms_vector	norm_cur_vel;
@@ -1380,7 +1380,7 @@ void ai_path_set_orient_and_vel(object *objp, vms_vector *goal_point, int player
 	if ((Ai_local_info[objp-Objects.data()].mode == AIM_RUN_FROM_OBJECT) || (objp->ctype.ai_info.behavior == AIB_SNIPE))
 		max_speed = max_speed*3/2;
 
-	vm_vec_sub(&norm_vec_to_goal, goal_point, &cur_pos);
+	vm_vec_sub(&norm_vec_to_goal, &goal_point, &cur_pos);
 	vm_vec_normalize_quick(&norm_vec_to_goal);
 
 	norm_cur_vel = cur_vel;
@@ -1427,9 +1427,9 @@ void ai_path_set_orient_and_vel(object *objp, vms_vector *goal_point, int player
 			else
 				vm_vec_negate(&norm_vec_to_goal);
 		}
-		ai_turn_towards_vector(&norm_vec_to_goal, objp, robptr->turn_time[NDL-1]/2);
+		ai_turn_towards_vector(norm_vec_to_goal, objp, robptr->turn_time[NDL-1]/2);
 	} else
-		ai_turn_towards_vector(&norm_vec_to_goal, objp, robptr->turn_time[Difficulty_level]);
+		ai_turn_towards_vector(norm_vec_to_goal, objp, robptr->turn_time[Difficulty_level]);
 
 }
 
