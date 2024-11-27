@@ -1288,6 +1288,8 @@ void extract_shortpos(object *objp, shortpos *spp)
 	objp->orient.uvec.z = *sp++ << MATRIX_PRECISION;
 	objp->orient.fvec.z = *sp++ << MATRIX_PRECISION;
 
+	sp++;
+
 	segnum = spp->segment;
 
 	Assert((segnum >= 0) && (segnum <= Highest_segment_index));

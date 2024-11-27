@@ -135,7 +135,7 @@ void netmisc_decode_shortpos(char* ptr, int* offset, shortpos* v)
 	v->bytemat[6] = ptr[*offset + 6];
 	v->bytemat[7] = ptr[*offset + 7];
 	v->bytemat[8] = ptr[*offset + 8];
-	*offset += 9;
+	*offset += 10;
 	netmisc_decode_int16(ptr, offset, &v->xo);
 	netmisc_decode_int16(ptr, offset, &v->yo);
 	netmisc_decode_int16(ptr, offset, &v->zo);

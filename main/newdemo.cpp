@@ -232,6 +232,8 @@ void my_extract_shortpos(object * objp, shortpos * spp)
 	objp->orient.uvec.z = *sp++ << MATRIX_PRECISION;
 	objp->orient.fvec.z = *sp++ << MATRIX_PRECISION;
 
+	*sp++; //pad
+
 	segnum = spp->segment;
 	objp->segnum = segnum;
 

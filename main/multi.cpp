@@ -187,7 +187,7 @@ int message_length[MULTI_MAX_TYPE + 1] = {
 	9,  // MISSILE_TRACK
 	2,  // DE-CLOAK
 	2,       // MENU_CHOICE
-	28, // ROBOT_POSITION  (shortpos_length (23) + 5 = 28)
+	29, // ROBOT_POSITION  (shortpos_length (24) + 5 = 29)
 	9,  // ROBOT_EXPLODE
 	5,       // ROBOT_RELEASE
 	18, // ROBOT_FIRE
