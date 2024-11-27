@@ -121,7 +121,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 extern char	Object_type_names[MAX_OBJECT_TYPES][9];
 
 //	List of objects rendered last frame in order.  Created at render time, used by homing missiles in laser.c
-#define	MAX_RENDERED_OBJECTS	50
+#define	MAX_RENDERED_OBJECTS	100
 
 extern short Ordered_rendered_object_list[MAX_RENDERED_OBJECTS];
 extern int Num_rendered_objects;
@@ -131,13 +131,24 @@ extern int Num_rendered_objects;
  */
 
 //	A compressed form for sending crucial data about via slow devices, such as modems and buggies.
-typedef struct shortpos 
+/*#ifdef _MSC_VER
+# pragma pack(push, 1)
+#endif*/
+typedef struct shortpos
 {
 	int8_t	bytemat[9];
-	short	xo,yo,zo;
+	int8_t pad;
+	short	xo, yo, zo;
 	short	segment;
 	short velx, vely, velz;
 } shortpos;
+/*#ifndef _MSC_VER
+__attribute__((packed))
+#endif
+shortpos;
+#ifdef _MSC_VER
+# pragma pop
+#endif*/
 
 //	This is specific to the shortpos extraction routines in gameseg.c.
 #define	RELPOS_PRECISION	10

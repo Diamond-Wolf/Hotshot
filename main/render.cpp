@@ -1243,7 +1243,7 @@ void add_obj_to_seglist(int objnum, int listnum)
 
 		//find an available sublist
 
-		for (lookn = MAX_RENDER_SEGS; render_obj_list[lookn][0] != -1 && lookn < MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS; lookn++);
+		for (lookn = MAX_RENDER_SEGS; lookn < MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS && render_obj_list[lookn][0] != -1; lookn++);
 
 		//Assert(lookn<MAX_RENDER_SEGS+N_EXTRA_OBJ_LISTS);
 		if (lookn >= MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS)
