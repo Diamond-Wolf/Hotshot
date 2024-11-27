@@ -404,8 +404,11 @@ dont_add: ;
 				| (visited[MAX_SEGMENTS - 2] << 16) 
 				| (visited[MAX_SEGMENTS - 1] << 24); // [ISB] emulating underflow, since the code demands a path is found elsewhere. 
 			else*/ // [DW] Begone underflow emulation! Instead use d2gl's handler.
-			
-			end_seg = seg_queue[qtail - 1].end;
+			if (qtail > 0)
+				end_seg = seg_queue[qtail - 1].end;
+			else
+				end_seg = seg_queue[0].end;
+
 			end_seg_is_qtail_end = true;
 			break;
 		}
@@ -436,8 +439,10 @@ cpp_done1: ;
 		}
 		qtail--;
 	}
-	else while (seg_queue[--qtail].end != end_seg)
+	else do 
 	{
+		qtail--;
+
 		if (qtail < 0)
 		{
 			// mprintf((0, "\nNo path!\n"));
@@ -447,8 +452,7 @@ cpp_done1: ;
 			return -1;
 		}
 
-		qtail--;
-	}
+	} while (seg_queue[qtail].end != end_seg);
 
 
 	#ifdef EDITOR

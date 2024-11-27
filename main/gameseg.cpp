@@ -1950,7 +1950,7 @@ int set_segment_depths(int start_seg, std::vector<uint8_t> segbuf)
 			int	childnum;
 
 			childnum = Segments[curseg].children[i];
-			if (childnum != -1)
+			if (childnum >= 0)
 				if (segbuf[childnum])
 					if (!visited[childnum]) {
 						visited[childnum] = 1;

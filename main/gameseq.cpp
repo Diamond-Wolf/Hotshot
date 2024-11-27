@@ -510,11 +510,11 @@ void init_player_stats_new_ship()
 void reset_network_objects()
 {
 #ifdef NETWORK
-	memset(local_to_remote.data(), -1, Objects.size() * sizeof(short));
-	memset(object_owner.data(), -1, Objects.size());
+	memset(local_to_remote.data(), -1,local_to_remote.size() * sizeof(short));
+	memset(object_owner.data(), -1, object_owner.size());
 
 	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++)
-		memset(remote_to_local[i].data(), -1, Objects.size() * sizeof(short));
+		memset(remote_to_local[i].data(), -1, remote_to_local[i].size() * sizeof(short));
 #endif
 }
 

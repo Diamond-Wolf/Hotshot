@@ -1498,7 +1498,7 @@ void bng_process_segment(size_t objnum, fix damage, segment * segp, int depth, i
 	for (i = 0; i < MAX_SIDES_PER_SEGMENT; i++) {
 		int	segnum = segp->children[i];
 
-		if (segnum != -1) {
+		if (segnum >= 0) {
 			if (!visited[segnum]) {
 				if (WALL_IS_DOORWAY(segp, i) & WID_FLY_FLAG) {
 					visited[segnum] = 1;
