@@ -101,7 +101,7 @@ void AL_InitSource(ALuint source)
 int plat_init_audio()
 {
 	if (FindArg("-nosndlib"))
-		return 1;
+		return 2;
 
 	int i; 
 	ALDevice = alcOpenDevice(NULL);
