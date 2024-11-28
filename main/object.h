@@ -131,9 +131,6 @@ extern int Num_rendered_objects;
  */
 
 //	A compressed form for sending crucial data about via slow devices, such as modems and buggies.
-/*#ifdef _MSC_VER
-# pragma pack(push, 1)
-#endif*/
 typedef struct shortpos
 {
 	int8_t	bytemat[9];
@@ -142,13 +139,7 @@ typedef struct shortpos
 	short	segment;
 	short velx, vely, velz;
 } shortpos;
-/*#ifndef _MSC_VER
-__attribute__((packed))
-#endif
-shortpos;
-#ifdef _MSC_VER
-# pragma pop
-#endif*/
+
 
 //	This is specific to the shortpos extraction routines in gameseg.c.
 #define	RELPOS_PRECISION	10
