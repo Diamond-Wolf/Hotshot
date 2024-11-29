@@ -77,7 +77,7 @@ typedef struct sound_object
 	} link_type;
 } sound_object;
 
-#define MAX_SOUND_OBJECTS 150
+#define MAX_SOUND_OBJECTS 200
 sound_object SoundObjects[MAX_SOUND_OBJECTS];
 short next_signature=0;
 
