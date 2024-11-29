@@ -79,38 +79,6 @@ uint8_t Cycling = 0;
 //allow player to reorder menus?
 extern uint8_t MenuReordering;
 
-//char	*Primary_weapon_names[MAX_PRIMARY_WEAPONS] = {
-//	"Laser Cannon",
-//	"Vulcan Cannon",
-//	"Spreadfire Cannon",
-//	"Plasma Cannon",
-//	"Fusion Cannon"
-//};
-
-//char	*Secondary_weapon_names[MAX_SECONDARY_WEAPONS] = {
-//	"Concussion Missile",
-//	"Homing Missile",
-//	"Proximity Bomb",
-//	"Smart Missile",
-//	"Mega Missile"
-//};
-
-//char	*Primary_weapon_names_short[MAX_PRIMARY_WEAPONS] = {
-//	"Laser",
-//	"Vulcan",
-//	"Spread",
-//	"Plasma",
-//	"Fusion"
-//};
-
-//char	*Secondary_weapon_names_short[MAX_SECONDARY_WEAPONS] = {
-//	"Concsn\nMissile",
-//	"Homing\nMissile",
-//	"Proxim.\nBomb",
-//	"Smart\nMissile",
-//	"Mega\nMissile"
-//};
-
 int8_t	Weapon_is_energy[MAX_WEAPON_TYPES] = {
 	1, 1, 1, 1, 1,
 	1, 1, 1, 0, 1,

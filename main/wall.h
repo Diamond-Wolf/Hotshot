@@ -165,8 +165,6 @@ extern char	Wall_names[7][10];
 
 #define WALL_IS_DOORWAY(seg,side) (((seg)->children[(side)] == -1) ? WID_RENDER_FLAG : ((seg)->children[(side)] == -2) ? WID_EXTERNAL_FLAG : ((seg)->sides[(side)].wall_num == -1) ? (WID_FLY_FLAG|WID_RENDPAST_FLAG) : wall_is_doorway((seg), (side)))
 
-//extern wall Walls[MAX_WALLS];			// Master walls array
-//extern int Num_walls;					// Number of walls
 extern std::vector<wall> Walls;
 
 extern active_door ActiveDoors[MAX_DOORS];	//	Master doors array
@@ -174,8 +172,6 @@ extern int Num_open_doors;				// Number of open doors
 
 extern cloaking_wall CloakingWalls[];
 extern int Num_cloaking_walls;
-
-//extern int walls_bm_num[MAX_WALL_ANIMS];
 
 // Initializes all walls (i.e. no special walls.)
 extern void wall_init();

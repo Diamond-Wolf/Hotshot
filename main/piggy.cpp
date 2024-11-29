@@ -70,34 +70,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 uint8_t* BitmapBits = NULL;
 uint8_t* SoundBits = NULL;
 
-/*hashtable AllBitmapsNames;
-hashtable AllDigiSndNames;
-
-int Num_bitmap_files = 0;
-int Num_sound_files = 0;
-
-digi_sound GameSounds[MAX_SOUND_FILES];
-int SoundOffset[MAX_SOUND_FILES];
-grs_bitmap GameBitmaps[MAX_BITMAP_FILES];
-
-alias alias_list[MAX_ALIASES];
-int Num_aliases = 0;*/
-
 int Must_write_hamfile = 0;
 int Num_bitmap_files_new = 0;
 int Num_sound_files_new = 0;
-/*BitmapFile AllBitmaps[MAX_BITMAP_FILES];
-static SoundFile AllSounds[MAX_SOUND_FILES];*/
 
 int piggy_low_memory = 0;
 
 int Piggy_bitmap_cache_size = 0;
 int Piggy_bitmap_cache_next = 0;
 uint8_t* Piggy_bitmap_cache_data = NULL;
-
-/*static int GameBitmapOffset[MAX_BITMAP_FILES];
-static uint8_t GameBitmapFlags[MAX_BITMAP_FILES];
-uint16_t GameBitmapXlat[MAX_BITMAP_FILES];*/
 
 #define PIGGY_BUFFER_SIZE (2400*1024)
 
@@ -1009,26 +990,12 @@ int PiggyInitD1()
 	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
 #endif
 
-	//hashtable_init(&AllBitmapsNames, MAX_BITMAP_FILES);
-	//hashtable_init(&AllDigiSndNames, MAX_SOUND_FILES);
-	
 	if (FindArg("-nosound") || (digi_driver_board < 1)) 
 	{
 		read_sounds = 0;
 		mprintf((0, "Not loading sound data!!!!!\n"));
 	}
 
-	/*activePiggyTable->gameSounds.resize(MAX_SOUNDS_D1);
-	activePiggyTable->soundOffsets.resize(MAX_SOUNDS_D1);
-
-	for (i = 0; i < MAX_SOUNDS_D1; i++) 
-	{
-		activePiggyTable->gameSounds[i].length = 0;
-		activePiggyTable->gameSounds[i].data = NULL;
-		activePiggyTable->soundOffsets[i] = 0;
-	}*/
-
-	//activePiggyTable->gameBitmaps.resize(MAX_BITMAP_FILES_D1);
 	activePiggyTable->gameBitmapXlat.resize(MAX_BITMAP_FILES_D1);
 
 	for (i = 0; i < MAX_BITMAP_FILES_D1; i++) 
@@ -1125,16 +1092,6 @@ int PiggyInitD1()
 
 	for (i = 0; i < N_bitmaps; i++) 
 	{
-		//cfread(&bmh, sizeof(DiskBitmapHeader), 1, activePiggyTable->file);
-		//size -= sizeof(DiskBitmapHeader);
-		//[ISB] fix platform bugs, hopefully
-		/*	char name[8];
-	uint8_t dflags;
-	uint8_t	width;
-	uint8_t height;
-	uint8_t flags;
-	uint8_t avg_color;
-	int offset;*/
 		cfread(&bmh.name[0], 8 * sizeof(char), 1, activePiggyTable->file);
 		bmh.dflags = cfile_read_byte(activePiggyTable->file);
 		bmh.width = cfile_read_byte(activePiggyTable->file);
@@ -1229,17 +1186,6 @@ int PiggyInitD2()
 {
 	int ham_ok = 0, snd_ok = 0;
 	int i;
-
-	/*for (i = 0; i < MAX_SOUND_FILES; i++)
-	{
-		GameSounds[i].length = 0;
-		GameSounds[i].data = NULL;
-		SoundOffset[i] = 0;
-	}
-
-	for (i = 0; i < MAX_BITMAP_FILES; i++)
-		//GameBitmapXlat[i] = i;
-		activePiggyTable->gameBitmapXlat.push_back(i);*/
 
 	if (!activePiggyTable->bogusInitialized)
 	{

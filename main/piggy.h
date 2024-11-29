@@ -32,26 +32,16 @@ typedef struct alias
 	char file_name[FILENAME_LEN];
 } alias;
 
-//extern alias alias_list[MAX_ALIASES];
-//extern int Num_aliases;
-
 typedef struct bitmap_index 
 {
 	uint16_t	index;
 } bitmap_index;
 
-#if defined(__GNUG__) || defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
 # define BITMAP_INDEX(val) (bitmap_index){(uint16_t)val}
 #else
 # define BITMAP_INDEX(val) (bitmap_index {(uint16_t)val})
 #endif
-
-/*#define BITMAP_INDEX(val)
-# if defined(_MSC_VER)
-2
-# else
-(bitmap_index){(uint16_t)val}
-#endif*/
 
 int piggy_init();
 void piggy_close();
@@ -103,9 +93,6 @@ typedef struct SoundFile {
 
 struct piggytable {
 	CFILE* file;
-
-	/*hashtable bitmapNames;
-	hashtable soundNames;*/
 
 	std::unordered_map<std::string, int> bitmapNames;
 	std::unordered_map<std::string, int> soundNames;

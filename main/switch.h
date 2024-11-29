@@ -78,17 +78,7 @@ typedef struct trigger {
 	int8_t		pad;	
 } trigger;
 
-//typedef struct link {
-//	short 	num_walls;
-//	short 	seg[MAX_WALLS_PER_LINK];
-//	short		side[MAX_WALLS_PER_LINK];
-//	} link;
-
 extern std::vector<trigger> Triggers;
-//extern link Links[MAX_WALL_LINKS];
-
-//extern int Num_triggers;
-//extern int Num_links;
 
 extern void trigger_init();
 

@@ -157,9 +157,7 @@ void robot_set_angles(robot_info *r,polymodel *pm,vms_angvec angs[N_ANIM_STATES]
 					pos.jointnum = m;
 					pos.angles = angs[state][m];
 					r->anim_states[g][state].n_joints++;
-					//N_robot_joints++;
 					activeBMTable->robotJoints.push_back(std::move(pos));
-					//Assert(N_robot_joints < MAX_ROBOT_JOINTS);
 				}
 			}
 		}

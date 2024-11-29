@@ -50,9 +50,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	BOSS_LOCKED_DOOR_SIDE	5
 
 std::vector<wall> Walls(MAX_WALLS);					// Master walls array
-//int Num_walls = 0;							// Number of walls
-
-//door Doors[MAX_DOORS];					//	Master doors array
 
 active_door ActiveDoors[MAX_DOORS];
 int Num_open_doors;						// Number of open doors
