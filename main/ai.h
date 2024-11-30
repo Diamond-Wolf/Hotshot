@@ -57,8 +57,8 @@ extern uint8_t	Boss_invulnerable_spot[NUM_D2_BOSSES + 2];		//	Set int8_t if boss
 
 extern fix Boss_cloak_start_time, Boss_cloak_end_time;
 extern	int	Boss_hit_this_frame;
-extern int	Num_boss_teleport_segs;
-extern short	Boss_teleport_segs[MAX_BOSS_TELEPORT_SEGS];
+extern std::vector<short> Boss_teleport_segs;
+extern std::vector<short> Boss_gate_segs;
 extern fix	Last_teleport_time;
 extern fix 	Boss_cloak_duration;
 
@@ -98,7 +98,7 @@ extern int ready_to_fire(robot_info *robptr, ai_local *ailp);
 extern int polish_path(object *objp, point_seg *psegs, int num_points);
 extern void move_towards_player(object *objp, vms_vector vec_to_player);
 
-void init_boss_segments(short segptr[], int* num_segs, int size_check, int wall_hack);
+void init_boss_segments(std::vector<short>& segvec, int size_check, int wall_hack);
 
 //	max_length is maximum depth of path to create.
 //	If -1, use default:	MAX_DEPTH_TO_SEARCH_FOR_PLAYER
@@ -241,12 +241,6 @@ extern int8_t	Mike_to_matt_xlate[];
 
 //	Amount of time since the current robot was last processed for things such as movement.
 //	It is not valid to use FrameTime because robots do not get moved every frame.
-
-extern int	Num_boss_teleport_segs;
-extern short Boss_teleport_segs[];
-extern int	Num_boss_gate_segs;
-extern short	Boss_gate_segs[];
-
 
 //	---------- John: These variables must be saved as part of gamesave. ----------
 extern int				Ai_initialized;

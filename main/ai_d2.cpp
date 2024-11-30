@@ -1300,15 +1300,15 @@ int ai_save_state_d2(FILE* fp)
 		file_write_int(fp, temp);
 	}
 
-	file_write_int(fp, Num_boss_teleport_segs);
-	file_write_int(fp, Num_boss_gate_segs);
+	file_write_int(fp, Boss_teleport_segs.size());
+	file_write_int(fp, Boss_gate_segs.size());
 
 	//if (Num_boss_gate_segs)
-	for (int i = 0; i < Num_boss_gate_segs; i++)
+	for (int i = 0; i < Boss_gate_segs.size(); i++)
 	{
 		file_write_short(fp, Boss_gate_segs[i]);
 	}
-	for (int i = 0; i < Num_boss_teleport_segs; i++)
+	for (int i = 0; i < Boss_teleport_segs.size(); i++)
 	{
 		file_write_short(fp, Boss_teleport_segs[i]);
 	}
@@ -1386,13 +1386,16 @@ int ai_restore_state_d2(FILE* fp, int version)
 	{
 		//fread(&Num_boss_teleport_segs, sizeof(Num_boss_teleport_segs), 1, fp);
 		//fread(&Num_boss_gate_segs, sizeof(Num_boss_gate_segs), 1, fp);
-		Num_boss_teleport_segs = file_read_int(fp);
-		Num_boss_gate_segs = file_read_int(fp);
+		auto Num_boss_teleport_segs = file_read_int(fp);
+		auto Num_boss_gate_segs = file_read_int(fp);
 
-		if (Num_boss_teleport_segs > MAX_BOSS_TELEPORT_SEGS)
+		/*if (Num_boss_teleport_segs > MAX_BOSS_TELEPORT_SEGS)
 			Error("ai_restore_state: Too many boss teleport segments.\n");
 		if (Num_boss_gate_segs > MAX_BOSS_TELEPORT_SEGS)
-			Error("ai_restore_state: Too many boss gate segemnets.\n");
+			Error("ai_restore_state: Too many boss gate segemnets.\n");*/
+
+		Boss_teleport_segs.resize(Num_boss_teleport_segs);
+		Boss_gate_segs.resize(Num_boss_gate_segs);
 
 		if (Num_boss_gate_segs)
 			for (i = 0; i < Num_boss_gate_segs; i++)

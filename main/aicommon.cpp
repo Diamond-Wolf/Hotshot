@@ -11,6 +11,9 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+#include <algorithm>
+#include <vector>
+
 #include "ai.h"
 #include "ai_ifwd.h"
 #include "aistruct.h"
@@ -38,10 +41,8 @@ int8_t	Mike_to_matt_xlate[] = {AS_REST, AS_REST, AS_ALERT, AS_ALERT, AS_FLINCH, 
 //	Amount of time since the current robot was last processed for things such as movement.
 //	It is not valid to use FrameTime because robots do not get moved every frame.
 
-int 	Num_boss_teleport_segs; 
-short	Boss_teleport_segs[MAX_BOSS_TELEPORT_SEGS];
-int	    Num_boss_gate_segs;
-short	Boss_gate_segs[MAX_BOSS_TELEPORT_SEGS];
+std::vector<short> Boss_teleport_segs;
+std::vector<short> Boss_gate_segs;
 
 #define	AI_TURN_SCALE	1
 #define	BABY_SPIDER_ID	14
@@ -233,11 +234,11 @@ void init_ai_objects(void)
 			init_ai_object(i, objp->ctype.ai_info.behavior, objp->ctype.ai_info.hide_segment);
 	}
 
-	init_boss_segments(Boss_gate_segs, &Num_boss_gate_segs, 0, 0);
-	init_boss_segments(Boss_teleport_segs, &Num_boss_teleport_segs, 1, 0);
+	init_boss_segments(Boss_gate_segs, 0, 0);
+	init_boss_segments(Boss_teleport_segs, 1, 0);
 
-	if (Num_boss_teleport_segs == 1 && currentGame == G_DESCENT_2)
-		init_boss_segments(Boss_teleport_segs, &Num_boss_teleport_segs, 1, 1);
+	if (Boss_teleport_segs.size() == 1 && currentGame == G_DESCENT_2)
+		init_boss_segments(Boss_teleport_segs, 1, 1);
 
 	Boss_dying_sound_playing = 0;
 	Boss_dying = 0;
@@ -474,7 +475,7 @@ int create_gated_robot( int segnum, int object_id, vms_vector* pos)
 int gate_in_robot(int type, int segnum)
 {
 	if (segnum < 0)
-		segnum = Boss_gate_segs[(P_Rand() * Num_boss_gate_segs) >> 15];
+		segnum = Boss_gate_segs[(P_Rand() * Boss_gate_segs.size()) >> 15];
 
 	Assert((segnum >= 0) && (segnum <= Highest_segment_index));
 
@@ -486,10 +487,10 @@ void teleport_boss(object *objp)
 {
 	int			rand_segnum, rand_index;
 	vms_vector	boss_dir;
-	Assert(Num_boss_teleport_segs > 0);
+	Assert(Boss_teleport_segs.size() > 0);
 
 	//	Pick a random segment from the list of boss-teleportable-to segments.
-	rand_index = (P_Rand() * Num_boss_teleport_segs) >> 15;	
+	rand_index = P_Rand() % Boss_teleport_segs.size();
 	rand_segnum = Boss_teleport_segs[rand_index];
 	Assert((rand_segnum >= 0) && (rand_segnum <= Highest_segment_index));
 
@@ -570,20 +571,23 @@ void ai_turn_towards_vector(vms_vector goal_vector, object *objp, fix rate)
 //	he can reach from his initial position (calls find_connected_distance).
 //	If size_check is set, then only add segment if boss can fit in it, else any segment is legal.
 //	one_wall_hack added by MK, 10/13/95: A mega-hack!  Set to !0 to ignore the 
-void init_boss_segments(short segptr[], int *num_segs, int size_check, int one_wall_hack)
+void init_boss_segments(std::vector<short>& segvec, int size_check, int one_wall_hack)
 {
 	int			boss_objnum=-1;
 	int			i;
 
-	*num_segs = 0;
+	int num_segs = 0;
+
 #ifdef EDITOR
 	N_selected_segs = 0;
 #endif
 
+	segvec.clear();
+	segvec.reserve(MAX_BOSS_TELEPORT_SEGS);
 
-if (size_check)
-	mprintf((0, "Boss fits in segments:\n"));
-	//	See if there is a boss.  If not, quick out.
+	if (size_check)
+		mprintf((0, "Boss fits in segments:\n"));
+		//	See if there is a boss.  If not, quick out.
 	for (i=0; i<=Highest_object_index; i++)
 		if ((Objects[i].type == OBJ_ROBOT) && (activeBMTable->robots[Objects[i].id].boss_flag)) {
 			if (boss_objnum != -1)		//	There are two bosses in this mine!  i and boss_objnum!
@@ -596,7 +600,7 @@ if (size_check)
 		vms_vector	original_boss_pos;
 		object		*boss_objp = &Objects[boss_objnum];
 		int			head, tail;
-		int			seg_queue[AI_QUEUE_SIZE];
+		int* seg_queue = new int[Segments.size()];
 		fix			boss_size_save;
 
 		boss_size_save = boss_objp->size;
@@ -608,7 +612,7 @@ if (size_check)
 		tail = 0;
 		seg_queue[head++] = original_boss_seg;
 
-		segptr[(*num_segs)++] = original_boss_seg;
+		segvec.push_back(original_boss_seg);
 		mprintf((0, "%4i ", original_boss_seg));
 		#ifdef EDITOR
 		Selected_segs[N_selected_segs++] = original_boss_seg;
@@ -621,7 +625,9 @@ if (size_check)
 			int		sidenum;
 			segment	*segp = &Segments[seg_queue[tail++]];
 
-			tail &= AI_QUEUE_SIZE-1;
+			//tail &= AI_QUEUE_SIZE-1;
+			if (tail >= Segments.size())
+				tail = 0;
 
 			for (sidenum=0; sidenum<MAX_SIDES_PER_SEGMENT; sidenum++) {
 				int	w;
@@ -637,24 +643,29 @@ if (size_check)
 					if (visited[segp->children[sidenum]] == 0) {
 						seg_queue[head++] = segp->children[sidenum];
 						visited[segp->children[sidenum]] = 1;
-						head &= AI_QUEUE_SIZE-1;
+						//head &= AI_QUEUE_SIZE-1;
+						if (head >= Segments.size())
+							head = 0;
+
 						if (head > tail) {
-							if (head == tail + AI_QUEUE_SIZE-1)
+							if (head == tail + Segments.size() - 1)
 								Int3();	//	queue overflow.  Make it bigger!
 						} else
-							if (head+AI_QUEUE_SIZE == tail + AI_QUEUE_SIZE-1)
+							if (head + Segments.size() == tail + Segments.size() -1)
 								Int3();	//	queue overflow.  Make it bigger!
 	
-						if ((!size_check) || boss_fits_in_seg(boss_objp, segp->children[sidenum])) {
-							segptr[(*num_segs)++] = segp->children[sidenum];
-							if (size_check) mprintf((0, "%4i ", segp->children[sidenum]));
+						auto newsegnum = segp->children[sidenum];
+
+						if ((!size_check) || boss_fits_in_seg(boss_objp, newsegnum)) {
+							if (std::find(segvec.begin(), segvec.end(), newsegnum) == segvec.end()) {
+								segvec.push_back(newsegnum);
+								if (size_check) 
+									mprintf((0, "%4i ", newsegnum));
+							}
+
 							#ifdef EDITOR
 							Selected_segs[N_selected_segs++] = segp->children[sidenum];
 							#endif
-							if (*num_segs >= MAX_BOSS_TELEPORT_SEGS) {
-								mprintf((1, "Warning: Too many boss teleport segments.  Found %i after searching %i/%i segments.\n", MAX_BOSS_TELEPORT_SEGS, segp->children[sidenum], Highest_segment_index+1));
-								tail = head;
-							}
 						}
 					}
 				}
@@ -665,6 +676,8 @@ if (size_check)
 		boss_objp->size = boss_size_save;
 		boss_objp->pos = original_boss_pos;
 		obj_relink(boss_objnum, original_boss_seg);
+
+		delete[] seg_queue;
 
 	}
 

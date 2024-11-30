@@ -1055,7 +1055,7 @@ multi_do_boss_actions(char *buf)
 				int teleport_segnum;
 				vms_vector boss_dir;
 
-				if ((secondary < 0) || (secondary > Num_boss_teleport_segs))
+				if ((secondary < 0) || (secondary > Boss_teleport_segs.size()))
 				{
 					Int3(); // Bad segnum for boss teleport, ROB!!
 					return;
