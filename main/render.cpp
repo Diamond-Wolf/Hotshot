@@ -1216,7 +1216,6 @@ void add_obj_to_seglist(int objnum, int listnum)
 		if (marker != -1)
 		{
 			checkn = -marker;
-			//Assert(checkn < MAX_RENDER_SEGS+N_EXTRA_OBJ_LISTS);
 			if (checkn >= MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS)
 			{
 				Int3();
