@@ -199,9 +199,8 @@ typedef struct
 
 #define	DL_SCALE				2048		//	Divide light to allow 3 bits integer, 5 bits fraction.
 
-extern	dl_index		Dl_indices[MAX_DL_INDICES];
-extern	delta_light Delta_lights[MAX_DELTA_LIGHTS];
-extern	int			Num_static_lights;
+extern	std::vector<dl_index>		Dl_indices;
+extern	std::vector<delta_light>	Delta_lights;
 
 void ResizeSegmentVectors(size_t newSize);
 void ResizeVertexVectors(size_t newSize);

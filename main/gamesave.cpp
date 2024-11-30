@@ -1021,50 +1021,6 @@ typedef struct
 
 extern void remove_trigger_num(int trigger_num);
 
-//Overflows a read delta_light structure in the delta lights array into the dl index array
-void handle_overflow_delta_light(CFILE* LoadFile, size_t overflow_amount)
-{
-	if (overflow_amount > ((MAX_DL_INDICES - 2) * 6))
-	{
-		Error("handle_overflow_light_delta: This level has overrun both the delta light and dl index arrays. Please post a bug report if you see this.");
-	}
-	dl_index* first_index = &Dl_indices[overflow_amount / 8];
-	dl_index* second_index = first_index + 1;
-
-	//delta_light is 8 bytes long in vanilla, while dl_index is only 6, complicating matters. 
-	//From the overflow, find which element to start at.
-	if (overflow_amount % 24 == 0)
-	{
-		first_index->segnum = read_short(LoadFile); //delta_light::segnum
-		first_index->sidenum = read_byte(LoadFile); //delta_light::sidenum
-		first_index->count = read_byte(LoadFile); //delta_light::dummy
-		first_index->index = (read_byte(LoadFile) | (read_byte(LoadFile) << 8)); //delta_light::vertlight[0-1]
-		second_index->segnum = (read_byte(LoadFile) | (read_byte(LoadFile) << 8)); //delta_light::vertlight[1-2]
-	}
-	else if (overflow_amount % 16 == 0)
-	{
-		first_index->index = read_short(LoadFile); //delta_light::segnum
-		second_index->segnum = read_byte(LoadFile) | (read_byte(LoadFile) << 8); //delta_light::sidenum and delta_light::dummy
-		second_index->sidenum = read_byte(LoadFile); //delta_light::vertlight[0];
-		second_index->count = read_byte(LoadFile); //delta_light::vertlight[1];
-		second_index->index = (read_byte(LoadFile) | (read_byte(LoadFile) << 8)); //delta_light::vertlight[1-2]
-	}
-	else if (overflow_amount % 8 == 0)
-	{
-		short t = read_short(LoadFile); //delta_light::segnum
-		first_index->sidenum = t & 255;
-		first_index->count = (t >> 8) & 255;
-		first_index->index = read_byte(LoadFile) | (read_byte(LoadFile) << 8); //delta_light::sidenum and delta_light::dummy
-		second_index->segnum = (read_byte(LoadFile) | (read_byte(LoadFile) << 8)); //delta_light::vertlight[0-1]
-		second_index->sidenum = read_byte(LoadFile); //delta_light::vertlight[2]
-		second_index->count = read_byte(LoadFile); //delta_light::vertlight[3]
-	}
-	else
-	{
-		Error("handle_overflow_delta_light: Bad overflow_amount");
-	}
-}
-
 int8_t ConvertTrigger(short v29Flags) {
 
 	mprintf((1, "Converting trigger %x\n", v29Flags));
@@ -1909,26 +1865,20 @@ int LoadGameDataD2(CFILE* LoadFile)
 
 	//================ READ DL_INDICES INFO ===============
 
-	Num_static_lights = 0;
+	//Num_static_lights = 0;
 
-	if (game_fileinfo.dl_indices_offset > -1)
-	{
-		int	i;
+	if (game_top_fileinfo.fileinfo_version >= 29) {
 
-		if (!cfseek(LoadFile, game_fileinfo.dl_indices_offset, SEEK_SET)) 
+		if (game_fileinfo.dl_indices_offset > -1)
 		{
-			Num_static_lights = game_fileinfo.dl_indices_howmany;
-			if (Num_static_lights > MAX_DL_INDICES)
-				Error("Level contains more than MAX_DL_INDICIES(%d) dynamic light indicies.", MAX_DL_INDICES);
+			int	i;
 
-			for (i = 0; i < game_fileinfo.dl_indices_howmany; i++) 
+			if (!cfseek(LoadFile, game_fileinfo.dl_indices_offset, SEEK_SET))
 			{
-				if (game_top_fileinfo.fileinfo_version < 29)
-				{
-					mprintf((0, "Warning: Old mine version.  Not reading Dl_indices info.\n"));
-					Int3();	//shouldn't be here!!!
-				}
-				else 
+				
+				Dl_indices.resize(game_fileinfo.dl_indices_howmany);
+
+				for (i = 0; i < game_fileinfo.dl_indices_howmany; i++)
 				{
 					Dl_indices[i].segnum = read_short(LoadFile);
 					Dl_indices[i].sidenum = read_byte(LoadFile);
@@ -1937,6 +1887,9 @@ int LoadGameDataD2(CFILE* LoadFile)
 				}
 			}
 		}
+
+	} else {
+		mprintf((0, "Warning: Old mine version.  Not reading Dl_indices info.\n"));
 	}
 
 	//	Indicate that no light has been subtracted from any vertices.
@@ -1944,39 +1897,29 @@ int LoadGameDataD2(CFILE* LoadFile)
 
 	//================ READ DELTA LIGHT INFO ===============
 
-	if (game_fileinfo.delta_light_offset > -1) 
-	{
-		int	i;
+	if (game_top_fileinfo.fileinfo_version >= 29) {
 
-		if (!cfseek(LoadFile, game_fileinfo.delta_light_offset, SEEK_SET)) 
-		{
-			size_t overflow_amount = 0;
-			for (i = 0; i < game_fileinfo.delta_light_howmany; i++) 
-			{
-				if (game_top_fileinfo.fileinfo_version < 29) 
-				{
-					mprintf((0, "Warning: Old mine version.  Not reading delta light info.\n"));
-				}
-				else 
-				{
-					if (i < MAX_DELTA_LIGHTS)
-					{
-						Delta_lights[i].segnum = read_short(LoadFile);
-						Delta_lights[i].sidenum = read_byte(LoadFile);
-						Delta_lights[i].dummy = read_byte(LoadFile);
-						Delta_lights[i].vert_light[0] = read_byte(LoadFile);
-						Delta_lights[i].vert_light[1] = read_byte(LoadFile);
-						Delta_lights[i].vert_light[2] = read_byte(LoadFile);
-						Delta_lights[i].vert_light[3] = read_byte(LoadFile);
-					}
-					else
-					{
-						handle_overflow_delta_light(LoadFile, overflow_amount);
-						overflow_amount += 8;
-					}
+		if (game_fileinfo.delta_light_offset > -1) {
+			int	i;
+
+			if (!cfseek(LoadFile, game_fileinfo.delta_light_offset, SEEK_SET)) {
+
+				Delta_lights.resize(game_fileinfo.delta_light_howmany);
+
+				for (i = 0; i < game_fileinfo.delta_light_howmany; i++) {
+					Delta_lights[i].segnum = read_short(LoadFile);
+					Delta_lights[i].sidenum = read_byte(LoadFile);
+					Delta_lights[i].dummy = read_byte(LoadFile);
+					Delta_lights[i].vert_light[0] = read_byte(LoadFile);
+					Delta_lights[i].vert_light[1] = read_byte(LoadFile);
+					Delta_lights[i].vert_light[2] = read_byte(LoadFile);
+					Delta_lights[i].vert_light[3] = read_byte(LoadFile);
 				}
 			}
 		}
+
+	} else {
+		mprintf((0, "Warning: Old mine version.  Not reading delta light info.\n"));
 	}
 
 	//========================= UPDATE VARIABLES ======================

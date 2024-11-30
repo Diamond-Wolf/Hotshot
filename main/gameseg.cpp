@@ -39,9 +39,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 // How far a point can be from a plane, and still be "in" the plane
 #define PLANE_DIST_TOLERANCE	250
 
-dl_index		Dl_indices[MAX_DL_INDICES];
-delta_light Delta_lights[MAX_DELTA_LIGHTS];
-int	Num_static_lights;
+std::vector<dl_index>		Dl_indices(MAX_DL_INDICES);
+std::vector<delta_light> Delta_lights(MAX_DELTA_LIGHTS);
 
 // ------------------------------------------------------------------------------------------
 // Compute the center point of a side of a segment.
@@ -2064,7 +2063,7 @@ void change_light(int segnum, int sidenum, int dir)
 {
 	int	i, j, k;
 
-	for (i=0; i<Num_static_lights; i++) 
+	for (i=0; i<Dl_indices.size(); i++) 
 	{
 		if ((Dl_indices[i].segnum == segnum) && (Dl_indices[i].sidenum == sidenum)) 
 		{
