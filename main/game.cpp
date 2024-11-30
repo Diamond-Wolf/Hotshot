@@ -2142,6 +2142,7 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 	//[ISB] Okay I really don't want to track all the changes and mini loops and shit
 	//so the game loop will ensure the mouse is always in relative mode
 	plat_set_mouse_relative_mode(1);
+	mouse_set_pos(Game_window_w / 2, Game_window_h / 2);
 
 	#ifndef	NDEBUG
 	//	Used to slow down frame rate for testing things.

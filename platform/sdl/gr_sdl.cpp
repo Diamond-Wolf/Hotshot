@@ -388,7 +388,7 @@ void plat_do_events()
 void plat_set_mouse_relative_mode(int state)
 {
 	SDL_bool formerState = SDL_GetRelativeMouseMode();
-	SDL_SetRelativeMouseMode((SDL_bool)state);
+	SDL_SetRelativeMouseMode((SDL_bool)state); 
 	if (state && !formerState)
 	{
 		int bogusX, bogusY;
