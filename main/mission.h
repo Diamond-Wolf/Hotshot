@@ -13,6 +13,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include <vector>
+
 #include "inferno.h"
 #include "misc/types.h"
 #include "platform/platform_filesys.h"
@@ -46,8 +48,8 @@ extern int Current_mission_num;
 extern char *Current_mission_filename,*Current_mission_longname;
 
 //arrays of name of the level files
-extern char Level_names[MAX_LEVELS_PER_MISSION][FILENAME_LEN];
-extern char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
+extern std::vector<char*> Level_names;
+extern std::vector<char*> Secret_level_names;
 
 inline bool noHog;
 

@@ -1742,7 +1742,7 @@ void DoEndGame(void)
 }
 
 //from which level each do you get to each secret level 
-int Secret_level_table[MAX_SECRET_LEVELS_PER_MISSION];
+std::vector<int> Secret_level_table;
 
 //called to go to the next level (if there is one)
 //if secret_flag is true, advance to secret level, else next normal one
@@ -2332,7 +2332,7 @@ void maybe_set_first_secret_visit(int level_num)
 {
 	int	i;
 
-	for (i = 0; i < N_secret_levels; i++) {
+	for (i = 0; i < Secret_level_table.size(); i++) {
 		if (Secret_level_table[i] == level_num) {
 			First_secret_visit = 1;
 			mprintf((0, "Bashing First_secret_visit to 1 because entering level %i.\n", level_num));

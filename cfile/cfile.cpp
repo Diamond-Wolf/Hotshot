@@ -463,23 +463,28 @@ char* cfgets(char* buf, size_t n, CFILE* fp)
 	int i;
 	int c;
 
+	if (fp->raw_position >= fp->size)
+	{
+		*buf = 0;
+		return NULL;
+	}
+
 	for (i = 0; i < (int)(n - 1); i++) 
 	{
-		do 
-		{
-			if (fp->raw_position >= fp->size) 
-			{
-				*buf = 0;
-				return NULL;
-			}
+		do {
 			c = fgetc(fp->file);
 			fp->raw_position++;
-		} while (c == 13);
+		} while (c == 13 && fp->raw_position < fp->size);
+
+		if (fp->raw_position >= fp->size)
+			break;
+
 		*buf++ = c;
 		if (c == 10)
 			c = '\n';
 		if (c == '\n') break;
 	}
+
 	*buf++ = 0;
 	return  t;
 }

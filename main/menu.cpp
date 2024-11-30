@@ -385,18 +385,20 @@ void do_option(int select)
 	case MENU_PLAY_SONG:
 	{
 		int i;
-		char* m[MAX_NUM_SONGS];
+		char** m = new char*[Songs.size()];
 
-		for (i = 0; i < Num_songs; i++)
+		for (i = 0; i < Songs.size(); i++)
 		{
 			m[i] = Songs[i].filename;
 		}
-		i = newmenu_listbox("Select Song", Num_songs, m, 1, NULL);
+		i = newmenu_listbox("Select Song", Songs.size(), m, 1, NULL);
 
 		if (i > -1)
 		{
 			songs_play_song(i, 0);
 		}
+
+		delete[] m;
 	}
 	break;
 	case MENU_LOAD_LEVEL:

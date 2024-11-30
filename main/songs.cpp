@@ -31,19 +31,18 @@ extern uint8_t Config_redbook_volume;
 #include "platform/s_midi.h"
 #include "hqmusic.h"
 
-song_info Songs[MAX_NUM_SONGS];
+std::vector<song_info> Songs;
 int Songs_initialized = 0;
 
 bool No_endlevel_songs;
 
-int Num_songs;
 bool needToMaybePatchD1SongFile = false;
 
 int Redbook_enabled = 1;
 //0 if redbook is no playing, else the track number
 int Redbook_playing = 0;
 
-#define NumLevelSongs (Num_songs - SONG_FIRST_LEVEL_SONG)
+#define NumLevelSongs (Songs.size() - SONG_FIRST_LEVEL_SONG)
 
 #define REDBOOK_VOLUME_SCALE  (127/3) //changed to 127 since this uses the same interface as the MIDI sound system
 
@@ -75,37 +74,39 @@ void songs_init()
 		Error( "Couldn't open descent.sng" );
 	}
 	i = 0;
+
+	Songs.clear();
+
 	while (cfgets(inputline, 80, fp ))
 	{
 		char *p = strchr(inputline,'\n');
 		if (p) *p = '\0';
 		if ( strlen( inputline ) )
 		{
-			if (i < MAX_NUM_SONGS)
-			{
-				memset(&Songs[i], 0, sizeof(song_info));
-				sscanf(inputline, "%15s %15s %15s", Songs[i].filename, Songs[i].melodic_bank_file, Songs[i].drum_bank_file);
-				//printf( "%d. '%s' '%s' '%s'\n",i,Songs[i].filename,Songs[i].melodic_bank_file,Songs[i].drum_bank_file );
-				i++;
-			}
+			song_info song;
+			sscanf(inputline, "%15s %15s %15s", song.filename, song.melodic_bank_file, song.drum_bank_file);
+			Songs.push_back(song);
 		}
 	}
-	Num_songs = i;
-	if (Num_songs <= SONG_FIRST_LEVEL_SONG)
+	//Num_songs = i;
+	if (Songs.size() <= SONG_FIRST_LEVEL_SONG)
 		Error("Must have at least %d songs",SONG_FIRST_LEVEL_SONG+1);
 	cfclose(fp);
 
-	mprintf((1, "Num_songs: %d\n", Num_songs));
+	if (Songs.capacity() > MAX_NUM_SONGS)
+		Songs.shrink_to_fit();
 
-	if (currentGame == G_DESCENT_1 && needToMaybePatchD1SongFile && Num_songs == SONG_FIRST_LEVEL_SONG + 7) {
+	mprintf((1, "Num songs: %d\n", Songs.size()));
+
+	if (currentGame == G_DESCENT_1 && needToMaybePatchD1SongFile && Songs.size() == SONG_FIRST_LEVEL_SONG + 7) {
 		for (int i = 7; i < 22; i++) {
 			int index = SONG_FIRST_LEVEL_SONG + i;
-			memset(&Songs[index], 0, sizeof(song_info));
-			snprintf(Songs[index].filename, 11, "game%02u.hmp", i + 1);
-			snprintf(Songs[index].melodic_bank_file, 12, "melodic.bnk");
-			snprintf(Songs[index].melodic_bank_file, 9, "drum.bnk");
+			song_info song;
+			snprintf(song.filename, 11, "game%02u.hmp", i + 1);
+			snprintf(song.melodic_bank_file, 12, "melodic.bnk");
+			snprintf(song.drum_bank_file, 9, "drum.bnk");
+			Songs.push_back(song);
 		}
-		Num_songs += (22 - 7);
 	}
 
 	needToMaybePatchD1SongFile = false;

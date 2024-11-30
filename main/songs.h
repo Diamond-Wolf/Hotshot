@@ -13,6 +13,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include <vector>
+
 typedef struct song_info
 {
 	char	filename[16];
@@ -20,7 +22,7 @@ typedef struct song_info
 	char	drum_bank_file[16];
 } song_info;
 
-extern song_info Songs[];
+extern std::vector<song_info> Songs;
 
 extern bool needToMaybePatchD1SongFile;
 
@@ -37,10 +39,8 @@ extern bool needToMaybePatchD1SongFile;
 
 #ifdef MACINTOSH
 #define MAX_NUM_SONGS			9
-#define Num_songs					9
 #else
 #define MAX_NUM_SONGS			30
-extern int Num_songs;	//how many MIDI songs
 #endif
 
 //whether or not redbook audio should be played

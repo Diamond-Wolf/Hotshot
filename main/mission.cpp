@@ -40,8 +40,22 @@ char *Current_mission_filename,*Current_mission_longname;
 
 //this stuff should get defined elsewhere
 
-char Level_names[MAX_LEVELS_PER_MISSION][FILENAME_LEN];
-char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
+std::vector<char*> Level_names;
+std::vector<char*> Secret_level_names;
+
+void ResetLevelNames() {
+	for (auto& arr : Level_names)
+		if (arr)
+			delete[] arr;
+	
+	Level_names.clear();
+
+	for (auto& arr : Secret_level_names)
+		if (arr)
+			delete[] arr;
+
+	Secret_level_names.clear();
+}
 
 #define SHAREWARE_MISSION_FILENAME	"d2demo"
 #define SHAREWARE_MISSION_NAME		"Descent 2 Demo"
@@ -52,7 +66,6 @@ char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
 #else
 #define MISSION_DIR ".\\"
 #endif
-
 
 #define D1_BIM_LAST_LEVEL			27
 #define D1_BIM_LAST_SECRET_LEVEL	-3
@@ -178,7 +191,7 @@ char *mfgets(char *s,int n,CFILE *f)
 	char *r;
 
 	r = cfgets(s,n,f);
-	if (r && s[strlen(s)-1] == '\n')
+	if (r && strlen(s) > 0 && s[strlen(s) - 1] == '\n')
 		s[strlen(s)-1] = 0;
 
 	return r;
@@ -522,6 +535,12 @@ int load_mission(int mission_num)
 		//Assert(Last_level == 3);
 		Last_level = 3;
 
+		ResetLevelNames();
+
+		Level_names[0] = new char[FILENAME_LEN];
+		Level_names[1] = new char[FILENAME_LEN];
+		Level_names[2] = new char[FILENAME_LEN];
+
 		strcpy(Level_names[0], "d2leva-1.sl2");
 		strcpy(Level_names[1], "d2leva-2.sl2");
 		strcpy(Level_names[2], "d2leva-3.sl2");
@@ -572,12 +591,22 @@ int load_mission(int mission_num)
 		Last_level = D1_BIM_LAST_LEVEL;
 		Last_secret_level = D1_BIM_LAST_SECRET_LEVEL;
 
-		//build level names
-		for (i = 0; i < Last_level; i++)
-			sprintf(Level_names[i], "LEVEL%02d.RDL", i + 1);
-		for (i = 0; i < -Last_secret_level; i++)
-			sprintf(Secret_level_names[i], "LEVELS%1d.RDL", i + 1);
+		ResetLevelNames();
 
+		Level_names.resize(D1_BIM_LAST_LEVEL);
+		Secret_level_names.resize(-D1_BIM_LAST_SECRET_LEVEL);
+
+		//build level names
+		for (i = 0; i < Last_level; i++) {
+			Level_names[i] = new char[FILENAME_LEN];
+			sprintf(Level_names[i], "LEVEL%02d.RDL", i + 1);
+		}
+		for (i = 0; i < -Last_secret_level; i++) {
+			Secret_level_names[i] = new char[FILENAME_LEN];
+			sprintf(Secret_level_names[i], "LEVELS%1d.RDL", i + 1);
+		}
+
+		Secret_level_table.resize(-D1_BIM_LAST_SECRET_LEVEL);
 		Secret_level_table[0] = 10;
 		Secret_level_table[1] = 21;
 		Secret_level_table[2] = 24;
@@ -621,6 +650,8 @@ int load_mission(int mission_num)
 			Briefing_text_filename[0] = 0;
 			Ending_text_filename[0] = 0;
 		}
+
+		ResetLevelNames();
 
 		while (mfgets(buf,80,mfile)) 
 		{
@@ -679,11 +710,18 @@ int load_mission(int mission_num)
 
 					n_levels = atoi(v);
 
+					if (Level_names.size()) //Handle malformed msn that has two level sets
+						for (auto& arr : Level_names)
+							if (arr)
+								delete[] arr;
+
+					Level_names.resize(n_levels);
+
 					for (i=0;i<n_levels && mfgets(buf,80,mfile);i++)
 					{
-
+						Level_names[i] = new char[FILENAME_LEN];
 						add_term(buf);
-						if (strlen(buf) <= 12 && i < MAX_LEVELS_PER_MISSION) 
+						if (strlen(buf) <= 12) 
 						{
 							strcpy(Level_names[i],buf);
 							Last_level++;
@@ -702,17 +740,25 @@ int load_mission(int mission_num)
 
 					N_secret_levels = atoi(v);
 
-					Assert(N_secret_levels <= MAX_SECRET_LEVELS_PER_MISSION);
+					if (Secret_level_names.size()) //Handle malformed msn that has two secret level sets
+						for (auto& arr : Level_names)
+							if (arr)
+								delete[] arr;
+
+					Secret_level_names.resize(N_secret_levels);
+					Secret_level_table.resize(N_secret_levels);
 
 					for (i=0;i<N_secret_levels && mfgets(buf,80,mfile);i++) 
 					{
+						Secret_level_names[i] = new char[FILENAME_LEN];
+
 						char *t;
 						if ((t=strchr(buf,','))!=NULL) *t++=0;
 						else
 							break;
 
 						add_term(buf);
-						if (strlen(buf) <= 12 && i < MAX_SECRET_LEVELS_PER_MISSION)
+						if (strlen(buf) <= 12)
 						{
 							strcpy(Secret_level_names[i],buf);
 							Secret_level_table[i] = atoi(t);
