@@ -1311,6 +1311,8 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	player restore_players[MAX_PLAYERS];
 	fix	old_gametime = GameTime;
 
+	int cv = 0;
+
 	fp = fopen(filename, "rb");
 	if (!fp) return 0;
 
@@ -1730,9 +1732,11 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	if (version >= 7)
 	{
 		fread(&state_game_id, sizeof(uint32_t), 1, fp);
-		fread(&cheatValues[CI_RAPID_FIRE], sizeof(int), 1, fp);
-		fread(&cheatValues[CI_LUNACY], sizeof(int), 1, fp);		//	Yes, writing this twice.  Removed the Ugly robot system, but didn't want to change savegame format.
-		fread(&cheatValues[CI_LUNACY], sizeof(int), 1, fp);
+		fread(&cv, sizeof(int), 1, fp);
+		cheatValues[CI_RAPID_FIRE] = (short)cv;
+		fread(&cv, sizeof(int), 1, fp);		//	Yes, writing this twice.  Removed the Ugly robot system, but didn't want to change savegame format.
+		fread(&cv, sizeof(int), 1, fp);
+		cheatValues[CI_LUNACY] = (short)cv;
 		if (cheatValues[CI_LUNACY])
 			do_lunacy_on();
 	}
