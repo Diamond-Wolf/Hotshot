@@ -394,7 +394,8 @@ void plat_set_mouse_relative_mode(int state)
 		int bogusX, bogusY;
 		SDL_GetRelativeMouseState(&bogusX, &bogusY);
 	}
-	else if (!state && formerState)
+	//else if (!state && formerState) 
+	if ((state || formerState) && (SDL_GetWindowFlags(gameWindow) & SDL_WINDOW_INPUT_FOCUS)) // [DW] Fix issue where mouse would be stuck within the window but would still try to get out, dropping input when it did
 	{
 		SDL_WarpMouseInWindow(gameWindow, CurWindowWidth / 2, CurWindowHeight / 2);
 	}

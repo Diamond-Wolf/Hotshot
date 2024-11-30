@@ -978,8 +978,6 @@ void do_automap(int key_code)
 						MarkerMessage[HighlightMarker][0] = 0;
 						HighlightMarker = -1;
 					}
-
-					plat_set_mouse_relative_mode(1);
 				}
 				break;
 
@@ -1044,7 +1042,7 @@ void do_automap(int key_code)
 
 		plat_present_canvas(0);
 
-		mouse_set_pos(Game_window_w / 2, Game_window_h / 2);
+		plat_set_mouse_relative_mode(1);
 
 		plat_do_events();
 		//[ISB] framerate limiter 
