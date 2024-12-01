@@ -2252,32 +2252,30 @@ void compress_objects(void)
 	for (start_i = 0; start_i < Highest_object_index; start_i++) {
 		if (Objects[start_i].type == OBJ_NONE) {
 
-			object** specialRelink = NULL;
+			std::vector<object**> specialRelinks;
 			int	segnum_copy;
 
-			{
-				if (&Objects[Highest_object_index] == Viewer)
-					specialRelink = &Viewer;
-				else if (&Objects[Highest_object_index] == Missile_viewer)
-					specialRelink = &Missile_viewer;
-				else if (&Objects[Highest_object_index] == Viewer_save)
-					specialRelink = &Viewer_save;
-				else if (&Objects[Highest_object_index] == Dead_player_camera)
-					specialRelink = &Dead_player_camera;
-				else if (&Objects[Highest_object_index] == old_viewer)
-					specialRelink = &old_viewer;
-				else if (&Objects[Highest_object_index] == prev_obj)
-					specialRelink = &prev_obj;
-				else if (&Objects[Highest_object_index] == slew_obj)
-					specialRelink = &slew_obj;
-				else {
-					for (int i = 0; i < MAX_PLAYERS; i++) {
-						if (&Objects[Highest_object_index] == Guided_missile[i]) {
-							specialRelink = &Guided_missile[i];
-							break;
-						}
-					}
-				}
+			if (&Objects[Highest_object_index] == Viewer)
+				specialRelinks.push_back(&Viewer);
+			if (&Objects[Highest_object_index] == Missile_viewer)
+				specialRelinks.push_back(&Missile_viewer);
+			if (&Objects[Highest_object_index] == Viewer_save)
+				specialRelinks.push_back(&Viewer_save);
+			if (&Objects[Highest_object_index] == Dead_player_camera)
+				specialRelinks.push_back(&Dead_player_camera);
+			if (&Objects[Highest_object_index] == old_viewer)
+				specialRelinks.push_back(&old_viewer);
+			if (&Objects[Highest_object_index] == prev_obj)
+				specialRelinks.push_back(&prev_obj);
+			if (&Objects[Highest_object_index] == slew_obj)
+				specialRelinks.push_back(&slew_obj);
+			for (int i = 0; i < MAX_PLAYERS; i++) {
+				if (&Objects[Highest_object_index] == Guided_missile[i])
+					specialRelinks.push_back(&Guided_missile[i]);
+			}
+			for (auto& morph : morph_objects) {
+				if (morph.obj == &Objects[Highest_object_index])
+					specialRelinks.push_back(&morph.obj);
 			}
 
 			//Adjust objnum-as-pointer values embedded within objects
@@ -2357,11 +2355,11 @@ void compress_objects(void)
 
 			obj_link(start_i, segnum_copy);
 
-			if (specialRelink)
-				*specialRelink = &Objects[start_i];
+			for (auto& addr : specialRelinks)
+				*addr = &Objects[start_i];
 
 			while (Objects[--Highest_object_index].type == OBJ_NONE) 
-				{}
+				{ /*Do nothing*/ }
 
 			//last_i = find_last_obj(last_i);
 
