@@ -873,6 +873,8 @@ int LoadMineD1(CFILE* LoadFile)
 
 	validate_segment_all();			// Fill in side type and normals.
 
+	Station.clear();
+
 	// Activate fuelcentes
 	for (i = 0; i < Num_segments; i++)
 	{

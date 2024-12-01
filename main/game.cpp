@@ -2448,6 +2448,10 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 		if (Game_mode & GM_MULTI)
 			DoRemoteToLocalGC();
 #endif
+		if (morph_objects.size() * 2 < morph_objects.capacity()) {
+			morph_objects.resize(morph_objects.size() * 2);
+			morph_objects.shrink_to_fit();
+		}
 	}
 
 	//!!hoard_light_pulse();		//do cool hoard light pulsing

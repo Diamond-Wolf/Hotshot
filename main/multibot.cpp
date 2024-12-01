@@ -972,7 +972,7 @@ multi_do_create_robot(char *buf)
 	vms_vector cur_object_loc, direction;
 	object *obj;
 
-	if ((pnum < 0) || (objnum < 0) || (fuelcen_num < 0) || (fuelcen_num >= Num_fuelcenters) || (pnum >= N_players))
+	if ((pnum < 0) || (objnum < 0) || (fuelcen_num < 0) || (fuelcen_num >= Station.size()) || (pnum >= N_players))
 	{
 		Int3(); // Bogus data
 		return;
@@ -1001,7 +1001,7 @@ multi_do_create_robot(char *buf)
 	if (obj == NULL)
 		return; // Cannot create object!
 	
-	obj->matcen_creator = robotcen-Station | 0x80;
+	obj->matcen_creator = robotcen- Station.data() | 0x80;
 //	extract_orient_from_segment(&obj->orient, &Segments[robotcen->segnum]);
 	vm_vec_sub( &direction, &ConsoleObject->pos, &obj->pos );
 	vm_vector_2_matrix( &obj->orient, &direction, &obj->orient.uvec, NULL);

@@ -106,8 +106,6 @@ typedef struct FuelCenter
 // The max number of robot centers per mine.
 #define MAX_ROBOT_CENTERS  20	
 
-extern int Num_robot_centers;
-
 typedef struct matcen_info
 {
 	int			robot_flags[2];	// Up to 64 different robots
@@ -117,7 +115,7 @@ typedef struct matcen_info
 	short			fuelcen_num;		// Index in fuelcen array.
 } matcen_info;
 
-extern matcen_info RobotCenters[MAX_ROBOT_CENTERS];
+extern std::vector<matcen_info> RobotCenters;
 
 
 extern int Fuelcen_control_center_destroyed;
@@ -129,8 +127,7 @@ extern void trigger_matcen(int segnum);
 
 extern void disable_matcens(void);
 
-extern FuelCenter Station[MAX_NUM_FUELCENS];
-extern int Num_fuelcenters;
+extern std::vector<FuelCenter> Station;
 
 extern void init_all_matcens(void);
 

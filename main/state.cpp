@@ -1038,16 +1038,16 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		// Save the fuelcen info
 		file_write_int(fp, Control_center_destroyed);
 		file_write_int(fp, Countdown_timer);
-		file_write_int(fp, Num_robot_centers);
+		file_write_int(fp, RobotCenters.size());
 
-		for (elem = 0; elem < Num_robot_centers; elem++)
+		for (elem = 0; elem < RobotCenters.size(); elem++)
 		{
 			write_matcen(&RobotCenters[elem], fp);
 		}
 		write_reactor_triggers(&ControlCenterTriggers, fp);
 
-		file_write_int(fp, Num_fuelcenters);
-		for (elem = 0; elem < Num_fuelcenters; elem++)
+		file_write_int(fp, Station.size());
+		for (elem = 0; elem < Station.size(); elem++)
 		{
 			write_fuelcen(&Station[elem], fp);
 		}
@@ -1632,8 +1632,6 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 			read_active_door(&ActiveDoors[i], fp);
 		}
 
-
-
 		if (version >= 14) //Restore cloaking wall info
 		{
 			//fread(&i, sizeof(int), 1, fp);
@@ -1680,26 +1678,23 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//Restore the fuelcen info
 		fread(&Control_center_destroyed, sizeof(int), 1, fp);
 		fread(&Countdown_timer, sizeof(int), 1, fp);
+
+		int Num_robot_centers;
+
 		fread(&Num_robot_centers, sizeof(int), 1, fp);
 
-		if (Num_robot_centers > MAX_ROBOT_CENTERS)
-		{
-			Error("state_restore_all_sub: Too many matcens in save file.\n");
-			return 0;
-		}
+		RobotCenters.resize(Num_robot_centers);
 		for (i = 0; i < Num_robot_centers; i++)
 		{
 			read_matcen(&RobotCenters[i], fp);
 		}
 		//fread(RobotCenters, sizeof(matcen_info) * Num_robot_centers, 1, fp);
 		fread(&ControlCenterTriggers, sizeof(control_center_triggers), 1, fp);
+
+		int Num_fuelcenters;
 		fread(&Num_fuelcenters, sizeof(int), 1, fp);
 		
-		if (Num_fuelcenters > MAX_NUM_FUELCENS)
-		{
-			Error("state_restore_all_sub: Too many matcens in save file.\n");
-			return 0;
-		}
+		Station.resize(Num_fuelcenters);
 		for (i = 0; i < Num_fuelcenters; i++)
 		{
 			read_fuelcen(&Station[i], fp);

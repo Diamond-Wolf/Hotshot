@@ -1316,8 +1316,7 @@ int LoadGameDataD1(CFILE* LoadFile)
 
 		if (!cfseek(LoadFile, game_fileinfo.matcen_offset, SEEK_SET)) 
 		{
-			if (game_fileinfo.matcen_howmany > MAX_ROBOT_CENTERS)
-				Error("Level contains over MAX_ROBOT_CENTERS(%d) matcens.", MAX_ROBOT_CENTERS);
+			RobotCenters.resize(game_fileinfo.matcen_howmany);
 
 			// mprintf((0, "Reading %i materialization centers.\n", game_fileinfo.matcen_howmany));
 			for (i = 0; i < game_fileinfo.matcen_howmany; i++) 
@@ -1386,7 +1385,7 @@ int LoadGameDataD1(CFILE* LoadFile)
 	Num_open_doors = game_fileinfo.doors_howmany;
 	auto Num_triggers = game_fileinfo.triggers_howmany;
 
-	Num_robot_centers = game_fileinfo.matcen_howmany;
+	auto Num_robot_centers = game_fileinfo.matcen_howmany;
 
 	//fix old wall structs
 	if (game_top_fileinfo.fileinfo_version < 17) 
@@ -1822,8 +1821,7 @@ int LoadGameDataD2(CFILE* LoadFile)
 
 		if (!cfseek(LoadFile, game_fileinfo.matcen_offset, SEEK_SET)) 
 		{
-			if (game_fileinfo.matcen_howmany > MAX_ROBOT_CENTERS)
-				Error("Level contains over MAX_ROBOT_CENTERS(%d) matcens (found %d).", MAX_ROBOT_CENTERS, game_fileinfo.matcen_howmany);
+			RobotCenters.resize(game_fileinfo.matcen_howmany);
 
 			// mprintf((0, "Reading %i materialization centers.\n", game_fileinfo.matcen_howmany));
 			for (i = 0; i < game_fileinfo.matcen_howmany; i++) 
@@ -2027,7 +2025,7 @@ int LoadGameDataD2(CFILE* LoadFile)
 				if (Triggers[t].type == TT_MATCEN) 
 				{
 					if (Segment2s[seg_num].special != SEGMENT_IS_ROBOTMAKER)
-						Int3();		//matcen trigger doesn't point to matcen
+						;// Int3();		//matcen trigger doesn't point to matcen
 				}
 				else if (Triggers[t].type != TT_LIGHT_OFF && Triggers[t].type != TT_LIGHT_ON) {	//light triggers don't require walls
 					if (wall_num == -1)
@@ -2039,7 +2037,7 @@ int LoadGameDataD2(CFILE* LoadFile)
 		}
 	}
 
-	Num_robot_centers = game_fileinfo.matcen_howmany;
+	auto Num_robot_centers = game_fileinfo.matcen_howmany;
 
 	//fix old wall structs
 	if (game_top_fileinfo.fileinfo_version < 17) 
