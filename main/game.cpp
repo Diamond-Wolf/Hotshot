@@ -2448,8 +2448,9 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 		if (Game_mode & GM_MULTI)
 			DoRemoteToLocalGC();
 #endif
-		if (morph_objects.size() * 2 < morph_objects.capacity()) {
-			morph_objects.resize(morph_objects.size() * 2);
+		auto msize = morph_objects.size() * 2;
+		if (msize < morph_objects.capacity()) {
+			morph_objects.resize(msize > MAX_MORPH_OBJECTS ? msize : MAX_MORPH_OBJECTS);
 			morph_objects.shrink_to_fit();
 		}
 	}
