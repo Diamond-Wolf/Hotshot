@@ -2076,12 +2076,13 @@ int newdemo_read_frame_information()
 			//the monitor. the blowup code wants to know who the parent of the
 			//laser is, so create a laser whose parent is the player
 			dummy.ctype.laser_info.parent_type = OBJ_PLAYER;
+			dummy.ctype.laser_info.parent_num = -1;
 
 			nd_read_short(&segnum);
 			nd_read_byte(&side);
 			nd_read_vector(&pnt);
 			if (Newdemo_vcr_state != ND_STATE_PAUSED)
-				check_effect_blowup(&(Segments[segnum]), side, pnt, &dummy, 0);
+				check_effect_blowup(&(Segments[segnum]), side, pnt, &dummy, 0, true);
 			break;
 		}
 

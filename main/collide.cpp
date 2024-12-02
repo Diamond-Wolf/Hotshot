@@ -542,7 +542,7 @@ void scrape_object_on_wall(object* obj, short hitseg, short hitside, vms_vector 
 
 //if an effect is hit, and it can blow up, then blow it up
 //returns true if it blew up
-int check_effect_blowup(segment* seg, int side, vms_vector pnt, object* blower, int force_blowup_flag)
+int check_effect_blowup(segment* seg, int side, vms_vector pnt, object* blower, int force_blowup_flag, bool isDemo)
 {
 	int tm, tmf, ec, db;
 
@@ -644,7 +644,8 @@ int check_effect_blowup(segment* seg, int side, vms_vector pnt, object* blower, 
 
 				object_create_explosion(seg - Segments.data(), pnt, dest_size, vc);
 
-				blower = &Objects[bobjnum];
+				if (!isDemo)
+					blower = &Objects[bobjnum];
 
 				if (ec != -1 && db != -1 && !(activeBMTable->eclips[ec].flags & EF_ONE_SHOT)) {
 
