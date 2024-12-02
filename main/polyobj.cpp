@@ -15,14 +15,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdlib.h>
 #include <string.h>
 
-// -- I hate this warning in make depend! -- #ifdef DRIVE
-// -- I hate this warning in make depend! -- #include "drive.h"
-// -- I hate this warning in make depend! -- #else
-#include "inferno.h"
-// -- I hate this warning in make depend! -- #endif
+#include <array>
+#include <vector>
 
 #include "polyobj.h"
-
+#include "inferno.h"
 #include "vecmat/vecmat.h"
 #include "3d/3d.h"
 #include "misc/error.h"
@@ -659,7 +656,7 @@ void polyobj_find_min_max(polymodel* pm)
 
 extern short highest_texture_num;	//from the 3d
 
-char Pof_names[MAX_POLYGON_MODELS][FILENAME_LEN];
+std::vector<std::array<char, FILENAME_LEN>> Pof_names;
 
 //returns the number of this model
 #ifndef DRIVE
@@ -683,7 +680,10 @@ int load_polygon_model(char* filename, int n_textures, grs_bitmap*** textures)
 
 	polymodel model;
 
-	strcpy(Pof_names[activeBMTable->models.size()], filename);
+	std::array<char, FILENAME_LEN> str; 
+	strncpy(str.data(), filename, FILENAME_LEN);
+
+	Pof_names.push_back(str);
 
 	read_model_file(&model, filename, r);
 

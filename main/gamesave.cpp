@@ -16,6 +16,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <math.h>
 #include <string.h>
 
+#include <array>
+#include <vector>
+
 #include "platform/posixstub.h"
 #include "platform/mono.h"
 #include "platform/key.h"
@@ -255,7 +258,7 @@ void change_filename_extension(char* dest, const char* src, const char* new_ext)
 int Gamesave_num_players = 0;
 
 int N_save_pof_names;
-char Save_pof_names[MAX_POLYGON_MODELS][FILENAME_LEN];
+std::vector<std::array<char, FILENAME_LEN>> Save_pof_names;
 
 void check_and_fix_matrix(vms_matrix* m);
 
@@ -315,18 +318,22 @@ void verify_object(object* obj)
 	}
 	else {		//Robots taken care of above
 
-		if (obj->render_type == RT_POLYOBJ)
+		if (obj->render_type == RT_POLYOBJ && Pof_names.size() > 0)
 		{
 			int i;
-			char* name = Save_pof_names[obj->rtype.pobj_info.model_num];
 
-			for (i = 0; i < activeBMTable->models.size(); i++)
-				if (!_stricmp(Pof_names[i], name)) //found it!	
-				{
-					// mprintf((0,"Mapping <%s> to %d (was %d)\n",name,i,obj->rtype.pobj_info.model_num));
-					obj->rtype.pobj_info.model_num = i;
-					break;
-				}
+			auto modelNum = obj->rtype.pobj_info.model_num;
+			if (modelNum >= 0 && modelNum < Save_pof_names.size()) {
+				char* name = Save_pof_names[modelNum].data();
+
+				for (i = 0; i < Pof_names.size(); i++)
+					if (!_stricmp(Pof_names[i].data(), name)) //found it!	
+					{
+						// mprintf((0,"Mapping <%s> to %d (was %d)\n",name,i,obj->rtype.pobj_info.model_num));
+						obj->rtype.pobj_info.model_num = i;
+						break;
+					}
+			}
 		}
 	}
 
@@ -1160,20 +1167,8 @@ int LoadGameDataD1(CFILE* LoadFile)
 	if (game_top_fileinfo.fileinfo_version >= 19) //load pof names
 	{
 		N_save_pof_names = (int)cfile_read_short(LoadFile);
-		if (N_save_pof_names > MAX_POLYGON_MODELS)
-		{
-			//Some levels seem to exceed these limits. Still need to read all of them or else the file pointer won't be at the right place. 
-			char* badLevelHack = (char*)malloc(N_save_pof_names * FILENAME_LEN * sizeof(char));
-
-			cfread(badLevelHack, N_save_pof_names, FILENAME_LEN, LoadFile);
-			memcpy(Save_pof_names, badLevelHack, MAX_POLYGON_MODELS * FILENAME_LEN * sizeof(char));
-
-			free(badLevelHack);
-		}
-		else
-		{
-			cfread(Save_pof_names, N_save_pof_names, FILENAME_LEN, LoadFile);
-		}
+		Save_pof_names.resize(N_save_pof_names);
+		cfread(Save_pof_names.data(), FILENAME_LEN, N_save_pof_names, LoadFile);
 	}
 
 	//===================== READ PLAYER INFO ==========================
@@ -1550,20 +1545,8 @@ int LoadGameDataD2(CFILE* LoadFile)
 	if (game_top_fileinfo.fileinfo_version >= 19) 	//load pof names
 	{
 		N_save_pof_names = read_short(LoadFile);
-		if (N_save_pof_names > MAX_POLYGON_MODELS)
-		{
-			//Some levels seem to exceed these limits. Still need to read all of them or else the file pointer won't be at the right place. 
-			char* badLevelHack = (char*)malloc(N_save_pof_names * FILENAME_LEN * sizeof(char));
-
-			cfread(badLevelHack, N_save_pof_names, FILENAME_LEN, LoadFile);
-			memcpy(Save_pof_names, badLevelHack, MAX_POLYGON_MODELS * FILENAME_LEN * sizeof(char));
-
-			free(badLevelHack);
-		}
-		else
-		{
-			cfread(Save_pof_names, N_save_pof_names, FILENAME_LEN, LoadFile);
-		}
+		Save_pof_names.resize(N_save_pof_names);
+		cfread(Save_pof_names.data(), FILENAME_LEN, N_save_pof_names, LoadFile);
 	}
 
 	//===================== READ PLAYER INFO ==========================

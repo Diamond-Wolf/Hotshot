@@ -54,7 +54,7 @@ extern int Simple_model_threshhold_scale;
 //how many polygon objects there are
 
 //array of names of currently-loaded models
-extern char Pof_names[MAX_POLYGON_MODELS][13];
+extern std::vector<std::array<char, FILENAME_LEN>> Pof_names;
 
 void init_polygon_models();
 
