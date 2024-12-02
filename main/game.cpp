@@ -2137,6 +2137,9 @@ extern time_t t_current_time, t_saved_time;
 
 void flicker_lights();
 
+#define SPECIAL_GC_FRAMES 1000
+int specialGCCounter = SPECIAL_GC_FRAMES;
+
 void GameLoop(int RenderFlag, int ReadControlsFlag )
 {
 	//[ISB] Okay I really don't want to track all the changes and mini loops and shit
@@ -2455,7 +2458,63 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 		}
 	}
 
-	//!!hoard_light_pulse();		//do cool hoard light pulsing
+	if (specialGCCounter <= 0) {
+		specialGCCounter = SPECIAL_GC_FRAMES;
+
+		if (ActiveDoors.capacity() > MAX_DOORS && ActiveDoors.size() * 2 < MAX_DOORS) {
+			ActiveDoors.shrink_to_fit();
+		}
+
+		if (CloakingWalls.capacity() > MAX_CLOAKING_WALLS && CloakingWalls.size() * 2 < MAX_CLOAKING_WALLS) {
+			CloakingWalls.shrink_to_fit();
+		}
+
+		if (expl_wall_list.capacity() > MAX_EXPLODING_WALLS) {
+			int count = 0;
+
+			int start = 0;
+			int end = expl_wall_list.size() - 1;
+
+			while (end > start) {
+
+				while (expl_wall_list[start].segnum != -1 && start < end)
+					start++;
+				while (expl_wall_list[end].segnum == -1 && end > start)
+					end--;
+
+				if (end <= start)
+					break;
+
+				expl_wall_list[start] = expl_wall_list[end];
+				expl_wall_list[end].segnum = -1;
+
+			}
+
+			end = -1;
+
+			for (start = 0; start < expl_wall_list.size(); start++)
+				if (expl_wall_list[start].segnum == -1) {
+					end = start;
+					break;
+				}
+
+			if (end < MAX_EXPLODING_WALLS)
+				end = MAX_EXPLODING_WALLS;
+
+			if (end < expl_wall_list.size()) {
+				mprintf((0, "Resized expl_wall_list from %d / %d ", expl_wall_list.size(), expl_wall_list.capacity()));
+				expl_wall_list.resize(end);
+				expl_wall_list.shrink_to_fit();
+				mprintf((0, "to %d / %d!\n", expl_wall_list.size(), expl_wall_list.capacity()));
+			}
+
+		}
+
+	}
+
+	if (expl_wall_list.capacity() > MAX_EXPLODING_WALLS) {
+		
+	}
 
 }
 
