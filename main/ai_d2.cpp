@@ -1264,8 +1264,8 @@ int ai_save_state_d2(FILE* fp)
 
 	file_write_int(fp, Ai_initialized);
 	file_write_int(fp, Overall_agitation);
-	file_write_int(fp, Objects.size());
-	for (i = 0; i < Objects.size(); i++)
+	file_write_int(fp, Highest_object_index + 1);
+	for (i = 0; i < Highest_object_index + 1; i++)
 		P_WriteAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
 		P_WriteSegPoint(&Point_segs[i], fp);
@@ -1328,9 +1328,8 @@ int ai_restore_state_d2(FILE* fp, int version)
 	Overall_agitation = file_read_int(fp);
 	int numObjects = file_read_int(fp);
 	if (numObjects != Objects.size()) {
-		printf("<%d %d>\n", Objects.size(), numObjects);
+		mprintf((1, "<%d %d>\n", Objects.size(), numObjects));
 	}
-	Assert(Objects.size() == numObjects);
 	for (i = 0; i < numObjects; i++)
 		P_ReadAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
