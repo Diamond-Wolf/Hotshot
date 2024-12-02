@@ -100,7 +100,7 @@ object* ConsoleObject;					//the object that is the player
 
 object* Viewer_save;
 
-static std::vector<short> free_obj_list(MAX_OBJECTS);
+static std::vector<short> free_obj_list(MAX_OBJECTS + 1);
 
 extern std::vector<fix> Last_afterburner_time;
 extern std::vector<int8_t> Lighting_objects;
@@ -829,8 +829,10 @@ void init_objects()
 		Objects[i].segnum = -1;
 	}
 
-	if (free_obj_list.size() != Objects.size())
+	if (free_obj_list.size() != Objects.size()) {
 		free_obj_list.resize(Objects.size());
+		free_obj_list.push_back(Objects.size());
+	}
 
 	for (i = 0; i < free_obj_list.size(); i++)
 		free_obj_list[i] = i;
@@ -859,8 +861,10 @@ void special_reset_objects(void)
 	Highest_object_index = 0;
 	Assert(Objects[0].type != OBJ_NONE);		//0 should be used
 
-	if (free_obj_list.size() != Objects.size())
+	if (free_obj_list.size() != Objects.size()) {
 		free_obj_list.resize(Objects.size());
+		free_obj_list.push_back(Objects.size());
+	}
 
 	for (i = Objects.size(); i--;)
 		if (Objects[i].type == OBJ_NONE)
@@ -1098,6 +1102,29 @@ void doObjectGC() {
 		
 }
 
+void objectPushAll() {
+	RelinkCache cache;
+
+	Objects.push_back(object());
+	free_obj_list.push_back(free_obj_list.size());
+	Ai_local_info.push_back(ai_local());
+	Last_afterburner_time.push_back(0);
+	Lighting_objects.push_back(0);
+	object_light.push_back(0);
+	object_sig.push_back(0);
+	WasRecorded.push_back(0);
+	ViewWasRecorded.push_back(0);
+
+#ifdef NETWORK
+	local_to_remote.push_back(-1);
+	object_owner.push_back(-1);
+#endif
+
+	num_objects++;
+
+	RelinkSpecialObjectPointers(cache);
+}
+
 //returns the number of a free object, updating Highest_object_index.
 //Generally, obj_create() should be called to get an object, since it
 //fills in important fields and does the linking.
@@ -1121,7 +1148,7 @@ int obj_allocate(void)
 		num_objects = Objects.size();
 	}
 
-	if (num_objects == Objects.size() - 1) 
+	if (num_objects >= Objects.size() - 1) 
 	{
 #ifndef NDEBUG
 		mprintf((1, "Hit object vector size!\n"));
@@ -1129,26 +1156,7 @@ int obj_allocate(void)
 		objnum = Objects.size();
 		createAtEnd = true;
 
-		RelinkCache cache;
-
-		Objects.push_back(object());
-		free_obj_list.push_back(free_obj_list.size());
-		Ai_local_info.push_back(ai_local());
-		Last_afterburner_time.push_back(0);
-		Lighting_objects.push_back(0);
-		object_light.push_back(0);
-		object_sig.push_back(0);
-		WasRecorded.push_back(0);
-		ViewWasRecorded.push_back(0);
-
-		#ifdef NETWORK
-		local_to_remote.push_back(-1);
-		object_owner.push_back(-1);
-		#endif
-		
-		num_objects++;
-
-		RelinkSpecialObjectPointers(cache); 
+		objectPushAll();
 	}
 
 	if (!createAtEnd)
@@ -1180,8 +1188,10 @@ int obj_allocate(void)
 //the object has been unlinked
 void obj_free(int objnum)
 {
-	if (free_obj_list.size() != Objects.size())
+	if (free_obj_list.size() != Objects.size()) {
 		free_obj_list.resize(Objects.size());
+		free_obj_list.push_back(Objects.size());
+	}
 
 	free_obj_list[--num_objects] = objnum;
 	Assert(num_objects >= 0);
@@ -2403,10 +2413,10 @@ void reset_objects(int n_objs, bool inLevel)
 
 	Assert(num_objects > 0);
 
-	if (free_obj_list.size() != Objects.size())
+	if (free_obj_list.size() != Objects.size()) {
 		free_obj_list.resize(Objects.size());
-
-	
+		free_obj_list.push_back(Objects.size());
+	}
 
 	for (i = num_objects; i < Objects.size(); i++) {
 		free_obj_list[i] = i;

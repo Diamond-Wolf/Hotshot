@@ -661,6 +661,8 @@ void create_player_appearance_effect(object* player_obj)
 	vms_vector pos;
 	object* effect_obj;
 
+	size_t pobjnum = player_obj - Objects.data();
+
 #ifndef NDEBUG
 	{
 		int objnum = player_obj - Objects.data();
@@ -675,6 +677,7 @@ void create_player_appearance_effect(object* player_obj)
 		pos = player_obj->pos;
 
 	effect_obj = object_create_explosion(player_obj->segnum, pos, player_obj->size, VCLIP_PLAYER_APPEARANCE);
+	player_obj = &Objects[pobjnum];
 
 	if (effect_obj)
 	{
