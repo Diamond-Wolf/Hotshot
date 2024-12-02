@@ -1825,17 +1825,25 @@ int newdemo_read_frame_information()
 			{
 				mprintf((0, "EVENT TRIGGER! shot=%d\n", shot));
 
-				if (Triggers[Walls[Segments[segnum].sides[side].wall_num].trigger].type == TT_SECRET_EXIT) {
-					int	truth;
+				auto wallnum = Segments[segnum].sides[side].wall_num;
+				if (wallnum >= 0 && wallnum < Walls.size()) {
 
-					nd_read_byte((int8_t*)&c);
-					Assert(c == ND_EVENT_SECRET_THINGY);
-					nd_read_int(&truth);
-					if (!truth)
+					auto trignum = Walls[wallnum].trigger;
+					if (trignum >= 0 && trignum < Triggers.size() && Triggers[trignum].type == TT_SECRET_EXIT) {
+						int	truth;
+
+						nd_read_byte((int8_t*)&c);
+						Assert(c == ND_EVENT_SECRET_THINGY);
+						nd_read_int(&truth);
+						if (!truth)
+							check_trigger(&Segments[segnum], side, objnum, shot);
+					}
+					else
 						check_trigger(&Segments[segnum], side, objnum, shot);
+
+				} else {
+					mprintf((1, "Newdemo: bad wall! Seg %d side %d, wall %d", segnum, side, wallnum));
 				}
-				else
-					check_trigger(&Segments[segnum], side, objnum, shot);
 			}
 			break;
 

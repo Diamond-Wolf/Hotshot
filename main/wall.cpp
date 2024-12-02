@@ -1127,6 +1127,9 @@ void do_cloaking_wall_frame(int cloaking_wall_num)
 
 	d->time += FrameTime;
 
+	if (Newdemo_state == ND_STATE_RECORDING)
+		newdemo_record_cloaking_wall(d->front_wallnum, d->back_wallnum, wfront->type, wfront->state, wfront->cloak_value, Segments[wfront->segnum].sides[wfront->sidenum].uvls[0].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[1].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[2].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[3].l);
+
 	if (d->time > CLOAKING_WALL_TIME) {
 		int i;
 
@@ -1166,9 +1169,6 @@ void do_cloaking_wall_frame(int cloaking_wall_num)
 			Segments[wback->segnum].sides[wback->sidenum].uvls[i].l = fixmul(d->back_ls[i], light_scale);
 		}
 	}
-
-	if (Newdemo_state == ND_STATE_RECORDING)
-		newdemo_record_cloaking_wall(d->front_wallnum, d->back_wallnum, wfront->type, wfront->state, wfront->cloak_value, Segments[wfront->segnum].sides[wfront->sidenum].uvls[0].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[1].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[2].l, Segments[wfront->segnum].sides[wfront->sidenum].uvls[3].l);
 
 }
 
