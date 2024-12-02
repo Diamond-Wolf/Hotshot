@@ -684,7 +684,10 @@ int state_save_all(int between_levels, int secret_save, char* filename_override)
 #endif
 
 			fseek(tfp, DESC_OFFSET, SEEK_SET);
-			fwrite("[autosave backup]", sizeof(char) * DESC_LENGTH, 1, tfp);
+			fwrite("[autosave backup]", sizeof(char) * 18, 1, tfp); //[DW] Don't use DESC_LENGTH, it triggers a buffer overflow error with asan
+			auto test1 = 2345678;
+			auto test2 = "34567892340";
+			test1 = *test2;
 			fclose(tfp);
 			_unlink(newname);
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
