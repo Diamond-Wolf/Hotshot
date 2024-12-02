@@ -227,8 +227,7 @@ typedef struct
 
 #define MAX_FLICKERING_LIGHTS 100
 
-extern flickering_light Flickering_lights[MAX_FLICKERING_LIGHTS];
-extern int Num_flickering_lights;
+extern std::vector<flickering_light> Flickering_lights;
 
 //returns ptr to flickering light structure, or NULL if can't find
 flickering_light *find_flicker(int segnum,int sidenum);

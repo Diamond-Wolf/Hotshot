@@ -2216,13 +2216,14 @@ int load_level(char* filename_passed)
 
 	if (version >= 4)
 		Reactor_strength = read_int(LoadFile);
-	else
+	else 
 		Reactor_strength = -1;	//use old defaults
 
 	if (version >= 7)
 	{
-		Num_flickering_lights = read_int(LoadFile);
-		Assert((Num_flickering_lights >= 0) && (Num_flickering_lights < MAX_FLICKERING_LIGHTS));
+		auto Num_flickering_lights = read_int(LoadFile);
+		Flickering_lights.resize(Num_flickering_lights);
+		Flickering_lights.shrink_to_fit();
 		for (i = 0; i < Num_flickering_lights; i++)
 		{
 			Flickering_lights[i].segnum = read_short(LoadFile);
@@ -2233,7 +2234,7 @@ int load_level(char* filename_passed)
 		}
 	}
 	else
-		Num_flickering_lights = 0;
+		Flickering_lights.clear();
 
 	if (currentGame == G_DESCENT_1)
 		strcpy(Current_level_palette, "descent.256");

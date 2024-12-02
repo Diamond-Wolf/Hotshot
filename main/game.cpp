@@ -2623,18 +2623,14 @@ void slide_textures(void)
 	}
 }
 
-flickering_light Flickering_lights[MAX_FLICKERING_LIGHTS];
-
-int Num_flickering_lights=0;
+std::vector<flickering_light> Flickering_lights;
 
 void flicker_lights()
 {
 	int l;
-	flickering_light *f;
+	auto f = Flickering_lights.begin();
 
-	f = Flickering_lights;
-
-	for (l=0;l<Num_flickering_lights;l++,f++) {
+	for (l=0; l < Flickering_lights.size(); l++, f++) {
 		segment *segp = &Segments[f->segnum];
 
 		//make sure this is actually a light
@@ -2665,15 +2661,13 @@ void flicker_lights()
 flickering_light *find_flicker(int segnum,int sidenum)
 {
 	int l;
-	flickering_light *f;
+	auto f = Flickering_lights.begin();
 
 	//see if there's already an entry for this seg/side
 
-	f = Flickering_lights;
-
-	for (l=0;l<Num_flickering_lights;l++,f++)
+	for (l = 0; l < Flickering_lights.size(); l++, f++)
 		if (f->segnum == segnum && f->sidenum == sidenum)	//found it!
-			return f;
+			return &(*f);
 
 	return NULL;
 }
@@ -2683,8 +2677,8 @@ void disable_flicker(int segnum,int sidenum)
 {
 	flickering_light *f;
 
-	if ((f=find_flicker(segnum,sidenum)) != NULL)
-		f->timer = 0x80000000;
+	if ((f = find_flicker(segnum,sidenum)) != NULL)
+		f->timer = INT32_MIN; 
 }
 
 //turn flickering off (because light has been turned on)
