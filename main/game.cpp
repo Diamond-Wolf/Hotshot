@@ -2512,6 +2512,8 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 
 	}
 
+	specialGCCounter--;
+
 	if (expl_wall_list.capacity() > MAX_EXPLODING_WALLS) {
 		
 	}
