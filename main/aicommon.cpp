@@ -2022,16 +2022,22 @@ void do_ai_frame_all(void)
 
 	if (currentGame == G_DESCENT_2) {
 
-		if (Ai_last_missile_camera != -1) {
+		int	i;
+
+		if (Ai_last_missile_camera >= 0 && Ai_last_missile_camera < Objects.size()) {
 			//	Clear if supposed misisle camera is not a weapon, or just every so often, just in case.
 			if (((FrameCount & 0x0f) == 0) || (Objects[Ai_last_missile_camera].type != OBJ_WEAPON)) {
-				int	i;
+				
 
 				Ai_last_missile_camera = -1;
 				for (i = 0; i <= Highest_object_index; i++)
 					if (Objects[i].type == OBJ_ROBOT)
 						Objects[i].ctype.ai_info.SUB_FLAGS &= ~SUB_FLAGS_CAMERA_AWAKE;
 			}
+		} else {
+			for (i = 0; i <= Highest_object_index; i++)
+				if (Objects[i].type == OBJ_ROBOT)
+					Objects[i].ctype.ai_info.SUB_FLAGS &= ~SUB_FLAGS_CAMERA_AWAKE;
 		}
 
 		//	(Moved here from do_boss_stuff() because that only gets called if robot aware of player.)

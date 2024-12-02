@@ -1708,6 +1708,15 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		// Restore the AI state
 		ai_restore_state(fp, version);
 
+		if (Objects.size() < MAX_OBJECTS) { //Save games with only a few objects needlessly shrink the object array
+			int i = Objects.size();
+			ResizeObjectVectors(MAX_OBJECTS, false);
+			for (i; i < Objects.size(); i++) {
+				Objects[i].type = OBJ_NONE;
+				Objects[i].segnum = -1;
+			}
+		}
+
 		// Restore the automap visited info
 		fread(Automap_visited.data(), sizeof(uint8_t) * Automap_visited.size(), 1, fp);
 

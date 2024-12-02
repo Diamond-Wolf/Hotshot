@@ -208,8 +208,13 @@ extern void verify_console_object();
 
 void ResizeObjectVectors(int newSize, bool shrinkToFit) {
 
+	int curSize = Objects.size();
+
 	Objects.resize(newSize);
 	free_obj_list.resize(newSize);
+	free_obj_list.push_back(newSize); //for the extra slot, when obj count = list size
+	for (int i = curSize; i < newSize; i++)
+		free_obj_list[i] = i;
 	Ai_local_info.resize(newSize);
 	Last_afterburner_time.resize(newSize);
 	Lighting_objects.resize(newSize);
@@ -1111,6 +1116,11 @@ int obj_allocate(void)
 		mprintf((0, " *** Freed %i objects in frame %i\n", num_freed, FrameCount));
 	}*/
 
+	if (num_objects > Objects.size()) {
+		mprintf((1, "More objects than are in the vector!? (num %d, size %d)\nBashing to size\n", num_objects, Objects.size()));
+		num_objects = Objects.size();
+	}
+
 	if (num_objects == Objects.size() - 1) 
 	{
 #ifndef NDEBUG
@@ -1325,10 +1335,9 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector pos,
 	if (objnum == -1)		//no free objects
 		return -1;
 
-	Assert(Objects[objnum].type == OBJ_NONE);		//make sure unused 
-
 	obj = &Objects[objnum];
 
+	Assert(obj->type == OBJ_NONE);		//make sure unused 
 	Assert(obj->segnum == -1);
 
 	// Zero out object structure to keep weird bugs from happening
