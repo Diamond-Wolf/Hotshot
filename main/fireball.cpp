@@ -1350,13 +1350,13 @@ void do_explosion_sequence(object *obj)
 #define EXPL_WALL_TOTAL_FIREBALLS	32
 #define EXPL_WALL_FIREBALL_SIZE 		(0x48000*6/10)	//smallest size
 
-expl_wall expl_wall_list[MAX_EXPLODING_WALLS];
+std::vector<expl_wall> expl_wall_list(MAX_EXPLODING_WALLS);
 
 void init_exploding_walls()
 {
 	int i;
 
-	for (i=0;i<MAX_EXPLODING_WALLS;i++)
+	for (i = 0; i < expl_wall_list.size(); i++)
 		expl_wall_list[i].segnum = -1;
 }
 
@@ -1368,12 +1368,10 @@ void explode_wall(int segnum,int sidenum)
 
 	//find a free slot
 
-	for (i=0;i<MAX_EXPLODING_WALLS && expl_wall_list[i].segnum != -1;i++);
+	for (i=0; i < expl_wall_list.size() && expl_wall_list[i].segnum != -1; i++);
 
-	if (i==MAX_EXPLODING_WALLS) {		//didn't find slot.
-		mprintf((0,"Couldn't find free slot for exploding wall!\n"));
-		Int3();
-		return;
+	if (i == expl_wall_list.size()) {		//didn't find slot.
+		expl_wall_list.emplace_back();
 	}
 
 	expl_wall_list[i].segnum	= segnum;
@@ -1392,7 +1390,7 @@ void do_exploding_wall_frame()
 {
 	int i;
 
-	for (i=0;i<MAX_EXPLODING_WALLS;i++) {
+	for (i = 0; i < expl_wall_list.size(); i++) {
 		int segnum = expl_wall_list[i].segnum;
 
 		if (segnum != -1) {

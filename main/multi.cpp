@@ -4544,8 +4544,7 @@ void multi_do_powerup_update(char* buf)
 			MaxPowerupsAllowed[i] = buf[i + 1];
 }
 
-extern active_door ActiveDoors[];
-extern int Num_open_doors;						// Number of open doors
+extern std::vector<active_door> ActiveDoors;
 
 void multi_send_active_door(char i)
 {
@@ -4553,7 +4552,7 @@ void multi_send_active_door(char i)
 
 	multibuf[0] = MULTI_ACTIVE_DOOR;
 	multibuf[1] = i;
-	multibuf[2] = Num_open_doors;
+	multibuf[2] = ActiveDoors.size();
 	count = 3;
 #ifndef MACINTOSH
 	memcpy((char*)(multibuf[3]), &ActiveDoors[i], sizeof(struct active_door));
@@ -4574,7 +4573,7 @@ void multi_do_active_door(char* buf)
 {
 	int count;
 	char i = multibuf[1];
-	Num_open_doors = buf[2];
+	ActiveDoors.resize(buf[2]);
 
 	count = 3;
 #ifndef MACINTOSH

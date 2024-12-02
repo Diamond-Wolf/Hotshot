@@ -1238,8 +1238,7 @@ int LoadGameDataD1(CFILE* LoadFile)
 		{
 			mprintf((1, "load_game_data: active doors present\n"));
 
-			if (game_fileinfo.doors_howmany > MAX_DOORS)
-				Error("Level contains over MAX_DOORS(%d) active doors.", MAX_DOORS);
+			ActiveDoors.resize(game_fileinfo.doors_howmany);
 
 			for (i = 0; i < game_fileinfo.doors_howmany; i++) 
 			{
@@ -1382,9 +1381,8 @@ int LoadGameDataD1(CFILE* LoadFile)
 	//reset_walls();
 	//Walls.resize(Num_walls);
 
-	Num_open_doors = game_fileinfo.doors_howmany;
+	auto Num_open_doors = game_fileinfo.doors_howmany;
 	auto Num_triggers = game_fileinfo.triggers_howmany;
-
 	auto Num_robot_centers = game_fileinfo.matcen_howmany;
 
 	//fix old wall structs
@@ -1659,8 +1657,7 @@ int LoadGameDataD2(CFILE* LoadFile)
 		{
 			mprintf((1, "load_game_data: active doors present\n"));
 
-			if (game_fileinfo.doors_howmany > MAX_DOORS)
-				Error("Level contains over MAX_DOORS(%d) active doors.", MAX_DOORS);
+			ActiveDoors.resize(game_fileinfo.doors_howmany);
 
 			for (i = 0; i < game_fileinfo.doors_howmany; i++)
 			{
@@ -1964,7 +1961,7 @@ int LoadGameDataD2(CFILE* LoadFile)
 	//reset_walls();
 	//Walls.resize(Num_walls);
 
-	Num_open_doors = game_fileinfo.doors_howmany;
+	auto Num_open_doors = game_fileinfo.doors_howmany;
 	auto Num_triggers = game_fileinfo.triggers_howmany;
 	Triggers.resize(Num_triggers);
 

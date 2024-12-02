@@ -983,7 +983,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 
 		//Save exploding wall info
 
-		i = MAX_EXPLODING_WALLS; //[ISB] i dunno
+		i = expl_wall_list.size(); //[ISB] i dunno [DW] Makes life easy for me
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
 		{
@@ -996,7 +996,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 
 		//Save door info
 
-		i = Num_open_doors;
+		i = ActiveDoors.size();
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
 		{
@@ -1010,8 +1010,8 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//fwrite(&i, sizeof(int), 1, fp);
 		//fwrite(CloakingWalls, sizeof(cloaking_wall), i, fp);
 
-		file_write_int(fp, Num_cloaking_walls);
-		for (elem = 0; elem < Num_cloaking_walls; elem++)
+		file_write_int(fp, CloakingWalls.size());
+		for (elem = 0; elem < CloakingWalls.size(); elem++)
 			P_WriteCloakingWall(&CloakingWalls[i], fp);
 
 		//Save trigger info
@@ -1606,13 +1606,9 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		if (version >= 10)
 		{
 			//fread(&i, sizeof(int), 1, fp);
-			int heh = file_read_int(fp);
-			if (heh > 10)
-			{
-				Error("state_restore_all_sub: Too many exploding walls in save file.\n");
-				return 0;
-			}
-			for (i = 0; i < heh; i++)
+			int numExplWalls = file_read_int(fp);
+			expl_wall_list.resize(numExplWalls);
+			for (i = 0; i < numExplWalls; i++)
 			{
 				expl_wall_list[i].segnum = file_read_int(fp);
 				expl_wall_list[i].sidenum = file_read_int(fp);
@@ -1626,7 +1622,8 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//Num_open_doors = i;
 		//fread(ActiveDoors, sizeof(active_door) * Num_open_doors, 1, fp);
 
-		Num_open_doors = file_read_int(fp);
+		auto Num_open_doors = file_read_int(fp);
+		ActiveDoors.resize(Num_open_doors);
 		for (i = 0; i < Num_open_doors; i++)
 		{
 			read_active_door(&ActiveDoors[i], fp);
@@ -1635,12 +1632,9 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		if (version >= 14) //Restore cloaking wall info
 		{
 			//fread(&i, sizeof(int), 1, fp);
-			Num_cloaking_walls = file_read_int(fp);
-			if (Num_cloaking_walls > 10)
-			{
-				Error("state_restore_all_sub: Too many cloaking walls in save file.\n");
-				return 0;
-			}
+			auto Num_cloaking_walls = file_read_int(fp);
+			CloakingWalls.resize(Num_cloaking_walls);
+			
 			for (i = 0; i < Num_cloaking_walls; i++)
 			{
 				P_ReadCloakingWall(&CloakingWalls[i], fp);

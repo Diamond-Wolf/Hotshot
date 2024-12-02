@@ -50,15 +50,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	BOSS_LOCKED_DOOR_SIDE	5
 
 std::vector<wall> Walls(MAX_WALLS);					// Master walls array
-
-active_door ActiveDoors[MAX_DOORS];
-int Num_open_doors;						// Number of open doors
+std::vector<active_door> ActiveDoors;
 
 #define CLOAKING_WALL_TIME f1_0
 
-#define MAX_CLOAKING_WALLS 10
-cloaking_wall CloakingWalls[MAX_CLOAKING_WALLS];
-int Num_cloaking_walls;
+std::vector<cloaking_wall> CloakingWalls; 
 
 //--unused-- grs_bitmap *wall_title_bms[MAX_WALL_ANIMS];
 
@@ -371,7 +367,7 @@ void wall_open_door(segment* seg, int side)
 
 		d = NULL;
 
-		for (i = 0; i < Num_open_doors; i++) {		//find door
+		for (i = 0; i < ActiveDoors.size(); i++) {		//find door
 
 			d = &ActiveDoors[i];
 
@@ -379,10 +375,10 @@ void wall_open_door(segment* seg, int side)
 				break;
 		}
 
-		if (i >= Num_open_doors && (Game_mode & GM_MULTI))
+		if (i >= ActiveDoors.size() && (Game_mode & GM_MULTI))
 			goto FastFix;
 
-		Assert(i < Num_open_doors);				//didn't find door!
+		Assert(i < ActiveDoors.size());				//didn't find door!
 		Assert(d != NULL); // Get John!
 
 		d->time = activeBMTable->wclips[w->clip_num].play_time - d->time;
@@ -394,12 +390,11 @@ void wall_open_door(segment* seg, int side)
 	else {											//create new door
 		Assert(w->state == WALL_DOOR_CLOSED);
 	FastFix:
-		d = &ActiveDoors[Num_open_doors];
-		d->time = 0;
-		Num_open_doors++;
-		Assert(Num_open_doors < MAX_DOORS);
+		active_door door;
+		door.time = 0;
+		ActiveDoors.push_back(std::move(door));
+		d = &ActiveDoors[ActiveDoors.size() - 1];
 	}
-
 
 	w->state = WALL_DOOR_OPENING;
 
@@ -486,7 +481,7 @@ void start_wall_cloak(segment* seg, int side)
 
 		d = NULL;
 
-		for (i = 0; i < Num_cloaking_walls; i++) {		//find door
+		for (i = 0; i < CloakingWalls.size(); i++) {		//find door
 
 			d = &CloakingWalls[i];
 
@@ -494,22 +489,17 @@ void start_wall_cloak(segment* seg, int side)
 				break;
 		}
 
-		Assert(i < Num_cloaking_walls);				//didn't find door!
+		Assert(i < CloakingWalls.size());				//didn't find door!
 		Assert(d != NULL); // Get John!
 
 		d->time = CLOAKING_WALL_TIME - d->time;
 
 	}
 	else if (w->state == WALL_DOOR_CLOSED) {	//create new door
-		d = &CloakingWalls[Num_cloaking_walls];
-		d->time = 0;
-		if (Num_cloaking_walls >= MAX_CLOAKING_WALLS) {		//no more!
-			Int3();		//ran out of cloaking wall slots
-			w->type = WALL_OPEN;
-			Walls[csegp->sides[Connectside].wall_num].type = WALL_OPEN;
-			return;
-		}
-		Num_cloaking_walls++;
+		cloaking_wall cloak;
+		cloak.time = 0;
+		CloakingWalls.push_back(std::move(cloak));
+		d = &CloakingWalls[CloakingWalls.size() - 1];
 	}
 	else {
 		Int3();		//unexpected wall state
@@ -563,7 +553,7 @@ void start_wall_decloak(segment* seg, int side)
 
 		d = NULL;
 
-		for (i = 0; i < Num_cloaking_walls; i++) {		//find door
+		for (i = 0; i < CloakingWalls.size(); i++) {		//find door
 
 			d = &CloakingWalls[i];
 
@@ -571,22 +561,17 @@ void start_wall_decloak(segment* seg, int side)
 				break;
 		}
 
-		Assert(i < Num_cloaking_walls);				//didn't find door!
+		Assert(i < CloakingWalls.size());				//didn't find door!
 		Assert(d != NULL); // Get John!
 
 		d->time = CLOAKING_WALL_TIME - d->time;
 
 	}
 	else if (w->state == WALL_DOOR_CLOSED) {	//create new door
-		d = &CloakingWalls[Num_cloaking_walls];
-		d->time = 0;
-		if (Num_cloaking_walls >= MAX_CLOAKING_WALLS) {		//no more!
-			Int3();		//ran out of cloaking wall slots
-			w->type = WALL_CLOSED;
-			Walls[csegp->sides[Connectside].wall_num].type = WALL_CLOSED;
-			return;
-		}
-		Num_cloaking_walls++;
+		cloaking_wall cloak;
+		cloak.time = 0;
+		CloakingWalls.push_back(std::move(cloak));
+		d = &CloakingWalls[CloakingWalls.size() - 1];
 	}
 	else {
 		Int3();		//unexpected wall state
@@ -655,10 +640,10 @@ void wall_close_door_num(int door_num)
 
 	}
 
-	for (i = door_num; i < Num_open_doors; i++)
+	for (i = door_num; i < ActiveDoors.size() - 1; i++)
 		ActiveDoors[i] = ActiveDoors[i + 1];
 
-	Num_open_doors--;
+	ActiveDoors.pop_back();
 
 }
 
@@ -729,7 +714,7 @@ void wall_close_door(segment* seg, int side)
 
 		d = NULL;
 
-		for (i = 0; i < Num_open_doors; i++) {		//find door
+		for (i = 0; i < ActiveDoors.size(); i++) {		//find door
 
 			d = &ActiveDoors[i];
 
@@ -737,7 +722,7 @@ void wall_close_door(segment* seg, int side)
 				break;
 		}
 
-		Assert(i < Num_open_doors);				//didn't find door!
+		Assert(i < ActiveDoors.size());				//didn't find door!
 		Assert(d != NULL); // Get John!
 
 		d->time = activeBMTable->wclips[w->clip_num].play_time - d->time;
@@ -748,10 +733,9 @@ void wall_close_door(segment* seg, int side)
 	}
 	else {											//create new door
 		Assert(w->state == WALL_DOOR_OPEN);
-		d = &ActiveDoors[Num_open_doors];
-		d->time = 0;
-		Num_open_doors++;
-		Assert(Num_open_doors < MAX_DOORS);
+		active_door door;
+		door.time = 0;
+		ActiveDoors.push_back(std::move(door));
 	}
 
 	w->state = WALL_DOOR_CLOSING;
@@ -845,9 +829,9 @@ void do_door_open(int door_num)
 
 			// If our door is not automatic just remove it from the list.
 			if (!(Walls[seg->sides[side].wall_num].flags & WALL_DOOR_AUTO)) {
-				for (i = door_num; i < Num_open_doors; i++)
+				for (i = door_num; i < ActiveDoors.size() - 1; i++)
 					ActiveDoors[i] = ActiveDoors[i + 1];
-				Num_open_doors--;
+				ActiveDoors.pop_back();
 				Walls[seg->sides[side].wall_num].state = WALL_DOOR_OPEN;
 				Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_OPEN;
 			}
@@ -856,7 +840,7 @@ void do_door_open(int door_num)
 				Walls[seg->sides[side].wall_num].state = WALL_DOOR_WAITING;
 				Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_WAITING;
 
-				ActiveDoors[Num_open_doors].time = 0;	//counts up
+				//ActiveDoors[Num_open_doors].time = 0;	//counts up
 			}
 		}
 
@@ -874,6 +858,7 @@ void do_door_close(int door_num)
 	wall* w;
 
 	Assert(door_num != -1);		//Trying to do_door_open on illegal door
+	Assert(door_num < ActiveDoors.size());
 
 	d = &ActiveDoors[door_num];
 
@@ -889,14 +874,12 @@ void do_door_close(int door_num)
 			return;
 		} 
 
-	for (p = 0; p < d->n_parts; p++) {
-		wall* w;
+	//for (p = 0; p < d->n_parts; p++) {	 // [DW] n_parts was always broken anyway, now it's causing memory errors
+	p = 0;
 		int Connectside, side;
 		segment* csegp, * seg;
 		fix time_elapsed, time_total, one_frame;
 		int i, n;
-
-		w = &Walls[d->front_wallnum[p]];
 
 		seg = &Segments[w->segnum];
 		side = w->sidenum;
@@ -948,12 +931,12 @@ void do_door_close(int door_num)
 			Walls[seg->sides[side].wall_num].state = WALL_DOOR_CLOSING;
 			Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_CLOSING;
 
-			ActiveDoors[Num_open_doors].time = 0;		//counts up
+			//ActiveDoors[Num_open_doors].time = 0;		//counts up
 
 		}
 		else
 			wall_close_door_num(door_num);
-	}
+	//}
 }
 
 
@@ -1150,9 +1133,10 @@ void do_cloaking_wall_frame(int cloaking_wall_num)
 		wfront->type = wback->type = WALL_OPEN;
 		wfront->state = wback->state = WALL_DOOR_CLOSED;		//why closed? why not?
 
-		for (i = cloaking_wall_num; i < Num_cloaking_walls; i++)
+		for (i = cloaking_wall_num; i < CloakingWalls.size() - 1; i++)
 			CloakingWalls[i] = CloakingWalls[i + 1];
-		Num_cloaking_walls--;
+		
+		CloakingWalls.pop_back();
 
 	}
 	else if (d->time > CLOAKING_WALL_TIME / 2) {
@@ -1211,9 +1195,10 @@ void do_decloaking_wall_frame(int cloaking_wall_num)
 			Segments[wback->segnum].sides[wback->sidenum].uvls[i].l = d->back_ls[i];
 		}
 
-		for (i = cloaking_wall_num; i < Num_cloaking_walls; i++)
+		for (i = cloaking_wall_num; i < CloakingWalls.size() - 1; i++)
 			CloakingWalls[i] = CloakingWalls[i + 1];
-		Num_cloaking_walls--;
+		
+		CloakingWalls.pop_back();
 
 	}
 	else if (d->time > CLOAKING_WALL_TIME / 2) {		//fading in
@@ -1243,7 +1228,7 @@ void wall_frame_process()
 {
 	int i;
 
-	for (i = 0; i < Num_open_doors; i++) {
+	for (i = 0; i < ActiveDoors.size(); i++) {
 		active_door* d;
 		wall* w;
 
@@ -1273,14 +1258,14 @@ void wall_frame_process()
 			//there shouldn't be an activedoor entry for it.  So we'll kill
 			//the activedoor entry.  Tres simple.
 			int t;
-			Int3();		//a bad thing has happened, but I'll try to fix it up
-			for (t = i; t < Num_open_doors; t++)
+			//Int3();		//a bad thing has happened, but I'll try to fix it up
+			for (t = i; t < ActiveDoors.size() - 1; t++)
 				ActiveDoors[t] = ActiveDoors[t + 1];
-			Num_open_doors--;
+			ActiveDoors.pop_back();
 		}
 	}
 
-	for (i = 0; i < Num_cloaking_walls; i++) {
+	for (i = 0; i < CloakingWalls.size(); i++) {
 		cloaking_wall* d;
 		wall* w;
 

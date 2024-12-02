@@ -27,7 +27,7 @@ typedef struct expl_wall
 
 #define MAX_EXPLODING_WALLS 			10
 
-extern expl_wall expl_wall_list[MAX_EXPLODING_WALLS];
+extern std::vector<expl_wall> expl_wall_list;
 
 object *object_create_explosion(short segnum, vms_vector position, fix size, int vclip_type );
 object *object_create_muzzle_flash(short segnum, vms_vector position, fix size, int vclip_type );

@@ -33,6 +33,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_WALL_ANIMS MAX_WALL_ANIMS_D2	// Maximum different types of doors
 #define MAX_DOORS MAX_DOORS_D2	// Maximum number of open doors
 
+#define MAX_CLOAKING_WALLS 10
+
 // Various wall types.
 #define WALL_NORMAL				0  	// Normal wall
 #define WALL_BLASTABLE			1  	// Removable (by shooting) wall
@@ -167,11 +169,9 @@ extern char	Wall_names[7][10];
 
 extern std::vector<wall> Walls;
 
-extern active_door ActiveDoors[MAX_DOORS];	//	Master doors array
-extern int Num_open_doors;				// Number of open doors
+extern std::vector<active_door> ActiveDoors;	//	Master doors array
 
-extern cloaking_wall CloakingWalls[];
-extern int Num_cloaking_walls;
+extern std::vector<cloaking_wall> CloakingWalls;
 
 // Initializes all walls (i.e. no special walls.)
 extern void wall_init();
