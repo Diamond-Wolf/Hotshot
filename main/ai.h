@@ -374,3 +374,5 @@ void P_ReadCloakInfo(ai_cloak_info* info, FILE* fp);
 
 extern void do_lunacy_on();
 extern void do_lunacy_off();
+
+void ResizeRobotTypesVectors();

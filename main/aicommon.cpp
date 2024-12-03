@@ -66,9 +66,9 @@ int		Robot_sound_volume = DEFAULT_ROBOT_SOUND_VOLUME;
 
 int	Diff_save = 1;
 
-fix	Firing_wait_copy[MAX_ROBOT_TYPES];
-fix	Firing_wait2_copy[MAX_ROBOT_TYPES];
-int8_t	Rapidfire_count_copy[MAX_ROBOT_TYPES];
+std::vector<fix> Firing_wait_copy(MAX_ROBOT_TYPES);
+std::vector<fix> Firing_wait2_copy(MAX_ROBOT_TYPES);
+std::vector<int8_t> Rapidfire_count_copy(MAX_ROBOT_TYPES);
 
 extern fix Seismic_tremor_magnitude;
 
@@ -108,6 +108,16 @@ int				ai_evaded = 0;
 
 // ---------------------------------------------------------------------------------------------------------------------
 //	Given a behavior, set initial mode.
+
+void ResizeRobotTypesVectors() {
+
+	auto size = activeBMTable->robots.size();
+
+	Firing_wait_copy.resize(size);
+	Firing_wait2_copy.resize(size);
+	Rapidfire_count_copy.resize(size);
+
+}
 
 int ai_behavior_to_mode(int behavior)
 {
