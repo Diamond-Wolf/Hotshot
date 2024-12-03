@@ -1207,9 +1207,6 @@ int LoadGameDataD1(CFILE* LoadFile)
 	{
 		if (!cfseek(LoadFile, game_fileinfo.walls_offset, SEEK_SET)) 
 		{
-			//if (game_fileinfo.walls_howmany >= MAX_WALLS)
-			//	Error("Level contains over MAX_WALLS(%d) walls.", MAX_WALLS);
-
 			Walls.resize(game_fileinfo.walls_howmany);
 			
 			for (i = 0; i < game_fileinfo.walls_howmany; i++) 
@@ -1243,7 +1240,8 @@ int LoadGameDataD1(CFILE* LoadFile)
 					read_v19_active_door(&ActiveDoors[i], LoadFile);
 			}
 		}
-	}
+	} else
+		ActiveDoors.clear();
 
 	//==================== READ TRIGGER INFO ==========================
 	if (game_fileinfo.triggers_offset > -1)
@@ -1587,8 +1585,6 @@ int LoadGameDataD2(CFILE* LoadFile)
 	{
 		if (!cfseek(LoadFile, game_fileinfo.walls_offset, SEEK_SET))
 		{
-			//if (game_fileinfo.walls_howmany > MAX_WALLS)
-			//	Error("Level contains over MAX_WALLS(%d) walls.", MAX_WALLS);
 			Walls.resize(game_fileinfo.walls_howmany);
 
 			for (i = 0; i < game_fileinfo.walls_howmany; i++) 
@@ -1666,7 +1662,8 @@ int LoadGameDataD2(CFILE* LoadFile)
 				}
 			}
 		}
-	}
+	} else
+		ActiveDoors.clear();
 
 	//==================== READ TRIGGER INFO ==========================
 
