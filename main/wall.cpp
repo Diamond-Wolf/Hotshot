@@ -849,7 +849,6 @@ void do_door_open(int door_num)
 // Called from the game loop.
 void do_door_close(int door_num)
 {
-	int p;
 	active_door* d;
 	wall* w;
 
@@ -870,69 +869,66 @@ void do_door_close(int door_num)
 			return;
 		} 
 
-	//for (p = 0; p < d->n_parts; p++) {	 // [DW] n_parts was always broken anyway, now it's causing memory errors
-	p = 0;
-		int Connectside, side;
-		segment* csegp, * seg;
-		fix time_elapsed, time_total, one_frame;
-		int i, n;
+	int Connectside, side;
+	segment* csegp, * seg;
+	fix time_elapsed, time_total, one_frame;
+	int i, n;
 
-		seg = &Segments[w->segnum];
-		side = w->sidenum;
+	seg = &Segments[w->segnum];
+	side = w->sidenum;
 
-		if (seg->sides[side].wall_num == -1) {
-			mprintf((0, "Trying to do_door_close on Illegal wall\n"));
-			return;
-		}
+	if (seg->sides[side].wall_num == -1) {
+		mprintf((0, "Trying to do_door_close on Illegal wall\n"));
+		return;
+	}
 
-		//if here, must be auto door
+	//if here, must be auto door
 //		Assert(Walls[seg->sides[side].wall_num].flags & WALL_DOOR_AUTO);		
 //don't assert here, because now we have triggers to close non-auto doors
 
-		// Otherwise, close it.
-		csegp = &Segments[seg->children[side]];
-		Connectside = find_connect_side(seg, csegp);
-		Assert(Connectside != -1);
+	// Otherwise, close it.
+	csegp = &Segments[seg->children[side]];
+	Connectside = find_connect_side(seg, csegp);
+	Assert(Connectside != -1);
 
 
-		if (Newdemo_state != ND_STATE_PLAYBACK)
-			// NOTE THE LINK TO ABOVE!!
-			if (p == 0)	//only play one sound for linked doors
-				if (d->time == 0) {		//first time
-					vms_vector cp;
-					compute_center_point_on_side(&cp, seg, side);
-					if (activeBMTable->wclips[w->clip_num].close_sound > -1)
-						digi_link_sound_to_pos(activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments.data(), side, cp, 0, F1_0);
-				}
-
-		d->time += FrameTime;
-
-		time_elapsed = d->time;
-		n = activeBMTable->wclips[w->clip_num].num_frames;
-		time_total = activeBMTable->wclips[w->clip_num].play_time;
-
-		one_frame = time_total / n;
-
-		i = n - time_elapsed / one_frame - 1;
-
-		if (i < n / 2) {
-			Walls[seg->sides[side].wall_num].flags &= ~WALL_DOOR_OPENED;
-			Walls[csegp->sides[Connectside].wall_num].flags &= ~WALL_DOOR_OPENED;
+	if (Newdemo_state != ND_STATE_PLAYBACK)
+		// NOTE THE LINK TO ABOVE!!
+		if (d->time == 0) {		//first time
+			vms_vector cp;
+			compute_center_point_on_side(&cp, seg, side);
+			if (activeBMTable->wclips[w->clip_num].close_sound > -1)
+				digi_link_sound_to_pos(activeBMTable->wclips[Walls[seg->sides[side].wall_num].clip_num].close_sound, seg - Segments.data(), side, cp, 0, F1_0);
 		}
 
-		// Animate door.
-		if (i > 0) {
-			wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, i);
+	d->time += FrameTime;
 
-			Walls[seg->sides[side].wall_num].state = WALL_DOOR_CLOSING;
-			Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_CLOSING;
+	time_elapsed = d->time;
+	n = activeBMTable->wclips[w->clip_num].num_frames;
+	time_total = activeBMTable->wclips[w->clip_num].play_time;
 
-			//ActiveDoors[Num_open_doors].time = 0;		//counts up
+	one_frame = time_total / n;
 
-		}
-		else
-			wall_close_door_num(door_num);
-	//}
+	i = n - time_elapsed / one_frame - 1;
+
+	if (i < n / 2) {
+		Walls[seg->sides[side].wall_num].flags &= ~WALL_DOOR_OPENED;
+		Walls[csegp->sides[Connectside].wall_num].flags &= ~WALL_DOOR_OPENED;
+	}
+
+	// Animate door.
+	if (i > 0) {
+		wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, i);
+
+		Walls[seg->sides[side].wall_num].state = WALL_DOOR_CLOSING;
+		Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_CLOSING;
+
+		//ActiveDoors[Num_open_doors].time = 0;		//counts up
+
+	}
+	else
+		wall_close_door_num(door_num);
+
 }
 
 
