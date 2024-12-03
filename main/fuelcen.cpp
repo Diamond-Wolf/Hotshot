@@ -432,9 +432,10 @@ void robotmaker_proc(FuelCenter* robotcen)
 		return;
 	}
 
+	// [DW] Gameplay change - remove global matcen cap
 	// Wait until we have a free slot for this puppy...
-   //	  <<<<<<<<<<<<<<<< Num robots in mine >>>>>>>>>>>>>>>>>>>>>>>>>>    <<<<<<<<<<<< Max robots in mine >>>>>>>>>>>>>>>
-	if ((Players[Player_num].num_robots_level - Players[Player_num].num_kills_level) >= (Gamesave_num_org_robots + Num_extry_robots)) {
+	//	  <<<<<<<<<<<<<<<< Num robots in mine >>>>>>>>>>>>>>>>>>>>>>>>>>    <<<<<<<<<<<< Max robots in mine >>>>>>>>>>>>>>>
+	/*if ((Players[Player_num].num_robots_level - Players[Player_num].num_kills_level) >= (Gamesave_num_org_robots + Num_extry_robots)) {
 #ifndef NDEBUG
 		if (FrameCount > FrameCount_last_msg + 20)
 		{
@@ -443,7 +444,7 @@ void robotmaker_proc(FuelCenter* robotcen)
 		}
 #endif
 		return;
-	}
+	}*/
 
 	robotcen->Timer += FrameTime;
 
