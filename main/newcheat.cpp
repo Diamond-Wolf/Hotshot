@@ -685,17 +685,19 @@ bool CheckCheats(char newKeyIn) {
             return true;
         break;
 
-        case CI_LUNACY:
+        /*case CI_LUNACY:
             cheatValues[CI_LUNACY] = !cheatValues[CI_LUNACY];
             if (cheatValues[CI_LUNACY]) {
                 do_cheat_penalty();
                 do_lunacy_on();
+                HUD_init_message("It's a full moon!");
             } else {
                 do_lunacy_off();
+                HUD_init_message("What moon?");
             }
 
             return true;
-        break;
+        break;*/
 
         case CI_SHAREWARE_WEAPONS:
             do_cheat_penalty();
