@@ -98,7 +98,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define WID_NO_WALL					5	//	1/0/1		no wall, can fly through
 #define WID_EXTERNAL					8	// 0/0/0/1	don't see it, dont fly through it
 
-#define	MAX_STUCK_OBJECTS	32
+#define	MAX_STUCK_OBJECTS	64
 
 typedef struct stuckobj 
 {
