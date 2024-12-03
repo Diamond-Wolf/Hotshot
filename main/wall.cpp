@@ -779,71 +779,67 @@ void wall_close_door(segment* seg, int side)
 // Called in the game loop.
 void do_door_open(int door_num)
 {
-	int p;
 	active_door* d;
 
 	Assert(door_num != -1);		//Trying to do_door_open on illegal door
 
 	d = &ActiveDoors[door_num];
 
-	for (p = 0; p < d->n_parts; p++) {
-		wall* w;
-		int Connectside, side;
-		segment* csegp, * seg;
-		fix time_elapsed, time_total, one_frame;
-		int i, n;
+	wall* w;
+	int Connectside, side;
+	segment* csegp, * seg;
+	fix time_elapsed, time_total, one_frame;
+	int i, n;
 
-		w = &Walls[d->front_wallnum[p]];
-		kill_stuck_objects(d->front_wallnum[p]);
-		kill_stuck_objects(d->back_wallnum[p]);
+	w = &Walls[d->front_wallnum[0]];
+	kill_stuck_objects(d->front_wallnum[0]);
+	kill_stuck_objects(d->back_wallnum[0]);
 
-		seg = &Segments[w->segnum];
-		side = w->sidenum;
+	seg = &Segments[w->segnum];
+	side = w->sidenum;
 
-		Assert(seg->sides[side].wall_num != -1);		//Trying to do_door_open on illegal wall
+	Assert(seg->sides[side].wall_num != -1);		//Trying to do_door_open on illegal wall
 
-		csegp = &Segments[seg->children[side]];
-		Connectside = find_connect_side(seg, csegp);
-		Assert(Connectside != -1);
+	csegp = &Segments[seg->children[side]];
+	Connectside = find_connect_side(seg, csegp);
+	Assert(Connectside != -1);
 
-		d->time += FrameTime;
+	d->time += FrameTime;
 
-		time_elapsed = d->time;
-		n = activeBMTable->wclips[w->clip_num].num_frames;
-		time_total = activeBMTable->wclips[w->clip_num].play_time;
+	time_elapsed = d->time;
+	n = activeBMTable->wclips[w->clip_num].num_frames;
+	time_total = activeBMTable->wclips[w->clip_num].play_time;
 
-		one_frame = time_total / n;
+	one_frame = time_total / n;
 
-		i = time_elapsed / one_frame;
+	i = time_elapsed / one_frame;
 
-		if (i < n)
-			wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, i);
+	if (i < n)
+		wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, i);
 
-		if (i > n / 2) {
-			Walls[seg->sides[side].wall_num].flags |= WALL_DOOR_OPENED;
-			Walls[csegp->sides[Connectside].wall_num].flags |= WALL_DOOR_OPENED;
+	if (i > n / 2) {
+		Walls[seg->sides[side].wall_num].flags |= WALL_DOOR_OPENED;
+		Walls[csegp->sides[Connectside].wall_num].flags |= WALL_DOOR_OPENED;
+	}
+
+	if (i >= n - 1) {
+		wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, n - 1);
+
+		// If our door is not automatic just remove it from the list.
+		if (!(Walls[seg->sides[side].wall_num].flags & WALL_DOOR_AUTO)) {
+			for (i = door_num; i < ActiveDoors.size() - 1; i++)
+				ActiveDoors[i] = ActiveDoors[i + 1];
+			ActiveDoors.pop_back();
+			Walls[seg->sides[side].wall_num].state = WALL_DOOR_OPEN;
+			Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_OPEN;
 		}
+		else {
 
-		if (i >= n - 1) {
-			wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, n - 1);
+			Walls[seg->sides[side].wall_num].state = WALL_DOOR_WAITING;
+			Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_WAITING;
 
-			// If our door is not automatic just remove it from the list.
-			if (!(Walls[seg->sides[side].wall_num].flags & WALL_DOOR_AUTO)) {
-				for (i = door_num; i < ActiveDoors.size() - 1; i++)
-					ActiveDoors[i] = ActiveDoors[i + 1];
-				ActiveDoors.pop_back();
-				Walls[seg->sides[side].wall_num].state = WALL_DOOR_OPEN;
-				Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_OPEN;
-			}
-			else {
-
-				Walls[seg->sides[side].wall_num].state = WALL_DOOR_WAITING;
-				Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_WAITING;
-
-				//ActiveDoors[Num_open_doors].time = 0;	//counts up
-			}
+			//ActiveDoors[Num_open_doors].time = 0;	//counts up
 		}
-
 	}
 
 }
