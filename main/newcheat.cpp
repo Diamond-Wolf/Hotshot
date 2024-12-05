@@ -617,7 +617,7 @@ bool CheckCheats(char newKeyIn) {
             do_cheat_penalty();
             Players[Player_num].flags ^= PLAYER_FLAGS_INVULNERABLE;
             HUD_init_message("%s %s!", TXT_INVULNERABILITY, (Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE) ? TXT_ON : TXT_OFF);
-            if (Players[Player_num].flags & PLAYER_FLAGS_CLOAKED) 
+            if (Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE)
             {
                 Players[Player_num].invulnerable_time = GameTime;
             }

@@ -1211,7 +1211,7 @@ void do_sound_menu()
 
 		m[5].type = NM_TYPE_CHECK;  m[5].text = TXT_REVERSE_STEREO; m[5].value = Config_channels_reversed;
 
-		i = newmenu_do1(NULL, "Sound activeBMTable->eclips & Music", sizeof(m) / sizeof(*m), m, sound_menuset, i);
+		i = newmenu_do1(NULL, "Sound Effects & Music", sizeof(m) / sizeof(*m), m, sound_menuset, i);
 
 		Redbook_enabled = m[4].value;
 		Config_channels_reversed = m[5].value;
