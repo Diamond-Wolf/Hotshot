@@ -266,7 +266,10 @@ void do_controlcen_destroyed_stuff(object *objp)
 		mprintf((0, "Deleting secret.sgc, return value = %i\n", rval));
 	}
 
-	if (CurrentDataVersion == DataVer::DEMO)
+	if (currentGame == G_DESCENT_1) {
+		Total_countdown_time = 30 + 5 * (NDL - Difficulty_level - 1);
+	}
+	else if (CurrentDataVersion == DataVer::DEMO)
 	{
 		Total_countdown_time = Base_control_center_explosion_time + Base_control_center_explosion_time * (NDL - Difficulty_level - 1) / 4 - 1;
 	}

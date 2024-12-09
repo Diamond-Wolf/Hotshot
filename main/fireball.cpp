@@ -250,7 +250,7 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector posit
 
 								phys_apply_force(obj0p, vforce);
 								phys_apply_rot(obj0p, vforce2);
-								if (Difficulty_level == 0)
+								if (Difficulty_level == 0 && currentGame == G_DESCENT_2)
 									damage /= 4;
 								if ( obj0p->shields >= 0 )
 									apply_damage_to_player(obj0p, killer, damage );
