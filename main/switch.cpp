@@ -249,71 +249,69 @@ int do_change_walls(int8_t trigger_num)
 			//segp->sides[side].wall_num = -1;
 			//csegp->sides[cside].wall_num = -1;
 
-			switch (Triggers[trigger_num].type)
-			{
-				case TT_OPEN_WALL:		new_wall_type = WALL_OPEN; break;
-				case TT_CLOSE_WALL:		new_wall_type = WALL_CLOSED; break;
-				case TT_ILLUSORY_WALL:	new_wall_type = WALL_ILLUSION; break;
-			}
+			auto type = Triggers[trigger_num].type;
+
+			if (type & HTT_OPEN_WALL)
+				new_wall_type = WALL_OPEN;
+			else if (new_wall_type & HTT_ILLUSORY_WALL)
+				new_wall_type = WALL_ILLUSION;
+			else if (new_wall_type & HTT_CLOSE_WALL)
+				new_wall_type = WALL_CLOSED;
 
 			if (Walls[segp->sides[side].wall_num].type == new_wall_type && Walls[csegp->sides[cside].wall_num].type == new_wall_type)
 				continue;		//already in correct state, so skip
 
 			ret = 1;
 
-			switch (Triggers[trigger_num].type) 
-			{
-	
-				case TT_OPEN_WALL:
-					mprintf((0,"Open wall\n"));
+			////////////////////////////////////
+			
+			if (type & HTT_OPEN_WALL) {
+				mprintf((0, "Open wall\n"));
 
-					if ((activeBMTable->tmaps[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD)) 
-					{
-						vms_vector pos;
-						compute_center_point_on_side(&pos, segp, side );
-						digi_link_sound_to_pos( SOUND_FORCEFIELD_OFF, segp-Segments.data(), side, pos, 0, F1_0 );
-						if (segp->sides[side].wall_num >= 0) {
-							Walls[segp->sides[side].wall_num].type = new_wall_type;
-							digi_kill_sound_linked_to_segment(segp-Segments.data(),side,SOUND_FORCEFIELD_HUM);
-						}
-						if (csegp->sides[side].wall_num >= 0) {
-							Walls[csegp->sides[cside].wall_num].type = new_wall_type;
-							digi_kill_sound_linked_to_segment(csegp-Segments.data(),cside,SOUND_FORCEFIELD_HUM);
-						}
+				if ((activeBMTable->tmaps[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD))
+				{
+					vms_vector pos;
+					compute_center_point_on_side(&pos, segp, side);
+					digi_link_sound_to_pos(SOUND_FORCEFIELD_OFF, segp - Segments.data(), side, pos, 0, F1_0);
+					if (segp->sides[side].wall_num >= 0) {
+						Walls[segp->sides[side].wall_num].type = new_wall_type;
+						digi_kill_sound_linked_to_segment(segp - Segments.data(), side, SOUND_FORCEFIELD_HUM);
 					}
-					else
-						start_wall_cloak(segp,side);
-
-					ret = 1;
-
-					break;
-
-				case TT_CLOSE_WALL:
-					mprintf((0,"Close wall\n"));
-
-					if ((activeBMTable->tmaps[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD)) 
-					{
-						vms_vector pos;
-						compute_center_point_on_side(&pos, segp, side );
-						digi_link_sound_to_pos(SOUND_FORCEFIELD_HUM,segp-Segments.data(),side,pos,1, F1_0/2);
-						if (segp->sides[side].wall_num >= 0) 
-							Walls[segp->sides[side].wall_num].type = new_wall_type;
-						if (csegp->sides[side].wall_num >= 0) 
-							Walls[csegp->sides[cside].wall_num].type = new_wall_type;
+					if (csegp->sides[side].wall_num >= 0) {
+						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
+						digi_kill_sound_linked_to_segment(csegp - Segments.data(), cside, SOUND_FORCEFIELD_HUM);
 					}
-					else
-						start_wall_decloak(segp,side);
-					break;
+				}
+				else
+					start_wall_cloak(segp, side);
 
-				case TT_ILLUSORY_WALL:
-					mprintf((0,"Illusory wall\n"));
+				ret = 1;
+
+			} else if (type & HTT_ILLUSORY_WALL) {
+				mprintf((0,"Illusory wall\n"));
+				
+				if (segp->sides[side].wall_num >= 0)
+					Walls[segp->sides[side].wall_num].type = new_wall_type;
+				if (csegp->sides[side].wall_num >= 0)
+					Walls[csegp->sides[cside].wall_num].type = new_wall_type;
+
+			} else if (type & HTT_CLOSE_WALL) {
+				mprintf((0, "Close wall\n"));
+
+				if ((activeBMTable->tmaps[segp->sides[side].tmap_num].flags & TMI_FORCE_FIELD))
+				{
+					vms_vector pos;
+					compute_center_point_on_side(&pos, segp, side);
+					digi_link_sound_to_pos(SOUND_FORCEFIELD_HUM, segp - Segments.data(), side, pos, 1, F1_0 / 2);
 					if (segp->sides[side].wall_num >= 0)
 						Walls[segp->sides[side].wall_num].type = new_wall_type;
 					if (csegp->sides[side].wall_num >= 0)
 						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
-					break;
-			}
+				}
+				else
+					start_wall_decloak(segp, side);
 
+			}
 
 			kill_stuck_objects(segp->sides[side].wall_num);
 			kill_stuck_objects(csegp->sides[cside].wall_num);
@@ -414,6 +412,57 @@ int wall_is_forcefield(trigger *trig)
 	return (i<trig->num_links);
 }
 
+bool ExecSecretLevel(int pnum) {
+	int	truth;
+
+	if (CurrentDataVersion == DataVer::DEMO)
+	{
+		HUD_init_message("Secret Level Teleporter disabled in Descent 2 Demo");
+		digi_play_sample(SOUND_BAD_SELECTION, F1_0);
+		return false;
+	}
+
+	if (pnum != Player_num)
+		return false;
+
+	if ((Players[Player_num].shields < 0) || Player_is_dead)
+		return false;
+
+	if (Game_mode & GM_MULTI)
+	{
+		HUD_init_message("Secret Level Teleporter disabled in multiplayer!");
+		digi_play_sample(SOUND_BAD_SELECTION, F1_0);
+		return false;
+	}
+
+	truth = p_secret_level_destroyed();
+
+	if (Newdemo_state == ND_STATE_RECORDING)			// record whether we're really going to the secret level
+		newdemo_record_secret_exit_blown(truth);
+
+	if ((Newdemo_state != ND_STATE_PLAYBACK) && truth)
+	{
+		HUD_init_message("Secret Level destroyed.  Exit disabled.");
+		digi_play_sample(SOUND_BAD_SELECTION, F1_0);
+		return false;
+	}
+
+	if (Newdemo_state == ND_STATE_RECORDING)		// stop demo recording
+		Newdemo_state = ND_STATE_PAUSED;
+
+	digi_stop_all();		//kill the sounds
+
+	if (currentGame != G_DESCENT_1)
+		digi_play_sample(SOUND_SECRET_EXIT, F1_0);
+	mprintf((0, "Exiting to secret level\n"));
+
+	gr_palette_fade_out(gr_palette, 32, 0);
+	EnterSecretLevel();
+	Control_center_destroyed = 0;
+	
+	return true;
+}
+
 int check_trigger_sub(int trigger_num, int pnum,int shot)
 {
 	trigger *trig = &Triggers[trigger_num];
@@ -426,175 +475,134 @@ int check_trigger_sub(int trigger_num, int pnum,int shot)
 	if (trig->flags & TF_ONE_SHOT)		//if this is a one-shot...
 		trig->flags |= TF_DISABLED;		//..then don't let it happen again
 
-	switch (trig->type) 
-	{
-		case TT_EXIT:
+	auto type = trig->type;
 
-			if (pnum!=Player_num)
-			  break;
+	int had_no_net_trigger = 0;
+	int executed = 0;
+	
+	if (type & HTT_EXIT && pnum == Player_num) {
+		executed++;
+		digi_stop_all();		//kill the sounds
 
-			digi_stop_all();		//kill the sounds
-			
-			if (Current_level_num > 0) 
-			{
-				start_endlevel_sequence();
-				mprintf((0,"WOOHOO! (leaving the mine!)\n"));
-			} else if (Current_level_num < 0) {
-				if ((Players[Player_num].shields < 0) || Player_is_dead)
-					break;
-
+		if (Current_level_num > 0)
+		{
+			start_endlevel_sequence();
+			mprintf((0, "WOOHOO! (leaving the mine!)\n"));
+		} else if (Current_level_num < 0) {
+			if (!((Players[Player_num].shields < 0) || Player_is_dead)) {
 				if (currentGame == G_DESCENT_1)
 					start_endlevel_sequence();
 				else
 					ExitSecretLevel();
-					
-				return 1;
-			} 
-			else 
-			{
-				#ifdef EDITOR
-					nm_messagebox( "Yo!", 1, "You have hit the exit trigger!", "" );
-				#else
-					Int3();		//level num == 0, but no editor!
-				#endif
 			}
-			return 1;
-			break;
-
-		case TT_SECRET_EXIT: 
-		{
-			int	truth;
-
-			if (CurrentDataVersion == DataVer::DEMO)
-			{
-				HUD_init_message("Secret Level Teleporter disabled in Descent 2 Demo");
-				digi_play_sample(SOUND_BAD_SELECTION, F1_0);
-				break;
-			}
- 
-			if (pnum!=Player_num)
-				break;
-
-			if ((Players[Player_num].shields < 0) || Player_is_dead)
-				break;
-
-			if (Game_mode & GM_MULTI) 
-			{
-				HUD_init_message("Secret Level Teleporter disabled in multiplayer!");
-				digi_play_sample( SOUND_BAD_SELECTION, F1_0 );
-				break;
-			}
-
-			truth = p_secret_level_destroyed();
-
-			if (Newdemo_state == ND_STATE_RECORDING)			// record whether we're really going to the secret level
-				newdemo_record_secret_exit_blown(truth);
-
-			if ((Newdemo_state != ND_STATE_PLAYBACK) && truth)
-			{
-				HUD_init_message("Secret Level destroyed.  Exit disabled.");
-				digi_play_sample(SOUND_BAD_SELECTION, F1_0);
-				break;
-			}
-
-			if (Newdemo_state == ND_STATE_RECORDING)		// stop demo recording
-				Newdemo_state = ND_STATE_PAUSED;
-
-			digi_stop_all();		//kill the sounds
-
-			if (currentGame != G_DESCENT_1)
-				digi_play_sample(SOUND_SECRET_EXIT, F1_0);
-			mprintf((0, "Exiting to secret level\n"));
-
-			gr_palette_fade_out(gr_palette, 32, 0);
-			EnterSecretLevel();
-			Control_center_destroyed = 0;
-			return 1;
-			break;
-
 		}
-
-		case TT_OPEN_DOOR:
-			mprintf((0,"D"));
-			do_link(trigger_num);
-			print_trigger_message (pnum,trigger_num,shot,"Door%s opened!");
-			
-			break;
-
-		case TT_CLOSE_DOOR:
-			do_close_door(trigger_num);
-			print_trigger_message (pnum,trigger_num,shot,"Door%s closed!");
-			break;
-
-		case TT_UNLOCK_DOOR:
-			mprintf((0,"D"));
-			do_unlock_doors(trigger_num);
-			print_trigger_message (pnum,trigger_num,shot,"Door%s unlocked!");
-			
-			break;
-	
-		case TT_LOCK_DOOR:
-			mprintf((0,"D"));
-			do_lock_doors(trigger_num);
-			print_trigger_message (pnum,trigger_num,shot,"Door%s locked!");
-
-			break;
-	
-		case TT_OPEN_WALL:
-			if (do_change_walls(trigger_num))
-				if (wall_is_forcefield(trig))
-					print_trigger_message (pnum,trigger_num,shot,"Force field%s deactivated!");
-				else
-					print_trigger_message (pnum,trigger_num,shot,"Wall%s opened!");
-			break;
-
-		case TT_CLOSE_WALL:
-			if (do_change_walls(trigger_num))
-				if (wall_is_forcefield(trig))
-					print_trigger_message (pnum,trigger_num,shot,"Force field%s activated!");
-				else
-					print_trigger_message (pnum,trigger_num,shot,"Wall%s closed!");
-			break;
-
-		case TT_ILLUSORY_WALL:
-			//don't know what to say, so say nothing
-			do_change_walls(trigger_num);
-			break;
-
-		case TT_MATCEN:
-			if (!(Game_mode & GM_MULTI) || (Game_mode & GM_MULTI_ROBOTS))
-				do_matcen(trigger_num);
-			break;
-	
-		case TT_ILLUSION_ON:
-			mprintf((0,"I"));
-			do_il_on(trigger_num);
-			print_trigger_message (pnum,trigger_num,shot,"Illusion%s on!");
-			break;
-	
-		case TT_ILLUSION_OFF:
-			mprintf((0,"i"));
-			do_il_off(trigger_num);
-			print_trigger_message (pnum,trigger_num,shot,"Illusion%s off!");
-			break;
-
-		case TT_LIGHT_OFF:
-			if (do_light_off(trigger_num))
-				print_trigger_message (pnum,trigger_num,shot,"Lights off!");
-			break;
-
-		case TT_LIGHT_ON:
-			if (do_light_on(trigger_num))
-				print_trigger_message (pnum,trigger_num,shot,"Lights on!");
-
-			break;
-
-		default:
-			Int3();
-			break;
+		else
+		{
+#ifdef EDITOR
+			nm_messagebox("Yo!", 1, "You have hit the exit trigger!", "");
+#else
+			Int3();		//level num == 0, but no editor!
+#endif
+		}
+		had_no_net_trigger = 1;
 	}
 
-	return 0;
+	if (type & HTT_SECRET_EXIT)
+	{
+		executed++;
+		if (ExecSecretLevel(pnum))
+			had_no_net_trigger = 1;
+	}
+
+	if (type & HTT_OPEN_DOOR) {
+		executed++;
+		mprintf((0, "D"));
+		do_link(trigger_num);
+		print_trigger_message(pnum, trigger_num, shot, "Door%s opened!");
+	}
+
+	if (type & HTT_CLOSE_DOOR) {
+		executed++;
+		do_close_door(trigger_num);
+		print_trigger_message(pnum, trigger_num, shot, "Door%s closed!");
+	}
+
+	if (type & HTT_UNLOCK_DOOR) {
+		executed++;
+		mprintf((0, "U"));
+		do_unlock_doors(trigger_num);
+		print_trigger_message(pnum, trigger_num, shot, "Door%s unlocked!");
+	}
+	
+	if (type & HTT_LOCK_DOOR) {
+		executed++;
+		mprintf((0, "L"));
+		do_lock_doors(trigger_num);
+		print_trigger_message(pnum, trigger_num, shot, "Door%s locked!");
+	}
+	
+	if (type & HTT_OPEN_WALL) {
+		executed++;
+		if (do_change_walls(trigger_num))
+			if (wall_is_forcefield(trig))
+				print_trigger_message(pnum, trigger_num, shot, "Force field%s deactivated!");
+			else
+				print_trigger_message(pnum, trigger_num, shot, "Wall%s opened!");
+	}
+
+	if (type & HTT_CLOSE_WALL) {
+		executed++;
+		if (do_change_walls(trigger_num))
+			if (wall_is_forcefield(trig))
+				print_trigger_message(pnum, trigger_num, shot, "Force field%s activated!");
+			else
+				print_trigger_message(pnum, trigger_num, shot, "Wall%s closed!");
+	}
+
+	if (type & HTT_ILLUSORY_WALL) {
+		executed++;
+		//don't know what to say, so say nothing
+		do_change_walls(trigger_num);
+	}
+
+	if (type & HTT_MATCEN) {
+		executed++;
+		if (!(Game_mode & GM_MULTI) || (Game_mode & GM_MULTI_ROBOTS))
+			do_matcen(trigger_num);
+	}
+	
+	if (type & HTT_ILLUSION_ON) {
+		executed++;
+		mprintf((0, "I"));
+		do_il_on(trigger_num);
+		print_trigger_message(pnum, trigger_num, shot, "Illusion%s on!");
+	}
+	
+	if (type & HTT_ILLUSION_OFF) {
+		executed++;
+		mprintf((0, "i"));
+		do_il_off(trigger_num);
+		print_trigger_message(pnum, trigger_num, shot, "Illusion%s off!");
+	}
+
+	if (type & HTT_LIGHT_OFF) {
+		executed++;
+		if (do_light_off(trigger_num))
+			print_trigger_message(pnum, trigger_num, shot, "Lights off!");
+	}
+
+	if (type & HTT_LIGHT_ON) {
+		executed++;
+		if (do_light_on(trigger_num))
+			print_trigger_message(pnum, trigger_num, shot, "Lights on!");
+	}
+
+	mprintf((0, "Executed %d triggers\n", executed));
+
+	if (executed <= 0)
+		Int3();
+	
+	return had_no_net_trigger;
 }
 
 //-----------------------------------------------------------------
@@ -670,7 +678,7 @@ void read_trigger(trigger* trig, FILE* fp)
 	trig->type = file_read_byte(fp);
 	trig->flags = file_read_byte(fp);
 	trig->num_links = file_read_byte(fp);
-	trig->pad = file_read_byte(fp);
+	j = file_read_byte(fp); //new trigger struct doesn't have pad
 
 	trig->value = file_read_int(fp);
 	trig->time = file_read_int(fp);
@@ -686,7 +694,7 @@ void write_trigger(trigger* trig, FILE* fp)
 	file_write_byte(fp, trig->type);
 	file_write_byte(fp, trig->flags);
 	file_write_byte(fp, trig->num_links);
-	file_write_byte(fp, trig->pad);
+	file_write_byte(fp, 0);
 
 	file_write_int(fp, trig->value);
 	file_write_int(fp, trig->time);

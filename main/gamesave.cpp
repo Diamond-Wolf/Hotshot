@@ -150,6 +150,64 @@ typedef struct v30_trigger {
 #define	TRIGGER_CLOSE_WALL		4096	// Makes a wall closed
 #define	TRIGGER_ILLUSORY_WALL	8192	// Makes a wall illusory
 
+constexpr std::array<uint32_t, 14> D2_TRIGGER_TABLE{
+	HTT_OPEN_DOOR,
+	HTT_CLOSE_DOOR,
+	HTT_MATCEN,
+	HTT_EXIT,
+	HTT_SECRET_EXIT,
+	HTT_ILLUSION_OFF,
+	HTT_ILLUSION_ON,
+	HTT_UNLOCK_DOOR,
+	HTT_LOCK_DOOR,
+	HTT_OPEN_WALL,
+	HTT_CLOSE_WALL,
+	HTT_ILLUSORY_WALL,
+	HTT_LIGHT_OFF,
+	HTT_LIGHT_ON,
+};
+
+uint16_t MakeD1HTriggerFlags(int flags) {
+	return ((flags & TRIGGER_ONE_SHOT) ? TF_ONE_SHOT : 0);
+}
+
+uint32_t MakeD1HTrigger(int flags) {
+	uint32_t htFlags = 0;
+
+	if (flags & TRIGGER_CONTROL_DOORS)
+		htFlags |= HTT_OPEN_DOOR;
+	if (flags & TRIGGER_SHIELD_DAMAGE)
+		htFlags |= HTT_DRAIN_SHIELDS;
+	if (flags & TRIGGER_ENERGY_DRAIN)
+		htFlags |= HTT_DRAIN_ENERGY;
+	if (flags & TRIGGER_EXIT)
+		htFlags |= HTT_EXIT;
+	// no TRIGGER_ON
+	if (flags & TRIGGER_MATCEN)
+		htFlags |= HTT_MATCEN;
+	if (flags & TRIGGER_ILLUSION_OFF)
+		htFlags |= HTT_ILLUSION_OFF;
+	if (flags & TRIGGER_SECRET_EXIT)
+		htFlags |= HTT_SECRET_EXIT;
+	if (flags & TRIGGER_ILLUSION_ON)
+		htFlags |= HTT_ILLUSION_ON;
+	if (flags & TRIGGER_UNLOCK_DOORS)
+		htFlags |= HTT_UNLOCK_DOOR;
+	if (flags & TRIGGER_OPEN_WALL)
+		htFlags |= HTT_OPEN_WALL;
+	if (flags & TRIGGER_CLOSE_WALL)
+		htFlags |= HTT_CLOSE_WALL;
+	if (flags & TRIGGER_ILLUSORY_WALL)
+		htFlags |= HTT_ILLUSORY_WALL;
+
+	return htFlags;
+}
+
+uint32_t MakeD2HTrigger(int type) {
+	return D2_TRIGGER_TABLE[type];
+}
+
+
 struct {
 	uint16_t 	fileinfo_signature;
 	uint16_t	fileinfo_version;
@@ -1258,11 +1316,12 @@ int LoadGameDataD1(CFILE* LoadFile)
 				int8_t type1 = cfile_read_byte(LoadFile);
 				short flags1 = cfile_read_short(LoadFile);
 
-				Triggers[i].type = ConvertTrigger(flags1);
-				Triggers[i].flags = 0;
+				Triggers[i].type = MakeD1HTrigger(flags1);
+				Triggers[i].flags = MakeD1HTriggerFlags(flags1);
 				Triggers[i].value = cfile_read_int(LoadFile);
 				Triggers[i].time = cfile_read_int(LoadFile);
-				Triggers[i].link_num = cfile_read_byte(LoadFile);
+				//Triggers[i].link_num = cfile_read_byte(LoadFile);
+				cfile_read_byte(LoadFile);
 				Triggers[i].num_links = cfile_read_short(LoadFile);
 				for (j = 0; j < MAX_WALLS_PER_LINK; j++)
 					Triggers[i].seg[j] = cfile_read_short(LoadFile);
@@ -1714,39 +1773,8 @@ int LoadGameDataD2(CFILE* LoadFile)
 					//Assert(trig.flags & TRIGGER_ON);
 					trig.flags &= ~TRIGGER_ON;
 
-					if (trig.flags & TRIGGER_CONTROL_DOORS)
-						type = TT_OPEN_DOOR;
-					else if (trig.flags & TRIGGER_SHIELD_DAMAGE)
-						Int3();
-					else if (trig.flags & TRIGGER_ENERGY_DRAIN)
-						Int3();
-					else if (trig.flags & TRIGGER_EXIT)
-						type = TT_EXIT;
-					else if (trig.flags & TRIGGER_ONE_SHOT)
-						Int3();
-					else if (trig.flags & TRIGGER_MATCEN)
-						type = TT_MATCEN;
-					else if (trig.flags & TRIGGER_ILLUSION_OFF)
-						type = TT_ILLUSION_OFF;
-					else if (trig.flags & TRIGGER_SECRET_EXIT)
-						type = TT_SECRET_EXIT;
-					else if (trig.flags & TRIGGER_ILLUSION_ON)
-						type = TT_ILLUSION_ON;
-					else if (trig.flags & TRIGGER_UNLOCK_DOORS)
-						type = TT_UNLOCK_DOOR;
-					else if (trig.flags & TRIGGER_OPEN_WALL)
-						type = TT_OPEN_WALL;
-					else if (trig.flags & TRIGGER_CLOSE_WALL)
-						type = TT_CLOSE_WALL;
-					else if (trig.flags & TRIGGER_ILLUSORY_WALL)
-						type = TT_ILLUSORY_WALL;
-					else
-						Int3();
-
-					printf("Done trigger flagging\n");
-
-					Triggers[i].type = type;
-					Triggers[i].flags = 0;
+					Triggers[i].type = MakeD1HTrigger(trig.flags);
+					Triggers[i].flags = MakeD1HTriggerFlags(trig.flags);
 					Triggers[i].num_links = trig.num_links;
 					Triggers[i].num_links = trig.num_links;
 					Triggers[i].value = trig.value;
@@ -1760,10 +1788,10 @@ int LoadGameDataD2(CFILE* LoadFile)
 				}
 				else 
 				{
-					Triggers[i].type = read_byte(LoadFile);
+					Triggers[i].type = MakeD2HTrigger(read_byte(LoadFile));
 					Triggers[i].flags = read_byte(LoadFile);
 					Triggers[i].num_links = read_byte(LoadFile);
-					Triggers[i].pad = read_byte(LoadFile);
+					read_byte(LoadFile);
 					Triggers[i].value = read_fix(LoadFile);
 					Triggers[i].time = read_fix(LoadFile);
 					for (j = 0; j < MAX_WALLS_PER_LINK; j++)
@@ -1999,12 +2027,12 @@ int LoadGameDataD2(CFILE* LoadFile)
 				//check to see that if a trigger requires a wall that it has one,
 				//and if it requires a matcen that it has one
 
-				if (Triggers[t].type == TT_MATCEN) 
+				if (Triggers[t].type & HTT_MATCEN) 
 				{
 					if (Segment2s[seg_num].special != SEGMENT_IS_ROBOTMAKER)
-						;// Int3();		//matcen trigger doesn't point to matcen
+						Int3();		//matcen trigger doesn't point to matcen
 				}
-				else if (Triggers[t].type != TT_LIGHT_OFF && Triggers[t].type != TT_LIGHT_ON) {	//light triggers don't require walls
+				else if (!(Triggers[t].type & (HTT_LIGHT_OFF | HTT_LIGHT_ON))) {	//light triggers don't require walls
 					if (wall_num == -1)
 						Int3();	//	This is illegal.  This trigger requires a wall
 					else

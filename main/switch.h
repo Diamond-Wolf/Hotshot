@@ -13,6 +13,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include <array>
+
 #include "inferno.h"
 #include "segment.h"
 
@@ -52,6 +54,23 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define TT_LIGHT_ON				13		// Turn s light on
 #define NUM_TRIGGER_TYPES		14
 
+#define HTT_OPEN_DOOR			0x0001
+#define HTT_CLOSE_DOOR			0x0002
+#define HTT_MATCEN				0x0004
+#define HTT_EXIT				0x0008
+#define HTT_SECRET_EXIT			0x0010
+#define HTT_ILLUSION_OFF		0x0020
+#define HTT_ILLUSION_ON			0x0040		
+#define HTT_UNLOCK_DOOR			0x0080		
+#define HTT_LOCK_DOOR			0x0100	
+#define HTT_OPEN_WALL			0x0200	
+#define HTT_CLOSE_WALL			0x0400
+#define HTT_ILLUSORY_WALL		0x0800
+#define HTT_LIGHT_OFF			0x1000
+#define HTT_LIGHT_ON			0x2000
+#define HTT_DRAIN_ENERGY		0x4000
+#define HTT_DRAIN_SHIELDS		0x8000
+
 #define TF_NO_MESSAGE			1		// Don't show a message when triggered
 #define TF_ONE_SHOT				2		// Only trigger once
 #define TF_DISABLED				4		// Set after one-shot fires
@@ -66,7 +85,17 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define	CONTROL_LIGHTS_ON			  16	// If Trigger turns on lights in a certain area
 #define	CONTROL_LIGHTS_OFF		  32	// If Trigger turns off lights in a certain area
 
-typedef struct trigger {
+typedef struct HTrigger {
+	uint32_t type;
+	uint16_t flags;
+	fix value;
+	fix time;
+	int8_t num_links;
+	short seg[MAX_WALLS_PER_LINK];
+	short side[MAX_WALLS_PER_LINK];
+} trigger;
+
+typedef struct d2_trigger {
 	int8_t		type;
 	short		flags;
 	fix		value;
@@ -76,7 +105,7 @@ typedef struct trigger {
 	short 	seg[MAX_WALLS_PER_LINK];
 	short		side[MAX_WALLS_PER_LINK];
 	int8_t		pad;	
-} trigger;
+} d2_trigger;
 
 extern std::vector<trigger> Triggers;
 
