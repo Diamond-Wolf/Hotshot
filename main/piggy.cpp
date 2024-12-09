@@ -151,9 +151,11 @@ void swap_0_255(grs_bitmap* bmp)
 
 #define XLAT_SIZE MAX_BITMAP_FILES
 
-//piggytable::piggytable() {
-//	init();
-//}
+piggytable::piggytable() {
+	file = nullptr;
+	piggyInitialized = false;
+	Init();
+}
 
 void piggytable::Init() {
 
@@ -171,23 +173,11 @@ void piggytable::Init() {
 		gameBitmapXlat[i] = i;
 	}
 
-	/*hashtable_init(&bitmapNames, MAX_BITMAP_FILES);
-	hashtable_init(&soundNames, MAX_SOUND_FILES);*/
-
-}
-
-void piggytable::SetActive() {
-	//piggy_close();
-	activePiggyTable = this;
 }
 
 piggytable::~piggytable() {
 
-	/*hashtable_free(&bitmapNames);
-	hashtable_free(&soundNames);*/
-
-	if (file)
-	{
+	if (file) {
 		cfclose(file);
 	}
 
@@ -337,18 +327,6 @@ int piggy_find_sound(const char* name)
 
 char Current_pigfile[FILENAME_LEN] = "";
 
-void piggy_close_file()
-{
-	/*if (activePiggyTable->file)
-	{
-		cfclose(activePiggyTable->file);
-		activePiggyTable->file = NULL;
-		Current_pigfile[0] = 0;
-	}*/
-}
-
-//int Pigfile_initialized = 0;
-
 #define PIGFILE_ID              'GIPP'          //PPIG
 #define PIGFILE_VERSION         2
 
@@ -381,8 +359,6 @@ void piggy_init_pigfile(const char* filename)
 #elif defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char name[CHOCOLATE_MAX_FILE_PATH_SIZE];
 #endif
-
-	piggy_close_file();             //close old pig if still open
 
 #ifdef SHAREWARE                //rename pigfile for shareware
 	if (strfcmp(filename, DEFAULT_PIGFILE_REGISTERED) == 0)
@@ -526,20 +502,16 @@ void piggy_new_pigfile(const char* pigname)
 			pigname = DEFAULT_PIGFILE_SHAREWARE;
 	}
 
-	if (_strnfcmp(Current_pigfile, pigname, sizeof(Current_pigfile)) == 0)
-		return;         //already have correct pig
-
 	if (!activePiggyTable->piggyInitialized) //have we ever opened a pigfile?
 	{
 		piggy_init_pigfile(pigname);            //..no, so do initialization stuff
 		return;
 	}
+
 	else if (currentGame == G_DESCENT_1) {
 		printf("init new in d1");
 		return;
 	}
-
-	piggy_close_file();             //close old pig if still open
 
 	Piggy_bitmap_cache_next = 0;            //free up cache
 
@@ -1167,8 +1139,6 @@ int PiggyInitD1()
 	Piggy_bitmap_cache_next = 0;
 
 	mprintf((0, "\nBitmaps: %d KB   Sounds: %d KB\n", Piggy_bitmap_cache_size / 1024, sbytes / 1024));
-
-	atexit(piggy_close_file);
 
 	//	mprintf( (0, "<<<<Paging in all piggy bitmaps...>>>>>" ));
 	//	for (i=0; i < Num_bitmap_files; i++ )	{
@@ -1832,12 +1802,8 @@ void ClearPiggyCache() {
 	}
 }
 
-void piggy_close()
-{
-	piggy_close_file();
-
+void piggy_close() {
 	ClearPiggyCache();
-
 }
 
 int piggy_does_bitmap_exist_slow(char* name)

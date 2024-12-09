@@ -110,9 +110,8 @@ struct piggytable {
 	std::vector<uint8_t> gameBitmapFlags;
 	std::vector<uint16_t> gameBitmapXlat;
 
-	//piggytable();
+	piggytable();
 	void Init();
-	void SetActive();
 	~piggytable();
 };
 

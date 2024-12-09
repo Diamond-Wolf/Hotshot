@@ -111,7 +111,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MENU_JOIN_TCP_NETGAME                   27
 #define MENU_START_APPLETALK_NETGAME			28
 #define MENU_JOIN_APPLETALK_NETGAME				30
-#define MENU_SWITCH_GAME						31
 
 //ADD_ITEM("Start netgame...", MENU_START_NETGAME, -1 );
 //ADD_ITEM("Send net message...", MENU_SEND_NET_MESSAGE, -1 );
@@ -283,6 +282,9 @@ void create_main_menu(newmenu_item * m, int* menu_choice, int* callers_num_optio
 //returns number of item chosen
 int DoMenu()
 {
+
+	SwitchGame(2);
+
 	int menu_choice[25];
 	newmenu_item m[25];
 	int num_options = 0;
@@ -422,7 +424,7 @@ void do_option(int select)
 		break;
 	}
 
-	case MENU_SWITCH_GAME:
+	/*case MENU_SWITCH_GAME:
 	{
 		if (currentGame == G_DESCENT_1) {
 			currentGame = G_DESCENT_2;
@@ -437,7 +439,7 @@ void do_option(int select)
 		//bm_init();
 
 		break;
-	}
+	}*/
 
 #endif
 
@@ -977,6 +979,24 @@ void do_new_game_menu()
 
 	if (!do_difficulty_menu())
 		return;
+
+	//activeBMTable->Init(true);
+	/*switch (currentGame) {
+	case G_DESCENT_1:
+		d1Table = bmtable();
+		d1Table.SetActive();
+		break;
+	case G_DESCENT_2:
+		d2Table = bmtable();
+		d2Table.SetActive();
+		break;
+	default:
+		Int3();
+	}*/
+
+	SwitchGame(currentGame == G_DESCENT_1 ? 1 : 2);
+
+	//bm_init();
 
 	gr_palette_fade_out(gr_palette, 32, 0);
 	StartNewGame(new_level_num);

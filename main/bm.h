@@ -105,8 +105,6 @@ extern fix	ObjStrength[MAX_OBJTYPE];	// initial strength of each object
 
 #define MAX_OBJ_BITMAPS MAX_OBJ_BITMAPS_D2
 
-inline bool shouldAutoClearBMTable = false;
-
 struct bmtable {
 
 	std::vector<bitmap_index> cockpits;
@@ -148,20 +146,19 @@ struct bmtable {
 
 	int firstMultiBitmapNum;
 
-	bool initialized;
+	uint8_t game;
 
 	piggytable piggy;
 
-	//bmtable();
-	void Init(bool reinitialize = false);
-	void SetActive();
+	bmtable();
+	void Init();
 	~bmtable();
 };
 
-extern bmtable d1Table;
-extern bmtable d2Table;
+/*extern bmtable d1Table;
+extern bmtable d2Table;*/
 
-inline bmtable* activeBMTable;
+extern bmtable* activeBMTable;
 
 // Initializes all bitmaps from BITMAPS.TBL file.
 int bm_init_use_tbl(void);

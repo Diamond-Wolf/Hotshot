@@ -832,21 +832,17 @@ void SwitchGame(uint8_t gameVersion) {
 
 		case 1:
 			currentGame = G_DESCENT_1;
-			d1Table.SetActive();
-			if (shouldAutoClearBMTable && !activeBMTable->initialized)
-				bm_init();
 			break;
 
 		case 2:
 			currentGame = G_DESCENT_2;
-			d2Table.SetActive();
-			if (shouldAutoClearBMTable && !activeBMTable->initialized)
-				bm_init();
 			break;
 
 		default:
 			Int3();
 
 	}
+
+	bm_init();
 
 }

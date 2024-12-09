@@ -863,32 +863,14 @@ Here:
 	}
 
 	mprintf((0, "\nDoing bm_init..."));
-	
-	if (!FindArg("-lowmem")) { //If enough memory, just init the tables now
-		d1Table.Init();
-		d2Table.Init();
-
-		currentGame = G_DESCENT_1;
-		d1Table.SetActive(); //Also set up D1 table for fast switching
-#ifdef EDITOR
-		bm_init_use_tbl();
-#else
-		bm_init();
-#endif
-	} else { //Otherwise, ensure only one is loaded at a time
-		shouldAutoClearBMTable = true;
-	}
 
 	currentGame = G_DESCENT_2;
-	d2Table.SetActive();
 
 #ifdef EDITOR
 	bm_init_use_tbl();
 #else
 	bm_init();
 #endif
-
-	printf("D1 tex / D2 tex: %d / %d", d1Table.textures.size(), d2Table.textures.size());
 
 #ifdef EDITOR
 	if (FindArg("-hoarddata") != 0) 
@@ -1029,8 +1011,6 @@ Here:
 		switch (Function_mode) 
 		{
 		case FMODE_MENU:
-			//SwitchGame(2);
-
 			set_screen_mode(SCREEN_MENU);
 
 			if (Auto_demo) 
