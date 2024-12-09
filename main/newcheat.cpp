@@ -407,18 +407,17 @@ bool CheckCheats(char newKeyIn) {
 
         case CI_WEAPONS_D1:
         case CI_WEAPONS_D2:
-
             HUD_init_message(TXT_WOWIE_ZOWIE);
             do_cheat_penalty();
 
             if (currentGame == G_DESCENT_2) {
                 if (CurrentLogicVersion < LogicVer::FULL_1_1)
                 {
-                    if (CurrentLogicVersion == LogicVer::FULL_1_0)
-                        Players[Player_num].primary_weapon_flags &= ~HAS_FLAG(SUPER_LASER_INDEX);
-
                     Players[Player_num].primary_weapon_flags = ~((1 << PHOENIX_INDEX) | (1 << OMEGA_INDEX) | (1 << FUSION_INDEX));
                     Players[Player_num].secondary_weapon_flags = ~((1 << SMISSILE4_INDEX) | (1 << MEGA_INDEX) | (1 << SMISSILE5_INDEX));
+                    
+                    if (CurrentLogicVersion == LogicVer::FULL_1_0)
+                        Players[Player_num].primary_weapon_flags &= ~HAS_FLAG(SUPER_LASER_INDEX);
                 }
                 else
                 {
@@ -472,8 +471,8 @@ bool CheckCheats(char newKeyIn) {
         case CI_PERMA_INVULN_D1:
         case CI_PERMA_INVULN_D2:
             Players[Player_num].flags ^= PLAYER_FLAGS_INVULNERABLE;
+            do_cheat_penalty();
             if (Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE) {
-                do_cheat_penalty();
                 Players[Player_num].invulnerable_time = GameTime + i2f(10000);
             }
             HUD_init_message("%s %s!", TXT_INVULNERABILITY, (Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE) ? TXT_ON : TXT_OFF);
@@ -508,25 +507,23 @@ bool CheckCheats(char newKeyIn) {
         break;
 
         case CI_HOMING:
-            if (!cheatValues[CI_HOMING]) {
-                cheatValues[CI_HOMING] = !cheatValues[CI_HOMING];
-                if (cheatValues[CI_HOMING]) {
-                    do_cheat_penalty();
-                    homingFlags.resize(activeBMTable->weapons.size());
-                    for (i = 0; i < 20; i++)
-                    {
-                        homingFlags[i] = activeBMTable->weapons[i].homing_flag;
-                        activeBMTable->weapons[i].homing_flag = 1;
-                    }
-                    HUD_init_message("Homing weapons!");
-                } else {
-                    Assert(homingFlags.size() == activeBMTable->weapons.size());
-                    for (i = 0; i < 20; i++)
-                    {
-                        activeBMTable->weapons[i].homing_flag = homingFlags[i];
-                    }
-                    HUD_init_message("Dumb weapons.");
+            do_cheat_penalty();
+            cheatValues[CI_HOMING] = !cheatValues[CI_HOMING];
+            if (cheatValues[CI_HOMING]) {
+                homingFlags.resize(activeBMTable->weapons.size());
+                for (i = 0; i < 20; i++)
+                {
+                    homingFlags[i] = activeBMTable->weapons[i].homing_flag;
+                    activeBMTable->weapons[i].homing_flag = 1;
                 }
+                HUD_init_message("Homing weapons!");
+            } else {
+                Assert(homingFlags.size() == activeBMTable->weapons.size());
+                for (i = 0; i < 20; i++)
+                {
+                    activeBMTable->weapons[i].homing_flag = homingFlags[i];
+                }
+                HUD_init_message("Dumb weapons.");
             }
 
             return true;
@@ -548,10 +545,10 @@ bool CheckCheats(char newKeyIn) {
         break;
 
         case CI_INFIGHTING:
+            do_cheat_penalty();
             cheatValues[CI_INFIGHTING] = !cheatValues[CI_INFIGHTING];
             if (cheatValues[CI_INFIGHTING]) {
                 HUD_init_message("Rabid robots!");
-                do_cheat_penalty();
             }
             else
                 HUD_init_message("Kill the player!");
@@ -561,10 +558,10 @@ bool CheckCheats(char newKeyIn) {
 
         case CI_NO_FIRING_D1:
         case CI_NO_FIRING_D2:
+            do_cheat_penalty();
             cheatValues[CI_NO_FIRING_D1] = !cheatValues[CI_NO_FIRING_D1];
             if (cheatValues[CI_NO_FIRING_D1]) {
                 HUD_init_message("%s", "Robot firing OFF!");
-                do_cheat_penalty();
             }
             else
                 HUD_init_message("%s", "Robot firing ON!");
@@ -573,18 +570,17 @@ bool CheckCheats(char newKeyIn) {
         break;
 
         case CI_RAPID_FIRE:
+            do_cheat_penalty();
             cheatValues[CI_RAPID_FIRE] = !cheatValues[CI_RAPID_FIRE];
-            if (cheatValues[CI_RAPID_FIRE])
-                do_cheat_penalty();
             HUD_init_message("Rapid fire %s!", cheatValues[CI_RAPID_FIRE] ? TXT_ON : TXT_OFF);
 
             return true;
         break;
 
         case CI_PERMA_CLOAK:
+            do_cheat_penalty();
             Players[Player_num].flags ^= PLAYER_FLAGS_CLOAKED;
             if (Players[Player_num].flags & PLAYER_FLAGS_CLOAKED) {
-                do_cheat_penalty();
                 Players[Player_num].cloak_time = GameTime + i2f(10000);
             }
             HUD_init_message("%s %s!", PLAYER_FLAGS_CLOAKED, (Players[Player_num].flags & PLAYER_FLAGS_CLOAKED) ? TXT_ON : TXT_OFF);
@@ -600,7 +596,7 @@ bool CheckCheats(char newKeyIn) {
         break;
 
         case CI_TEMP_CLOAK:
-        do_cheat_penalty();
+            do_cheat_penalty();
             Players[Player_num].flags ^= PLAYER_FLAGS_CLOAKED;
             HUD_init_message("%s %s!", TXT_CLOAK, (Players[Player_num].flags & PLAYER_FLAGS_CLOAKED) ? TXT_ON : TXT_OFF);
             digi_play_sample(SOUND_CHEATER, F1_0);
@@ -642,9 +638,9 @@ bool CheckCheats(char newKeyIn) {
         break;
 
         case CI_GHOST:
+            do_cheat_penalty();
             cheatValues[CI_GHOST] = !cheatValues[CI_GHOST];
             if (cheatValues[CI_GHOST])
-                do_cheat_penalty();
             HUD_init_message("%s %s!", "Ghosty mode", cheatValues[CI_GHOST] ? TXT_ON : TXT_OFF);
 
             return true;
@@ -734,6 +730,7 @@ bool CheckCheats(char newKeyIn) {
                 try {
                     newSegNum = std::stoi(m.text);
                     if (newSegNum >= 0 && newSegNum < Num_segments) {
+                        do_cheat_penalty();
                         auto& segment = Segments[newSegNum];
                         int objnum = Players[Player_num].objnum;
                         vms_vector segCenter;
@@ -748,9 +745,9 @@ bool CheckCheats(char newKeyIn) {
         break;
 
         case CI_EXPLODE_FLARES:
+            do_cheat_penalty();
             cheatValues[CI_EXPLODE_FLARES] = !cheatValues[CI_EXPLODE_FLARES];
             if (cheatValues[CI_EXPLODE_FLARES]) {
-                do_cheat_penalty();
                 weaponChildren.resize(activeBMTable->weapons.size());
                 for (i = 0; i < activeBMTable->weapons.size(); i++)
                 {
@@ -772,9 +769,9 @@ bool CheckCheats(char newKeyIn) {
         break;
 
         case CI_LAVA_WALLS:
+            do_cheat_penalty();
             cheatValues[CI_LAVA_WALLS] = !cheatValues[CI_LAVA_WALLS];
             if (cheatValues[CI_LAVA_WALLS]) {
-                do_cheat_penalty();
                 tmapFlags.resize(activeBMTable->tmaps.size());
                 tmapDamage.resize(activeBMTable->tmaps.size());
                 for (i = 0; i < activeBMTable->tmaps.size(); i++)
@@ -803,6 +800,5 @@ bool CheckCheats(char newKeyIn) {
     }
 
     return false;
-    
     
 }

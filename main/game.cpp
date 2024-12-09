@@ -1621,14 +1621,6 @@ extern short cheatValues[CI_TOTAL];
 //turns off active cheats
 void turn_cheats_off()
 {
-	/*int i;
-
-	if (HomingCheat)
-		for (i=0;i<20;i++)
-			activeBMTable->weapons[i].homing_flag=OldHomingState[i];
-
-	*/
-
 	ResetCheatStates();
 	do_lunacy_off();
 
