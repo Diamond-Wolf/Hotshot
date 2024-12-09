@@ -67,4 +67,4 @@ int load_mission(int mission_num);
 //Returns true if mission loaded ok, else false.
 int load_mission_by_name(char *mission_name);
 
-void SwitchGame(uint8_t gameVersion);
+void SwitchGame(uint8_t gameVersion, bool reload);

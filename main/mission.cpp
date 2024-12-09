@@ -505,7 +505,7 @@ void init_extra_robot_movie(char *filename);
 //does not need to be called.  Returns true if mission loaded ok, else false.
 int load_mission(int mission_num)
 {
-	SwitchGame(Mission_list[mission_num].gameVersion);
+	SwitchGame(Mission_list[mission_num].gameVersion, false);
 
 	CFILE *mfile;
 # if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
@@ -786,6 +786,8 @@ int load_mission(int mission_num)
 	Current_mission_filename = Mission_list[Current_mission_num].filename;
 	Current_mission_longname = Mission_list[Current_mission_num].mission_name;
 
+	SwitchGame(Mission_list[mission_num].gameVersion, true);
+
 	if (currentGame == G_DESCENT_2 && enhanced_mission) 
 	{
 		char t[50];
@@ -826,7 +828,7 @@ int load_mission_by_name(char *mission_name)
 #endif
 //#endif
 
-void SwitchGame(uint8_t gameVersion) {
+void SwitchGame(uint8_t gameVersion, bool reload) {
 
 	switch (gameVersion) {
 
@@ -843,6 +845,7 @@ void SwitchGame(uint8_t gameVersion) {
 
 	}
 
-	bm_init();
+	if (reload)
+		bm_init();
 
 }

@@ -79,8 +79,6 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "misc/types.h"
 #include "newcheat.h"
 
-extern void SwitchGame(uint8_t gameVersion);
-
 #define SANTA
 
 //#include "3dfx_des.h"

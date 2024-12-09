@@ -282,8 +282,7 @@ void create_main_menu(newmenu_item * m, int* menu_choice, int* callers_num_optio
 //returns number of item chosen
 int DoMenu()
 {
-
-	SwitchGame(2);
+	SwitchGame(2, true);
 
 	int menu_choice[25];
 	newmenu_item m[25];
@@ -979,8 +978,6 @@ void do_new_game_menu()
 
 	if (!do_difficulty_menu())
 		return;
-
-	SwitchGame(currentGame == G_DESCENT_1 ? 1 : 2);
 
 	gr_palette_fade_out(gr_palette, 32, 0);
 	StartNewGame(new_level_num);
