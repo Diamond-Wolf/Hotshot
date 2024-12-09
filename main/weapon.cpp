@@ -386,6 +386,8 @@ void auto_select_weapon(int weapon_type)
 	int cutpoint;
 	int looped = 0;
 
+	auto wcount = (currentGame == G_DESCENT_1 ? NUM_WEAPONS_D1 : NUM_WEAPONS_D2);
+
 	if (weapon_type == 0)
 	{
 		r = player_has_weapon(Primary_weapon, 0);
@@ -400,7 +402,7 @@ void auto_select_weapon(int weapon_type)
 			while (try_again)
 			{
 				cur_weapon++;
-
+				
 				if (cur_weapon >= cutpoint)
 				{
 					if (looped)
@@ -427,6 +429,9 @@ void auto_select_weapon(int weapon_type)
 
 				if (cur_weapon == MAX_PRIMARY_WEAPONS)
 					cur_weapon = 0;
+
+				if (PrimaryOrder[cur_weapon] >= wcount)
+					continue;
 
 				//	Hack alert!  Because the fusion uses 0 energy at the end (it's got the weird chargeup)
 				//	it looks like it takes 0 to fire, but it doesn't, so never auto-select.
@@ -475,7 +480,7 @@ void auto_select_weapon(int weapon_type)
 			while (try_again)
 			{
 				cur_weapon++;
-
+				
 				if (cur_weapon >= cutpoint)
 				{
 					if (looped)
@@ -493,6 +498,9 @@ void auto_select_weapon(int weapon_type)
 
 				if (cur_weapon == MAX_SECONDARY_WEAPONS)
 					cur_weapon = 0;
+
+				if (SecondaryOrder[cur_weapon] >= wcount)
+					continue;
 
 				if (SecondaryOrder[cur_weapon] == Secondary_weapon)
 				{
