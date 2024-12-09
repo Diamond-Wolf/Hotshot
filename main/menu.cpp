@@ -980,23 +980,7 @@ void do_new_game_menu()
 	if (!do_difficulty_menu())
 		return;
 
-	//activeBMTable->Init(true);
-	/*switch (currentGame) {
-	case G_DESCENT_1:
-		d1Table = bmtable();
-		d1Table.SetActive();
-		break;
-	case G_DESCENT_2:
-		d2Table = bmtable();
-		d2Table.SetActive();
-		break;
-	default:
-		Int3();
-	}*/
-
 	SwitchGame(currentGame == G_DESCENT_1 ? 1 : 2);
-
-	//bm_init();
 
 	gr_palette_fade_out(gr_palette, 32, 0);
 	StartNewGame(new_level_num);
