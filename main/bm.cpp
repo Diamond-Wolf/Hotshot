@@ -1067,6 +1067,8 @@ void bm_read_extra_robots(char *fname,int type)
 	#endif
 
 	fp = cfopen(fname,"rb");
+	if (!fp)
+		return;
 
 	if (type == 2) {
 		int sig;
