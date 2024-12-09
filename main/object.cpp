@@ -2155,7 +2155,7 @@ void object_move_one(int objnum)
 				if (wall_num != -1) {
 					trigger_num = Walls[wall_num].trigger;
 					if (trigger_num != -1)
-						if (Triggers[trigger_num].type == TT_EXIT)
+						if (Triggers[trigger_num].type & HTT_EXIT)
 							Guided_missile[Player_num]->lifeleft = 0;
 				}
 			}

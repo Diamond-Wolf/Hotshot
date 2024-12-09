@@ -1829,7 +1829,7 @@ int newdemo_read_frame_information()
 				if (wallnum >= 0 && wallnum < Walls.size()) {
 
 					auto trignum = Walls[wallnum].trigger;
-					if (trignum >= 0 && trignum < Triggers.size() && Triggers[trignum].type == TT_SECRET_EXIT) {
+					if (trignum >= 0 && trignum < Triggers.size() && Triggers[trignum].type & HTT_SECRET_EXIT) {
 						int	truth;
 
 						nd_read_byte((int8_t*)&c);
