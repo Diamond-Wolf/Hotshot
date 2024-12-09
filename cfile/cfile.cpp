@@ -363,7 +363,6 @@ int cfexist(const char* filename)
 	return 0;		// Couldn't find it.
 }
 
-
 CFILE* cfopen(const char* filename, const char* mode)
 {
 	int length;
@@ -394,47 +393,40 @@ CFILE* cfopen(const char* filename, const char* mode)
 	while ((p = strchr(new_filename, 10)))
 		* p = '\0';
 
-	//[ISB] descent 2 code for handling '\x01'
-	if (filename[0] != '\x01' || noHog)
-	{
-		fp = cfile_get_filehandle(filename, mode);		// Check for non-hog file first...
-	}
-	else
-	{
-		fp = NULL;		//don't look in dir, only in hogfile
+	if (filename[0] == '\x01')
 		filename++;
-	}
-	if (!fp) 
-	{
-		fp = cfile_find_libfile(filename, &length);
-		if (!fp)
-			return NULL;		// No file found
+
+	fp = cfile_find_libfile(filename, &length);
+	if (fp) {
 		cfile = (CFILE*)mem_malloc(sizeof(CFILE));
-		if (cfile == NULL) 
+		if (cfile != NULL)
 		{
+			cfile->file = fp;
+			cfile->size = length;
+			cfile->lib_offset = ftell(fp);
+			cfile->raw_position = 0;
+			return cfile;
+		} else {
 			fclose(fp);
 			return NULL;
 		}
-		cfile->file = fp;
-		cfile->size = length;
-		cfile->lib_offset = ftell(fp);
-		cfile->raw_position = 0;
-		return cfile;
-	}
-	else
+	} 
+
+	fp = cfile_get_filehandle(filename, "rb");
+	if (!fp)
+		return NULL;
+
+	cfile = (CFILE*)mem_malloc(sizeof(CFILE));
+	if (cfile == NULL) 
 	{
-		cfile = (CFILE*)mem_malloc(sizeof(CFILE));
-		if (cfile == NULL) 
-		{
-			fclose(fp);
-			return NULL;
-		}
-		cfile->file = fp;
-		cfile->size = _filelength(_fileno(fp));
-		cfile->lib_offset = 0;
-		cfile->raw_position = 0;
-		return cfile;
+		fclose(fp);
+		return NULL;
 	}
+	cfile->file = fp;
+	cfile->size = _filelength(_fileno(fp));
+	cfile->lib_offset = 0;
+	cfile->raw_position = 0;
+	return cfile;
 }
 
 int cfilelength(CFILE* fp)
