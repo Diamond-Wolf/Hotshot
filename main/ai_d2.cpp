@@ -707,7 +707,7 @@ void do_ai_frame_d2(size_t objnum)
 				do_stuff = 1;
 			else if (aip->hide_index + aip->cur_path_index + aip->PATH_DIR >= 0 && openable_doors_in_segment(Point_segs[aip->hide_index + aip->cur_path_index + aip->PATH_DIR].segnum) != -1)
 				do_stuff = 1;
-			else if (aip->hide_index + aip->cur_path_index + aip->PATH_DIR >= 0 && openable_doors_in_segment(Point_segs[aip->hide_index + aip->cur_path_index + 2 * aip->PATH_DIR].segnum) != -1)
+			else if (aip->hide_index + aip->cur_path_index + 2 * aip->PATH_DIR >= 0 && openable_doors_in_segment(Point_segs[aip->hide_index + aip->cur_path_index + 2 * aip->PATH_DIR].segnum) != -1)
 				do_stuff = 1;
 
 			if (do_stuff) {
