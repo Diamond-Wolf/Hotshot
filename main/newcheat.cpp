@@ -753,7 +753,7 @@ bool CheckCheats(char newKeyIn) {
                 {
                     weaponChildren[i] = activeBMTable->weapons[i].children;
                     if (activeBMTable->weapons[i].children < 0 && i != FLARE_ID)
-                    activeBMTable->weapons[i].children = FLARE_ID;
+                        activeBMTable->weapons[i].children = FLARE_ID;
                 }
                 HUD_init_message("Crazy fraggy!");
             } else {
