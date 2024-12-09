@@ -272,10 +272,14 @@ int do_change_walls(int8_t trigger_num)
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
 						digi_link_sound_to_pos( SOUND_FORCEFIELD_OFF, segp-Segments.data(), side, pos, 0, F1_0 );
-						Walls[segp->sides[side].wall_num].type = new_wall_type;
-						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
-						digi_kill_sound_linked_to_segment(segp-Segments.data(),side,SOUND_FORCEFIELD_HUM);
-						digi_kill_sound_linked_to_segment(csegp-Segments.data(),cside,SOUND_FORCEFIELD_HUM);
+						if (segp->sides[side].wall_num >= 0) {
+							Walls[segp->sides[side].wall_num].type = new_wall_type;
+							digi_kill_sound_linked_to_segment(segp-Segments.data(),side,SOUND_FORCEFIELD_HUM);
+						}
+						if (csegp->sides[side].wall_num >= 0) {
+							Walls[csegp->sides[cside].wall_num].type = new_wall_type;
+							digi_kill_sound_linked_to_segment(csegp-Segments.data(),cside,SOUND_FORCEFIELD_HUM);
+						}
 					}
 					else
 						start_wall_cloak(segp,side);
@@ -292,8 +296,10 @@ int do_change_walls(int8_t trigger_num)
 						vms_vector pos;
 						compute_center_point_on_side(&pos, segp, side );
 						digi_link_sound_to_pos(SOUND_FORCEFIELD_HUM,segp-Segments.data(),side,pos,1, F1_0/2);
-						Walls[segp->sides[side].wall_num].type = new_wall_type;
-						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
+						if (segp->sides[side].wall_num >= 0) 
+							Walls[segp->sides[side].wall_num].type = new_wall_type;
+						if (csegp->sides[side].wall_num >= 0) 
+							Walls[csegp->sides[cside].wall_num].type = new_wall_type;
 					}
 					else
 						start_wall_decloak(segp,side);
@@ -301,8 +307,10 @@ int do_change_walls(int8_t trigger_num)
 
 				case TT_ILLUSORY_WALL:
 					mprintf((0,"Illusory wall\n"));
-					Walls[segp->sides[side].wall_num].type = new_wall_type;
-					Walls[csegp->sides[cside].wall_num].type = new_wall_type;
+					if (segp->sides[side].wall_num >= 0)
+						Walls[segp->sides[side].wall_num].type = new_wall_type;
+					if (csegp->sides[side].wall_num >= 0)
+						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
 					break;
 			}
 
