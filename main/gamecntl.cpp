@@ -1589,7 +1589,7 @@ void kill_and_so_forth(void)
 
 	for (i = 0; i < Triggers.size(); i++)
 	{
-		if (Triggers[i].type == TT_EXIT)
+		if (Triggers[i].type & HTT_EXIT)
 		{
 			for (j = 0; j < Walls.size(); j++)
 			{
