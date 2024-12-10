@@ -1066,9 +1066,12 @@ void bm_read_extra_robots(char *fname,int type)
 		ulong varSave = 0;
 	#endif
 
-	fp = cfopen(fname,"rb");
-	if (!fp)
-		return;
+	fp = cfopen(fname, "rb");
+	if (!fp) {
+		fp = cfopen("d2x.ham", "rb"); // [DW] Since Vertigo is statically loaded, try that. Done to bypass the traditional "Play Vertigo first" in the modern hot-data-reload paradigm.
+		if (!fp)
+			return;
+	}
 
 	if (type == 2) {
 		int sig;

@@ -252,6 +252,16 @@ extern char CDROM_dir[];
 //returns 1 if file read ok, else 0
 int read_mission_file(char *filename,int count,int location, uint8_t gameVersion)
 {
+	switch (gameVersion) {
+	case 1:
+		if (!d1HogInitialized)
+			return 0;
+		break;
+	case 2:
+		if (!d2HogInitialized)
+			return 0;
+		break;
+	}
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char filename2[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -375,8 +385,8 @@ int read_mission_file(char *filename,int count,int location, uint8_t gameVersion
 
 int build_mission_list(int anarchy_mode)
 {
-	static int num_missions=-1;
-	int count=0,special_count=0;
+	static int num_missions = -1;
+	int count = 0, special_count = 0;
 	FILEFINDSTRUCT find;
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char search_name_d1[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -416,48 +426,59 @@ int build_mission_list(int anarchy_mode)
 
 	strcpy(Mission_list[0].filename, "");		//no filename for builtin
 	strcpy(Mission_list[0].mission_name, "(1) Descent: First Strike");
+	if (!d1HogInitialized)
+		Mission_list[0].mission_name[1] = 'X';
 	Mission_list[0].gameVersion = 1;
 	Mission_list[0].location = ML_CURDIR;
-	
+
 	count = 1;
 
-	if (!read_mission_file(const_cast<char*>(BUILTIN_MISSION), 1, ML_CURDIR, 2))		//read built-in first
-		Error("Could not find required mission file <%s>", BUILTIN_MISSION);
+	if (d2HogInitialized) {
+		if (!read_mission_file(const_cast<char*>(BUILTIN_MISSION), 1, ML_CURDIR, 2))		//read built-in first
+			Error("Could not find required mission file <%s>", BUILTIN_MISSION);
+	} else {
+		strcpy(Mission_list[1].mission_name, "(X) Descent 2: Counterstrike!");
+		Mission_list[1].gameVersion = 1;
+	}
 
 	special_count = count = 2;
 
-	if( !FileFindFirst( search_name_d1, &find ) )
-	{
-		do	
+	if (d1HogInitialized) {
+		if (!FileFindFirst(search_name_d1, &find))
 		{
-
-			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
-			if (read_mission_file(find.name, count, ML_MISSIONDIR, 1))
+			do
 			{
-				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
-					count++;
-			} 
 
-		} while( !FileFindNext( &find ) && count<MAX_MISSIONS);
-		FileFindClose();
+				//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
+				if (read_mission_file(find.name, count, ML_MISSIONDIR, 1))
+				{
+					if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
+						count++;
+				}
+
+			} while (!FileFindNext(&find) && count < MAX_MISSIONS);
+			FileFindClose();
+		}
 	}
 
-	if( !FileFindFirst( search_name_d2, &find ) )
-	{
-		do	
+	if (d2HogInitialized) {
+		if (!FileFindFirst(search_name_d2, &find))
 		{
-			if (_strfcmp(find.name,BUILTIN_MISSION)==0)
-				continue;		//skip the built-in
-
-			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
-			if (read_mission_file(find.name, count, ML_MISSIONDIR, 2))
+			do
 			{
-				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
-					count++;
-			} 
+				if (_strfcmp(find.name, BUILTIN_MISSION) == 0)
+					continue;		//skip the built-in
 
-		} while( !FileFindNext( &find ) && count<MAX_MISSIONS);
-		FileFindClose();
+				//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
+				if (read_mission_file(find.name, count, ML_MISSIONDIR, 2))
+				{
+					if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
+						count++;
+				}
+
+			} while (!FileFindNext(&find) && count < MAX_MISSIONS);
+			FileFindClose();
+		}
 	}
 
 	int i;
@@ -490,7 +511,7 @@ int build_mission_list(int anarchy_mode)
 		});
 	}
 
-	load_mission(1);			//set built-in mission as default
+	load_mission(d2HogInitialized ? 1 : 0);			//set built-in mission as default
 	num_missions = count;
 
 	return count;

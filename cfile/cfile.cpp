@@ -49,24 +49,29 @@ typedef struct hogfile
 #define HOG_FILENAME_MAX 64
 #endif
 
-hogfile HogFiles[MAX_HOGFILES];
-char Hogfile_initialized = 0;
-int Num_hogfiles = 0;
-
 hogfile D1HogFiles[MAX_HOGFILES];
 bool d1HogInitialized = 0;
 int numD1Hogfiles = 0;
 
+hogfile D2HogFiles[MAX_HOGFILES];
+bool d2HogInitialized = 0;
+int Num_hogfiles = 0;
+
 hogfile AltHogFiles[MAX_HOGFILES];
-char AltHogfile_initialized = 0;
+bool AltHogfile_initialized = 0;
 int AltNum_hogfiles = 0;
 
-char HogFilename[HOG_FILENAME_MAX];
-char AltHogFilename[HOG_FILENAME_MAX];
+hogfile VertigoHogFiles[MAX_HOGFILES];
+bool VertigoHogfile_initialized = 0;
+int VertigoNum_hogfiles = 0;
+
 char d1HogFilename[HOG_FILENAME_MAX];
+char d2HogFilename[HOG_FILENAME_MAX];
+char AltHogFilename[HOG_FILENAME_MAX];
+char vertigoHogFilename[HOG_FILENAME_MAX];
 
 char AltHogDir[HOG_FILENAME_MAX];
-char AltHogdir_initialized = 0;
+bool AltHogdir_initialized = 0;
 
 void cfile_use_alternate_hogdir(const char* path)
 {
@@ -201,14 +206,14 @@ int cfile_init_hogfile(const char* fname, hogfile* hog_files, int* nfiles)
 }
 
 //Specify the name of the hogfile.  Returns 1 if hogfile found & had files
-int cfile_init(const char* hogname)
+int cfile_init_d2(const char* hogname)
 {
-	Assert(Hogfile_initialized == 0);
+	Assert(d2HogInitialized == 0);
 
-	if (cfile_init_hogfile(hogname, HogFiles, &Num_hogfiles)) 
+	if (cfile_init_hogfile(hogname, D2HogFiles, &Num_hogfiles)) 
 	{
-		strcpy(HogFilename, hogname);
-		Hogfile_initialized = 1;
+		strcpy(d2HogFilename, hogname);
+		d2HogInitialized = 1;
 		return 1;
 	}
 	else
@@ -229,7 +234,27 @@ int cfile_init_d1(const char* hogname)
 		return 0;	//not loaded!
 }
 
+int cfile_init_vertigo(const char* hogname)
+{
+	if (!d2HogInitialized)
+		return 0;
+
+	Assert(VertigoHogfile_initialized == 0);
+
+	if (cfile_init_hogfile(hogname, VertigoHogFiles, &VertigoNum_hogfiles))
+	{
+		strcpy(vertigoHogFilename, hogname);
+		VertigoHogfile_initialized = 1;
+		return 1;
+	}
+	else
+		return 0;	//not loaded!
+}
+
 FILE* FindFileInD1(const char* name, int* length) {
+
+	if (!d1HogInitialized)
+		return NULL;
 
 	//Hack to patch v1.5 descent.sng if needed
 	if (currentGame == G_DESCENT_1 && !_strnicmp(name, "descent.sng", 11))
@@ -255,15 +280,40 @@ FILE* FindFileInD1(const char* name, int* length) {
 
 FILE* FindFileInD2(const char* name, int* length) {
 
+	if (!d2HogInitialized)
+		return NULL;
+
 	FILE* fp;
 	for (int i = 0; i < Num_hogfiles; i++) 
 	{
-		if (!_stricmp(HogFiles[i].name, name))
+		if (!_stricmp(D2HogFiles[i].name, name))
 		{
-			fp = cfile_get_filehandle(HogFilename, "rb");
+			fp = cfile_get_filehandle(d2HogFilename, "rb");
 			if (fp == NULL) return NULL;
-			fseek(fp, HogFiles[i].offset, SEEK_SET);
-			*length = HogFiles[i].length;
+			fseek(fp, D2HogFiles[i].offset, SEEK_SET);
+			*length = D2HogFiles[i].length;
+			return fp;
+		}
+	}
+
+	return NULL;
+
+}
+
+FILE* FindFileInVertigo(const char* name, int* length) {
+
+	if (!VertigoHogfile_initialized)
+		return NULL;
+
+	FILE* fp;
+	for (int i = 0; i < Num_hogfiles; i++)
+	{
+		if (!_stricmp(VertigoHogFiles[i].name, name))
+		{
+			fp = cfile_get_filehandle(vertigoHogFilename, "rb");
+			if (fp == NULL) return NULL;
+			fseek(fp, VertigoHogFiles[i].offset, SEEK_SET);
+			*length = VertigoHogFiles[i].length;
 			return fp;
 		}
 	}
@@ -294,17 +344,25 @@ FILE* cfile_find_libfile(const char* name, int* length)
 
 	if (currentGame == G_DESCENT_1) { //Search the correct game's files first
 
-		mprintf((1, "\nCurrent game is D1, trying D1 first (%s)\n", name));
+		//mprintf((1, "\nCurrent game is D1, trying D1 first (%s)\n", name));
 
 		fp = FindFileInD1(name, length);
 		if (fp) 
+			return fp;
+
+		fp = FindFileInVertigo(name, length);
+		if (fp)
 			return fp;
 
 		return FindFileInD2(name, length);
 
 	} else {
 
-		mprintf((1, "\nCurrent game is D2, trying D2 first (%s)\n", name));
+		//mprintf((1, "\nCurrent game is D2, trying D2 first (%s)\n", name));
+
+		fp = FindFileInVertigo(name, length);
+		if (fp)
+			return fp;
 
 		fp = FindFileInD2(name, length);
 		if (fp)

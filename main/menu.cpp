@@ -282,7 +282,7 @@ void create_main_menu(newmenu_item * m, int* menu_choice, int* callers_num_optio
 //returns number of item chosen
 int DoMenu()
 {
-	SwitchGame(2, true);
+	SwitchGame(d2HogInitialized ? 2 : 1, true);
 
 	int menu_choice[25];
 	newmenu_item m[25];

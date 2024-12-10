@@ -524,20 +524,20 @@ int D_DescentMain(int argc, const char** argv)
 #define HOGNAME "descent2.hog"
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(hogfile_full_path, HOGNAME, CHOCOLATE_SYSTEM_FILE_DIR);
-	if (!cfile_init(hogfile_full_path))
+	if (!cfile_init_d2(hogfile_full_path))
 #else
-	if (!cfile_init(HOGNAME))
+	if (!cfile_init_d2(HOGNAME))
 #endif
 	{
 		//Failed to get registered Descent 2, try loading demo now. 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 		get_full_file_path(hogfile_full_path, "d2demo.hog", CHOCOLATE_SYSTEM_FILE_DIR);
-		if (!cfile_init(hogfile_full_path))
+		if (!cfile_init_d2(hogfile_full_path))
 #else
-		if (!cfile_init("d2demo.hog"))
+		if (!cfile_init_d2("d2demo.hog"))
 #endif
 		{
-			Error("Could not find required file <%s>", HOGNAME);
+			Warning("Could not find <%s>", HOGNAME);
 		}
 		else
 		{
@@ -552,9 +552,17 @@ int D_DescentMain(int argc, const char** argv)
 	}
 
 	if (!cfile_init_d1("descent.hog")) {
-		Error("Could not find required file descent.hog");
+		Warning("Could not find descent.hog");
 	}
 
+	if (!d1HogInitialized && !d2HogInitialized) {
+		Error("Could not load any game data!\nNeed at least one of descent.hog or descent2.hog");
+	}
+
+	if (!cfile_init_vertigo("d2x.hog")) {
+		Warning("Could not find d2x.hog");
+	}
+		
 	load_text(num_text_strings);
 
 	//print out the banner title
