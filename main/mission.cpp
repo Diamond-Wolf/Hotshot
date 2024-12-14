@@ -438,7 +438,7 @@ int build_mission_list(int anarchy_mode)
 			Error("Could not find required mission file <%s>", BUILTIN_MISSION);
 	} else {
 		strcpy(Mission_list[1].mission_name, "(X) Descent 2: Counterstrike!");
-		Mission_list[1].gameVersion = 1;
+		Mission_list[1].gameVersion = 2;
 	}
 
 	special_count = count = 2;
