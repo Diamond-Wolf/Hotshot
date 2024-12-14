@@ -21,6 +21,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "segment.h"
 #include "gameseg.h"
 
+#define MAX_PLAYERS 8 //Would include player, but that creates a circular dependency that breaks everything
+
 /*
  *		CONSTANTS
  */
@@ -119,7 +121,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 extern char	Object_type_names[MAX_OBJECT_TYPES][9];
 
 //	List of objects rendered last frame in order.  Created at render time, used by homing missiles in laser.c
-#define	MAX_RENDERED_OBJECTS	50
+#define	MAX_RENDERED_OBJECTS	100
 
 extern short Ordered_rendered_object_list[MAX_RENDERED_OBJECTS];
 extern int Num_rendered_objects;
@@ -129,13 +131,15 @@ extern int Num_rendered_objects;
  */
 
 //	A compressed form for sending crucial data about via slow devices, such as modems and buggies.
-typedef struct shortpos 
+typedef struct shortpos
 {
 	int8_t	bytemat[9];
-	short	xo,yo,zo;
+	int8_t pad;
+	short	xo, yo, zo;
 	short	segment;
 	short velx, vely, velz;
 } shortpos;
+
 
 //	This is specific to the shortpos extraction routines in gameseg.c.
 #define	RELPOS_PRECISION	10
@@ -260,6 +264,11 @@ typedef struct object
 		vclip_info_t	 vclip_info;		//vclip
 	} rtype;
 
+	object() {
+		type = OBJ_NONE; //init to null object
+		segnum = -1;
+	}
+
 } object;
 
 typedef struct obj_position 
@@ -310,6 +319,8 @@ extern int Player_exploded;
 extern int Death_sequence_aborted;
 extern int Player_fired_laser_this_frame;
 
+extern bool objectGCReady;
+
 /*
  *		FUNCTIONS
  */
@@ -337,18 +348,18 @@ void obj_unlink(int objnum);
 
 //initialize a new object.  adds to the list for the given segment
 //returns the object number
-int obj_create(uint8_t type,uint8_t id,int segnum,vms_vector *pos,
+int obj_create(uint8_t type,uint8_t id,int segnum,vms_vector pos,
 			vms_matrix *orient,fix size,uint8_t ctype,uint8_t mtype,uint8_t rtype);
 
 //make a copy of an object. returs num of new object
-int obj_create_copy(int objnum, vms_vector *new_pos, int newsegnum);
+int obj_create_copy(int objnum, vms_vector new_pos, int newsegnum);
 
 //remove object from the world
 void obj_delete(int objnum);
 
 //called after load.  Takes number of objects,  and objects should be 
 //compressed
-void reset_objects(int n_objs);
+void reset_objects(int n_objs, bool inLevel = false);
 
 //make object array non-sparse
 void compress_objects(void);
@@ -378,7 +389,7 @@ void object_goto_next_viewer();
 void object_render_targets(void);
 
 //move an object for the current frame
-void object_move_one( object * obj );
+void object_move_one(int objnum);
 
 //make object0 the player, setting all relevant fields
 void init_player_object();
@@ -400,10 +411,10 @@ extern int find_object_seg(object * obj );
 void fix_object_segs();
 
 //	Drops objects contained in objp.
-int object_create_egg(object *objp);
+int object_create_egg(size_t objnum);
 
 //	Interface to object_create_egg, puts count objects of type type, id = id in objp and then drops them.
-int call_object_create_egg(object *objp, int count, int type, int id);
+int call_object_create_egg(size_t objnum, int count, int type, int id);
 
 extern void dead_player_end(void);
 
@@ -441,12 +452,47 @@ void obj_attach(object *parent,object *sub);
 extern void create_small_fireball_on_object(object *objp, fix size_scale, int sound_flag);
 
 //returns object number
-int drop_marker_object(vms_vector *pos,int segnum,vms_matrix *orient,int marker_num);
+int drop_marker_object(vms_vector pos,int segnum,vms_matrix orient,int marker_num);
 
 extern void wake_up_rendered_objects(object *gmissp, int window_num);
 
 void obj_detach_one(object* sub);
 void obj_detach_all(object* parent);
+
+struct RelinkCache {
+	size_t viewer;
+	size_t missile;
+	size_t save;
+	size_t guideds[MAX_PLAYERS];
+	size_t old;
+	size_t prev;
+	size_t deadcam;
+	size_t slew;
+
+	RelinkCache() {
+		extern object* Missile_viewer;
+		extern object* Viewer_save;
+		extern object* Guided_missile[MAX_PLAYERS];
+		extern object* old_viewer;
+		extern object* prev_obj;
+		extern object* slew_obj;
+
+		viewer = Viewer - Objects.data();
+		missile = Missile_viewer - Objects.data();
+		save = Viewer_save - Objects.data();
+		for (int i = 0; i < MAX_PLAYERS; i++) {
+			guideds[i] = Guided_missile[i] - Objects.data();
+		}
+		old = old_viewer - Objects.data();
+		prev = prev_obj - Objects.data();
+		deadcam = Dead_player_camera - Objects.data();
+		slew = slew_obj - Objects.data();
+	}
+};
+
+void ResizeObjectVectors(int newSize, bool shrinkToFit);
+void RelinkSpecialObjectPointers(const RelinkCache& cache);
+void doObjectGC();
 
 #include <stdio.h>
 //Reads an object from disk. This code is my absolute nightmare. Thanks, unions.

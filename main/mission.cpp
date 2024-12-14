@@ -11,6 +11,7 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,8 +40,22 @@ char *Current_mission_filename,*Current_mission_longname;
 
 //this stuff should get defined elsewhere
 
-char Level_names[MAX_LEVELS_PER_MISSION][FILENAME_LEN];
-char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
+std::vector<char*> Level_names;
+std::vector<char*> Secret_level_names;
+
+void ResetLevelNames() {
+	for (auto& arr : Level_names)
+		if (arr)
+			delete[] arr;
+	
+	Level_names.clear();
+
+	for (auto& arr : Secret_level_names)
+		if (arr)
+			delete[] arr;
+
+	Secret_level_names.clear();
+}
 
 #define SHAREWARE_MISSION_FILENAME	"d2demo"
 #define SHAREWARE_MISSION_NAME		"Descent 2 Demo"
@@ -51,7 +66,6 @@ char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
 #else
 #define MISSION_DIR ".\\"
 #endif
-
 
 #define D1_BIM_LAST_LEVEL			27
 #define D1_BIM_LAST_SECRET_LEVEL	-3
@@ -177,7 +191,7 @@ char *mfgets(char *s,int n,CFILE *f)
 	char *r;
 
 	r = cfgets(s,n,f);
-	if (r && s[strlen(s)-1] == '\n')
+	if (r && strlen(s) > 0 && s[strlen(s) - 1] == '\n')
 		s[strlen(s)-1] = 0;
 
 	return r;
@@ -230,11 +244,6 @@ char *get_parm_value(const char *parm,CFILE *f)
 		return NULL;
 }
 
-int ml_sort_func(mle *e0,mle *e1)
-{
-	return _stricmp(e0->mission_name,e1->mission_name);
-}
-
 extern int HoardEquipped();
 
 extern char CDROM_dir[];
@@ -243,6 +252,16 @@ extern char CDROM_dir[];
 //returns 1 if file read ok, else 0
 int read_mission_file(char *filename,int count,int location, uint8_t gameVersion)
 {
+	switch (gameVersion) {
+	case 1:
+		if (!d1HogInitialized)
+			return 0;
+		break;
+	case 2:
+		if (!d2HogInitialized)
+			return 0;
+		break;
+	}
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char filename2[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -366,8 +385,8 @@ int read_mission_file(char *filename,int count,int location, uint8_t gameVersion
 
 int build_mission_list(int anarchy_mode)
 {
-	static int num_missions=-1;
-	int count=0,special_count=0;
+	static int num_missions = -1;
+	int count = 0, special_count = 0;
 	FILEFINDSTRUCT find;
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char search_name_d1[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -407,84 +426,92 @@ int build_mission_list(int anarchy_mode)
 
 	strcpy(Mission_list[0].filename, "");		//no filename for builtin
 	strcpy(Mission_list[0].mission_name, "(1) Descent: First Strike");
+	if (!d1HogInitialized)
+		Mission_list[0].mission_name[1] = 'X';
 	Mission_list[0].gameVersion = 1;
 	Mission_list[0].location = ML_CURDIR;
-	
+
 	count = 1;
 
-	if (!read_mission_file(const_cast<char*>(BUILTIN_MISSION), 1, ML_CURDIR, 2))		//read built-in first
-		Error("Could not find required mission file <%s>", BUILTIN_MISSION);
+	if (d2HogInitialized) {
+		if (!read_mission_file(const_cast<char*>(BUILTIN_MISSION), 1, ML_CURDIR, 2))		//read built-in first
+			Error("Could not find required mission file <%s>", BUILTIN_MISSION);
+	} else {
+		strcpy(Mission_list[1].mission_name, "(X) Descent 2: Counterstrike!");
+		Mission_list[1].gameVersion = 2;
+	}
 
 	special_count = count = 2;
 
-	if( !FileFindFirst( search_name_d1, &find ) )
-	{
-		do	
+	if (d1HogInitialized) {
+		if (!FileFindFirst(search_name_d1, &find))
 		{
-
-			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
-			if (read_mission_file(find.name, count, ML_MISSIONDIR, 1))
+			do
 			{
-				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
-					count++;
-			} 
 
-		} while( !FileFindNext( &find ) && count<MAX_MISSIONS);
-		FileFindClose();
-	}
+				//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
+				if (read_mission_file(find.name, count, ML_MISSIONDIR, 1))
+				{
+					if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
+						count++;
+				}
 
-	if( !FileFindFirst( search_name_d2, &find ) )
-	{
-		do	
-		{
-			if (_strfcmp(find.name,BUILTIN_MISSION)==0)
-				continue;		//skip the built-in
-
-			//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
-			if (read_mission_file(find.name, count, ML_MISSIONDIR, 2))
-			{
-				if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
-					count++;
-			} 
-
-		} while( !FileFindNext( &find ) && count<MAX_MISSIONS);
-		FileFindClose();
-	}
-
-
-	//move vertigo to top of mission list
-	/*
-	if (currentGame == G_DESCENT_2) {
-		int i;
-
-		for (i=special_count;i<count;i++)
-		{
-# if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-			if (!_strnicmp(Mission_list[i].filename, "d2x", 3))
-# else
-			if (!_strfcmp(Mission_list[i].filename,"D2X")) //swap!
-# endif
-			{
-				printf("found D2X");
-				mle temp;
-
-				temp = Mission_list[special_count];
-				Mission_list[special_count] = Mission_list[i];
-				Mission_list[i] = temp;
-
-				special_count++;
-
-				break;
-			}
+			} while (!FileFindNext(&find) && count < MAX_MISSIONS);
+			FileFindClose();
 		}
 	}
-	*/
 
-	if (count>special_count)
-		qsort(&Mission_list[special_count],count-special_count,sizeof(*Mission_list),
-				(int (*)( const void *, const void * ))ml_sort_func);
+	if (d2HogInitialized) {
+		if (!FileFindFirst(search_name_d2, &find))
+		{
+			do
+			{
+				if (_strfcmp(find.name, BUILTIN_MISSION) == 0)
+					continue;		//skip the built-in
 
-	load_mission(1);			//set built-in mission as default
+				//get_full_file_path(temp_buf, find.name, CHOCOLATE_MISSIONS_DIR);
+				if (read_mission_file(find.name, count, ML_MISSIONDIR, 2))
+				{
+					if (anarchy_mode || !Mission_list[count].anarchy_only_flag)
+						count++;
+				}
+
+			} while (!FileFindNext(&find) && count < MAX_MISSIONS);
+			FileFindClose();
+		}
+	}
+
+	int i;
+
+	for (i=special_count;i<count;i++)
+	{
+# if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+		if (!_strnicmp(Mission_list[i].filename, "d2x", 3))
+# else
+		if (!_strfcmp(Mission_list[i].filename,"D2X")) //swap!
+# endif
+		{
+			printf("found D2X");
+			mle temp;
+
+			temp = Mission_list[special_count];
+			Mission_list[special_count] = Mission_list[i];
+			Mission_list[i] = temp;
+
+			special_count++;
+
+			break;
+		}
+	}
+	
+	if (count>special_count) {
+		std::sort(Mission_list + special_count, Mission_list + count, [](const mle& a, const mle& b) {
+			auto res = _strnicmp(a.mission_name + 4, b.mission_name + 4, MISSION_NAME_LEN - 4);
+			return res < 0;
+		});
+	}
+
+	load_mission(d2HogInitialized ? 1 : 0);			//set built-in mission as default
 	num_missions = count;
 
 	return count;
@@ -499,7 +526,7 @@ void init_extra_robot_movie(char *filename);
 //does not need to be called.  Returns true if mission loaded ok, else false.
 int load_mission(int mission_num)
 {
-	SwitchGame(Mission_list[mission_num].gameVersion);
+	SwitchGame(Mission_list[mission_num].gameVersion, false);
 
 	CFILE *mfile;
 # if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
@@ -528,6 +555,12 @@ int load_mission(int mission_num)
 
 		//Assert(Last_level == 3);
 		Last_level = 3;
+
+		ResetLevelNames();
+
+		Level_names[0] = new char[FILENAME_LEN];
+		Level_names[1] = new char[FILENAME_LEN];
+		Level_names[2] = new char[FILENAME_LEN];
 
 		strcpy(Level_names[0], "d2leva-1.sl2");
 		strcpy(Level_names[1], "d2leva-2.sl2");
@@ -579,12 +612,22 @@ int load_mission(int mission_num)
 		Last_level = D1_BIM_LAST_LEVEL;
 		Last_secret_level = D1_BIM_LAST_SECRET_LEVEL;
 
-		//build level names
-		for (i = 0; i < Last_level; i++)
-			sprintf(Level_names[i], "LEVEL%02d.RDL", i + 1);
-		for (i = 0; i < -Last_secret_level; i++)
-			sprintf(Secret_level_names[i], "LEVELS%1d.RDL", i + 1);
+		ResetLevelNames();
 
+		Level_names.resize(D1_BIM_LAST_LEVEL);
+		Secret_level_names.resize(-D1_BIM_LAST_SECRET_LEVEL);
+
+		//build level names
+		for (i = 0; i < Last_level; i++) {
+			Level_names[i] = new char[FILENAME_LEN];
+			sprintf(Level_names[i], "LEVEL%02d.RDL", i + 1);
+		}
+		for (i = 0; i < -Last_secret_level; i++) {
+			Secret_level_names[i] = new char[FILENAME_LEN];
+			sprintf(Secret_level_names[i], "LEVELS%1d.RDL", i + 1);
+		}
+
+		Secret_level_table.resize(-D1_BIM_LAST_SECRET_LEVEL);
 		Secret_level_table[0] = 10;
 		Secret_level_table[1] = 21;
 		Secret_level_table[2] = 24;
@@ -616,13 +659,8 @@ int load_mission(int mission_num)
 
 			found_hogfile = cfile_use_alternate_hogfile(buf);
 
-			#ifdef RELEASE				//for release, require mission to be in hogfile
-			if (! found_hogfile) {
-				cfclose(mfile);
-				Current_mission_num = -1;
-				return 0;
-			}
-			#endif
+			noHog = !found_hogfile;
+
 		}
 
 		//init vars
@@ -633,6 +671,8 @@ int load_mission(int mission_num)
 			Briefing_text_filename[0] = 0;
 			Ending_text_filename[0] = 0;
 		}
+
+		ResetLevelNames();
 
 		while (mfgets(buf,80,mfile)) 
 		{
@@ -691,11 +731,18 @@ int load_mission(int mission_num)
 
 					n_levels = atoi(v);
 
+					if (Level_names.size()) //Handle malformed msn that has two level sets
+						for (auto& arr : Level_names)
+							if (arr)
+								delete[] arr;
+
+					Level_names.resize(n_levels);
+
 					for (i=0;i<n_levels && mfgets(buf,80,mfile);i++)
 					{
-
+						Level_names[i] = new char[FILENAME_LEN];
 						add_term(buf);
-						if (strlen(buf) <= 12 && i < MAX_LEVELS_PER_MISSION) 
+						if (strlen(buf) <= 12) 
 						{
 							strcpy(Level_names[i],buf);
 							Last_level++;
@@ -714,17 +761,25 @@ int load_mission(int mission_num)
 
 					N_secret_levels = atoi(v);
 
-					Assert(N_secret_levels <= MAX_SECRET_LEVELS_PER_MISSION);
+					if (Secret_level_names.size()) //Handle malformed msn that has two secret level sets
+						for (auto& arr : Level_names)
+							if (arr)
+								delete[] arr;
+
+					Secret_level_names.resize(N_secret_levels);
+					Secret_level_table.resize(N_secret_levels);
 
 					for (i=0;i<N_secret_levels && mfgets(buf,80,mfile);i++) 
 					{
+						Secret_level_names[i] = new char[FILENAME_LEN];
+
 						char *t;
 						if ((t=strchr(buf,','))!=NULL) *t++=0;
 						else
 							break;
 
 						add_term(buf);
-						if (strlen(buf) <= 12 && i < MAX_SECRET_LEVELS_PER_MISSION)
+						if (strlen(buf) <= 12)
 						{
 							strcpy(Secret_level_names[i],buf);
 							Secret_level_table[i] = atoi(t);
@@ -751,6 +806,8 @@ int load_mission(int mission_num)
 
 	Current_mission_filename = Mission_list[Current_mission_num].filename;
 	Current_mission_longname = Mission_list[Current_mission_num].mission_name;
+
+	SwitchGame(Mission_list[mission_num].gameVersion, true);
 
 	if (currentGame == G_DESCENT_2 && enhanced_mission) 
 	{
@@ -792,27 +849,24 @@ int load_mission_by_name(char *mission_name)
 #endif
 //#endif
 
-void SwitchGame(uint8_t gameVersion) {
+void SwitchGame(uint8_t gameVersion, bool reload) {
 
 	switch (gameVersion) {
 
 		case 1:
 			currentGame = G_DESCENT_1;
-			d1Table.SetActive();
-			if (shouldAutoClearBMTable && !activeBMTable->initialized)
-				bm_init();
 			break;
 
 		case 2:
 			currentGame = G_DESCENT_2;
-			d2Table.SetActive();
-			if (shouldAutoClearBMTable && !activeBMTable->initialized)
-				bm_init();
 			break;
 
 		default:
 			Int3();
 
 	}
+
+	if (reload)
+		bm_init();
 
 }

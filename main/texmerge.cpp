@@ -28,8 +28,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #define MAX_NUM_CACHE_BITMAPS 50
 
-//static grs_bitmap * cache_bitmaps[MAX_NUM_CACHE_BITMAPS];                     
-
 typedef struct	{
 	grs_bitmap * bitmap;
 	grs_bitmap * bottom_bmp;

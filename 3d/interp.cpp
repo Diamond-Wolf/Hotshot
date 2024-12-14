@@ -577,7 +577,7 @@ dbool g3_draw_morphing_model(void* model_ptr, grs_bitmap** model_bitmaps, vms_an
 void init_model_sub(uint8_t* p)
 {
 #ifndef NDEBUG
-	Assert(++nest_count < 1000);
+	Assert(++nest_count < 2000);
 #endif
 
 	int loop = 0;

@@ -39,14 +39,47 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 // How far a point can be from a plane, and still be "in" the plane
 #define PLANE_DIST_TOLERANCE	250
 
-dl_index		Dl_indices[MAX_DL_INDICES];
-delta_light Delta_lights[MAX_DELTA_LIGHTS];
-int	Num_static_lights;
+std::vector<dl_index>		Dl_indices(MAX_DL_INDICES);
+std::vector<delta_light> Delta_lights(MAX_DELTA_LIGHTS);
 
 // ------------------------------------------------------------------------------------------
 // Compute the center point of a side of a segment.
 //	The center point is defined to be the average of the 4 points defining the side.
-void compute_center_point_on_side(vms_vector *vp,segment *sp,int side)
+
+void ResizeSegmentVectors(size_t newSize) {
+	extern std::vector<int8_t> New_awareness;
+	extern std::vector<uint8_t> Automap_visited;
+	extern std::vector<uint8_t> Slide_segs;
+	extern std::vector<char> visited;
+	extern std::vector<short> render_pos;
+
+	New_awareness.resize(newSize);
+	Automap_visited.resize(newSize);
+	Slide_segs.resize(newSize);
+	Light_subtracted.resize(newSize);
+	Segments.resize(newSize);
+	Segment2s.resize(newSize);
+	visited.resize(newSize);
+	render_pos.resize(newSize); 
+
+	#ifndef NDEBUG
+	extern std::vector<char> visited2;
+	visited2.resize(newSize);
+	#endif
+}
+
+void ResizeVertexVectors(size_t newSize) {
+	extern std::vector<short> Rotated_last;
+	extern std::vector<g3s_point> Segment_points;
+	extern std::vector<fix> Dynamic_light;
+
+	Vertices.resize(newSize);
+	Segment_points.resize(newSize);
+	Rotated_last.resize(newSize);
+	Dynamic_light.resize(newSize);
+}
+
+void compute_center_point_on_side(vms_vector* vp,segment *sp,int side)
 {
 	int			v;
 
@@ -61,7 +94,7 @@ void compute_center_point_on_side(vms_vector *vp,segment *sp,int side)
 // ------------------------------------------------------------------------------------------
 // Compute segment center.
 //	The center point is defined to be the average of the 8 points defining the segment.
-void compute_segment_center(vms_vector *vp,segment *sp)
+void compute_segment_center(vms_vector* vp,segment *sp)
 {
 	int			v;
 
@@ -79,7 +112,7 @@ void compute_segment_center(vms_vector *vp,segment *sp)
 int find_connect_side(segment *base_seg, segment *con_seg)
 {
 	int	s;
-	short	base_seg_num = base_seg - Segments;
+	short	base_seg_num = base_seg - Segments.data();
 	short *childs = con_seg->children;
 
 	for (s=0; s<MAX_SIDES_PER_SEGMENT; s++) {
@@ -305,7 +338,7 @@ void create_abs_vertex_lists(int *num_faces, int *vertices, int segnum, int side
 
 //returns 3 different bitmasks with info telling if this sphere is in
 //this segment.  See segmasks structure for info on fields   
-segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
+segmasks get_seg_masks(vms_vector checkp,int segnum,fix rad)
 {
 	int			sn,facebit,sidebit;
 	segmasks		masks;
@@ -374,9 +407,9 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
 			for (fn=0;fn<2;fn++,facebit<<=1) {
 
 				#ifdef COMPACT_SEGS
-					dist = vm_dist_to_plane(checkp, &normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &normals[fn], &Vertices[vertnum]);
 				#else
-					dist = vm_dist_to_plane(checkp, &s->normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &s->normals[fn], &Vertices[vertnum]);
 				#endif
 
 				if (dist < -PLANE_DIST_TOLERANCE)	//in front of face
@@ -425,9 +458,9 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
 
 			#ifdef COMPACT_SEGS
 				get_side_normal(seg, sn, 0, &normal );
-				dist = vm_dist_to_plane(checkp, &normal, &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &normal, &Vertices[vertnum]);
 			#else
-				dist = vm_dist_to_plane(checkp, &s->normals[0], &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &s->normals[0], &Vertices[vertnum]);
 			#endif
 
 	
@@ -451,7 +484,7 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad)
 //this was converted from get_seg_masks()...it fills in an array of 6
 //elements for the distace behind each side, or zero if not behind
 //only gets centermask, and assumes zero rad 
-uint8_t get_side_dists(vms_vector *checkp,int segnum,fix *side_dists)
+uint8_t get_side_dists(vms_vector checkp,int segnum,fix *side_dists)
 {
 	int			sn,facebit,sidebit;
 	uint8_t			mask;
@@ -523,9 +556,9 @@ uint8_t get_side_dists(vms_vector *checkp,int segnum,fix *side_dists)
 			for (fn=0;fn<2;fn++,facebit<<=1) {
 
 				#ifdef COMPACT_SEGS
-					dist = vm_dist_to_plane(checkp, &normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &normals[fn], &Vertices[vertnum]);
 				#else
-					dist = vm_dist_to_plane(checkp, &s->normals[fn], &Vertices[vertnum]);
+					dist = vm_dist_to_plane(&checkp, &s->normals[fn], &Vertices[vertnum]);
 				#endif
 
 				if (dist < -PLANE_DIST_TOLERANCE) {	//in front of face
@@ -573,9 +606,9 @@ uint8_t get_side_dists(vms_vector *checkp,int segnum,fix *side_dists)
 
 			#ifdef COMPACT_SEGS
 				get_side_normal(seg, sn, 0, &normal );
-				dist = vm_dist_to_plane(checkp, &normal, &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &normal, &Vertices[vertnum]);
 			#else
-				dist = vm_dist_to_plane(checkp, &s->normals[0], &Vertices[vertnum]);
+				dist = vm_dist_to_plane(&checkp, &s->normals[0], &Vertices[vertnum]);
 			#endif
 	
 			if (dist < -PLANE_DIST_TOLERANCE) {
@@ -742,7 +775,7 @@ int	Doing_lighting_hack_flag=0;
 
 //figure out what seg the given point is in, tracing through segments
 //returns segment number, or -1 if can't find segment
-int trace_segs(vms_vector *p0,int oldsegnum, int trace_segs_iterations)
+int trace_segs(vms_vector p0,int oldsegnum, int trace_segs_iterations)
 {
 	int centermask;
 	segment *seg;
@@ -825,7 +858,7 @@ int	Exhaustive_count=0, Exhaustive_failed_count=0;
 // 2. Recursively trace through attached segments
 // 3. Check all the segmentns
 //Returns segnum if found, or -1
-int find_point_seg(vms_vector *p,int segnum)
+int find_point_seg(vms_vector p,int segnum)
 {
 	int newseg;
 
@@ -989,15 +1022,15 @@ void add_to_fcd_cache(int seg0, int seg1, int depth, fix dist)
 //	Determine whether seg0 and seg1 are reachable in a way that allows sound to pass.
 //	Search up to a maximum depth of max_depth.
 //	Return the distance.
-fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, int max_depth, int wid_flag)
+fix find_connected_distance(vms_vector p0, int seg0, vms_vector p1, int seg1, int max_depth, int wid_flag)
 {
 	int		cur_seg;
 	int		sidenum;
 	int		qtail = 0, qhead = 0;
 	int		i;
-	int8_t		visited[MAX_SEGMENTS];
-	seg_seg	seg_queue[MAX_SEGMENTS];
-	short		depth[MAX_SEGMENTS];
+	int8_t*		visited = new int8_t[Segments.size()];
+	seg_seg*	seg_queue = new seg_seg[Segments.size()];
+	short*		depth = new short[Segments.size()];
 	int		cur_depth;
 	int		num_points;
 	point_seg	point_segs[MAX_LOC_POINT_SEGS];
@@ -1015,14 +1048,20 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 
 	if (seg0 == seg1) {
 		Connected_segment_distance = 0;
-		return vm_vec_dist_quick(p0, p1);
+		delete[] visited;
+		delete[] seg_queue;
+		delete[] depth;
+		return vm_vec_dist_quick(&p0, &p1);
 	} else {
 		int	conn_side;
 		if ((conn_side = find_connect_side(&Segments[seg0], &Segments[seg1])) != -1) {
 			if (WALL_IS_DOORWAY(&Segments[seg1], conn_side) & wid_flag) {
 				Connected_segment_distance = 1;
 				//mprintf((0, "\n"));
-				return vm_vec_dist_quick(p0, p1);
+				delete[] visited;
+				delete[] seg_queue;
+				delete[] depth;
+				return vm_vec_dist_quick(&p0, &p1);
 			}
 		}
 	}
@@ -1038,6 +1077,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 		if ((Fcd_cache[i].seg0 == seg0) && (Fcd_cache[i].seg1 == seg1)) {
 			Connected_segment_distance = Fcd_cache[i].csd;
 			// -- mprintf((0, "In cache, seg0=%i, seg1=%i.  Returning.\n", seg0, seg1));
+			delete[] visited;
+			delete[] seg_queue;
+			delete[] depth;
 			return Fcd_cache[i].dist;
 		}
 
@@ -1069,6 +1111,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 						if (depth[qtail-1] == max_depth) {
 							Connected_segment_distance = 1000;
 							add_to_fcd_cache(seg0, seg1, Connected_segment_distance, F1_0*1000);
+							delete[] visited;
+							delete[] seg_queue;
+							delete[] depth;
 							return -1;
 						}
 					} else if (this_seg == seg1) {
@@ -1082,6 +1127,9 @@ fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, 
 		if (qhead >= qtail) {
 			Connected_segment_distance = 1000;
 			add_to_fcd_cache(seg0, seg1, Connected_segment_distance, F1_0*1000);
+			delete[] visited;
+			delete[] seg_queue;
+			delete[] depth;
 			return -1;
 		}
 
@@ -1097,6 +1145,9 @@ fcd_done1: ;
 		if (qtail < 0) {
 			Connected_segment_distance = 1000;
 			add_to_fcd_cache(seg0, seg1, Connected_segment_distance, F1_0*1000);
+			delete[] visited;
+			delete[] seg_queue;
+			delete[] depth;
 			return -1;
 		}
 
@@ -1122,10 +1173,13 @@ fcd_done1: ;
 
 	if (num_points == 1) {
 		Connected_segment_distance = num_points;
-		return vm_vec_dist_quick(p0, p1);
+		delete[] visited;
+		delete[] seg_queue;
+		delete[] depth;
+		return vm_vec_dist_quick(&p0, &p1);
 	} else {
-		dist = vm_vec_dist_quick(p1, &point_segs[1].point);
-		dist += vm_vec_dist_quick(p0, &point_segs[num_points-2].point);
+		dist = vm_vec_dist_quick(&p1, &point_segs[1].point);
+		dist += vm_vec_dist_quick(&p0, &point_segs[num_points-2].point);
 
 		for (i=1; i<num_points-2; i++) {
 			fix	ndist;
@@ -1138,6 +1192,9 @@ fcd_done1: ;
 	Connected_segment_distance = num_points;
 	add_to_fcd_cache(seg0, seg1, num_points, dist);
 
+	delete[] visited;
+	delete[] seg_queue;
+	delete[] depth;
 	return dist;
 
 }
@@ -1230,6 +1287,8 @@ void extract_shortpos(object *objp, shortpos *spp)
 	objp->orient.uvec.z = *sp++ << MATRIX_PRECISION;
 	objp->orient.fvec.z = *sp++ << MATRIX_PRECISION;
 
+	sp++;
+
 	segnum = spp->segment;
 
 	Assert((segnum >= 0) && (segnum <= Highest_segment_index));
@@ -1321,7 +1380,7 @@ void extract_up_vector_from_segment(segment *sp,vms_vector *vp)
 }
 #endif
 
-void add_side_as_quad(segment *sp, int sidenum, vms_vector *normal)
+void add_side_as_quad(segment *sp, int sidenum, vms_vector normal)
 {
 	side	*sidep = &sp->sides[sidenum];
 
@@ -1330,8 +1389,8 @@ void add_side_as_quad(segment *sp, int sidenum, vms_vector *normal)
 	#ifdef COMPACT_SEGS
 		normal = normal;		//avoid compiler warning
 	#else
-	sidep->normals[0] = *normal;
-	sidep->normals[1] = *normal;
+	sidep->normals[0] = normal;
+	sidep->normals[1] = normal;
 	#endif
 
 	//	If there is a connection here, we only formed the faces for the purpose of determining segment boundaries,
@@ -1521,7 +1580,7 @@ void create_walls_on_side(segment *sp, int sidenum)
 		vm_vec_negate(&vn);
 
 	if (dist_to_plane <= PLANE_DIST_TOLERANCE)
-		add_side_as_quad(sp, sidenum, &vn);
+		add_side_as_quad(sp, sidenum, vn);
 	else {
 		add_side_as_2_triangles(sp, sidenum);
 
@@ -1536,7 +1595,7 @@ void create_walls_on_side(segment *sp, int sidenum)
 			int			vertnum;
 			side			*s;
 
-			create_abs_vertex_lists( &num_faces, vertex_list, sp-Segments, sidenum);
+			create_abs_vertex_lists( &num_faces, vertex_list, sp-Segments.data(), sidenum);
 
 			Assert(num_faces == 2);
 
@@ -1662,7 +1721,7 @@ int find_ncache_element( int segnum, int sidenum, int face_flags )
 void get_side_normal(segment *sp, int sidenum, int face_num, vms_vector * vm )
 {
 	int i;
-	i = find_ncache_element( sp - Segments, sidenum, 1 << face_num );
+	i = find_ncache_element( sp - Segments.data(), sidenum, 1 << face_num );
 	*vm = ncache[i].normals[face_num];
 	if (0) {
 		vms_vector tmp;
@@ -1676,7 +1735,7 @@ void get_side_normal(segment *sp, int sidenum, int face_num, vms_vector * vm )
 void get_side_normals(segment *sp, int sidenum, vms_vector * vm1, vms_vector * vm2 )
 {
 	int i;
-	i = find_ncache_element( sp - Segments, sidenum, 3 );
+	i = find_ncache_element( sp - Segments.data(), sidenum, 3 );
 	*vm1 = ncache[i].normals[0];
 	*vm2 = ncache[i].normals[1];
 
@@ -1858,11 +1917,11 @@ void pick_random_point_in_seg(vms_vector *new_pos, int segnum)
 //	----------------------------------------------------------------------------------------------------------
 //	Set the segment depth of all segments from start_seg in *segbuf.
 //	Returns maximum depth value.
-int set_segment_depths(int start_seg, uint8_t *segbuf)
+int set_segment_depths(int start_seg, std::vector<uint8_t> segbuf)
 {
 	int	i, curseg;
-	uint8_t	visited[MAX_SEGMENTS];
-	int	queue[MAX_SEGMENTS];
+	uint8_t* visited = new uint8_t[Segments.size()];
+	int* queue = new int[Segments.size()];
 	int	head, tail;
 	int	depth;
 	int	parent_depth;
@@ -1892,7 +1951,7 @@ int set_segment_depths(int start_seg, uint8_t *segbuf)
 			int	childnum;
 
 			childnum = Segments[curseg].children[i];
-			if (childnum != -1)
+			if (childnum >= 0)
 				if (segbuf[childnum])
 					if (!visited[childnum]) {
 						visited[childnum] = 1;
@@ -1901,6 +1960,9 @@ int set_segment_depths(int start_seg, uint8_t *segbuf)
 					}
 		}
 	}
+
+	delete[] visited;
+	delete[] queue;
 
 	return parent_depth+1;
 }
@@ -1915,11 +1977,11 @@ int n_changed_segs;
 
 //	------------------------------------------------------------------------------------------
 //cast static light from a segment to nearby segments
-void apply_light_to_segment(segment *segp,vms_vector *segment_center, fix light_intensity,int recursion_depth)
+void apply_light_to_segment(segment *segp,vms_vector segment_center, fix light_intensity,int recursion_depth)
 {
 	vms_vector	r_segment_center;
 	fix			dist_to_rseg;
-	int 			i,segnum=segp-Segments,sidenum;
+	int 			i,segnum=segp-Segments.data(),sidenum;
 
 	for (i=0;i<n_changed_segs;i++)
 		if (changed_segs[i] == segnum)
@@ -1927,7 +1989,7 @@ void apply_light_to_segment(segment *segp,vms_vector *segment_center, fix light_
 
 	if (i == n_changed_segs) {
 		compute_segment_center(&r_segment_center, segp);
-		dist_to_rseg = vm_vec_dist_quick(&r_segment_center, segment_center);
+		dist_to_rseg = vm_vec_dist_quick(&r_segment_center, &segment_center);
 	
 		if (dist_to_rseg <= LIGHT_DISTANCE_THRESHOLD) {
 			fix	light_at_point;
@@ -1982,7 +2044,7 @@ void change_segment_light(int segnum,int sidenum,int dir)
 		if (light_intensity) {
 			vms_vector	segment_center;
 			compute_segment_center(&segment_center, segp);
-			apply_light_to_segment(segp,&segment_center,light_intensity,0);
+			apply_light_to_segment(segp,segment_center,light_intensity,0);
 		}
 	}
 
@@ -2001,7 +2063,7 @@ void change_light(int segnum, int sidenum, int dir)
 {
 	int	i, j, k;
 
-	for (i=0; i<Num_static_lights; i++) 
+	for (i=0; i<Dl_indices.size(); i++) 
 	{
 		if ((Dl_indices[i].segnum == segnum) && (Dl_indices[i].sidenum == sidenum)) 
 		{
@@ -2072,7 +2134,7 @@ int add_light(int segnum, int sidenum)
 
 //	Light_subtracted[i] contains bit indicators for segment #i.
 //	If bit n (1 << n) is set, then side #n in segment #i has had light subtracted from original (editor-computed) value.
-uint8_t	Light_subtracted[MAX_SEGMENTS];
+std::vector<uint8_t> Light_subtracted(MAX_SEGMENTS);
 
 //	Parse the Light_subtracted array, turning on or off all lights.
 void apply_all_changed_light(void)
@@ -2136,7 +2198,7 @@ fix find_connected_distance_segments( int seg0, int seg1, int depth, int wid_fla
 	compute_segment_center(&p0, &Segments[seg0]);
 	compute_segment_center(&p1, &Segments[seg1]);
 
-	return find_connected_distance(&p0, seg0, &p1, seg1, depth, wid_flag);
+	return find_connected_distance(p0, seg0, p1, seg1, depth, wid_flag);
 }
 
 #define	AMBIENT_SEGMENT_DEPTH		5
@@ -2167,7 +2229,7 @@ void ambient_mark_bfs(int segnum, int8_t *marked_segs, int depth)
 void set_ambient_sound_flags_common(int tmi_bit, int s2f_bit)
 {
 	int	i, j;
-	int8_t	marked_segs[MAX_SEGMENTS];
+	int8_t* marked_segs = new int8_t[Segments.size()];
 
 	//	Now, all segments containing ambient lava or water sound makers are flagged.
 	//	Additionally flag all segments which are within range of them.
@@ -2210,6 +2272,8 @@ void set_ambient_sound_flags_common(int tmi_bit, int s2f_bit)
 	for (i=0; i<=Highest_segment_index; i++)
 		if (marked_segs[i])
 			Segment2s[i].s2_flags |= s2f_bit;
+
+	delete[] marked_segs;
 
 }
 

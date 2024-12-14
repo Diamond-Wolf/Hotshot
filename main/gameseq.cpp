@@ -101,6 +101,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "movie.h"
 #include "controls.h"
 #include "credits.h"
+#include "newcheat.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -509,9 +510,11 @@ void init_player_stats_new_ship()
 void reset_network_objects()
 {
 #ifdef NETWORK
-	memset(local_to_remote, -1, MAX_OBJECTS * sizeof(short));
-	memset(remote_to_local, -1, MAX_NUM_NET_PLAYERS * MAX_OBJECTS * sizeof(short));
-	memset(object_owner, -1, MAX_OBJECTS);
+	memset(local_to_remote.data(), -1,local_to_remote.size() * sizeof(short));
+	memset(object_owner.data(), -1, object_owner.size());
+
+	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++)
+		memset(remote_to_local[i].data(), -1, remote_to_local[i].size() * sizeof(short));
 #endif
 }
 
@@ -640,7 +643,7 @@ void set_sound_sources()
 						}
 
 						compute_center_point_on_side(&pnt, seg, sidenum);
-						digi_link_sound_to_pos(sn, segnum, sidenum, &pnt, 1, F1_0 / 2);
+						digi_link_sound_to_pos(sn, segnum, sidenum, pnt, 1, F1_0 / 2);
 					}
 		}
 
@@ -658,6 +661,8 @@ void create_player_appearance_effect(object* player_obj)
 	vms_vector pos;
 	object* effect_obj;
 
+	size_t pobjnum = player_obj - Objects.data();
+
 #ifndef NDEBUG
 	{
 		int objnum = player_obj - Objects.data();
@@ -671,7 +676,8 @@ void create_player_appearance_effect(object* player_obj)
 	else
 		pos = player_obj->pos;
 
-	effect_obj = object_create_explosion(player_obj->segnum, &pos, player_obj->size, VCLIP_PLAYER_APPEARANCE);
+	effect_obj = object_create_explosion(player_obj->segnum, pos, player_obj->size, VCLIP_PLAYER_APPEARANCE);
+	player_obj = &Objects[pobjnum];
 
 	if (effect_obj)
 	{
@@ -985,7 +991,7 @@ void LoadLevel(int level_num, int page_in_textures)
 	load_robot_replacements(level_name);
 
 #ifdef NETWORK
-	my_segments_checksum = netmisc_calc_checksum(Segments, sizeof(segment) * (Highest_segment_index + 1));
+	my_segments_checksum = netmisc_calc_checksum(Segments.data(), sizeof(segment) * (Highest_segment_index + 1));
 #endif
 
 	reset_network_objects();
@@ -1029,6 +1035,11 @@ extern void turn_cheats_off();
 extern void init_seismic_disturbances(void);
 void StartNewLevelSecret(int level_num, int page_in_textures);
 
+extern std::vector<fix> Last_afterburner_time;
+extern std::vector<int8_t> Lighting_objects;
+extern std::vector<fix> object_light;
+extern std::vector<int> object_sig;
+
 //starts a new game on the given level
 void StartNewGame(int start_level)
 {
@@ -1039,8 +1050,9 @@ void StartNewGame(int start_level)
 	Next_level_num = 0;
 
 	Objects.clear();
-	Objects.resize(MAX_OBJECTS);
-
+	
+	ResizeObjectVectors(MAX_OBJECTS, false);
+	
 	InitPlayerObject();				//make sure player's object set up
 
 	init_player_stats_game();		//clear all stats
@@ -1261,7 +1273,7 @@ void StartSecretLevel()
 	Auto_fire_fusion_cannon_time = 0;
 	Fusion_charge = 0;
 
-	Robot_firing_enabled = 1;
+	cheatValues[CI_NO_FIRING_D1] = 0;
 }
 
 extern void set_pos_from_return_segment(void);
@@ -1733,7 +1745,7 @@ void DoEndGame(void)
 }
 
 //from which level each do you get to each secret level 
-int Secret_level_table[MAX_SECRET_LEVELS_PER_MISSION];
+std::vector<int> Secret_level_table;
 
 //called to go to the next level (if there is one)
 //if secret_flag is true, advance to secret level, else next normal one
@@ -2323,7 +2335,7 @@ void maybe_set_first_secret_visit(int level_num)
 {
 	int	i;
 
-	for (i = 0; i < N_secret_levels; i++) {
+	for (i = 0; i < Secret_level_table.size(); i++) {
 		if (Secret_level_table[i] == level_num) {
 			First_secret_visit = 1;
 			mprintf((0, "Bashing First_secret_visit to 1 because entering level %i.\n", level_num));
@@ -2388,7 +2400,7 @@ void InitPlayerPosition(int random_flag)
 			{
 				if ((i != Player_num) && (Objects[Players[i].objnum].type == OBJ_PLAYER))
 				{
-					dist = find_connected_distance(&Objects[Players[i].objnum].pos, Objects[Players[i].objnum].segnum, &Player_init[NewPlayer].pos, Player_init[NewPlayer].segnum, 10, WID_FLY_FLAG);	//	Used to be 5, search up to 10 segments
+					dist = find_connected_distance(Objects[Players[i].objnum].pos, Objects[Players[i].objnum].segnum, Player_init[NewPlayer].pos, Player_init[NewPlayer].segnum, 10, WID_FLY_FLAG);	//	Used to be 5, search up to 10 segments
 					// -- mprintf((0, "Distance from start location %d to player %d is %f.\n", NewPlayer, i, f2fl(dist)));
 					if ((dist < closest_dist) && (dist >= 0)) {
 						closest_dist = dist;
@@ -2532,5 +2544,5 @@ void StartLevel(int random_flag)
 	Auto_fire_fusion_cannon_time = 0;
 	Fusion_charge = 0;
 
-	Robot_firing_enabled = 1;
+	cheatValues[CI_NO_FIRING_D1] = 0;
 }

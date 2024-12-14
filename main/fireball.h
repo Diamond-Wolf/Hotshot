@@ -27,18 +27,18 @@ typedef struct expl_wall
 
 #define MAX_EXPLODING_WALLS 			10
 
-extern expl_wall expl_wall_list[MAX_EXPLODING_WALLS];
+extern std::vector<expl_wall> expl_wall_list;
 
-object *object_create_explosion(short segnum, vms_vector * position, fix size, int vclip_type );
-object *object_create_muzzle_flash(short segnum, vms_vector * position, fix size, int vclip_type );
+object *object_create_explosion(short segnum, vms_vector position, fix size, int vclip_type );
+object *object_create_muzzle_flash(short segnum, vms_vector position, fix size, int vclip_type );
 
 object *object_create_badass_explosion(object *objp, short segnum, 
-		vms_vector * position, fix size, int vclip_type, 
+		vms_vector position, fix size, int vclip_type, 
 		fix maxdamage, fix maxdistance, fix maxforce, int parent );
 
 //blows up a badass weapon, creating the badass explosion
 //return the explosion object
-object *explode_badass_weapon(object *obj,vms_vector *pos);
+object *explode_badass_weapon(object *obj, vms_vector pos);
 
 //blows up the player with a badass explosion
 //return the explosion object
@@ -57,7 +57,7 @@ extern void maybe_drop_net_powerup(int powerup_type);
 extern void maybe_replace_powerup_with_energy(object *del_obj);
 
 extern int get_explosion_vclip(object *obj,int stage);
-extern int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *pos, int segnum);
+extern int drop_powerup(int type, int id, int num, vms_vector init_vel, vms_vector pos, int segnum);
 
 //creates afterburner blobs behind the specified object
-void drop_afterburner_blobs(object *obj, int count, fix size_scale, fix lifetime);
+void drop_afterburner_blobs(int objnum, int count, fix size_scale, fix lifetime);

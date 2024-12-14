@@ -19,7 +19,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 extern void do_automap(int key_code);
 extern void automap_clear_visited();
-extern uint8_t Automap_visited[MAX_SEGMENTS];
+extern std::vector<uint8_t> Automap_visited;
 extern void modex_print_message(int x, int y, char *str);
 void DropBuddyMarker(object *objp);
 

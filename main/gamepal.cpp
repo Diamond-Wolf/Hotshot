@@ -113,7 +113,7 @@ int load_palette(const char *name,int used_for_level,int no_change_screen)
 	if (name==NULL)
 		name = last_palette_loaded_pig;
 
-	if (used_for_level && _stricmp(last_palette_loaded_pig,name) != 0) {
+	if (used_for_level) {
 
 		_splitpath(name,NULL,NULL,pigname,NULL);
 		strcat(pigname,".PIG");

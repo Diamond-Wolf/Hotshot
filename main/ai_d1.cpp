@@ -50,6 +50,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main/gauges.h"
 #include "stringtable.h"
 #include "misc/rand.h"
+#include "newcheat.h"
 
 #include "ai_ifwd.h"
 
@@ -93,13 +94,9 @@ int	john_cheats_index_2;		//	PORGYS		high speed weapon firing
 #define	BOSS_DEATH_DURATION	(F1_0*6)
 #define	BOSS_DEATH_SOUND_DURATION	0x2ae14		//	2.68 seconds
 
-extern int Lunacy;
-
 //	Amount of time since the current robot was last processed for things such as movement.
 //	It is not valid to use FrameTime because robots do not get moved every frame.
 //fix	AI_proc_time;
-
-int	john_cheats_index_3;		//	LUNACY		lunacy (insane behavior, rookie firing)
 
 //	---------- John: End of variables which must be saved as part of gamesave. ----------
 
@@ -136,10 +133,7 @@ int8_t	Super_boss_gate_list[] = { 0, 1, 8, 9, 10, 11, 12, 15, 16, 18, 19, 20, 22
 #define	MAX_GATE_INDEX	( sizeof(Super_boss_gate_list) / sizeof(Super_boss_gate_list[0]) )
 #endif
 
-int	Robot_firing_enabled = 1;
-
 int	Ugly_robot_cheat, Ugly_robot_texture;
-extern int Laser_rapid_fire;
 extern	int8_t	Enable_john_cheat_1, Enable_john_cheat_2, Enable_john_cheat_3, Enable_john_cheat_4;
 
 uint8_t	john_cheats_3[2 * JOHN_CHEATS_SIZE_3 + 1] = { KEY_Y ^ 0x67,
@@ -200,7 +194,7 @@ void john_cheat_func_2(int key)
 	if (key == (john_cheats_2[2 * john_cheats_index_2] ^ (john_cheats_index_2 << 4) ^ 0x43)) {
 		john_cheats_index_2++;
 		if (john_cheats_index_2 == JOHN_CHEATS_SIZE_2) {
-			Laser_rapid_fire = 0xBADA55;
+			cheatValues[CI_RAPID_FIRE] = 0xBADA55;
 			do_megawow_powerup(200);
 			john_cheats_index_2 = 0;
 			digi_play_sample(SOUND_CHEATER, F1_0);
@@ -208,33 +202,6 @@ void john_cheat_func_2(int key)
 	}
 	else
 		john_cheats_index_2 = 0;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-void john_cheat_func_3(int key)
-{
-	if (!Cheats_enabled)
-		return;
-
-	if (key == (john_cheats_3[JOHN_CHEATS_SIZE_3 - john_cheats_index_3] ^ (0x61 + john_cheats_index_3))) {
-		if (john_cheats_index_3 == 4)
-			john_cheats_index_3++;
-		john_cheats_index_3++;
-		if (john_cheats_index_3 == JOHN_CHEATS_SIZE_3 + 1) {
-			if (Lunacy) {
-				do_lunacy_off();
-				HUD_init_message(TXT_NO_LUNACY);
-			}
-			else {
-				do_lunacy_on();
-				HUD_init_message(TXT_LUNACY);
-				digi_play_sample(SOUND_CHEATER, F1_0);
-			}
-			john_cheats_index_3 = 0;
-		}
-	}
-	else
-		john_cheats_index_3 = 0;
 }
 
 //--debug-- #ifndef NDEBUG
@@ -245,10 +212,10 @@ void john_cheat_func_3(int key)
 #define	AI_TURN_SCALE	1
 #define	BABY_SPIDER_ID	14
 
-extern void physics_turn_towards_vector(vms_vector * goal_vector, object * obj, fix rate);
+extern void physics_turn_towards_vector(vms_vector goal_vector, object * obj, fix rate);
 
 // --------------------------------------------------------------------------------------------------------------------
-void ai_turn_randomly(vms_vector* vec_to_player, object* obj, fix rate, int previous_visibility)
+void ai_turn_randomly(vms_vector vec_to_player, object* obj, fix rate, int previous_visibility)
 {
 	vms_vector	curvec;
 
@@ -381,7 +348,7 @@ extern int Player_exploded;
 //	Note: Parameter vec_to_player is only passed now because guns which aren't on the forward vector from the
 //	center of the robot will not fire right at the player.  We need to aim the guns at the player.  Barring that, we cheat.
 //	When this routine is complete, the parameter vec_to_player should not be necessary.
-void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num, vms_vector *believed_player_pos)
+void ai_fire_laser_at_player_d1(object* obj, vms_vector fire_point, int gun_num, vms_vector believed_player_pos)
 {
 	int			objnum = obj - Objects.data();
 	ai_local* ailp = &Ai_local_info[objnum];
@@ -389,7 +356,7 @@ void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num
 	vms_vector	fire_vec;
 	vms_vector	bpp_diff;
 
-	if (!Robot_firing_enabled)
+	if (cheatValues[CI_NO_FIRING_D1])
 		return;
 
 #ifndef NDEBUG
@@ -424,7 +391,7 @@ void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num
 	//	Half the time fire at the player, half the time lead the player.
 	if (P_Rand() > 16384) {
 
-		vm_vec_normalized_dir_quick(&fire_vec, &bpp_diff, fire_point);
+		vm_vec_normalized_dir_quick(&fire_vec, &bpp_diff, &fire_point);
 
 	}
 	else {
@@ -438,7 +405,7 @@ void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num
 		//	its target.  Ideally, we want to point the guns at the player.  For now, just fire right at the player.
 		if ((abs(player_direction_vector.x < 0x10000)) && (abs(player_direction_vector.y < 0x10000)) && (abs(player_direction_vector.z < 0x10000))) {
 
-			vm_vec_normalized_dir_quick(&fire_vec, &bpp_diff, fire_point);
+			vm_vec_normalized_dir_quick(&fire_vec, &bpp_diff, &fire_point);
 
 			// Player is moving.  Determine where the player will be at the end of the next frame if he doesn't change his
 			//	behavior.  Fire at exactly that point.  This isn't exactly what you want because it will probably take the laser
@@ -446,7 +413,7 @@ void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num
 			//	So, that's why we write games, instead of guiding missiles...
 		}
 		else {
-			vm_vec_sub(&fire_vec, &bpp_diff, fire_point);
+			vm_vec_sub(&fire_vec, &bpp_diff, &fire_point);
 			vm_vec_scale(&fire_vec, fixmul(activeBMTable->weapons[activeBMTable->robots[obj->id].weapon_type].speed[Difficulty_level], FrameTime));
 
 			vm_vec_add2(&fire_vec, &player_direction_vector);
@@ -460,7 +427,8 @@ void ai_fire_laser_at_player_d1(object* obj, vms_vector* fire_point, int gun_num
 	//		mprintf((0, "Boss (%i) fires!\n", obj-Objects));
 	//#endif
 
-	Laser_create_new_easy(&fire_vec, fire_point, obj - Objects.data(), robptr->weapon_type, 1);
+	Laser_create_new_easy(fire_vec, fire_point, obj - Objects.data(), robptr->weapon_type, 1);
+	obj = &Objects[objnum];
 
 #ifndef SHAREWARE
 #ifdef NETWORK
@@ -566,8 +534,11 @@ int get_random_child(int segnum)
 }
 
 //	----------------------------------------------------------------------
-void do_boss_dying_frame_d1(object* objp)
+void do_boss_dying_frame_d1(size_t objnum)
 {
+
+	object* objp = &Objects[objnum];
+
 	fix	boss_roll_val, temp;
 
 	boss_roll_val = fixdiv(GameTime - Boss_dying_start_time, BOSS_DEATH_DURATION);
@@ -586,16 +557,20 @@ void do_boss_dying_frame_d1(object* objp)
 			Boss_dying_sound_playing = 1;
 			digi_link_sound_to_object2(SOUND_BOSS_SHARE_DIE, objp - Objects.data(), 0, F1_0 * 4, F1_0 * 1024);	//	F1_0*512 means play twice as loud
 		}
-		else if (P_Rand() < FrameTime * 16)
+		else if (P_Rand() < FrameTime * 16) {
 			create_small_fireball_on_object(objp, (F1_0 + P_Rand()) * 8, 0);
+			objp = &Objects[objnum];
+		}
 	}
-	else if (P_Rand() < FrameTime * 8)
+	else if (P_Rand() < FrameTime * 8) {
 		create_small_fireball_on_object(objp, (F1_0 / 2 + P_Rand()) * 8, 1);
+		objp = &Objects[objnum];
+	}
 
 	if (Boss_dying_start_time + BOSS_DEATH_DURATION < GameTime) {
 		do_controlcen_destroyed_stuff(NULL);
 		explode_object(objp, F1_0 / 4);
-		digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objp - Objects.data(), 0, F2_0, F1_0 * 512);
+		digi_link_sound_to_object2(SOUND_BADASS_EXPLOSION, objnum, 0, F2_0, F1_0 * 512);
 	}
 }
 
@@ -652,7 +627,7 @@ void do_boss_stuff_d1(object* objp)
 		}
 	}
 	else
-		do_boss_dying_frame(objp);
+		do_boss_dying_frame(objp - Objects.data());
 
 }
 
@@ -666,6 +641,8 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 {
 	static int eclip_state = 0;
 	do_boss_stuff(objp, 0);
+
+	size_t objnum = objp - Objects.data();
 
 	// Only master player can cause gating to occur.
 #ifdef NETWORK
@@ -690,7 +667,7 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 #ifndef SHAREWARE
 #ifdef NETWORK
 			if (eclip_state == 1) {
-				multi_send_boss_actions(objp - Objects.data(), 5, 0, 0);
+				multi_send_boss_actions(objnum, 5, 0, 0);
 				eclip_state = 0;
 			}
 #endif
@@ -711,7 +688,7 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 #ifdef NETWORK
 				if (rtval && (Game_mode & GM_MULTI))
 				{
-					multi_send_boss_actions(objp - Objects.data(), 3, randtype, Net_create_objnums[0]);
+					multi_send_boss_actions(objnum, 3, randtype, Net_create_objnums[0]);
 					map_objnum_local_to_local(Net_create_objnums[0]);
 				}
 #endif
@@ -723,9 +700,9 @@ void do_super_boss_stuff(object* objp, fix dist_to_player, int player_visibility
 #endif
 
 // --------------------------------------------------------------------------------------------------------------------
-void do_ai_frame_d1(object* obj)
+void do_ai_frame_d1(size_t objnum)
 {
-	int			objnum = obj - Objects.data();
+	object* obj = &Objects[objnum];
 	ai_static* aip = &obj->ctype.ai_info;
 	ai_local* ailp = &Ai_local_info[objnum];
 	fix			dist_to_player;
@@ -777,7 +754,7 @@ void do_ai_frame_d1(object* obj)
 		return;
 
 	if (Break_on_object != -1)
-		if ((obj - Objects.data()) == Break_on_object)
+		if (objnum == Break_on_object)
 			Int3();	//	Contact Mike: This is a debug break
 #endif
 
@@ -812,6 +789,32 @@ void do_ai_frame_d1(object* obj)
 			aip->CLOAKED = 1;
 		else
 			aip->CLOAKED = 0;
+
+	if (cheatValues[CI_INFIGHTING]) {
+		vis_vec_pos = obj->pos;
+		compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+		if (player_visibility) {
+			int	ii, min_obj = -1;
+			fix	min_dist = F1_0 * 200, cur_dist;
+
+			for (ii = 0; ii <= Highest_object_index; ii++)
+				if ((Objects[ii].type == OBJ_ROBOT) && (ii != objnum)) {
+					cur_dist = vm_vec_dist_quick(&obj->pos, &Objects[ii].pos);
+
+					if (cur_dist < F1_0 * 100)
+						if (object_to_object_visibility(obj, &Objects[ii], FQ_TRANSWALL))
+							if (cur_dist < min_dist) {
+								min_obj = ii;
+								min_dist = cur_dist;
+							}
+				}
+			if (min_obj != -1) {
+				Believed_player_pos = Objects[min_obj].pos;
+				Believed_player_seg = Objects[min_obj].segnum;
+				vm_vec_normalized_dir_quick(&vec_to_player, &Believed_player_pos, &obj->pos);
+			}
+		}
+	}
 
 	if (!(Players[Player_num].flags & PLAYER_FLAGS_CLOAKED))
 		Believed_player_pos = ConsoleObject->pos;
@@ -877,7 +880,6 @@ void do_ai_frame_d1(object* obj)
 					attempt_to_resume_path(obj);
 				break;
 			case AIM_RUN_FROM_OBJECT:
-				mprintf((1,"Runner!\n"));
 				move_towards_segment_center(obj);
 				obj->mtype.phys_info.velocity.x = 0;
 				obj->mtype.phys_info.velocity.y = 0;
@@ -915,30 +917,13 @@ void do_ai_frame_d1(object* obj)
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -
 	//	If in materialization center, exit
 	if (!(Game_mode & GM_MULTI) && (Segments[obj->segnum].special == SEGMENT_IS_ROBOTMAKER)) {
-		ai_follow_path(obj, 1, 0, nullptr);		// 1 = player is visible, which might be a lie, but it works.
+		ai_follow_path(obj, 1, 0, vmd_zero_vector);		// 1 = player is visible, which might be a lie, but it works.
 		return;
 	}
 
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -
 	//	Decrease player awareness due to the passage of time.
-//-----old, faster way from about 11/06/94-----	if (ailp->player_awareness_type) {
-//-----old, faster way from about 11/06/94-----		if (ailp->player_awareness_time > 0) {
-//-----old, faster way from about 11/06/94-----			ailp->player_awareness_time -= FrameTime;
-//-----old, faster way from about 11/06/94-----			if (ailp->player_awareness_time <= 0) {
-//-----old, faster way from about 11/06/94----- 				ailp->player_awareness_time = F1_0*2;
-//-----old, faster way from about 11/06/94----- 				ailp->player_awareness_type--;
-//-----old, faster way from about 11/06/94-----				if (ailp->player_awareness_type < 0) {
-//-----old, faster way from about 11/06/94-----	 				aip->GOAL_STATE = AIS_REST;
-//-----old, faster way from about 11/06/94-----	 				ailp->player_awareness_type = 0;
-//-----old, faster way from about 11/06/94-----				}
-//-----old, faster way from about 11/06/94-----
-//-----old, faster way from about 11/06/94-----			}
-//-----old, faster way from about 11/06/94-----		} else {
-//-----old, faster way from about 11/06/94----- 			ailp->player_awareness_type = 0;
-//-----old, faster way from about 11/06/94----- 			aip->GOAL_STATE = AIS_REST;
-//-----old, faster way from about 11/06/94-----		}
-//-----old, faster way from about 11/06/94-----	} else
-//-----old, faster way from about 11/06/94-----		aip->GOAL_STATE = AIS_REST;
+
 
 
 	//	- -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -
@@ -1019,6 +1004,7 @@ void do_ai_frame_d1(object* obj)
 		dist_to_player /= 4;
 
 		do_boss_stuff(obj, 0);
+		obj = &Objects[objnum];
 		dist_to_player *= 4;
 		break;
 #ifndef SHAREWARE
@@ -1027,7 +1013,7 @@ void do_ai_frame_d1(object* obj)
 			aip->GOAL_STATE = AIS_FIRE;
 		if (aip->CURRENT_STATE == AIS_FLIN)
 			aip->CURRENT_STATE = AIS_FIRE;
-		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+		compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 		{	int pv = player_visibility;
 		fix	dtp = dist_to_player / 4;
@@ -1039,6 +1025,7 @@ void do_ai_frame_d1(object* obj)
 		}
 
 		do_super_boss_stuff(obj, dtp, pv);
+		obj = &Objects[objnum];
 		}
 		break;
 #endif
@@ -1083,8 +1070,8 @@ void do_ai_frame_d1(object* obj)
 		if (ConsoleObject->segnum == obj->segnum) {
 			if (!ai_multiplayer_awareness(obj, 97))
 				return;
-			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
-			move_away_from_player(obj, &vec_to_player, 0);
+			compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+			move_away_from_player(obj, vec_to_player, 0);
 			ai_multi_send_robot_position(objnum, -1);
 		}
 		else if (ailp->mode != AIM_STILL) {
@@ -1103,7 +1090,7 @@ void do_ai_frame_d1(object* obj)
 			}
 		}
 		else {
-			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+			compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 			if (player_visibility) {
 				if (!ai_multiplayer_awareness(obj, 50))
 					return;
@@ -1126,14 +1113,14 @@ void do_ai_frame_d1(object* obj)
 		if (robptr->attack_type != 1)
 			circle_distance += (objnum & 0xf) * F1_0 / 2;
 
-		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+		compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 		//	@mk, 12/27/94, structure here was strange.  Would do both clauses of what are now this if/then/else.  Used to be if/then, if/then.
 		if ((player_visibility < 2) && (previous_visibility == 2)) { // this is redundant: mk, 01/15/95: && (ailp->mode == AIM_CHASE_OBJECT)) {
 			// mprintf((0, "I used to be able to see the player!\n"));
 			if (!ai_multiplayer_awareness(obj, 53)) {
 				if (maybe_ai_do_actual_firing_stuff(obj, aip))
-					ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+					ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 				return;
 			}
 			// -- mprintf((0, "(3) Object #%i going from chase to player path in frame %i.\n", objnum, FrameCount));
@@ -1177,7 +1164,7 @@ void do_ai_frame_d1(object* obj)
 
 			if (!ai_multiplayer_awareness(obj, 64)) {
 				if (maybe_ai_do_actual_firing_stuff(obj, aip))
-					ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+					ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 				return;
 			}
 			// -- mprintf((0, "(4) Object #%i going from chase to player path in frame %i.\n", objnum, FrameCount));
@@ -1188,16 +1175,16 @@ void do_ai_frame_d1(object* obj)
 		else if ((aip->CURRENT_STATE != AIS_REST) && (aip->GOAL_STATE != AIS_REST)) {
 			if (!ai_multiplayer_awareness(obj, 70)) {
 				if (maybe_ai_do_actual_firing_stuff(obj, aip))
-					ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+					ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 				return;
 			}
-			ai_move_relative_to_player(obj, ailp, dist_to_player, &vec_to_player, circle_distance, 0, 0);
+			ai_move_relative_to_player(obj, ailp, dist_to_player, vec_to_player, circle_distance, 0, 0);
 
 			if ((obj_ref & 1) && ((aip->GOAL_STATE == AIS_SRCH) || (aip->GOAL_STATE == AIS_LOCK))) {
 				if (player_visibility) // == 2)
-					ai_turn_towards_vector(&vec_to_player, obj, robptr->turn_time[Difficulty_level]);
+					ai_turn_towards_vector(vec_to_player, obj, robptr->turn_time[Difficulty_level]);
 				else
-					ai_turn_randomly(&vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
+					ai_turn_randomly(vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
 			}
 
 			if (ai_evaded) {
@@ -1207,13 +1194,14 @@ void do_ai_frame_d1(object* obj)
 			else
 				ai_multi_send_robot_position(objnum, -1);
 
-			do_firing_stuff(obj, player_visibility, &vec_to_player);
+			do_firing_stuff(obj, player_visibility, vec_to_player);
+			obj = &Objects[objnum];
 		}
 		break;
 	}
 
 	case AIM_RUN_FROM_OBJECT:
-		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+		compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 		if (player_visibility) {
 			if (ailp->player_awareness_type == 0)
@@ -1224,7 +1212,7 @@ void do_ai_frame_d1(object* obj)
 		//	If in multiplayer, only do if player visible.  If not multiplayer, do always.
 		if (!(Game_mode & GM_MULTI) || player_visibility)
 			if (ai_multiplayer_awareness(obj, 75)) {
-				ai_follow_path(obj, player_visibility, 0, nullptr);
+				ai_follow_path(obj, player_visibility, 0, vmd_zero_vector);
 				ai_multi_send_robot_position(objnum, -1);
 			}
 
@@ -1249,14 +1237,15 @@ void do_ai_frame_d1(object* obj)
 			vm_vec_negate(&fire_vec);
 			vm_vec_add(&fire_pos, &obj->pos, &fire_vec);
 
-			Laser_create_new_easy(&fire_vec, &fire_pos, obj - Objects.data(), PROXIMITY_ID, 1);
+			Laser_create_new_easy(fire_vec, fire_pos, objnum, PROXIMITY_ID, 1);
+			obj = &Objects[objnum];
 			ailp->next_fire = F1_0 * 5;		//	Drop a proximity bomb every 5 seconds.
 
 #ifdef NETWORK
 			if (Game_mode & GM_MULTI)
 			{
-				ai_multi_send_robot_position(obj - Objects.data(), -1);
-				multi_send_robot_fire(obj - Objects.data(), -1, &fire_vec);
+				ai_multi_send_robot_position(objnum, -1);
+				multi_send_robot_fire(objnum, -1, &fire_vec);
 			}
 #endif	
 		}
@@ -1271,7 +1260,7 @@ void do_ai_frame_d1(object* obj)
 				// mprintf((0, "Object %i, station, lowering anger to 64.\n"));
 			}
 
-		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+		compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 		//[ISB MODEM]unused modem game logic 
 		/*if (Game_mode & (GM_MODEM | GM_SERIAL))
@@ -1282,21 +1271,23 @@ void do_ai_frame_d1(object* obj)
 
 		if (!ai_multiplayer_awareness(obj, anger_level)) {
 			if (maybe_ai_do_actual_firing_stuff(obj, aip)) {
-				compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
-				ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+				compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+				ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 			}
 			return;
 		}
 
-		ai_follow_path(obj, player_visibility, 0, nullptr);
+		ai_follow_path(obj, player_visibility, 0, vmd_zero_vector);
 
 		if (aip->GOAL_STATE != AIS_FLIN)
 			aip->GOAL_STATE = AIS_LOCK;
 		else if (aip->CURRENT_STATE == AIS_FLIN)
 			aip->GOAL_STATE = AIS_LOCK;
 
-		if ((aip->behavior != AIB_FOLLOW_PATH) && (aip->behavior != AIB_RUN_FROM))
-			do_firing_stuff(obj, player_visibility, &vec_to_player);
+		if ((aip->behavior != AIB_FOLLOW_PATH) && (aip->behavior != AIB_RUN_FROM)) {
+			do_firing_stuff(obj, player_visibility, vec_to_player);
+			obj = &Objects[objnum];
+		}
 
 		if ((player_visibility == 2) && (aip->behavior != AIB_FOLLOW_PATH) && (aip->behavior != AIB_RUN_FROM) && (obj->id != ROBOT_BRAIN)) {
 			if (robptr->attack_type == 0)
@@ -1316,15 +1307,15 @@ void do_ai_frame_d1(object* obj)
 	case AIM_HIDE:
 		if (!ai_multiplayer_awareness(obj, 71)) {
 			if (maybe_ai_do_actual_firing_stuff(obj, aip)) {
-				compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
-				ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+				compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+				ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 			}
 			return;
 		}
 
-		compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+		compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
-		ai_follow_path(obj, player_visibility, 0, nullptr);
+		ai_follow_path(obj, player_visibility, 0, vmd_zero_vector);
 
 		if (aip->GOAL_STATE != AIS_FLIN)
 			aip->GOAL_STATE = AIS_LOCK;
@@ -1336,31 +1327,32 @@ void do_ai_frame_d1(object* obj)
 
 	case AIM_STILL:
 		if ((dist_to_player < F1_0 * 120 + Difficulty_level * F1_0 * 20) || (ailp->player_awareness_type >= PA_WEAPON_ROBOT_COLLISION - 1)) {
-			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+			compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 			//	turn towards vector if visible this time or last time, or rand
 			// new!
 			if ((player_visibility) || (previous_visibility) || ((P_Rand() > 0x4000) && !(Game_mode & GM_MULTI))) {
 				if (!ai_multiplayer_awareness(obj, 71)) {
 					if (maybe_ai_do_actual_firing_stuff(obj, aip))
-						ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+						ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 					return;
 				}
-				ai_turn_towards_vector(&vec_to_player, obj, robptr->turn_time[Difficulty_level]);
+				ai_turn_towards_vector(vec_to_player, obj, robptr->turn_time[Difficulty_level]);
 				ai_multi_send_robot_position(objnum, -1);
 			}
 
-			do_firing_stuff(obj, player_visibility, &vec_to_player);
+			do_firing_stuff(obj, player_visibility, vec_to_player);
+			obj = &Objects[objnum];
 			//	This is debugging code!  Remove it!  It's to make the green guy attack without doing other kinds of movement.
 			if (player_visibility) {		//	Change, MK, 01/03/94 for Multiplayer reasons.  If robots can't see you (even with eyes on back of head), then don't do evasion.
 				if (robptr->attack_type == 1) {
 					aip->behavior = AIB_NORMAL;
 					if (!ai_multiplayer_awareness(obj, 80)) {
 						if (maybe_ai_do_actual_firing_stuff(obj, aip))
-							ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+							ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 						return;
 					}
-					ai_move_relative_to_player(obj, ailp, dist_to_player, &vec_to_player, 0, 0, 0);
+					ai_move_relative_to_player(obj, ailp, dist_to_player, vec_to_player, 0, 0, 0);
 					if (ai_evaded) {
 						ai_multi_send_robot_position(objnum, 1);
 						ai_evaded = 0;
@@ -1372,10 +1364,10 @@ void do_ai_frame_d1(object* obj)
 					//	Robots in hover mode are allowed to evade at half normal speed.
 					if (!ai_multiplayer_awareness(obj, 81)) {
 						if (maybe_ai_do_actual_firing_stuff(obj, aip))
-							ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+							ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 						return;
 					}
-					ai_move_relative_to_player(obj, ailp, dist_to_player, &vec_to_player, 0, 1, 0);
+					ai_move_relative_to_player(obj, ailp, dist_to_player, vec_to_player, 0, 1, 0);
 					if (ai_evaded) {
 						ai_multi_send_robot_position(objnum, -1);
 						ai_evaded = 0;
@@ -1407,15 +1399,15 @@ void do_ai_frame_d1(object* obj)
 		compute_center_point_on_side(&center_point, &Segments[obj->segnum], aip->GOALSIDE);
 		vm_vec_sub(&goal_vector, &center_point, &obj->pos);
 		vm_vec_normalize_quick(&goal_vector);
-		ai_turn_towards_vector(&goal_vector, obj, robptr->turn_time[Difficulty_level]);
-		move_towards_vector(obj, &goal_vector, true);
+		ai_turn_towards_vector(goal_vector, obj, robptr->turn_time[Difficulty_level]);
+		move_towards_vector(obj, goal_vector, true);
 		ai_multi_send_robot_position(objnum, -1);
 
 		break;
 	}
 
 	default:
-		mprintf((0, "Unknown mode = %i in robot %i, behavior = %i\n", ailp->mode, obj - Objects.data(), aip->behavior));
+		mprintf((0, "Unknown mode = %i in robot %i, behavior = %i\n", ailp->mode, objnum, aip->behavior));
 		ailp->mode = AIM_CHASE_OBJECT;
 		break;
 	}		// end:	switch (ailp->mode) {
@@ -1424,7 +1416,7 @@ void do_ai_frame_d1(object* obj)
 	//	If the robot can see you, increase his awareness of you.
 	//	This prevents the problem of a robot looking right at you but doing nothing.
 	// Assert(player_visibility != -1);	//	Means it didn't get initialized!
-	compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+	compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 	if (player_visibility == 2)
 		if (ailp->player_awareness_type == 0)
 			ailp->player_awareness_type = PA_PLAYER_COLLISION;
@@ -1475,7 +1467,7 @@ void do_ai_frame_d1(object* obj)
 	if ((aip->GOAL_STATE != AIS_FLIN) && (obj->id != ROBOT_BRAIN)) {
 		switch (aip->CURRENT_STATE) {
 		case	AIS_NONE:
-			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+			compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 			dot = vm_vec_dot(&obj->orient.fvec, &vec_to_player);
 			if (dot >= F1_0 / 2)
@@ -1485,7 +1477,7 @@ void do_ai_frame_d1(object* obj)
 			break;
 		case	AIS_REST:
 			if (aip->GOAL_STATE == AIS_REST) {
-				compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+				compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 				if ((ailp->next_fire <= 0) && (player_visibility)) {
 					// mprintf((0, "Setting goal state to fire from rest.\n"));
 					aip->GOAL_STATE = AIS_FIRE;
@@ -1497,63 +1489,64 @@ void do_ai_frame_d1(object* obj)
 			if (!ai_multiplayer_awareness(obj, 60))
 				return;
 
-			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+			compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 			if (player_visibility) {
-				ai_turn_towards_vector(&vec_to_player, obj, robptr->turn_time[Difficulty_level]);
+				ai_turn_towards_vector(vec_to_player, obj, robptr->turn_time[Difficulty_level]);
 				ai_multi_send_robot_position(objnum, -1);
 			}
 			else if (!(Game_mode & GM_MULTI))
-				ai_turn_randomly(&vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
+				ai_turn_randomly(vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
 			break;
 		case	AIS_LOCK:
-			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+			compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 			if (!(Game_mode & GM_MULTI) || (player_visibility)) {
 				if (!ai_multiplayer_awareness(obj, 68))
 					return;
 
 				if (player_visibility) {
-					ai_turn_towards_vector(&vec_to_player, obj, robptr->turn_time[Difficulty_level]);
+					ai_turn_towards_vector(vec_to_player, obj, robptr->turn_time[Difficulty_level]);
 					ai_multi_send_robot_position(objnum, -1);
 				}
 				else if (!(Game_mode & GM_MULTI))
-					ai_turn_randomly(&vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
+					ai_turn_randomly(vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
 			}
 			break;
 		case	AIS_FIRE:
-			compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+			compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 
 			if (player_visibility) {
 				if (!ai_multiplayer_awareness(obj, (ROBOT_FIRE_AGITATION - 1)))
 				{
 					if (Game_mode & GM_MULTI) {
-						ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+						ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
 						return;
 					}
 				}
-				ai_turn_towards_vector(&vec_to_player, obj, robptr->turn_time[Difficulty_level]);
+				ai_turn_towards_vector(vec_to_player, obj, robptr->turn_time[Difficulty_level]);
 				ai_multi_send_robot_position(objnum, -1);
 			}
 			else if (!(Game_mode & GM_MULTI)) {
-				ai_turn_randomly(&vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
+				ai_turn_randomly(vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
 			}
 
 			//	Fire at player, if appropriate.
-			ai_do_actual_firing_stuff(obj, aip, ailp, robptr, &vec_to_player, dist_to_player, &gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+			ai_do_actual_firing_stuff(obj, aip, ailp, robptr, vec_to_player, dist_to_player, gun_point, player_visibility, object_animates, aip->CURRENT_GUN);
+			obj = &Objects[objnum];
 
 			break;
 		case	AIS_RECO:
 			if (!(obj_ref & 3)) {
-				compute_vis_and_vec(obj, &vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
+				compute_vis_and_vec(obj, vis_vec_pos, ailp, &vec_to_player, &player_visibility, robptr, &visibility_and_vec_computed);
 				if (player_visibility) {
 					if (!ai_multiplayer_awareness(obj, 69))
 						return;
-					ai_turn_towards_vector(&vec_to_player, obj, robptr->turn_time[Difficulty_level]);
+					ai_turn_towards_vector(vec_to_player, obj, robptr->turn_time[Difficulty_level]);
 					ai_multi_send_robot_position(objnum, -1);
 				}
 				else if (!(Game_mode & GM_MULTI)) {
-					ai_turn_randomly(&vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
+					ai_turn_randomly(vec_to_player, obj, robptr->turn_time[Difficulty_level], previous_visibility);
 				}
 			}
 			break;
@@ -1583,7 +1576,8 @@ int ai_save_state_d1(FILE* fp)
 	
 	file_write_int(fp, Ai_initialized);
 	file_write_int(fp, Overall_agitation);
-	for (i = 0; i < MAX_OBJECTS; i++)
+	file_write_int(fp, Highest_object_index + 1);
+	for (i = 0; i <= Highest_object_index; i++)
 		P_WriteAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
 		P_WriteSegPoint(&Point_segs[i], fp);
@@ -1613,7 +1607,9 @@ int ai_restore_state_d1(FILE* fp)
 
 	Ai_initialized = file_read_int(fp);
 	Overall_agitation = file_read_int(fp);
-	for (i = 0; i < MAX_OBJECTS; i++)
+	int numObjects = file_read_int(fp);
+	//Assert(Objects.size() == numObjects);
+	for (i = 0; i < numObjects; i++)
 		P_ReadAILocals(&Ai_local_info[i], fp);
 	for (i = 0; i < MAX_POINT_SEGS; i++)
 		P_ReadSegPoint(&Point_segs[i], fp);

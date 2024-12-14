@@ -95,8 +95,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //Does demo start automatically?
 int Auto_demo = 0;
 
-int8_t WasRecorded[MAX_OBJECTS];
-int8_t ViewWasRecorded[MAX_OBJECTS];
+std::vector<int8_t> WasRecorded(MAX_OBJECTS);
+std::vector<int8_t> ViewWasRecorded(MAX_OBJECTS);
 int8_t RenderingWasRecorded[32];
 
 #define ND_EVENT_EOF					0			// EOF
@@ -231,6 +231,8 @@ void my_extract_shortpos(object * objp, shortpos * spp)
 	objp->orient.rvec.z = *sp++ << MATRIX_PRECISION;
 	objp->orient.uvec.z = *sp++ << MATRIX_PRECISION;
 	objp->orient.fvec.z = *sp++ << MATRIX_PRECISION;
+
+	*sp++; //pad
 
 	segnum = spp->segment;
 	objp->segnum = segnum;
@@ -919,7 +921,7 @@ void newdemo_record_start_frame(int frame_number, fix frame_time)
 
 	stop_time();
 
-	for (i = 0; i < MAX_OBJECTS; i++)
+	for (i = 0; i < Objects.size(); i++)
 	{
 		WasRecorded[i] = 0;
 		ViewWasRecorded[i] = 0;
@@ -1405,15 +1407,15 @@ void newdemo_set_new_level(int level_num)
 
 	if (JustStartedRecording == 1)
 	{
-		nd_write_int(Num_walls);
-		for (i = 0; i < Num_walls; i++)
+		nd_write_int(Walls.size());
+		for (auto& wall : Walls)
 		{
-			nd_write_byte(Walls[i].type);
-			nd_write_byte(Walls[i].flags);
-			nd_write_byte(Walls[i].state);
+			nd_write_byte(wall.type);
+			nd_write_byte(wall.flags);
+			nd_write_byte(wall.state);
 
-			seg = &Segments[Walls[i].segnum];
-			side = Walls[i].sidenum;
+			seg = &Segments[wall.segnum];
+			side = wall.sidenum;
 			nd_write_short(seg->sides[side].tmap_num);
 			nd_write_short(seg->sides[side].tmap_num2);
 			JustStartedRecording = 0;
@@ -1823,17 +1825,25 @@ int newdemo_read_frame_information()
 			{
 				mprintf((0, "EVENT TRIGGER! shot=%d\n", shot));
 
-				if (Triggers[Walls[Segments[segnum].sides[side].wall_num].trigger].type == TT_SECRET_EXIT) {
-					int	truth;
+				auto wallnum = Segments[segnum].sides[side].wall_num;
+				if (wallnum >= 0 && wallnum < Walls.size()) {
 
-					nd_read_byte((int8_t*)&c);
-					Assert(c == ND_EVENT_SECRET_THINGY);
-					nd_read_int(&truth);
-					if (!truth)
+					auto trignum = Walls[wallnum].trigger;
+					if (trignum >= 0 && trignum < Triggers.size() && Triggers[trignum].type & HTT_SECRET_EXIT) {
+						int	truth;
+
+						nd_read_byte((int8_t*)&c);
+						Assert(c == ND_EVENT_SECRET_THINGY);
+						nd_read_int(&truth);
+						if (!truth)
+							check_trigger(&Segments[segnum], side, objnum, shot);
+					}
+					else
 						check_trigger(&Segments[segnum], side, objnum, shot);
+
+				} else {
+					mprintf((1, "Newdemo: bad wall! Seg %d side %d, wall %d", segnum, side, wallnum));
 				}
-				else
-					check_trigger(&Segments[segnum], side, objnum, shot);
 			}
 			break;
 
@@ -2066,12 +2076,13 @@ int newdemo_read_frame_information()
 			//the monitor. the blowup code wants to know who the parent of the
 			//laser is, so create a laser whose parent is the player
 			dummy.ctype.laser_info.parent_type = OBJ_PLAYER;
+			dummy.ctype.laser_info.parent_num = -1;
 
 			nd_read_short(&segnum);
 			nd_read_byte(&side);
 			nd_read_vector(&pnt);
 			if (Newdemo_vcr_state != ND_STATE_PAUSED)
-				check_effect_blowup(&(Segments[segnum]), side, &pnt, &dummy, 0);
+				check_effect_blowup(&(Segments[segnum]), side, pnt, &dummy, 0, true);
 			break;
 		}
 
@@ -2498,6 +2509,7 @@ int newdemo_read_frame_information()
 
 			if (JustStartedPlayback)
 			{
+				int Num_walls;
 				nd_read_int(&Num_walls);
 				for (i = 0; i < Num_walls; i++)    // restore the walls
 				{

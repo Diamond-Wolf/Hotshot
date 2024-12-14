@@ -21,8 +21,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "game.h"
 
 // Global array of vertices, common to one mine.
-vms_vector Vertices[MAX_VERTICES];
-g3s_point Segment_points[MAX_VERTICES];
+std::vector<vms_vector> Vertices(MAX_VERTICES);
+std::vector<g3s_point> Segment_points(MAX_VERTICES);
 
 fix FrameTime = 0x1000;	// Time since last frame, in seconds
 fix GameTime = 0;			//	Time in game, in seconds
@@ -31,9 +31,11 @@ fix GameTime = 0;			//	Time in game, in seconds
 int FrameCount = 0;
 
 //	This is the global mine which create_new_mine returns.
-segment	Segments[MAX_SEGMENTS];
-segment2	Segment2s[MAX_SEGMENTS];
+
 //lsegment	Lsegments[MAX_SEGMENTS];
+
+std::vector<segment> Segments(MAX_SEGMENTS);
+std::vector<segment2> Segment2s(MAX_SEGMENTS);
 
 // Number of vertices in current mine (ie, Vertices, pointed to by Vp)
 int		Num_vertices = 0;

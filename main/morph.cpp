@@ -30,7 +30,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "bm.h"
 
-morph_data morph_objects[MAX_MORPH_OBJECTS];
+std::vector<morph_data> morph_objects(MAX_MORPH_OBJECTS);
 
 //returns ptr to data for this object, or NULL if none
 morph_data *find_morph_data(object *obj)
@@ -45,7 +45,7 @@ morph_data *find_morph_data(object *obj)
 	}
 	#endif
 
-	for (i=0;i<MAX_MORPH_OBJECTS;i++)
+	for (i=0;i<morph_objects.size();i++)
 		if (morph_objects[i].obj == obj)
 			return &morph_objects[i];
 
@@ -266,7 +266,7 @@ void init_morphs()
 {
 	int i;
 
-	for (i=0;i<MAX_MORPH_OBJECTS;i++)
+	for (i=0;i< morph_objects.size();i++)
 		morph_objects[i].obj = NULL;
 }
 
@@ -280,12 +280,15 @@ void morph_start(object *obj)
 	int i;
 	morph_data *md;
 
-	for (i=0;i<MAX_MORPH_OBJECTS;i++)
+	for (i = 0; i < morph_objects.size(); i++)
 		if (morph_objects[i].obj == NULL || morph_objects[i].obj->type==OBJ_NONE  || morph_objects[i].obj->signature!=morph_objects[i].Morph_sig)
 			break;
 
-	if (i==MAX_MORPH_OBJECTS)		//no free slots
-		return;
+	if (i == morph_objects.size()) {
+		morph_data newmd;
+		newmd.obj = NULL;
+		morph_objects.push_back(std::move(newmd));
+	}
 
 	md = &morph_objects[i];
 
@@ -414,7 +417,10 @@ void draw_morph_object(object *obj)
 	morph_data *md;
 
 	md = find_morph_data(obj);
-	Assert(md != NULL);
+	
+	//Assert(md != NULL);
+	if (md == NULL)
+		return;
 
 	Assert(obj->rtype.pobj_info.model_num < activeBMTable->models.size());
 

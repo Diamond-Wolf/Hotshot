@@ -211,8 +211,6 @@ void clear_boxed_message();
 //turns off rear view & rear view cockpit
 void reset_rear_view(void);
 
-extern int Game_turbo_mode;
-
 //returns ptr to escort robot, or NULL
 object *find_escort();
 
@@ -229,8 +227,7 @@ typedef struct
 
 #define MAX_FLICKERING_LIGHTS 100
 
-extern flickering_light Flickering_lights[MAX_FLICKERING_LIGHTS];
-extern int Num_flickering_lights;
+extern std::vector<flickering_light> Flickering_lights;
 
 //returns ptr to flickering light structure, or NULL if can't find
 flickering_light *find_flicker(int segnum,int sidenum);
@@ -261,7 +258,8 @@ extern grs_canvas	VR_render_sub_buffer;			//  Two sub buffers for left/right eye
 extern grs_canvas	VR_screen_buffer;
 
 void game_init_render_buffers(int screen_mode, int render_max_w, int render_max_h, int compatible_menus);
-void fill_background(int x, int y, int w, int h, int dx, int dy);
+//void fill_background(int x, int y, int w, int h, int dx, int dy);
+void fill_background();
 void game_init_render_sub_buffers(int x, int y, int w, int h);
 void GameLoop(int RenderFlag, int ReadControlsFlag);
 void powerup_grab_cheat_all(void);

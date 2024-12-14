@@ -19,7 +19,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "segment.h"
 
 //figure out what seg the given point is in, tracing through segments
-int get_new_seg(vms_vector *p0,int startseg);
+int get_new_seg(vms_vector p0,int startseg);
 
 typedef struct segmasks {
    short facemask;     //which faces sphere pokes through (12 bits)
@@ -65,7 +65,7 @@ extern int get_num_faces(side *sidep);
 
 //returns 3 different bitmasks with info telling if this sphere is in
 //this segment.  See segmasks structure for info on fields   
-segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad);
+segmasks get_seg_masks(vms_vector checkp,int segnum,fix rad);
 
 //this macro returns true if the segnum for an object is correct
 #define check_obj_seg(obj) (get_seg_masks(&(obj)->pos,(obj)->segnum,0).centermask == 0)
@@ -75,7 +75,7 @@ segmasks get_seg_masks(vms_vector *checkp,int segnum,fix rad);
 // 2. Recursively trace through attached segments
 // 3. Check all the segmentns
 //Returns segnum if found, or -1
-int find_point_seg(vms_vector *p,int segnum);
+int find_point_seg(vms_vector p,int segnum);
 
 // Create data specific to segments which does not need to get written to disk.
 extern void create_local_segment_data(void);
@@ -90,7 +90,7 @@ int check_lsegments_validity(void);
 //      set to WID_FLY_FLAG to see if a robot could fly from one to the other.
 //      Search up to a maximum depth of max_depth.
 //      Return the distance.
-extern fix find_connected_distance(vms_vector *p0, int seg0, vms_vector *p1, int seg1, int max_depth, int wid_flag);
+extern fix find_connected_distance(vms_vector p0, int seg0, vms_vector p1, int seg1, int max_depth, int wid_flag);
 
 //create a matrix that describes the orientation of the given segment
 extern void extract_orient_from_segment(vms_matrix *m,segment *seg);

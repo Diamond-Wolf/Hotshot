@@ -17,9 +17,9 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "object.h"
 
-#define MAX_RENDER_SEGS		500
+#define MAX_RENDER_SEGS		600
 #define OBJS_PER_SEG 		5
-#define N_EXTRA_OBJ_LISTS	50
+#define N_EXTRA_OBJ_LISTS	100
 
 extern int	Clear_window;			//	1 = Clear whole background window, 2 = clear view portals into rest of world, 0 = no clear
 
@@ -53,7 +53,7 @@ extern fix Render_zoom;		//the player's zoom factor
 
 //This is used internally to render_frame(), but is included here so AI
 //can use it for its own purposes.
-extern char visited[MAX_SEGMENTS];
+extern std::vector<char> visited;
 
 extern int N_render_segs;
 extern short Render_list[MAX_RENDER_SEGS];

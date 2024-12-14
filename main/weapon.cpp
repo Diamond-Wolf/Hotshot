@@ -79,38 +79,6 @@ uint8_t Cycling = 0;
 //allow player to reorder menus?
 extern uint8_t MenuReordering;
 
-//char	*Primary_weapon_names[MAX_PRIMARY_WEAPONS] = {
-//	"Laser Cannon",
-//	"Vulcan Cannon",
-//	"Spreadfire Cannon",
-//	"Plasma Cannon",
-//	"Fusion Cannon"
-//};
-
-//char	*Secondary_weapon_names[MAX_SECONDARY_WEAPONS] = {
-//	"Concussion Missile",
-//	"Homing Missile",
-//	"Proximity Bomb",
-//	"Smart Missile",
-//	"Mega Missile"
-//};
-
-//char	*Primary_weapon_names_short[MAX_PRIMARY_WEAPONS] = {
-//	"Laser",
-//	"Vulcan",
-//	"Spread",
-//	"Plasma",
-//	"Fusion"
-//};
-
-//char	*Secondary_weapon_names_short[MAX_SECONDARY_WEAPONS] = {
-//	"Concsn\nMissile",
-//	"Homing\nMissile",
-//	"Proxim.\nBomb",
-//	"Smart\nMissile",
-//	"Mega\nMissile"
-//};
-
 int8_t	Weapon_is_energy[MAX_WEAPON_TYPES] = {
 	1, 1, 1, 1, 1,
 	1, 1, 1, 0, 1,
@@ -418,6 +386,8 @@ void auto_select_weapon(int weapon_type)
 	int cutpoint;
 	int looped = 0;
 
+	auto wcount = (currentGame == G_DESCENT_1 ? NUM_WEAPONS_D1 : NUM_WEAPONS_D2);
+
 	if (weapon_type == 0)
 	{
 		r = player_has_weapon(Primary_weapon, 0);
@@ -432,7 +402,7 @@ void auto_select_weapon(int weapon_type)
 			while (try_again)
 			{
 				cur_weapon++;
-
+				
 				if (cur_weapon >= cutpoint)
 				{
 					if (looped)
@@ -459,6 +429,9 @@ void auto_select_weapon(int weapon_type)
 
 				if (cur_weapon == MAX_PRIMARY_WEAPONS)
 					cur_weapon = 0;
+
+				if (PrimaryOrder[cur_weapon] >= wcount)
+					continue;
 
 				//	Hack alert!  Because the fusion uses 0 energy at the end (it's got the weird chargeup)
 				//	it looks like it takes 0 to fire, but it doesn't, so never auto-select.
@@ -507,7 +480,7 @@ void auto_select_weapon(int weapon_type)
 			while (try_again)
 			{
 				cur_weapon++;
-
+				
 				if (cur_weapon >= cutpoint)
 				{
 					if (looped)
@@ -525,6 +498,9 @@ void auto_select_weapon(int weapon_type)
 
 				if (cur_weapon == MAX_SECONDARY_WEAPONS)
 					cur_weapon = 0;
+
+				if (SecondaryOrder[cur_weapon] >= wcount)
+					continue;
 
 				if (SecondaryOrder[cur_weapon] == Secondary_weapon)
 				{
@@ -1030,9 +1006,7 @@ void process_super_mines_frame(void)
 			Super_mines_yes = 1;
 			if (Objects[i].lifeleft + F1_0 * 2 < activeBMTable->weapons[SUPERPROX_ID].lifetime)
 			{
-				vms_vector* bombpos;
-
-				bombpos = &Objects[i].pos;
+				vms_vector bombpos = Objects[i].pos;
 
 				for (j = 0; j <= Highest_object_index; j++)
 				{
@@ -1040,7 +1014,7 @@ void process_super_mines_frame(void)
 					{
 						fix	dist;
 
-						dist = vm_vec_dist_quick(bombpos, &Objects[j].pos);
+						dist = vm_vec_dist_quick(&bombpos, &Objects[j].pos);
 
 						if (j != parent_num)
 						{
@@ -1127,7 +1101,9 @@ int spit_powerup(object * spitter, int id, int seed)
 #endif
 	}
 
-	objnum = obj_create(OBJ_POWERUP, id, spitter->segnum, &new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+	size_t tempID = spitter - Objects.data();
+	objnum = obj_create(OBJ_POWERUP, id, spitter->segnum, new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+	spitter = &Objects[tempID];
 
 	if (objnum < 0)
 	{
@@ -1265,7 +1241,7 @@ void DropSecondaryWeapon()
 
 	if (Players[Player_num].secondary_ammo[Secondary_weapon] == 0)
 	{
-		Players[Player_num].secondary_weapon_flags &= (~(1 << Secondary_weapon));
+		//Players[Player_num].secondary_weapon_flags &= (~(1 << Secondary_weapon));
 		auto_select_weapon(1);
 	}
 }

@@ -16,6 +16,6 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "vecmat/vecmat.h"
 
 void load_terrain(char* filename);
-void render_terrain(vms_vector* org, int org_i, int org_j);
+void render_terrain(vms_vector org, int org_i, int org_j);
 
 void build_light_table();

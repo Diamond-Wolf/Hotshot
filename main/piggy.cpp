@@ -70,34 +70,15 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 uint8_t* BitmapBits = NULL;
 uint8_t* SoundBits = NULL;
 
-/*hashtable AllBitmapsNames;
-hashtable AllDigiSndNames;
-
-int Num_bitmap_files = 0;
-int Num_sound_files = 0;
-
-digi_sound GameSounds[MAX_SOUND_FILES];
-int SoundOffset[MAX_SOUND_FILES];
-grs_bitmap GameBitmaps[MAX_BITMAP_FILES];
-
-alias alias_list[MAX_ALIASES];
-int Num_aliases = 0;*/
-
 int Must_write_hamfile = 0;
 int Num_bitmap_files_new = 0;
 int Num_sound_files_new = 0;
-/*BitmapFile AllBitmaps[MAX_BITMAP_FILES];
-static SoundFile AllSounds[MAX_SOUND_FILES];*/
 
 int piggy_low_memory = 0;
 
 int Piggy_bitmap_cache_size = 0;
 int Piggy_bitmap_cache_next = 0;
 uint8_t* Piggy_bitmap_cache_data = NULL;
-
-/*static int GameBitmapOffset[MAX_BITMAP_FILES];
-static uint8_t GameBitmapFlags[MAX_BITMAP_FILES];
-uint16_t GameBitmapXlat[MAX_BITMAP_FILES];*/
 
 #define PIGGY_BUFFER_SIZE (2400*1024)
 
@@ -170,9 +151,11 @@ void swap_0_255(grs_bitmap* bmp)
 
 #define XLAT_SIZE MAX_BITMAP_FILES
 
-//piggytable::piggytable() {
-//	init();
-//}
+piggytable::piggytable() {
+	file = nullptr;
+	piggyInitialized = false;
+	Init();
+}
 
 void piggytable::Init() {
 
@@ -190,23 +173,11 @@ void piggytable::Init() {
 		gameBitmapXlat[i] = i;
 	}
 
-	/*hashtable_init(&bitmapNames, MAX_BITMAP_FILES);
-	hashtable_init(&soundNames, MAX_SOUND_FILES);*/
-
-}
-
-void piggytable::SetActive() {
-	//piggy_close();
-	activePiggyTable = this;
 }
 
 piggytable::~piggytable() {
 
-	/*hashtable_free(&bitmapNames);
-	hashtable_free(&soundNames);*/
-
-	if (file)
-	{
+	if (file) {
 		cfclose(file);
 	}
 
@@ -237,9 +208,6 @@ bitmap_index piggy_register_bitmap(grs_bitmap* bmp, const char* name, int in_fil
 	//hashtable_insert(&activePiggyTable->bitmapNames, file.name, activePiggyTable->gameBitmaps.size());
 	activePiggyTable->bitmapNames[file.name] = activePiggyTable->bitmapFiles.size();
 	activePiggyTable->bitmapFiles.push_back(file);
-
-	if (currentGame == G_DESCENT_1 && !strncmp(file.name, "door", 4))
-		mprintf((1, "%s = %d\n", file.name, activePiggyTable->gameBitmaps.size()));
 
 	//activePiggyTable->gameBitmaps[Num_bitmap_files] = *bmp;
 	activePiggyTable->gameBitmaps.push_back(*bmp);
@@ -359,18 +327,6 @@ int piggy_find_sound(const char* name)
 
 char Current_pigfile[FILENAME_LEN] = "";
 
-void piggy_close_file()
-{
-	/*if (activePiggyTable->file)
-	{
-		cfclose(activePiggyTable->file);
-		activePiggyTable->file = NULL;
-		Current_pigfile[0] = 0;
-	}*/
-}
-
-//int Pigfile_initialized = 0;
-
 #define PIGFILE_ID              'GIPP'          //PPIG
 #define PIGFILE_VERSION         2
 
@@ -403,8 +359,6 @@ void piggy_init_pigfile(const char* filename)
 #elif defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	char name[CHOCOLATE_MAX_FILE_PATH_SIZE];
 #endif
-
-	piggy_close_file();             //close old pig if still open
 
 #ifdef SHAREWARE                //rename pigfile for shareware
 	if (strfcmp(filename, DEFAULT_PIGFILE_REGISTERED) == 0)
@@ -548,20 +502,16 @@ void piggy_new_pigfile(const char* pigname)
 			pigname = DEFAULT_PIGFILE_SHAREWARE;
 	}
 
-	if (_strnfcmp(Current_pigfile, pigname, sizeof(Current_pigfile)) == 0)
-		return;         //already have correct pig
-
 	if (!activePiggyTable->piggyInitialized) //have we ever opened a pigfile?
 	{
 		piggy_init_pigfile(pigname);            //..no, so do initialization stuff
 		return;
 	}
+
 	else if (currentGame == G_DESCENT_1) {
 		printf("init new in d1");
 		return;
 	}
-
-	piggy_close_file();             //close old pig if still open
 
 	Piggy_bitmap_cache_next = 0;            //free up cache
 
@@ -1012,26 +962,12 @@ int PiggyInitD1()
 	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
 #endif
 
-	//hashtable_init(&AllBitmapsNames, MAX_BITMAP_FILES);
-	//hashtable_init(&AllDigiSndNames, MAX_SOUND_FILES);
-	
 	if (FindArg("-nosound") || (digi_driver_board < 1)) 
 	{
 		read_sounds = 0;
 		mprintf((0, "Not loading sound data!!!!!\n"));
 	}
 
-	/*activePiggyTable->gameSounds.resize(MAX_SOUNDS_D1);
-	activePiggyTable->soundOffsets.resize(MAX_SOUNDS_D1);
-
-	for (i = 0; i < MAX_SOUNDS_D1; i++) 
-	{
-		activePiggyTable->gameSounds[i].length = 0;
-		activePiggyTable->gameSounds[i].data = NULL;
-		activePiggyTable->soundOffsets[i] = 0;
-	}*/
-
-	//activePiggyTable->gameBitmaps.resize(MAX_BITMAP_FILES_D1);
 	activePiggyTable->gameBitmapXlat.resize(MAX_BITMAP_FILES_D1);
 
 	for (i = 0; i < MAX_BITMAP_FILES_D1; i++) 
@@ -1128,16 +1064,6 @@ int PiggyInitD1()
 
 	for (i = 0; i < N_bitmaps; i++) 
 	{
-		//cfread(&bmh, sizeof(DiskBitmapHeader), 1, activePiggyTable->file);
-		//size -= sizeof(DiskBitmapHeader);
-		//[ISB] fix platform bugs, hopefully
-		/*	char name[8];
-	uint8_t dflags;
-	uint8_t	width;
-	uint8_t height;
-	uint8_t flags;
-	uint8_t avg_color;
-	int offset;*/
 		cfread(&bmh.name[0], 8 * sizeof(char), 1, activePiggyTable->file);
 		bmh.dflags = cfile_read_byte(activePiggyTable->file);
 		bmh.width = cfile_read_byte(activePiggyTable->file);
@@ -1214,8 +1140,6 @@ int PiggyInitD1()
 
 	mprintf((0, "\nBitmaps: %d KB   Sounds: %d KB\n", Piggy_bitmap_cache_size / 1024, sbytes / 1024));
 
-	atexit(piggy_close_file);
-
 	//	mprintf( (0, "<<<<Paging in all piggy bitmaps...>>>>>" ));
 	//	for (i=0; i < Num_bitmap_files; i++ )	{
 	//		bitmap_index bi;
@@ -1232,17 +1156,6 @@ int PiggyInitD2()
 {
 	int ham_ok = 0, snd_ok = 0;
 	int i;
-
-	/*for (i = 0; i < MAX_SOUND_FILES; i++)
-	{
-		GameSounds[i].length = 0;
-		GameSounds[i].data = NULL;
-		SoundOffset[i] = 0;
-	}
-
-	for (i = 0; i < MAX_BITMAP_FILES; i++)
-		//GameBitmapXlat[i] = i;
-		activePiggyTable->gameBitmapXlat.push_back(i);*/
 
 	if (!activePiggyTable->bogusInitialized)
 	{
@@ -1889,12 +1802,8 @@ void ClearPiggyCache() {
 	}
 }
 
-void piggy_close()
-{
-	piggy_close_file();
-
+void piggy_close() {
 	ClearPiggyCache();
-
 }
 
 int piggy_does_bitmap_exist_slow(char* name)

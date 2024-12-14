@@ -29,7 +29,7 @@ extern int phys_seglist[MAX_FVI_SEGS],n_phys_segs;
 void read_flying_controls( object * obj );
 
 //Simulate a physics object for this frame
-void do_physics_sim(object *obj);
+void do_physics_sim(size_t objnum);
 
 //tell us what the given object will do (as far as hiting walls) in
 //the given time (in seconds) t.  Igores acceleration (sorry) 
@@ -41,8 +41,8 @@ int physics_lookahead(object *obj,fix t,int fvi_flags,fix *hit_time, fvi_info *h
 
 //Applies an instantaneous force on an object, resulting in an instantaneous
 //change in velocity.
-void phys_apply_force(object *obj,vms_vector *force_vec);
-void phys_apply_rot(object *obj,vms_vector *force_vec);
+void phys_apply_force(object *obj,vms_vector force_vec);
+void phys_apply_rot(object *obj,vms_vector force_vec);
 
 //this routine will set the thrust for an object to a value that will
 //(hopefully) maintain the object's current velocity

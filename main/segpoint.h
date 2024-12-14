@@ -15,5 +15,5 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "3d/3d.h"
 
-extern	g3s_point	Segment_points[];
+extern std::vector<g3s_point> Segment_points;
 

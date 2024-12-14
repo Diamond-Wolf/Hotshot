@@ -94,7 +94,7 @@ typedef struct Edge_info {
 // THE following was determined by John by loading levels 1-14 and recording
 // numbers on 10/26/94. 
 //#define MAX_EDGES_FROM_VERTS(v)   (((v)*21)/10)
-#define MAX_EDGES_FROM_VERTS(v)		((v)*4)
+#define MAX_EDGES_FROM_VERTS(v)		((v)*8)
 //#define MAX_EDGES (MAX_EDGES_FROM_VERTS(MAX_VERTICES))
 
 #define MAX_EDGES 6000		// Determined by loading all the levels by John & Mike, Feb 9, 1995
@@ -140,14 +140,14 @@ void init_automap_colors(void)
 }
 
 // Segment visited list
-uint8_t Automap_visited[MAX_SEGMENTS];
+std::vector<uint8_t> Automap_visited(MAX_SEGMENTS);
 
 // Edge list variables
 static int Num_edges = 0;
 static int Max_edges;		//set each frame
 static int Highest_edge_index = -1;
-static Edge_info Edges[MAX_EDGES];
-static short DrawingListBright[MAX_EDGES];
+static std::vector<Edge_info> Edges;
+static std::vector<size_t> DrawingListBright;
 
 //static short DrawingListBright[MAX_EDGES];
 //static short Edge_used_list[MAX_EDGES];				//which entries in edge_list have been used
@@ -298,7 +298,7 @@ void DropMarker(int player_marker_num)
 	if (MarkerObject[marker_num] != -1)
 		obj_delete(MarkerObject[marker_num]);
 
-	MarkerObject[marker_num] = drop_marker_object(&playerp->pos, playerp->segnum, &playerp->orient, marker_num);
+	MarkerObject[marker_num] = drop_marker_object(playerp->pos, playerp->segnum, playerp->orient, marker_num);
 
 #ifdef NETWORK
 	if (Game_mode & GM_MULTI)
@@ -325,7 +325,7 @@ void DropBuddyMarker(object* objp)
 	if (MarkerObject[marker_num] != -1 && MarkerObject[marker_num] != 0)
 		obj_delete(MarkerObject[marker_num]);
 
-	MarkerObject[marker_num] = drop_marker_object(&objp->pos, objp->segnum, &objp->orient, marker_num);
+	MarkerObject[marker_num] = drop_marker_object(objp->pos, objp->segnum, objp->orient, marker_num);
 
 }
 
@@ -388,7 +388,7 @@ void ClearMarkers()
 void automap_clear_visited()
 {
 	int i;
-	for (i = 0; i < MAX_SEGMENTS; i++)
+	for (i = 0; i < Automap_visited.size(); i++)
 		Automap_visited[i] = 0;
 	ClearMarkers();
 }
@@ -675,7 +675,7 @@ void modex_print_message(int x, int y, char* str)
 }
 
 extern void GameLoop(int, int);
-extern int set_segment_depths(int start_seg, uint8_t* segbuf);
+extern int set_segment_depths(int start_seg, std::vector<uint8_t> segbuf);
 
 int Automap_active = 0;
 
@@ -725,10 +725,13 @@ void do_automap(int key_code)
 		digi_pause_digi_sounds();
 	}
 
-	Max_edges = std::min(MAX_EDGES_FROM_VERTS(Num_vertices), MAX_EDGES);			//make maybe smaller than max
+	Max_edges = MAX_EDGES_FROM_VERTS(Num_vertices);
+	
+	Edges.resize(Max_edges);
+	DrawingListBright.resize(Max_edges);
 
-	mprintf((0, "Num_vertices=%d, Max_edges=%d, (MAX:%d)\n", Num_vertices, Max_edges, MAX_EDGES));
-	mprintf((0, "Allocated %d K for automap edge list\n", (sizeof(Edge_info) + sizeof(short)) * Max_edges / 1024));
+	mprintf((0, "Num_vertices=%d, Max_edges=%d, (Vector capacity: %d)\n", Num_vertices, Max_edges, Edges.capacity()));
+	mprintf((0, "Allocated %d K for automap edge list (Capacity %d)\n", (sizeof(Edge_info) + sizeof(short)) * Max_edges / 1024, (sizeof(Edge_info) + sizeof(short)) * Edges.capacity() / 1024));
 
 	if ((Current_display_mode != 0 && Current_display_mode != 2) || (Automap_always_hires && MenuHiresAvailable)) 
 	{
@@ -750,333 +753,336 @@ void do_automap(int key_code)
 
 	gr_palette_clear();
 
-		if (!AutomapHires)
+	if (!AutomapHires)
+	{
+		gr_init_sub_canvas(&Pages[0], grd_curcanv, 0, 0, 320, 400);
+		gr_init_sub_canvas(&Pages[1], grd_curcanv, 0, 401, 320, 400);
+		gr_init_sub_canvas(&DrawingPages[0], &Pages[0], 16, 69, WINDOW_WIDTH, 272);
+		gr_init_sub_canvas(&DrawingPages[1], &Pages[1], 16, 69, WINDOW_WIDTH, 272);
+
+		Automap_background.bm_data = NULL;
+		pcx_error = pcx_read_bitmap(MAP_BACKGROUND_FILENAME, &Automap_background, BM_LINEAR, pal);
+		if (pcx_error != PCX_ERROR_NONE)
+			Error("File %s - PCX error: %s", MAP_BACKGROUND_FILENAME, pcx_errormsg(pcx_error));
+		gr_remap_bitmap_good(&Automap_background, pal, -1, -1);
+
+		for (i = 0; i < 2; i++)
 		{
-			gr_init_sub_canvas(&Pages[0], grd_curcanv, 0, 0, 320, 400);
-			gr_init_sub_canvas(&Pages[1], grd_curcanv, 0, 401, 320, 400);
-			gr_init_sub_canvas(&DrawingPages[0], &Pages[0], 16, 69, WINDOW_WIDTH, 272);
-			gr_init_sub_canvas(&DrawingPages[1], &Pages[1], 16, 69, WINDOW_WIDTH, 272);
+			gr_set_current_canvas(&Pages[i]);
+			gr_bitmap(0, 0, &Automap_background);
+			modex_printf(40, 22, TXT_AUTOMAP, HUGE_FONT, Font_color_20);
+			modex_printf(30, 353, TXT_TURN_SHIP, SMALL_FONT, Font_color_20);
+			modex_printf(30, 369, TXT_SLIDE_UPDOWN, SMALL_FONT, Font_color_20);
+			modex_printf(30, 385, TXT_VIEWING_DISTANCE, SMALL_FONT, Font_color_20);
+		}
+		if (Automap_background.bm_data)
+			mem_free(Automap_background.bm_data);
+		Automap_background.bm_data = NULL;
 
-			Automap_background.bm_data = NULL;
-			pcx_error = pcx_read_bitmap(MAP_BACKGROUND_FILENAME, &Automap_background, BM_LINEAR, pal);
-			if (pcx_error != PCX_ERROR_NONE)
-				Error("File %s - PCX error: %s", MAP_BACKGROUND_FILENAME, pcx_errormsg(pcx_error));
-			gr_remap_bitmap_good(&Automap_background, pal, -1, -1);
-
-			for (i = 0; i < 2; i++)
-			{
-				gr_set_current_canvas(&Pages[i]);
-				gr_bitmap(0, 0, &Automap_background);
-				modex_printf(40, 22, TXT_AUTOMAP, HUGE_FONT, Font_color_20);
-				modex_printf(30, 353, TXT_TURN_SHIP, SMALL_FONT, Font_color_20);
-				modex_printf(30, 369, TXT_SLIDE_UPDOWN, SMALL_FONT, Font_color_20);
-				modex_printf(30, 385, TXT_VIEWING_DISTANCE, SMALL_FONT, Font_color_20);
-			}
-			if (Automap_background.bm_data)
-				mem_free(Automap_background.bm_data);
-			Automap_background.bm_data = NULL;
-
-			gr_set_current_canvas(&DrawingPages[current_page]);
+		gr_set_current_canvas(&DrawingPages[current_page]);
+	}
+	else 
+	{
+		if (VR_render_buffer.cv_w >= 640 && VR_render_buffer.cv_h >= 480)
+		{
+			gr_init_sub_canvas(&Page, &VR_render_buffer, 0, 0, 640, 480);
 		}
 		else 
 		{
-			if (VR_render_buffer.cv_w >= 640 && VR_render_buffer.cv_h >= 480)
-			{
-				gr_init_sub_canvas(&Page, &VR_render_buffer, 0, 0, 640, 480);
-			}
-			else 
-			{
-				void* raw_data;
-				MALLOC(raw_data, uint8_t, 640 * 480);
-				gr_init_canvas(&Page, (unsigned char*)raw_data, BM_LINEAR, 640, 480);
-				must_free_canvas = 1;
-			}
+			void* raw_data;
+			MALLOC(raw_data, uint8_t, 640 * 480);
+			gr_init_canvas(&Page, (unsigned char*)raw_data, BM_LINEAR, 640, 480);
+			must_free_canvas = 1;
+		}
 
-			gr_init_sub_canvas(&DrawingPage, &Page, 27, 80, 582, 334);
+		gr_init_sub_canvas(&DrawingPage, &Page, 27, 80, 582, 334);
 
-			gr_set_current_canvas(&Page);
+		gr_set_current_canvas(&Page);
 
 #if defined(POLY_ACC)
-			pcx_error = pcx_read_bitmap(MAP_BACKGROUND_FILENAME, &(grd_curcanv->cv_bitmap), BM_LINEAR15, pal);
+		pcx_error = pcx_read_bitmap(MAP_BACKGROUND_FILENAME, &(grd_curcanv->cv_bitmap), BM_LINEAR15, pal);
 #else
 
-			pcx_error = pcx_read_bitmap(MAP_BACKGROUND_FILENAME, &(grd_curcanv->cv_bitmap), BM_LINEAR, pal);
-			if (pcx_error != PCX_ERROR_NONE)
-			{
-				//printf("File %s - PCX error: %s",MAP_BACKGROUND_FILENAME,pcx_errormsg(pcx_error));
-				Error("File %s - PCX error: %s", MAP_BACKGROUND_FILENAME, pcx_errormsg(pcx_error));
-				return;
-			}
-
-			gr_remap_bitmap_good(&(grd_curcanv->cv_bitmap), pal, -1, -1);
-#endif
-
-			gr_set_curfont(HUGE_FONT);
-			gr_set_fontcolor(BM_XRGB(20, 20, 20), -1);
-			gr_printf(80, 36, TXT_AUTOMAP, HUGE_FONT);
-			gr_set_curfont(SMALL_FONT);
-			gr_set_fontcolor(BM_XRGB(20, 20, 20), -1);
-			gr_printf(60, 426, TXT_TURN_SHIP);
-			gr_printf(60, 443, TXT_SLIDE_UPDOWN);
-			gr_printf(60, 460, TXT_VIEWING_DISTANCE);
-
-			gr_set_current_canvas(&DrawingPage);
+		pcx_error = pcx_read_bitmap(MAP_BACKGROUND_FILENAME, &(grd_curcanv->cv_bitmap), BM_LINEAR, pal);
+		if (pcx_error != PCX_ERROR_NONE)
+		{
+			//printf("File %s - PCX error: %s",MAP_BACKGROUND_FILENAME,pcx_errormsg(pcx_error));
+			Error("File %s - PCX error: %s", MAP_BACKGROUND_FILENAME, pcx_errormsg(pcx_error));
+			return;
 		}
 
-		automap_build_edge_list();
-
-		if (ViewDist == 0)
-			ViewDist = ZOOM_DEFAULT;
-		ViewMatrix = Objects[Players[Player_num].objnum].orient;
-
-		tangles.p = PITCH_DEFAULT;
-		tangles.h = 0;
-		tangles.b = 0;
-
-		done = 0;
-
-		view_target = Objects[Players[Player_num].objnum].pos;
-
-		t1 = entry_time = timer_get_fixed_seconds();
-		t2 = t1;
-
-		//Fill in Automap_visited from Objects[Players[Player_num].objnum].segnum
-		Max_segments_away = set_segment_depths(Objects[Players[Player_num].objnum].segnum, Automap_visited);
-		SegmentLimit = Max_segments_away;
-
-		adjust_segment_limit(SegmentLimit);
-
-		uint64_t startTime;
-
-		while (!done)
-		{
-			startTime = I_GetUS();
-			if (leave_mode == 0 && Controls.automap_state && (timer_get_fixed_seconds() - entry_time) > LEAVE_TIME)
-				leave_mode = 1;
-
-			if (!Controls.automap_state && (leave_mode == 1))
-				done = 1;
-
-			if (!pause_game)
-			{
-				uint16_t old_wiggle;
-				saved_control_info = Controls;				// Save controls so we can zero them
-				memset(&Controls, 0, sizeof(control_info));	// Clear everything...
-				old_wiggle = ConsoleObject->mtype.phys_info.flags & PF_WIGGLE;	// Save old wiggle
-				ConsoleObject->mtype.phys_info.flags &= ~PF_WIGGLE;		// Turn off wiggle
-#ifdef NETWORK
-				if (multi_menu_poll())
-					done = 1;
+		gr_remap_bitmap_good(&(grd_curcanv->cv_bitmap), pal, -1, -1);
 #endif
-				//			GameLoop( 0, 0 );		// Do game loop with no rendering and no reading controls.
-				ConsoleObject->mtype.phys_info.flags |= old_wiggle;	// Restore wiggle
-				Controls = saved_control_info;
+
+		gr_set_curfont(HUGE_FONT);
+		gr_set_fontcolor(BM_XRGB(20, 20, 20), -1);
+		gr_printf(80, 36, TXT_AUTOMAP, HUGE_FONT);
+		gr_set_curfont(SMALL_FONT);
+		gr_set_fontcolor(BM_XRGB(20, 20, 20), -1);
+		gr_printf(60, 426, TXT_TURN_SHIP);
+		gr_printf(60, 443, TXT_SLIDE_UPDOWN);
+		gr_printf(60, 460, TXT_VIEWING_DISTANCE);
+
+		gr_set_current_canvas(&DrawingPage);
+	}
+
+	automap_build_edge_list();
+
+	if (ViewDist == 0)
+		ViewDist = ZOOM_DEFAULT;
+	ViewMatrix = Objects[Players[Player_num].objnum].orient;
+
+	tangles.p = PITCH_DEFAULT;
+	tangles.h = 0;
+	tangles.b = 0;
+
+	done = 0;
+
+	view_target = Objects[Players[Player_num].objnum].pos;
+
+	t1 = entry_time = timer_get_fixed_seconds();
+	t2 = t1;
+
+	//Fill in Automap_visited from Objects[Players[Player_num].objnum].segnum
+	Max_segments_away = set_segment_depths(Objects[Players[Player_num].objnum].segnum, Automap_visited);
+	SegmentLimit = Max_segments_away;
+
+	adjust_segment_limit(SegmentLimit);
+
+	uint64_t startTime;
+
+	while (!done)
+	{
+		startTime = I_GetUS();
+		if (leave_mode == 0 && Controls.automap_state && (timer_get_fixed_seconds() - entry_time) > LEAVE_TIME)
+			leave_mode = 1;
+
+		if (!Controls.automap_state && (leave_mode == 1))
+			done = 1;
+
+		if (!pause_game)
+		{
+			uint16_t old_wiggle;
+			saved_control_info = Controls;				// Save controls so we can zero them
+			memset(&Controls, 0, sizeof(control_info));	// Clear everything...
+			old_wiggle = ConsoleObject->mtype.phys_info.flags & PF_WIGGLE;	// Save old wiggle
+			ConsoleObject->mtype.phys_info.flags &= ~PF_WIGGLE;		// Turn off wiggle
+#ifdef NETWORK
+			if (multi_menu_poll())
+				done = 1;
+#endif
+			//			GameLoop( 0, 0 );		// Do game loop with no rendering and no reading controls.
+			ConsoleObject->mtype.phys_info.flags |= old_wiggle;	// Restore wiggle
+			Controls = saved_control_info;
+		}
+
+		controls_read_all();
+
+		if (Controls.automap_down_count)
+		{
+			if (leave_mode == 0)
+				done = 1;
+			c = 0;
+		}
+
+		//see if redbook song needs to be restarted
+		songs_check_redbook_repeat();
+
+		while ((c = key_inkey()))
+		{
+			switch (c) 
+			{
+#ifndef NDEBUG
+			case KEY_BACKSP: Int3(); break;
+#endif
+
+			case KEY_PRINT_SCREEN:
+			{
+				if (AutomapHires)
+				{
+						gr_set_current_canvas(NULL);
+				}
+				else
+					gr_set_current_canvas(&Pages[current_page]);
+				save_screen_shot(1);
+				break;
 			}
 
-			controls_read_all();
-
-			if (Controls.automap_down_count)
-			{
+			case KEY_ESC:
 				if (leave_mode == 0)
 					done = 1;
-				c = 0;
-			}
+				break;
 
-			//see if redbook song needs to be restarted
-			songs_check_redbook_repeat();
-
-			while ((c = key_inkey()))
-			{
-				switch (c) 
-				{
 #ifndef NDEBUG
-				case KEY_BACKSP: Int3(); break;
+			case KEY_DEBUGGED + KEY_F: 
+			{
+				for (i = 0; i <= Highest_segment_index; i++)
+					Automap_visited[i] = 1;
+				automap_build_edge_list();
+				Max_segments_away = set_segment_depths(Objects[Players[Player_num].objnum].segnum, Automap_visited);
+				SegmentLimit = Max_segments_away;
+				adjust_segment_limit(SegmentLimit);
+			}
+										break;
 #endif
 
-				case KEY_PRINT_SCREEN:
+			case KEY_MINUS:
+				if (SegmentLimit > 1) 
 				{
-					if (AutomapHires)
-					{
-							gr_set_current_canvas(NULL);
-					}
-					else
-						gr_set_current_canvas(&Pages[current_page]);
-					save_screen_shot(1);
-					break;
-				}
-
-				case KEY_ESC:
-					if (leave_mode == 0)
-						done = 1;
-					break;
-
-#ifndef NDEBUG
-				case KEY_DEBUGGED + KEY_F: 
-				{
-					for (i = 0; i <= Highest_segment_index; i++)
-						Automap_visited[i] = 1;
-					automap_build_edge_list();
-					Max_segments_away = set_segment_depths(Objects[Players[Player_num].objnum].segnum, Automap_visited);
-					SegmentLimit = Max_segments_away;
+					SegmentLimit--;
 					adjust_segment_limit(SegmentLimit);
 				}
-										 break;
-#endif
+				break;
+			case KEY_EQUAL:
+				if (SegmentLimit < Max_segments_away) 
+				{
+					SegmentLimit++;
+					adjust_segment_limit(SegmentLimit);
+				}
+				break;
+			case KEY_1:
+			case KEY_2:
+			case KEY_3:
+			case KEY_4:
+			case KEY_5:
+			case KEY_6:
+			case KEY_7:
+			case KEY_8:
+			case KEY_9:
+			case KEY_0:
+				if (Game_mode & GM_MULTI)
+					maxdrop = 2;
+				else
+					maxdrop = 9;
 
-				case KEY_MINUS:
-					if (SegmentLimit > 1) 
+				marker_num = c - KEY_1;
+				if (marker_num <= maxdrop)
+				{
+					if (MarkerObject[marker_num] != -1)
+						HighlightMarker = marker_num;
+				}
+				break;
+
+			case KEY_D + KEY_CTRLED:
+				if (current_page)		//menu will only work on page 0
+					draw_automap();	//..so switch from 1 to 0
+
+				if (HighlightMarker > -1 && MarkerObject[HighlightMarker] != -1) 
+				{
+					gr_set_current_canvas(&Pages[current_page]);
+
+					if (nm_messagebox(NULL, 2, TXT_YES, TXT_NO, "Delete Marker?") == 0)
 					{
-						SegmentLimit--;
-						adjust_segment_limit(SegmentLimit);
+						obj_delete(MarkerObject[HighlightMarker]);
+						MarkerObject[HighlightMarker] = -1;
+						MarkerMessage[HighlightMarker][0] = 0;
+						HighlightMarker = -1;
 					}
-					break;
-				case KEY_EQUAL:
-					if (SegmentLimit < Max_segments_away) 
-					{
-						SegmentLimit++;
-						adjust_segment_limit(SegmentLimit);
-					}
-					break;
-				case KEY_1:
-				case KEY_2:
-				case KEY_3:
-				case KEY_4:
-				case KEY_5:
-				case KEY_6:
-				case KEY_7:
-				case KEY_8:
-				case KEY_9:
-				case KEY_0:
-					if (Game_mode & GM_MULTI)
-						maxdrop = 2;
-					else
-						maxdrop = 9;
-
-					marker_num = c - KEY_1;
-					if (marker_num <= maxdrop)
-					{
-						if (MarkerObject[marker_num] != -1)
-							HighlightMarker = marker_num;
-					}
-					break;
-
-				case KEY_D + KEY_CTRLED:
-					if (current_page)		//menu will only work on page 0
-						draw_automap();	//..so switch from 1 to 0
-
-					if (HighlightMarker > -1 && MarkerObject[HighlightMarker] != -1) 
-					{
-						gr_set_current_canvas(&Pages[current_page]);
-
-						if (nm_messagebox(NULL, 2, TXT_YES, TXT_NO, "Delete Marker?") == 0)
-						{
-							obj_delete(MarkerObject[HighlightMarker]);
-							MarkerObject[HighlightMarker] = -1;
-							MarkerMessage[HighlightMarker][0] = 0;
-							HighlightMarker = -1;
-						}
-					}
-					break;
+				}
+				break;
 
 #ifndef RELEASE
-				case KEY_COMMA:
-					if (MarkerScale > .5)
-						MarkerScale -= .5;
-					break;
-				case KEY_PERIOD:
-					if (MarkerScale < 30.0)
-						MarkerScale += .5;
+			case KEY_COMMA:
+				if (MarkerScale > .5)
+					MarkerScale -= .5;
+				break;
+			case KEY_PERIOD:
+				if (MarkerScale < 30.0)
+					MarkerScale += .5;
 #endif
 
-				}
 			}
+		}
 
-			if (Controls.fire_primary_down_count) 
-			{
-				// Reset orientation
-				ViewDist = ZOOM_DEFAULT;
-				tangles.p = PITCH_DEFAULT;
-				tangles.h = 0;
-				tangles.b = 0;
-				view_target = Objects[Players[Player_num].objnum].pos;
-			}
+		if (Controls.fire_primary_down_count) 
+		{
+			// Reset orientation
+			ViewDist = ZOOM_DEFAULT;
+			tangles.p = PITCH_DEFAULT;
+			tangles.h = 0;
+			tangles.b = 0;
+			view_target = Objects[Players[Player_num].objnum].pos;
+		}
 
-			ViewDist -= Controls.forward_thrust_time * ZOOM_SPEED_FACTOR;
+		ViewDist -= Controls.forward_thrust_time * ZOOM_SPEED_FACTOR;
 
-			tangles.p += fixdiv(Controls.pitch_time, ROT_SPEED_DIVISOR);
-			tangles.h += fixdiv(Controls.heading_time, ROT_SPEED_DIVISOR);
-			tangles.b += fixdiv(Controls.bank_time, ROT_SPEED_DIVISOR * 2);
+		tangles.p += fixdiv(Controls.pitch_time, ROT_SPEED_DIVISOR);
+		tangles.h += fixdiv(Controls.heading_time, ROT_SPEED_DIVISOR);
+		tangles.b += fixdiv(Controls.bank_time, ROT_SPEED_DIVISOR * 2);
 
-			if (Controls.vertical_thrust_time || Controls.sideways_thrust_time)
-			{
-				vms_angvec	tangles1;
-				vms_vector	old_vt;
-				old_vt = view_target;
-				tangles1 = tangles;
-				vm_angles_2_matrix(&tempm, &tangles1);
-				vm_matrix_x_matrix(&ViewMatrix, &Objects[Players[Player_num].objnum].orient, &tempm);
-				vm_vec_scale_add2(&view_target, &ViewMatrix.uvec, Controls.vertical_thrust_time * SLIDE_SPEED);
-				vm_vec_scale_add2(&view_target, &ViewMatrix.rvec, Controls.sideways_thrust_time * SLIDE_SPEED);
-				if (vm_vec_dist_quick(&view_target, &Objects[Players[Player_num].objnum].pos) > i2f(1000))
-				{
-					view_target = old_vt;
-				}
-			}
-
-			vm_angles_2_matrix(&tempm, &tangles);
+		if (Controls.vertical_thrust_time || Controls.sideways_thrust_time)
+		{
+			vms_angvec	tangles1;
+			vms_vector	old_vt;
+			old_vt = view_target;
+			tangles1 = tangles;
+			vm_angles_2_matrix(&tempm, &tangles1);
 			vm_matrix_x_matrix(&ViewMatrix, &Objects[Players[Player_num].objnum].orient, &tempm);
-
-			if (ViewDist < ZOOM_MIN_VALUE) ViewDist = ZOOM_MIN_VALUE;
-			if (ViewDist > ZOOM_MAX_VALUE) ViewDist = ZOOM_MAX_VALUE;
-
-			draw_automap();
-
-			if (first_time)
+			vm_vec_scale_add2(&view_target, &ViewMatrix.uvec, Controls.vertical_thrust_time * SLIDE_SPEED);
+			vm_vec_scale_add2(&view_target, &ViewMatrix.rvec, Controls.sideways_thrust_time * SLIDE_SPEED);
+			if (vm_vec_dist_quick(&view_target, &Objects[Players[Player_num].objnum].pos) > i2f(1000))
 			{
-				first_time = 0;
-				gr_palette_load(gr_palette);
+				view_target = old_vt;
 			}
-
-			plat_present_canvas(0);
-			plat_do_events();
-			//[ISB] framerate limiter 
-			//waiting loop for polled fps mode
-			//With suggestions from dpjudas.
-			uint64_t numUS = 1000000 / FPSLimit;
-			//[ISB] Combine a sleep with the polling loop to try to spare CPU cycles
-			uint64_t diff = (startTime + numUS) - I_GetUS();
-			if (diff > 2000) //[ISB] Sleep only if there's sufficient time to do so, since the scheduler isn't precise enough
-				I_DelayUS(diff - 2000);
-			while (I_GetUS() < startTime + numUS);
-
-			t2 = timer_get_fixed_seconds();
-			if (pause_game)
-				FrameTime = t2 - t1;
-			t1 = t2;
 		}
 
-		//free(Edges);
-		//free(DrawingListBright);
+		vm_angles_2_matrix(&tempm, &tangles);
+		vm_matrix_x_matrix(&ViewMatrix, &Objects[Players[Player_num].objnum].orient, &tempm);
 
-		gr_free_canvas(name_canv_left);  name_canv_left = NULL;
-		gr_free_canvas(name_canv_right);  name_canv_right = NULL;
+		if (ViewDist < ZOOM_MIN_VALUE) ViewDist = ZOOM_MIN_VALUE;
+		if (ViewDist > ZOOM_MAX_VALUE) ViewDist = ZOOM_MAX_VALUE;
 
-		if (must_free_canvas)
+		draw_automap();
+
+		if (first_time)
 		{
-			mem_free(Page.cv_bitmap.bm_data);
+			first_time = 0;
+			gr_palette_load(gr_palette);
 		}
 
-		mprintf((0, "Automap memory freed\n"));
+		plat_present_canvas(0);
 
-		game_flush_inputs();
+		plat_set_mouse_relative_mode(1);
 
+		plat_do_events();
+		//[ISB] framerate limiter 
+		//waiting loop for polled fps mode
+		//With suggestions from dpjudas.
+		uint64_t numUS = 1000000 / FPSLimit;
+		//[ISB] Combine a sleep with the polling loop to try to spare CPU cycles
+		uint64_t diff = (startTime + numUS) - I_GetUS();
+		if (diff > 2000) //[ISB] Sleep only if there's sufficient time to do so, since the scheduler isn't precise enough
+			I_DelayUS(diff - 2000);
+		while (I_GetUS() < startTime + numUS);
+
+		t2 = timer_get_fixed_seconds();
 		if (pause_game)
-		{
-			start_time();
-			digi_resume_digi_sounds();
-		}
+			FrameTime = t2 - t1;
+		t1 = t2;
+	}
 
-		Automap_active = 0;
+	//free(Edges);
+	//free(DrawingListBright);
+
+	gr_free_canvas(name_canv_left);  name_canv_left = NULL;
+	gr_free_canvas(name_canv_right);  name_canv_right = NULL;
+
+	if (must_free_canvas)
+	{
+		mem_free(Page.cv_bitmap.bm_data);
+	}
+
+	mprintf((0, "Automap memory freed\n"));
+
+	game_flush_inputs();
+
+	if (pause_game)
+	{
+		start_time();
+		digi_resume_digi_sounds();
+	}
+
+	Automap_active = 0;
 }
 
 void adjust_segment_limit(int SegmentLimit)
@@ -1102,10 +1108,11 @@ void adjust_segment_limit(int SegmentLimit)
 void draw_all_edges()
 {
 	g3s_codes cc;
-	int i, j, nbright;
+	size_t i, nbright;
+	long j; // [DW] must be signed
 	uint8_t nfacing, nnfacing;
 	Edge_info* e;
-	vms_vector* tv1;
+	vms_vector tv1;
 	fix distance;
 	fix min_distance = 0x7fffffff;
 	g3s_point* p1, * p2;
@@ -1135,7 +1142,7 @@ void draw_all_edges()
 		if (!cc.high) //all off screen?
 		{
 			nfacing = nnfacing = 0;
-			tv1 = &Vertices[e->verts[0]];
+			tv1 = Vertices[e->verts[0]];
 			j = 0;
 			while (j < e->num_faces && (nfacing == 0 || nnfacing == 0)) {
 #ifdef COMPACT_SEGS
@@ -1143,7 +1150,7 @@ void draw_all_edges()
 				get_side_normal(&Segments[e->segnum[j]], e->sides[j], 0, &temp_v);
 				if (!g3_check_normal_facing(tv1, &temp_v))
 #else
-				if (!g3_check_normal_facing(tv1, &Segments[e->segnum[j]].sides[e->sides[j]].normals[0]))
+				if (!g3_check_normal_facing(&tv1, &Segments[e->segnum[j]].sides[e->sides[j]].normals[0]))
 #endif
 					nfacing++;
 				else
@@ -1153,7 +1160,7 @@ void draw_all_edges()
 
 			if (nfacing && nnfacing) {
 				// a contour line
-				DrawingListBright[nbright++] = e - Edges;
+				DrawingListBright[nbright++] = i;
 			}
 			else if (e->flags & (EF_DEFINING | EF_GRATE)) {
 				if (nfacing == 0) {
@@ -1164,7 +1171,7 @@ void draw_all_edges()
 					g3_draw_line(&Segment_points[e->verts[0]], &Segment_points[e->verts[1]]);
 				}
 				else {
-					DrawingListBright[nbright++] = e - Edges;
+					DrawingListBright[nbright++] = i;
 				}
 			}
 		}
@@ -1176,8 +1183,8 @@ void draw_all_edges()
 
 	// Sort the bright ones using a shell sort
 	{
-		int t;
-		int i, j, incr, v1, v2;
+		size_t t;
+		size_t i, incr, v1, v2;
 
 		incr = nbright / 2;
 		while (incr > 0) {
@@ -1243,12 +1250,12 @@ void draw_all_edges()
 static int automap_find_edge(int v0, int v1, Edge_info** edge_ptr)
 {
 	int32_t vv, evv;
-	short hash, oldhash;
+	size_t hash, oldhash;
 	int ret, ev0, ev1;
 
 	vv = (v1 << 16) + v0;
 
-	oldhash = hash = ((v0 * 5 + v1) % Max_edges);
+	oldhash = hash = (((size_t)v0 * 5 + v1) % Max_edges);
 
 	ret = -1;
 
@@ -1259,8 +1266,10 @@ static int automap_find_edge(int v0, int v1, Edge_info** edge_ptr)
 		if (Edges[hash].num_faces == 0) ret = 0;
 		else if (evv == vv) ret = 1;
 		else {
-			if (++hash == Max_edges) hash = 0;
-			if (hash == oldhash) Error("Edge list full!");
+			if (++hash == Max_edges) 
+				hash = 0;
+			if (hash == oldhash) 
+				Error("Edge list full!");
 		}
 	}
 
@@ -1310,8 +1319,8 @@ void add_one_edge(short va, short vb, uint8_t color, uint8_t side, short segnum,
 		e->sides[0] = side;
 		e->segnum[0] = segnum;
 		//Edge_used_list[Num_edges] = e-Edges;
-		if ((e - Edges) > Highest_edge_index)
-			Highest_edge_index = e - Edges;
+		if ((e - Edges.data()) > Highest_edge_index)
+			Highest_edge_index = e - Edges.data();
 		Num_edges++;
 	}
 	else 
@@ -1365,7 +1374,7 @@ void add_segment_edges(segment* seg)
 	int 	is_grate, no_fade;
 	uint8_t	color;
 	int	sn;
-	int	segnum = seg - Segments;
+	int	segnum = seg - Segments.data();
 	int	hidden_flag;
 	int ttype, trigger_num;
 
@@ -1398,79 +1407,83 @@ void add_segment_edges(segment* seg)
 			break;
 		}
 
-		if (seg->sides[sn].wall_num > -1)
+		if (seg->sides[sn].wall_num >= 0)
 		{
 
 			trigger_num = Walls[seg->sides[sn].wall_num].trigger;
-			ttype = Triggers[trigger_num].type;
-			if (ttype == TT_SECRET_EXIT)
-			{
-				color = BM_XRGB(29, 0, 31);
-				no_fade = 1;
-				goto Here;
-			}
+			if (trigger_num >= 0) {
 
-			switch (Walls[seg->sides[sn].wall_num].type) 
-			{
-			case WALL_DOOR:
-				if (Walls[seg->sides[sn].wall_num].keys == KEY_BLUE)
+				ttype = Triggers[trigger_num].type;
+				if (ttype & HTT_SECRET_EXIT)
 				{
+					color = BM_XRGB(29, 0, 31);
 					no_fade = 1;
-					color = Wall_door_blue;
-					//mprintf((0, "Seg %i, side %i has BLUE wall\n", segnum, sn));
+					goto Here;
 				}
-				else if (Walls[seg->sides[sn].wall_num].keys == KEY_GOLD) 
-				{
-					no_fade = 1;
-					color = Wall_door_gold;
-					//mprintf((0, "Seg %i, side %i has GOLD wall\n", segnum, sn));
-				}
-				else if (Walls[seg->sides[sn].wall_num].keys == KEY_RED) 
-				{
-					no_fade = 1;
-					color = Wall_door_red;
-					//mprintf((0, "Seg %i, side %i has RED wall\n", segnum, sn));
-				}
-				else if (!(activeBMTable->wclips[Walls[seg->sides[sn].wall_num].clip_num].flags & WCF_HIDDEN))
-				{
-					int	connected_seg = seg->children[sn];
-					if (connected_seg != -1) {
-						int connected_side = find_connect_side(seg, &Segments[connected_seg]);
-						int	keytype = Walls[Segments[connected_seg].sides[connected_side].wall_num].keys;
-						if ((keytype != KEY_BLUE) && (keytype != KEY_GOLD) && (keytype != KEY_RED))
-							color = Wall_door_color;
-						else {
-							switch (Walls[Segments[connected_seg].sides[connected_side].wall_num].keys) 
-							{
-							case KEY_BLUE:	color = Wall_door_blue;	no_fade = 1; break;
-							case KEY_GOLD:	color = Wall_door_gold;	no_fade = 1; break;
-							case KEY_RED:	color = Wall_door_red;	no_fade = 1; break;
-							default:	Error("Inconsistent data.  Supposed to be a colored wall, but not blue, gold or red.\n");
-							}
-							//mprintf((0, "Seg %i, side %i has a colored door on the other side.\n", segnum, sn));
-						}
 
+				switch (Walls[seg->sides[sn].wall_num].type)
+				{
+				case WALL_DOOR:
+					if (Walls[seg->sides[sn].wall_num].keys == KEY_BLUE)
+					{
+						no_fade = 1;
+						color = Wall_door_blue;
+						//mprintf((0, "Seg %i, side %i has BLUE wall\n", segnum, sn));
 					}
-				}
-				else 
-				{
+					else if (Walls[seg->sides[sn].wall_num].keys == KEY_GOLD)
+					{
+						no_fade = 1;
+						color = Wall_door_gold;
+						//mprintf((0, "Seg %i, side %i has GOLD wall\n", segnum, sn));
+					}
+					else if (Walls[seg->sides[sn].wall_num].keys == KEY_RED)
+					{
+						no_fade = 1;
+						color = Wall_door_red;
+						//mprintf((0, "Seg %i, side %i has RED wall\n", segnum, sn));
+					}
+					else if (!(activeBMTable->wclips[Walls[seg->sides[sn].wall_num].clip_num].flags & WCF_HIDDEN))
+					{
+						int	connected_seg = seg->children[sn];
+						if (connected_seg != -1) {
+							int connected_side = find_connect_side(seg, &Segments[connected_seg]);
+							int	keytype = Walls[Segments[connected_seg].sides[connected_side].wall_num].keys;
+							if ((keytype != KEY_BLUE) && (keytype != KEY_GOLD) && (keytype != KEY_RED))
+								color = Wall_door_color;
+							else {
+								switch (Walls[Segments[connected_seg].sides[connected_side].wall_num].keys)
+								{
+								case KEY_BLUE:	color = Wall_door_blue;	no_fade = 1; break;
+								case KEY_GOLD:	color = Wall_door_gold;	no_fade = 1; break;
+								case KEY_RED:	color = Wall_door_red;	no_fade = 1; break;
+								default:	Error("Inconsistent data.  Supposed to be a colored wall, but not blue, gold or red.\n");
+								}
+								//mprintf((0, "Seg %i, side %i has a colored door on the other side.\n", segnum, sn));
+							}
+
+						}
+					}
+					else
+					{
+						color = Wall_normal_color;
+						hidden_flag = 1;
+						//mprintf((0, "Wall at seg:side %i:%i is hidden.\n", seg-Segments.data(), sn));
+					}
+					break;
+				case WALL_CLOSED:
+					// Make grates draw properly
+					if (WALL_IS_DOORWAY(seg, sn) & WID_RENDPAST_FLAG)
+						is_grate = 1;
+					else
+						hidden_flag = 1;
 					color = Wall_normal_color;
-					hidden_flag = 1;
-					//mprintf((0, "Wall at seg:side %i:%i is hidden.\n", seg-Segments, sn));
+					break;
+				case WALL_BLASTABLE:
+					// Hostage doors
+					color = Wall_door_color;
+					break;
 				}
-				break;
-			case WALL_CLOSED:
-				// Make grates draw properly
-				if (WALL_IS_DOORWAY(seg, sn) & WID_RENDPAST_FLAG)
-					is_grate = 1;
-				else
-					hidden_flag = 1;
-				color = Wall_normal_color;
-				break;
-			case WALL_BLASTABLE:
-				// Hostage doors
-				color = Wall_door_color;
-				break;
+
 			}
 		}
 
@@ -1506,7 +1519,7 @@ void add_segment_edges(segment* seg)
 void add_unknown_segment_edges(segment* seg)
 {
 	int sn;
-	int segnum = seg - Segments;
+	int segnum = seg - Segments.data();
 
 	for (sn = 0; sn < MAX_SIDES_PER_SEGMENT; sn++)
 	{

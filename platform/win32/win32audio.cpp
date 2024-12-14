@@ -352,6 +352,9 @@ namespace
 
 int plat_init_audio()
 {
+	if (FindArg("-nosndlib"))
+		return 2;
+
 	CoInitialize(0);
 	static int majorhack = 1;
 

@@ -36,7 +36,7 @@ typedef struct morph_data
 
 #define MAX_MORPH_OBJECTS 5
 
-extern morph_data morph_objects[];
+extern std::vector<morph_data> morph_objects;
 
 void morph_start(object *obj);
 void draw_morph_object(object *obj);

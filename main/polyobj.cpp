@@ -15,14 +15,11 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdlib.h>
 #include <string.h>
 
-// -- I hate this warning in make depend! -- #ifdef DRIVE
-// -- I hate this warning in make depend! -- #include "drive.h"
-// -- I hate this warning in make depend! -- #else
-#include "inferno.h"
-// -- I hate this warning in make depend! -- #endif
+#include <array>
+#include <vector>
 
 #include "polyobj.h"
-
+#include "inferno.h"
 #include "vecmat/vecmat.h"
 #include "3d/3d.h"
 #include "misc/error.h"
@@ -45,10 +42,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifdef _3DFX
 #include "3dfx_des.h"
 #endif
-
-//polymodel activeBMTable->models[MAX_POLYGON_MODELS];	// = {&bot11,&bot17,&robot_s2,&robot_b2,&bot11,&bot17,&robot_s2,&robot_b2};
-
-//int N_polygon_models = 0;
 
 #define MAX_POLYGON_VECS 1000
 g3s_point robot_points[MAX_POLYGON_VECS];
@@ -472,7 +465,7 @@ int Simple_model_threshhold_scale = 5;		//switch when this times radius far away
 
 //draw a polygon model
 
-void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_angles, int model_num, int flags, fix light, fix* glow_values, bitmap_index alt_textures[])
+void draw_polygon_model(vms_vector pos, vms_matrix orient, vms_angvec* anim_angles, int model_num, int flags, fix light, fix* glow_values, bitmap_index alt_textures[])
 {
 	polymodel* po;
 	int i;
@@ -492,7 +485,7 @@ void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_an
 			int cnt = 1;
 			fix depth;
 
-			depth = g3_calc_point_depth(pos);		//gets 3d depth
+			depth = g3_calc_point_depth(&pos);		//gets 3d depth
 
 			while (po->simpler_model && depth > cnt++ * Simple_model_threshhold_scale * po->rad)
 				po = &activeBMTable->models[po->simpler_model - 1];
@@ -540,7 +533,7 @@ void draw_polygon_model(vms_vector* pos, vms_matrix* orient, vms_angvec* anim_an
 	Assert(piggy_page_flushed == 0);
 #endif
 
-	g3_start_instance_matrix(pos, orient);
+	g3_start_instance_matrix(&pos, &orient);
 
 	g3_set_interp_points(robot_points);
 
@@ -663,7 +656,7 @@ void polyobj_find_min_max(polymodel* pm)
 
 extern short highest_texture_num;	//from the 3d
 
-char Pof_names[MAX_POLYGON_MODELS][FILENAME_LEN];
+std::vector<std::array<char, FILENAME_LEN>> Pof_names;
 
 //returns the number of this model
 #ifndef DRIVE
@@ -687,7 +680,10 @@ int load_polygon_model(char* filename, int n_textures, grs_bitmap*** textures)
 
 	polymodel model;
 
-	strcpy(Pof_names[activeBMTable->models.size()], filename);
+	std::array<char, FILENAME_LEN> str; 
+	strncpy(str.data(), filename, FILENAME_LEN);
+
+	Pof_names.push_back(str);
 
 	read_model_file(&model, filename, r);
 
@@ -727,7 +723,7 @@ void init_polygon_models()
 //more-or-less fill the canvas.  Note that this routine actually renders
 //into an off-screen canvas that it creates, then copies to the current
 //canvas.
-void draw_model_picture(int mn, vms_angvec * orient_angles)
+void draw_model_picture(int mn, vms_angvec* orient_angles)
 {
 	vms_vector	temp_pos = ZERO_VECTOR;
 	vms_matrix	temp_orient = IDENTITY_MATRIX;
@@ -752,7 +748,7 @@ void draw_model_picture(int mn, vms_angvec * orient_angles)
 
 	//PA_DFX(save_light = Lighting_on);
 	//PA_DFX(Lighting_on = 0);
-	draw_polygon_model(&temp_pos, &temp_orient, NULL, mn, 0, f1_0, NULL, NULL);
+	draw_polygon_model(temp_pos, temp_orient, NULL, mn, 0, f1_0, NULL, NULL);
 	//PA_DFX (Lighting_on = save_light);
 
 	gr_set_current_canvas(save_canv);

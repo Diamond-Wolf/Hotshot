@@ -74,7 +74,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define vm_angvec_zero(v) (v)->p=(v)->b=(v)->h=0
 
 void reset_player_object(void); // In object.c but not in object.h
-void drop_player_eggs(object* player); // from collide.c
+void drop_player_eggs(size_t pobjnum); // from collide.c
 void GameLoop(int, int); // From game.c
 
 //
@@ -103,9 +103,11 @@ int multi_message_index = 0;
 
 char multibuf[MAX_MULTI_MESSAGE_LEN + 4];                // This is where multiplayer message are built
 
-short remote_to_local[MAX_NUM_NET_PLAYERS][MAX_OBJECTS];  // Remote object number for each local object
-short local_to_remote[MAX_OBJECTS];
-int8_t  object_owner[MAX_OBJECTS];   // Who created each object in my universe, -1 = loaded at start
+std::vector<int8_t>  object_owner(MAX_OBJECTS);   // Who created each object in my universe, -1 = loaded at start
+std::vector<short> local_to_remote(MAX_OBJECTS);
+
+// [DW] It's an array! Of vectors!
+std::vector<short> remote_to_local[MAX_NUM_NET_PLAYERS];  // Remote object number for each local object
 
 int     Net_create_objnums[MAX_NET_CREATE_OBJECTS]; // For tracking object creation that will be sent to remote
 int     Net_create_loc = 0;  // pointer into previous array
@@ -185,7 +187,7 @@ int message_length[MULTI_MAX_TYPE + 1] = {
 	9,  // MISSILE_TRACK
 	2,  // DE-CLOAK
 	2,       // MENU_CHOICE
-	28, // ROBOT_POSITION  (shortpos_length (23) + 5 = 28)
+	29, // ROBOT_POSITION  (shortpos_length (24) + 5 = 29)
 	9,  // ROBOT_EXPLODE
 	5,       // ROBOT_RELEASE
 	18, // ROBOT_FIRE
@@ -230,6 +232,7 @@ int message_length[MULTI_MAX_TYPE + 1] = {
    2, // MULTI_GOT_ORB
 	12, // MULTI_DROP_ORB
 	4,  // MULTI_PLAY_BY_PLAY
+	1 + sizeof(uint32_t) + (sizeof(uint32_t) * MAX_MULTI_OBJ_REMAPS * 2) //MULTI_REMAP_REMOTE_OBJECTS
 };
 
 char PowerupsInMine[MAX_POWERUP_TYPES], MaxPowerupsAllowed[MAX_POWERUP_TYPES];
@@ -281,6 +284,44 @@ void init_hoard_data();
 void multi_apply_goal_textures();
 void multi_bad_restore();
 
+void InitRemoteToLocal(size_t initialSize) {
+	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++) 
+		remote_to_local[i] = std::vector<short>(initialSize);
+}
+
+void RemapRemoteObjects(char* buf) {
+
+	size_t pos = 1;
+
+	uint16_t playernum = *reinterpret_cast<uint16_t*>(buf + 1);
+	int32_t vectorSize = *reinterpret_cast<int32_t*>(buf + 1 + sizeof(int16_t));
+	uint32_t amount = *reinterpret_cast<uint32_t*>(buf + 1 + sizeof(uint16_t) + sizeof(uint32_t));
+
+	if (amount > MAX_MULTI_OBJ_REMAPS) {
+		Error("Bad remap request: Attempting to remap %d objects, but only %d allowed", amount, MAX_MULTI_OBJ_REMAPS);
+	}
+
+	if (vectorSize >= 0) {
+		remote_to_local[playernum].resize(vectorSize);
+	}
+
+	uint32_t* remapBuffer = reinterpret_cast<uint32_t*>(buf + 1 + sizeof(uint32_t));
+
+	for (int i = 0; i < amount; i += 2) {
+		if (remapBuffer[i+1] > remote_to_local[playernum].size())
+			Error("Bad remap request: Remapping to object %d when max object is %d");
+		remote_to_local[playernum][remapBuffer[i]] = remote_to_local[playernum][remapBuffer[i+1]];
+	}
+
+}
+
+void DoRemoteToLocalGC() {
+	for (int i = 0; i < MAX_NUM_NET_PLAYERS; i++) {
+		if (remote_to_local[i].size() * 2.5 < remote_to_local[i].capacity())
+			remote_to_local[i].shrink_to_fit();
+	}
+}
+
 //
 //  Functions that replace what used to be macros
 //              
@@ -300,7 +341,7 @@ int objnum_remote_to_local(int remote_objnum, int owner)
 	if (owner == -1)
 		return(remote_objnum);
 
-	if ((remote_objnum < 0) || (remote_objnum >= MAX_OBJECTS))
+	if ((remote_objnum < 0) || (remote_objnum >= local_to_remote.size()))
 		return(-1);
 
 	result = remote_to_local[owner][remote_objnum];
@@ -368,8 +409,14 @@ map_objnum_local_to_remote(int local_objnum, int remote_objnum, int owner)
 	Assert(remote_objnum > -1);
 	Assert(owner > -1);
 	Assert(owner != Player_num);
-	Assert(local_objnum < MAX_OBJECTS);
-	Assert(remote_objnum < MAX_OBJECTS);
+	Assert(local_objnum < local_to_remote.size());
+	//Assert(remote_objnum < local_to_remote.size());
+	if (remote_objnum >= remote_to_local[owner].size()) {
+		size_t off = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		remote_to_local[owner].resize(remote_objnum + 1);
+		size_t newsize = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		memset(reinterpret_cast<int8_t*>(remote_to_local[Player_num].data()) + off, -1, newsize);
+	}
 
 	object_owner[local_objnum] = owner;
 
@@ -379,13 +426,19 @@ map_objnum_local_to_remote(int local_objnum, int remote_objnum, int owner)
 	return;
 }
 
-void
-map_objnum_local_to_local(int local_objnum)
+void map_objnum_local_to_local(int local_objnum)
 {
 	// Add a mapping for our locally created objects
 
 	Assert(local_objnum > -1);
-	Assert(local_objnum < MAX_OBJECTS);
+	Assert(local_objnum < local_to_remote.size());
+
+	if (local_objnum >= remote_to_local[Player_num].size()) {
+		size_t off = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		remote_to_local[Player_num].resize(local_objnum + 1);
+		size_t newsize = remote_to_local[Player_num].size() * sizeof(remote_to_local[Player_num][0]);
+		memset(reinterpret_cast<int8_t*>(remote_to_local[Player_num].data()) + off, -1, newsize);
+	}
 
 	object_owner[local_objnum] = Player_num;
 	remote_to_local[Player_num][local_objnum] = local_objnum;
@@ -954,6 +1007,49 @@ multi_send_data(char* buf, int len, int repeat)
 
 extern void AdjustMineSpawn();
 
+void multi_send_remote_remap(size_t finalSize, const std::vector<std::pair<uint32_t, uint32_t>>& maps) {
+	
+	int numMaps = maps.size();
+	int mapReached = 0;
+	int numLoops = numMaps / MAX_MULTI_OBJ_REMAPS;
+	const size_t bufferLen = 1 + sizeof(uint16_t) + sizeof(uint32_t) + (sizeof(uint32_t) * MAX_MULTI_OBJ_REMAPS);
+	char buffer[bufferLen];
+
+	for (int i = 0; i < numLoops; i++) {
+		memset(buffer, 0, bufferLen);
+		buffer[0] = MULTI_REMOTE_OBJECT_REMAP;
+		*reinterpret_cast<uint16_t*>(buffer + 1) = (uint16_t)Player_num;
+		*reinterpret_cast<int32_t*>(buffer + 1 + sizeof(uint16_t)) = -1;
+		*reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(uint32_t)) = MAX_MULTI_OBJ_REMAPS;
+		for (int j = 0; j < MAX_MULTI_OBJ_REMAPS; j++) {
+			uint32_t* write = reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(int32_t) + sizeof(uint32_t) + (2 * j * sizeof(uint32_t)));
+			auto& map = maps[i * MAX_MULTI_OBJ_REMAPS + j];
+			write[0] = map.first;
+			write[1] = map.second;
+			mapReached++;
+		}
+
+		multi_send_data(buffer, bufferLen, 1);
+	}
+
+	//send trailing data
+	memset(buffer, 0, bufferLen);
+	buffer[0] = MULTI_REMOTE_OBJECT_REMAP;
+	*reinterpret_cast<uint16_t*>(buffer + 1) = (uint16_t)Player_num;
+	*reinterpret_cast<int32_t*>(buffer + 1 + sizeof(uint16_t)) = finalSize;
+	*reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(uint32_t)) = numMaps - mapReached;
+	for (int j = 0; j < MAX_MULTI_OBJ_REMAPS; j++) {
+		uint32_t* write = reinterpret_cast<uint32_t*>(buffer + 1 + sizeof(uint16_t) + sizeof(int32_t) + sizeof(uint32_t) + (2 * j * sizeof(uint32_t)));
+		auto& map = maps[numLoops * MAX_MULTI_OBJ_REMAPS + j];
+		write[0] = map.first;
+		write[1] = map.second;
+		mapReached++;
+	}
+
+	multi_send_data(buffer, bufferLen, 1);
+
+}
+
 void
 multi_leave_game(void)
 {
@@ -971,7 +1067,7 @@ multi_leave_game(void)
 		Net_create_loc = 0;
 		AdjustMineSpawn();
 		multi_cap_objects();
-		drop_player_eggs(ConsoleObject);
+		drop_player_eggs(ConsoleObject - Objects.data());
 		multi_send_position(Players[Player_num].objnum);
 		multi_send_player_explode(MULTI_PLAYER_DROP);
 	}
@@ -1544,7 +1640,7 @@ multi_do_fire(char* buf)
 	//  mprintf((0,"multi_do_fire, weapon = %d\n",weapon));
 
 	if (weapon == FLARE_ADJUST)
-		Laser_player_fire(&Objects[Players[pnum].objnum], FLARE_ID, 6, 1, 0);
+		Laser_player_fire(Players[pnum].objnum, FLARE_ID, 6, 1, 0);
 	else if (weapon >= MISSILE_ADJUST) {
 		int weapon_id, weapon_gun;
 
@@ -1558,7 +1654,7 @@ multi_do_fire(char* buf)
 			Multi_is_guided = 1;
 		}
 
-		Laser_player_fire(&Objects[Players[pnum].objnum], weapon_id, weapon_gun, 1, 0);
+		Laser_player_fire(Players[pnum].objnum, weapon_id, weapon_gun, 1, 0);
 	}
 	else {
 		fix save_charge = Fusion_charge;
@@ -1734,7 +1830,7 @@ multi_do_player_explode(char* buf)
 
 	multi_adjust_remote_cap(pnum);
 
-	objp = &Objects[Players[pnum].objnum];
+	size_t pobjnum = Players[pnum].objnum;
 
 	//      objp->phys_info.velocity = *(vms_vector *)(buf+16); // 12 bytes
 	//      objp->pos = *(vms_vector *)(buf+28);                // 12 bytes
@@ -1743,7 +1839,9 @@ multi_do_player_explode(char* buf)
 
 	Net_create_loc = 0;
 
-	drop_player_eggs(objp);
+	drop_player_eggs(pobjnum);
+
+	objp = &Objects[Players[pnum].objnum];
 
 	// Create mapping from remote to local numbering system
 
@@ -2087,7 +2185,7 @@ multi_do_controlcen_fire(char* buf)
 	gun_num = buf[count];                                   count += 1;
 	objnum = (*(short*)(buf + count));         count += 2;
 
-	Laser_create_new_easy(&to_target, &activeBMTable->reactorGunPos[gun_num], objnum, CONTROLCEN_WEAPON_NUM, 1);
+	Laser_create_new_easy(to_target, activeBMTable->reactorGunPos[gun_num], objnum, CONTROLCEN_WEAPON_NUM, 1);
 }
 
 void
@@ -2122,7 +2220,7 @@ multi_do_create_powerup(char* buf)
 #endif
 
 	Net_create_loc = 0;
-	my_objnum = call_object_create_egg(&Objects[Players[pnum].objnum], 1, OBJ_POWERUP, powerup_type);
+	my_objnum = call_object_create_egg(Players[pnum].objnum, 1, OBJ_POWERUP, powerup_type);
 
 	if (my_objnum < 0) {
 		mprintf((0, "Could not create new powerup!\n"));
@@ -2143,7 +2241,7 @@ multi_do_create_powerup(char* buf)
 
 	map_objnum_local_to_remote(my_objnum, objnum, pnum);
 
-	object_create_explosion(segnum, &new_pos, i2f(5), VCLIP_POWERUP_DISAPPEARANCE);
+	object_create_explosion(segnum, new_pos, i2f(5), VCLIP_POWERUP_DISAPPEARANCE);
 	mprintf((0, "Creating powerup type %d in segment %i.\n", powerup_type, segnum));
 
 	if (Game_mode & GM_NETWORK)
@@ -2198,7 +2296,7 @@ multi_do_trigger(char* buf)
 		Int3(); // Got trigger from illegal playernum
 		return;
 	}
-	if ((trigger < 0) || (trigger >= Num_triggers))
+	if ((trigger < 0) || (trigger >= Triggers.size()))
 	{
 		Int3(); // Illegal trigger number in multiplayer
 		return;
@@ -2228,7 +2326,7 @@ void multi_do_drop_marker(char* buf)
 	if (MarkerObject[(pnum * 2) + mesnum] != -1 && Objects[MarkerObject[(pnum * 2) + mesnum]].type != OBJ_NONE && MarkerObject[(pnum * 2) + mesnum] != 0)
 		obj_delete(MarkerObject[(pnum * 2) + mesnum]);
 
-	MarkerObject[(pnum * 2) + mesnum] = drop_marker_object(&position, Objects[Players[Player_num].objnum].segnum, &Objects[Players[Player_num].objnum].orient, (pnum * 2) + mesnum);
+	MarkerObject[(pnum * 2) + mesnum] = drop_marker_object(position, Objects[Players[Player_num].objnum].segnum, Objects[Players[Player_num].objnum].orient, (pnum * 2) + mesnum);
 	strcpy(MarkerOwner[(pnum * 2) + mesnum], Players[pnum].callsign);
 	mprintf((0, "Dropped player %d message: %s\n", pnum, MarkerMessage[(pnum * 2) + mesnum]));
 }
@@ -2245,7 +2343,7 @@ void multi_do_hostage_door_status(char* buf)
 	wallnum = (*(short*)(buf + count));                count += 2;
 	hps = (fix)(*(int*)(buf + count));              count += 4;
 
-	if ((wallnum < 0) || (wallnum > Num_walls) || (hps < 0) || (Walls[wallnum].type != WALL_BLASTABLE))
+	if ((wallnum < 0) || (wallnum > Walls.size()) || (hps < 0) || (Walls[wallnum].type != WALL_BLASTABLE))
 	{
 		Int3(); // Non-terminal, see Rob
 		return;
@@ -2548,6 +2646,8 @@ multi_process_data(char* buf, int len)
 		if (!Endlevel_sequence) multi_do_req_player(buf); break;
 	case MULTI_SEND_PLAYER:
 		if (!Endlevel_sequence) multi_do_send_player(buf); break;
+	case MULTI_REMOTE_OBJECT_REMAP:
+		RemapRemoteObjects(buf);
 
 	default:
 		mprintf((1, "Invalid type in multi_process_input().\n"));
@@ -3443,7 +3543,7 @@ void multi_prep_level(void)
 
 		if ((Objects[i].type == OBJ_HOSTAGE) && !(Game_mode & GM_MULTI_COOP))
 		{
-			objnum = obj_create(OBJ_POWERUP, POW_SHIELD_BOOST, Objects[i].segnum, &Objects[i].pos, &vmd_identity_matrix, activeBMTable->powerups[POW_SHIELD_BOOST].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+			objnum = obj_create(OBJ_POWERUP, POW_SHIELD_BOOST, Objects[i].segnum, Objects[i].pos, &vmd_identity_matrix, activeBMTable->powerups[POW_SHIELD_BOOST].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
 			obj_delete(i);
 			if (objnum != -1)
 			{
@@ -3731,7 +3831,7 @@ int multi_delete_extra_objects()
 			//	Before deleting object, if it's a robot, drop it's special powerup, if any
 			if (objp->type == OBJ_ROBOT)
 				if (objp->contains_count && (objp->contains_type == OBJ_POWERUP))
-					object_create_egg(objp);
+					object_create_egg(i);
 			obj_delete(i);
 		}
 		//objp++;
@@ -4421,7 +4521,7 @@ void multi_send_drop_blobs(char pnum)
 void multi_do_drop_blob(char* buf)
 {
 	char pnum = buf[1];
-	drop_afterburner_blobs(&Objects[Players[pnum].objnum], 2, i2f(5) / 2, -1);
+	drop_afterburner_blobs(Players[pnum].objnum, 2, i2f(5) / 2, -1);
 }
 
 void multi_send_powerup_update()
@@ -4444,8 +4544,7 @@ void multi_do_powerup_update(char* buf)
 			MaxPowerupsAllowed[i] = buf[i + 1];
 }
 
-extern active_door ActiveDoors[];
-extern int Num_open_doors;						// Number of open doors
+extern std::vector<active_door> ActiveDoors;
 
 void multi_send_active_door(char i)
 {
@@ -4453,7 +4552,7 @@ void multi_send_active_door(char i)
 
 	multibuf[0] = MULTI_ACTIVE_DOOR;
 	multibuf[1] = i;
-	multibuf[2] = Num_open_doors;
+	multibuf[2] = ActiveDoors.size();
 	count = 3;
 #ifndef MACINTOSH
 	memcpy((char*)(multibuf[3]), &ActiveDoors[i], sizeof(struct active_door));
@@ -4474,7 +4573,7 @@ void multi_do_active_door(char* buf)
 {
 	int count;
 	char i = multibuf[1];
-	Num_open_doors = buf[2];
+	ActiveDoors.resize(buf[2]);
 
 	count = 3;
 #ifndef MACINTOSH

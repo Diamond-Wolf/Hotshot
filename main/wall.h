@@ -33,6 +33,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_WALL_ANIMS MAX_WALL_ANIMS_D2	// Maximum different types of doors
 #define MAX_DOORS MAX_DOORS_D2	// Maximum number of open doors
 
+#define MAX_CLOAKING_WALLS 10
+
 // Various wall types.
 #define WALL_NORMAL				0  	// Normal wall
 #define WALL_BLASTABLE			1  	// Removable (by shooting) wall
@@ -96,7 +98,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define WID_NO_WALL					5	//	1/0/1		no wall, can fly through
 #define WID_EXTERNAL					8	// 0/0/0/1	don't see it, dont fly through it
 
-#define	MAX_STUCK_OBJECTS	32
+#define	MAX_STUCK_OBJECTS	64
 
 typedef struct stuckobj 
 {
@@ -165,16 +167,11 @@ extern char	Wall_names[7][10];
 
 #define WALL_IS_DOORWAY(seg,side) (((seg)->children[(side)] == -1) ? WID_RENDER_FLAG : ((seg)->children[(side)] == -2) ? WID_EXTERNAL_FLAG : ((seg)->sides[(side)].wall_num == -1) ? (WID_FLY_FLAG|WID_RENDPAST_FLAG) : wall_is_doorway((seg), (side)))
 
-extern wall Walls[MAX_WALLS];			// Master walls array
-extern int Num_walls;					// Number of walls
+extern std::vector<wall> Walls;
 
-extern active_door ActiveDoors[MAX_DOORS];	//	Master doors array
-extern int Num_open_doors;				// Number of open doors
+extern std::vector<active_door> ActiveDoors;	//	Master doors array
 
-extern cloaking_wall CloakingWalls[];
-extern int Num_cloaking_walls;
-
-//extern int walls_bm_num[MAX_WALL_ANIMS];
+extern std::vector<cloaking_wall> CloakingWalls;
 
 // Initializes all walls (i.e. no special walls.)
 extern void wall_init();
@@ -217,9 +214,6 @@ extern int wall_hit_process(segment *seg, int side, fix damage, int playernum, o
 // Opens/destroys specified door.
 extern void wall_toggle(segment *seg, int side);
 
-// Tidy up Walls array for load/save purposes.
-extern void reset_walls();
-
 // Called once per frame..
 void wall_frame_process();
 
@@ -239,6 +233,8 @@ void kill_stuck_objects(int wallnum);
 //start wall open <-> closed transitions
 void start_wall_cloak(segment *seg, int side);
 void start_wall_decloak(segment *seg, int side);
+
+void validate_walls();
 
 #include <stdio.h>
 

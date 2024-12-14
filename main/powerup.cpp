@@ -83,7 +83,7 @@ void do_powerup_frame(object* obj)
 
 	if (obj->lifeleft <= 0)
 	{
-		object_create_explosion(obj->segnum, &obj->pos, F1_0 * 7 / 2, VCLIP_POWERUP_DISAPPEARANCE);
+		object_create_explosion(obj->segnum, obj->pos, F1_0 * 7 / 2, VCLIP_POWERUP_DISAPPEARANCE);
 
 		if (activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num > -1)
 			digi_link_sound_to_object(activeBMTable->vclips[VCLIP_POWERUP_DISAPPEARANCE].sound_num, obj - Objects.data(), 0, F1_0);
@@ -153,26 +153,41 @@ void do_megawow_powerup(int quantity)
 {
 	int i;
 
-	powerup_basic(30, 0, 30, 1, "MEGA-WOWIE-ZOWIE!");
-	Players[Player_num].primary_weapon_flags = 0xffff ^ HAS_FLAG(SUPER_LASER_INDEX);		//no super laser
-	Players[Player_num].secondary_weapon_flags = 0xffff;
+	powerup_basic(30, 0, 30, 5000, "MEGA-WOWIE-ZOWIE!");
 
+	Players[Player_num].primary_weapon_flags = 0xffff ^ HAS_FLAG(SUPER_LASER_INDEX); //no super laser
+	
 	for (i = 0; i < MAX_PRIMARY_WEAPONS; i++)
-		Players[Player_num].primary_ammo[i] = VULCAN_AMMO_MAX;
+		if (Players[Player_num].primary_weapon_flags & HAS_FLAG(i))
+			Players[Player_num].primary_ammo[i] = VULCAN_AMMO_MAX * 2;
 
 	for (i = 0; i < 3; i++)
-		Players[Player_num].secondary_ammo[i] = quantity;
+		if (Players[Player_num].secondary_weapon_flags & HAS_FLAG(i))
+			Players[Player_num].secondary_ammo[i] = quantity;
 
-	for (i = 3; i < MAX_SECONDARY_WEAPONS; i++)
-		Players[Player_num].secondary_ammo[i] = quantity / 5;
+	for (i = 3; i < 5; i++)
+		if (Players[Player_num].secondary_weapon_flags & HAS_FLAG(i))
+			Players[Player_num].secondary_ammo[i] = quantity / 5;
+
+	if (currentGame == G_DESCENT_2) {
+		for (i = 5; i < 9; i++)
+			if (Players[Player_num].secondary_weapon_flags & HAS_FLAG(i))
+				Players[Player_num].secondary_ammo[i] = quantity;
+
+		for (i = 9; i < 10; i++)
+			if (Players[Player_num].secondary_weapon_flags & HAS_FLAG(i))
+				Players[Player_num].secondary_ammo[i] = quantity / 5;
+	}
+
+	uint8_t laserLevel = (currentGame == G_DESCENT_2 ? MAX_SUPER_LASER_LEVEL : MAX_LASER_LEVEL);
 
 	if (Newdemo_state == ND_STATE_RECORDING)
-		newdemo_record_laser_level(Players[Player_num].laser_level, MAX_LASER_LEVEL);
+		newdemo_record_laser_level(Players[Player_num].laser_level, laserLevel);
 
 	Players[Player_num].energy = F1_0 * 200;
 	Players[Player_num].shields = F1_0 * 200;
 	Players[Player_num].flags |= PLAYER_FLAGS_QUAD_LASERS;
-	Players[Player_num].laser_level = MAX_SUPER_LASER_LEVEL;
+	Players[Player_num].laser_level = laserLevel;
 
 	if (Game_mode & GM_HOARD)
 		Players[Player_num].secondary_ammo[PROXIMITY_INDEX] = 12;

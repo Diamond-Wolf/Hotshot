@@ -21,6 +21,7 @@ Instead, it is released under the terms of the MIT License.
 #include "platform/s_sequencer.h"
 #include "misc/error.h"
 #include "platform/mono.h"
+#include "misc/args.h"
 //#include "mem/mem.h" //[ISB] mem.h isn't thread safe so uh
 
 ALCdevice *ALDevice = NULL;
@@ -99,6 +100,9 @@ void AL_InitSource(ALuint source)
 
 int plat_init_audio()
 {
+	if (FindArg("-nosndlib"))
+		return 2;
+
 	int i; 
 	ALDevice = alcOpenDevice(NULL);
 	if (ALDevice == NULL)

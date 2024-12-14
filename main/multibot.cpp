@@ -842,11 +842,11 @@ multi_do_robot_fire(char *buf)
 	robptr = &activeBMTable->robots[Objects[botnum].id];
 	
 	if (gun_num == -1) 
-		Laser_create_new_easy( &fire, &gun_point, botnum, PROXIMITY_ID, 1);
+		Laser_create_new_easy( fire, gun_point, botnum, PROXIMITY_ID, 1);
 	else if (gun_num == -2)
-		Laser_create_new_easy( &fire, &gun_point, botnum, SUPERPROX_ID, 1);
+		Laser_create_new_easy( fire, gun_point, botnum, SUPERPROX_ID, 1);
 	else	
-		Laser_create_new_easy( &fire, &gun_point, botnum, robptr->weapon_type, 1);
+		Laser_create_new_easy( fire, gun_point, botnum, robptr->weapon_type, 1);
 }
 
 extern void drop_stolen_items (object *);
@@ -888,7 +888,7 @@ multi_explode_robot_sub(int botnum, int killer,char isthief)
 	// Drop non-random KEY powerups locally only!
 	if ((robot->contains_count > 0) && (robot->contains_type == OBJ_POWERUP) && (Game_mode & GM_MULTI_COOP) && (robot->contains_id >= POW_KEY_BLUE) && (robot->contains_id <= POW_KEY_GOLD))
 	{
-		object_create_egg(robot);
+		object_create_egg(botnum);
 	}
 	else if (robot->ctype.ai_info.REMOTE_OWNER == Player_num) 
 	{
@@ -900,6 +900,8 @@ multi_explode_robot_sub(int botnum, int killer,char isthief)
 		multi_drop_robot_powerups(robot-Objects.data());
 		//multi_delete_controlled_robot(robot-Objects.data());
 	}
+
+	robot = &Objects[botnum];
 
    if (isthief || activeBMTable->robots[robot->id].thief)
 	 drop_stolen_items(robot);
@@ -955,7 +957,7 @@ multi_do_robot_explode(char *buf)
 }
 
 extern fix EnergyToCreateOneRobot; // From fuelcen.c 
-extern object *create_morph_robot(segment *segp, vms_vector *object_pos, int object_id); // from fuelcen.c
+extern object *create_morph_robot(segment *segp, vms_vector object_pos, int object_id); // from fuelcen.c
 
 void
 multi_do_create_robot(char *buf)
@@ -970,7 +972,7 @@ multi_do_create_robot(char *buf)
 	vms_vector cur_object_loc, direction;
 	object *obj;
 
-	if ((pnum < 0) || (objnum < 0) || (fuelcen_num < 0) || (fuelcen_num >= Num_fuelcenters) || (pnum >= N_players))
+	if ((pnum < 0) || (objnum < 0) || (fuelcen_num < 0) || (fuelcen_num >= Station.size()) || (pnum >= N_players))
 	{
 		Int3(); // Bogus data
 		return;
@@ -983,11 +985,11 @@ multi_do_create_robot(char *buf)
 	// Play effect and sound
 
 	compute_segment_center(&cur_object_loc, &Segments[robotcen->segnum]);
-	obj = object_create_explosion(robotcen->segnum, &cur_object_loc, i2f(10), VCLIP_MORPHING_ROBOT);
+	obj = object_create_explosion(robotcen->segnum, cur_object_loc, i2f(10), VCLIP_MORPHING_ROBOT);
 	if (obj)
 		extract_orient_from_segment(&obj->orient, &Segments[robotcen->segnum]);
 	if (activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num > -1)
-		digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, &cur_object_loc, 0, F1_0 );
+		digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, robotcen->segnum, 0, cur_object_loc, 0, F1_0 );
 
 	// Set robot center flags, in case we become the master for the next one
 
@@ -995,11 +997,11 @@ multi_do_create_robot(char *buf)
 	robotcen->Capacity -= EnergyToCreateOneRobot;
 	robotcen->Timer = 0;
 
-	obj = create_morph_robot(&Segments[robotcen->segnum], &cur_object_loc, type);
+	obj = create_morph_robot(&Segments[robotcen->segnum], cur_object_loc, type);
 	if (obj == NULL)
 		return; // Cannot create object!
 	
-	obj->matcen_creator = robotcen-Station | 0x80;
+	obj->matcen_creator = robotcen- Station.data() | 0x80;
 //	extract_orient_from_segment(&obj->orient, &Segments[robotcen->segnum]);
 	vm_vec_sub( &direction, &ConsoleObject->pos, &obj->pos );
 	vm_vector_2_matrix( &obj->orient, &direction, &obj->orient.uvec, NULL);
@@ -1053,7 +1055,7 @@ multi_do_boss_actions(char *buf)
 				int teleport_segnum;
 				vms_vector boss_dir;
 
-				if ((secondary < 0) || (secondary > Num_boss_teleport_segs))
+				if ((secondary < 0) || (secondary > Boss_teleport_segs.size()))
 				{
 					Int3(); // Bad segnum for boss teleport, ROB!!
 					return;
@@ -1072,7 +1074,7 @@ multi_do_boss_actions(char *buf)
 				vm_vec_sub(&boss_dir, &Objects[Players[pnum].objnum].pos, &boss_obj->pos);
 				vm_vector_2_matrix(&boss_obj->orient, &boss_dir, NULL, NULL);
 
-				digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, teleport_segnum, 0, &boss_obj->pos, 0 , F1_0);
+				digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, teleport_segnum, 0, boss_obj->pos, 0 , F1_0);
 				digi_kill_sound_linked_to_object( boss_obj-Objects.data());
 				digi_link_sound_to_object2( SOUND_BOSS_SHARE_SEE, boss_obj-Objects.data(), 1, F1_0, F1_0*512 );	//	F1_0*512 means play twice as loud
 				Ai_local_info[boss_obj-Objects.data()].next_fire = 0;
@@ -1097,7 +1099,7 @@ multi_do_boss_actions(char *buf)
 		case 3: // Gate in robots!
 			{
 				// Do some validity checking
-				if ( (remote_objnum >= MAX_OBJECTS) || (remote_objnum < 0) || (segnum < 0) || (segnum > Highest_segment_index) )
+				if ( (remote_objnum >= Objects.size()) || (remote_objnum < 0) || (segnum < 0) || (segnum > Highest_segment_index) )
 				{
 					Int3(); // See Rob, bad data in boss gate action message
 					return;
@@ -1148,7 +1150,7 @@ multi_do_create_robot_powerups(char *buf)
 	Net_create_loc = 0;
 	srand(1245L);
 
-	egg_objnum = object_create_egg(&del_obj);
+	egg_objnum = object_create_egg(&del_obj - Objects.data()); //This needs fixed badly
 
 	if (egg_objnum == -1)
 		return; // Object buffer full
@@ -1211,7 +1213,7 @@ multi_drop_robot_powerups(int objnum)
 		}
 		srand(1245L);
 		if (del_obj->contains_count > 0)
-			egg_objnum = object_create_egg(del_obj);
+			egg_objnum = object_create_egg(objnum);
 	}
 		
 	else if (del_obj->ctype.ai_info.REMOTE_OWNER == -1) // No random goodies for robots we weren't in control of
@@ -1232,7 +1234,7 @@ multi_drop_robot_powerups(int objnum)
 		
 			srand(1245L);
 			if (del_obj->contains_count > 0)
-				egg_objnum = object_create_egg(del_obj);
+				egg_objnum = object_create_egg(objnum);
 		}
 	}
 

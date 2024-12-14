@@ -290,7 +290,7 @@ void paging_touch_side( segment * segp, int sidenum )
 
 void paging_touch_robot_maker( segment * segp )
 {
-	segment2	*seg2p = &Segment2s[segp-Segments];
+	segment2	*seg2p = &Segment2s[segp-Segments.data()];
 
 	if ( seg2p->special == SEGMENT_IS_ROBOTMAKER )	{
 		paging_touch_vclip(&activeBMTable->vclips[VCLIP_MORPHING_ROBOT]);
@@ -320,7 +320,7 @@ void paging_touch_segment(segment * segp)
 {
 	int sn;
 	int objnum;
-	segment2	*seg2p = &Segment2s[segp-Segments];
+	segment2	*seg2p = &Segment2s[segp-Segments.data()];
 
 	if ( seg2p->special == SEGMENT_IS_ROBOTMAKER )	
 		paging_touch_robot_maker(segp);
@@ -344,15 +344,15 @@ void paging_touch_segment(segment * segp)
 
 void paging_touch_walls()
 {
-	int i,j;
+	int j;
 	wclip *anim;
 
-	for (i=0;i<Num_walls;i++)
+	for (auto& wall : Walls)
 	{
 //		paging_draw_orb();
-		if ( Walls[i].clip_num > -1 )	
+		if ( wall.clip_num > -1 )	
 		{
-			anim = &activeBMTable->wclips[Walls[i].clip_num];
+			anim = &activeBMTable->wclips[wall.clip_num];
 			for (j=0; j < anim->num_frames; j++ )	
 			{
 				PIGGY_PAGE_IN( activeBMTable->textures

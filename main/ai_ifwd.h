@@ -17,22 +17,21 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #ifndef NDEBUG
 extern int	Do_ai_flag;
 extern int	Cvv_test;
-extern int	Cvv_last_time[MAX_OBJECTS];
 extern int	Gun_point_hack;
 extern fix	Prev_boss_shields;
 #endif
 
 extern int      Robot_sound_volume;
-extern int8_t	New_awareness[MAX_SEGMENTS];
+extern std::vector<int8_t>	New_awareness;
 
-extern void move_around_player(object *objp, vms_vector *vec_to_player, int fast_flag);
+extern void move_around_player(object *objp, vms_vector vec_to_player, int fast_flag);
 extern void set_next_fire_time(object *objp, ai_local *ailp, robot_info *robptr, int gun_num);
-extern void ai_fire_laser_at_player(object* obj, vms_vector* fire_point, int gun_num, vms_vector *believed_player_pos);
-extern void move_away_from_player(object *objp, vms_vector *vec_to_player, int attack_type);
-extern void ai_move_relative_to_player(object *objp, ai_local *ailp, fix dist_to_player, vms_vector *vec_to_player, fix circle_distance, int evade_only, int player_visibility);
+extern void ai_fire_laser_at_player(object* obj, vms_vector fire_point, int gun_num, vms_vector believed_player_pos);
+extern void move_away_from_player(object *objp, vms_vector vec_to_player, int attack_type);
+extern void ai_move_relative_to_player(object *objp, ai_local *ailp, fix dist_to_player, vms_vector vec_to_player, fix circle_distance, int evade_only, int player_visibility);
 extern void move_object_to_legal_spot(object *objp);
 extern void teleport_boss(object* objp);
-extern void do_boss_dying_frame(object* objp);
+extern void do_boss_dying_frame(size_t objnum);
 extern void do_boss_stuff(object* objp, int player_visibility);
 extern void set_player_awareness_all();
 

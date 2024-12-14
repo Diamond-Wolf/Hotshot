@@ -40,6 +40,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "songs.h"
 
 #include "config.h"
+#include "newcheat.h"
 
 #define _DIGI_SAMPLE_FLAGS (_VOLUME | _PANNING | _TRANSLATE8TO16)
 
@@ -544,7 +545,16 @@ int digi_start_sound(short soundnum, fix volume, int pan, int looping, int loop_
 		return -1;
 	}
 	plat_set_sound_position(sHandle, DigiSampleData.volume, DigiSampleData.angle);
-	plat_set_sound_data(sHandle, DigiSampleData.data, DigiSampleData.length, (currentGame == G_DESCENT_2 ? digi_sample_rate : SAMPLE_RATE_11K));
+	
+	int sampleRate = (currentGame == G_DESCENT_2 ? digi_sample_rate : SAMPLE_RATE_11K);
+	if (cheatValues[CI_HELIUM]) {
+		if (cheatValues[CI_HELIUM] == 2)
+			sampleRate /= 2;
+		else
+			sampleRate *= 2;
+	}
+
+	plat_set_sound_data(sHandle, DigiSampleData.data, DigiSampleData.length, sampleRate);
 	if (looping)
 		plat_set_sound_loop_points(sHandle, loop_start, loop_end);
 	plat_start_sound(sHandle, DigiSampleData.loop);

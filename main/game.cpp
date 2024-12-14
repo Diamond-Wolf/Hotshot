@@ -104,6 +104,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "playsave.h"
 #include "fix/fix.h"
 
+#include "newcheat.h"
+
 #ifdef MWPROFILER
 #include <profiler.h>
 #endif
@@ -195,8 +197,6 @@ int Cockpit_mode=CM_FULL_COCKPIT;		//set game.h for values
 int Cockpit_mode_save=-1;					//set while in letterbox or rear view, or -1
 int force_cockpit_redraw=0;
 
-int framerate_on=0;
-
 int PaletteRedAdd, PaletteGreenAdd, PaletteBlueAdd;
 
 //	Toggle_var points at a variable which gets !ed on ctrl-alt-T press.
@@ -229,7 +229,6 @@ fix	Fusion_next_sound_time = 0;
 fix	Fusion_last_sound_time = 0;
 
 int Debug_spew = 1;
-int Game_turbo_mode = 0;
 
 int Game_mode = GM_GAME_OVER;
 
@@ -272,8 +271,6 @@ extern char Marker_input[];
 
 //	==============================================================================================
 
-extern char john_head_on;
-
 void load_background_bitmap()
 {
 	uint8_t pal[256*3];
@@ -282,10 +279,10 @@ void load_background_bitmap()
 	if (background_bitmap.bm_data)
 		mem_free(background_bitmap.bm_data);
 
-	background_bitmap.bm_data=NULL;
-	pcx_error = pcx_read_bitmap(john_head_on?"johnhead.pcx":BACKGROUND_NAME,&background_bitmap,BM_LINEAR,pal);
+	background_bitmap.bm_data = NULL;
+	pcx_error = pcx_read_bitmap(cheatValues[CI_JOHN] ? "johnhead.pcx" : BACKGROUND_NAME, &background_bitmap, BM_LINEAR, pal);
 	if (pcx_error != PCX_ERROR_NONE)
-		Error("File %s - PCX error: %s",BACKGROUND_NAME,pcx_errormsg(pcx_error));
+		Error("File %s - PCX error: %s", BACKGROUND_NAME, pcx_errormsg(pcx_error));
 	gr_remap_bitmap_good( &background_bitmap, pal, -1, -1 );
 }
 
@@ -848,7 +845,7 @@ void calc_frame_time()
 	actual_last_timer_value = last_timer_value;
 	#endif
 
-	if ( Game_turbo_mode )
+	if ( cheatValues[CI_TURBO] )
 		FrameTime *= 2;
 
 	// Limit frametime to be between 5 and 150 fps.
@@ -1619,37 +1616,17 @@ jmp_buf LeaveGame;
 
 int Cheats_enabled=0;
 
-extern int Laser_rapid_fire;
-
-extern int Physics_cheat_flag,Robots_kill_robots_cheat;
-extern char BounceCheat,HomingCheat,OldHomingState[20];
-extern char AcidCheatOn,old_IntMethod, Monster_mode;
-extern int Buddy_dude_cheat;
+extern short cheatValues[CI_TOTAL];
 
 //turns off active cheats
 void turn_cheats_off()
 {
-	int i;
-
-	if (HomingCheat)
-		for (i=0;i<20;i++)
-			activeBMTable->weapons[i].homing_flag=OldHomingState[i];
-
-	if (AcidCheatOn)
-	{
-		AcidCheatOn=0;
-		Interpolation_method=old_IntMethod;
-	}
-
-	Buddy_dude_cheat = 0;
-	BounceCheat=0;
-    HomingCheat=0;
+	ResetCheatStates();
 	do_lunacy_off();
-	Laser_rapid_fire = 0;
-	Physics_cheat_flag = 0;
-	Monster_mode = 0;
-	Robots_kill_robots_cheat=0;
-	Robot_firing_enabled = 1;
+
+	short helium = cheatValues[CI_HELIUM];
+	memset(cheatValues, 0, CI_TOTAL * sizeof(*cheatValues));
+	cheatValues[CI_HELIUM] = helium;
 }
 
 //turns off all cheats & resets cheater flag	
@@ -2152,6 +2129,9 @@ extern time_t t_current_time, t_saved_time;
 
 void flicker_lights();
 
+#define SPECIAL_GC_FRAMES 1000
+int specialGCCounter = SPECIAL_GC_FRAMES;
+
 void GameLoop(int RenderFlag, int ReadControlsFlag )
 {
 	//[ISB] Okay I really don't want to track all the changes and mini loops and shit
@@ -2422,7 +2402,7 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 					if (Fusion_charge > F1_0*2)
 						bump_amount = Fusion_charge*4;
 
-					bump_one_object(ConsoleObject, &rand_vec, bump_amount);
+					bump_one_object(ConsoleObject, rand_vec, bump_amount);
 				}
 			}
 
@@ -2457,7 +2437,78 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 	slide_textures();
 	flicker_lights();
 
-	//!!hoard_light_pulse();		//do cool hoard light pulsing
+	if (objectGCReady) {
+		doObjectGC();
+#ifdef NETWORK
+		if (Game_mode & GM_MULTI)
+			DoRemoteToLocalGC();
+#endif
+		auto msize = morph_objects.size() * 2;
+		if (msize < morph_objects.capacity()) {
+			morph_objects.resize(msize > MAX_MORPH_OBJECTS ? msize : MAX_MORPH_OBJECTS);
+			morph_objects.shrink_to_fit();
+		}
+	}
+
+	if (specialGCCounter <= 0) {
+		specialGCCounter = SPECIAL_GC_FRAMES;
+
+		if (ActiveDoors.capacity() > MAX_DOORS && ActiveDoors.size() * 2 < MAX_DOORS) {
+			ActiveDoors.shrink_to_fit();
+		}
+
+		if (CloakingWalls.capacity() > MAX_CLOAKING_WALLS && CloakingWalls.size() * 2 < MAX_CLOAKING_WALLS) {
+			CloakingWalls.shrink_to_fit();
+		}
+
+		if (expl_wall_list.capacity() > MAX_EXPLODING_WALLS) {
+			int count = 0;
+
+			int start = 0;
+			int end = expl_wall_list.size() - 1;
+
+			while (end > start) {
+
+				while (expl_wall_list[start].segnum != -1 && start < end)
+					start++;
+				while (expl_wall_list[end].segnum == -1 && end > start)
+					end--;
+
+				if (end <= start)
+					break;
+
+				expl_wall_list[start] = expl_wall_list[end];
+				expl_wall_list[end].segnum = -1;
+
+			}
+
+			end = -1;
+
+			for (start = 0; start < expl_wall_list.size(); start++)
+				if (expl_wall_list[start].segnum == -1) {
+					end = start;
+					break;
+				}
+
+			if (end < MAX_EXPLODING_WALLS)
+				end = MAX_EXPLODING_WALLS;
+
+			if (end < expl_wall_list.size()) {
+				mprintf((0, "Resized expl_wall_list from %d / %d ", expl_wall_list.size(), expl_wall_list.capacity()));
+				expl_wall_list.resize(end);
+				expl_wall_list.shrink_to_fit();
+				mprintf((0, "to %d / %d!\n", expl_wall_list.size(), expl_wall_list.capacity()));
+			}
+
+		}
+
+	}
+
+	specialGCCounter--;
+
+	if (expl_wall_list.capacity() > MAX_EXPLODING_WALLS) {
+		
+	}
 
 }
 
@@ -2485,7 +2536,7 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 //!!}
 
 
-uint8_t	Slide_segs[MAX_SEGMENTS];
+std::vector<uint8_t> Slide_segs(MAX_SEGMENTS);
 int	Slide_segs_computed;
 
 void compute_slide_segs(void)
@@ -2564,18 +2615,14 @@ void slide_textures(void)
 	}
 }
 
-flickering_light Flickering_lights[MAX_FLICKERING_LIGHTS];
-
-int Num_flickering_lights=0;
+std::vector<flickering_light> Flickering_lights;
 
 void flicker_lights()
 {
 	int l;
-	flickering_light *f;
+	auto f = Flickering_lights.begin();
 
-	f = Flickering_lights;
-
-	for (l=0;l<Num_flickering_lights;l++,f++) {
+	for (l=0; l < Flickering_lights.size(); l++, f++) {
 		segment *segp = &Segments[f->segnum];
 
 		//make sure this is actually a light
@@ -2606,15 +2653,13 @@ void flicker_lights()
 flickering_light *find_flicker(int segnum,int sidenum)
 {
 	int l;
-	flickering_light *f;
+	auto f = Flickering_lights.begin();
 
 	//see if there's already an entry for this seg/side
 
-	f = Flickering_lights;
-
-	for (l=0;l<Num_flickering_lights;l++,f++)
+	for (l = 0; l < Flickering_lights.size(); l++, f++)
 		if (f->segnum == segnum && f->sidenum == sidenum)	//found it!
-			return f;
+			return &(*f);
 
 	return NULL;
 }
@@ -2624,8 +2669,8 @@ void disable_flicker(int segnum,int sidenum)
 {
 	flickering_light *f;
 
-	if ((f=find_flicker(segnum,sidenum)) != NULL)
-		f->timer = 0x80000000;
+	if ((f = find_flicker(segnum,sidenum)) != NULL)
+		f->timer = INT32_MIN; 
 }
 
 //turn flickering off (because light has been turned on)
@@ -2758,7 +2803,7 @@ void powerup_grab_cheat(object *player, int objnum)
 		vms_vector	collision_point;
 
 		vm_vec_avg(&collision_point, &Objects[objnum].pos, &player->pos);
-		collide_player_and_powerup(player, &Objects[objnum], &collision_point);
+		collide_player_and_powerup(player, &Objects[objnum], collision_point);
 	}
 }
 
@@ -2829,7 +2874,7 @@ int mark_player_path_to_segment(int segnum)
 		mprintf((0, "%3i ", segnum));
 		seg_center = Point_segs[player_hide_index+i].point;
 
-		objnum = obj_create( OBJ_POWERUP, POW_ENERGY, segnum, &seg_center, &vmd_identity_matrix, activeBMTable->powerups[POW_ENERGY].size, CT_POWERUP, MT_NONE, RT_POWERUP);
+		objnum = obj_create( OBJ_POWERUP, POW_ENERGY, segnum, seg_center, &vmd_identity_matrix, activeBMTable->powerups[POW_ENERGY].size, CT_POWERUP, MT_NONE, RT_POWERUP);
 		if (objnum == -1) 
 		{
 			Int3();		//	Unable to drop energy powerup for path
@@ -2878,7 +2923,7 @@ void show_free_objects(void)
 		int	i;
 		int	count=0;
 
-		mprintf((0, "Highest_object_index = %3i, MAX_OBJECTS = %3i, now used = ", Highest_object_index, MAX_OBJECTS));
+		mprintf((0, "Highest_object_index = %3i, Object vector size = %3i, now used = ", Highest_object_index, Objects.size()));
 
 		for (i=0; i<=Highest_object_index; i++)
 			if (Objects[i].type != OBJ_NONE)

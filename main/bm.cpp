@@ -54,6 +54,8 @@ int8_t	ObjType[MAX_OBJTYPE];
 int8_t	ObjId[MAX_OBJTYPE];
 fix	ObjStrength[MAX_OBJTYPE];
 
+bmtable* activeBMTable = nullptr;
+
 //for each model, a model number for dying & dead variants, or -1 if none
 //int Dying_modelnums[MAX_POLYGON_MODELS];
 //int Dead_modelnums[MAX_POLYGON_MODELS];
@@ -81,21 +83,19 @@ player_ship* Player_ship;
 //bitmap_index		ObjBitmaps[MAX_OBJ_BITMAPS];
 //uint16_t			ObjBitmapPtrs[MAX_OBJ_BITMAPS];		// These point back into ObjBitmaps, since some are used twice.
 
-bmtable d1Table;
-bmtable d2Table;
+//bmtable d1Table;
+//bmtable d2Table;
 
-//bmtable::bmtable() {
-//	Init();
-//}
+bmtable::bmtable() {
+	activePiggyTable = &piggy;
+	Init();
+}
 
 #define READ_LIMIT(d1, d2) (currentGame == G_DESCENT_1 ? (d1) : (d2))
 
-void bmtable::Init(bool reinit) {
+void bmtable::Init() {
 
-	if (initialized && !reinit)
-		return;
-
-	initialized = true;
+	game = currentGame;
 
 	cockpits.reserve(N_COCKPIT_BITMAPS);
 	tmaps.reserve(MAX_TEXTURES);
@@ -120,13 +120,9 @@ void bmtable::Init(bool reinit) {
 	reactorGunDirs.reserve(MAX_CONTROLCEN_GUNS);
 
 	piggy.Init();
-}
-
-void bmtable::SetActive() {
-	activeBMTable = this;
-	piggy.SetActive();
 
 	Player_ship = &player;
+
 }
 
 extern void free_polygon_models();
@@ -814,16 +810,19 @@ void load_exit_models()
 // If editor is in, bm_init_use_table() is called.
 int bm_init() {
 	
-	if (shouldAutoClearBMTable) { //Destroy unused table to clear memory
+	/*if (shouldAutoClearBMTable) { //Destroy unused table to clear memory
 		if (activeBMTable == &d1Table)
 			d2Table = bmtable(); 
 		else if (activeBMTable == &d2Table)
 			d1Table = bmtable();
 		else
 			Int3(); //Got a rogue table active
-	}
+	}*/
 
-	activeBMTable->Init(false);
+	if (activeBMTable)
+		delete activeBMTable;
+
+	activeBMTable = new bmtable();
 
 	//init_polygon_models();
 	if (!piggy_init())				// This calls bm_read_all
@@ -1067,7 +1066,12 @@ void bm_read_extra_robots(char *fname,int type)
 		ulong varSave = 0;
 	#endif
 
-	fp = cfopen(fname,"rb");
+	fp = cfopen(fname, "rb");
+	if (!fp) {
+		fp = cfopen("d2x.ham", "rb"); // [DW] Since Vertigo is statically loaded, try that. Done to bypass the traditional "Play Vertigo first" in the modern hot-data-reload paradigm.
+		if (!fp)
+			return;
+	}
 
 	if (type == 2) {
 		int sig;

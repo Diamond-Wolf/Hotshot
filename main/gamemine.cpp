@@ -746,12 +746,14 @@ int LoadMineD1(CFILE* LoadFile)
 	//	Error("Got mine version %d when reading level file, expected %d.", version, COMPILED_MINE_VERSION);
 
 	Num_vertices = cfile_read_short(LoadFile);					// 2 bytes = Num_vertices
-	if (Num_vertices > MAX_VERTICES)
-		Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	//if (Num_vertices > MAX_VERTICES)
+	//	Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	ResizeVertexVectors(Num_vertices);
 
 	Num_segments = cfile_read_short(LoadFile);					// 2 bytes = Num_segments
-	if (Num_segments > MAX_SEGMENTS)
-		Error("Level contains more than MAX_SEGMENTS(%d) segments.", MAX_SEGMENTS);
+	//if (Num_segments > MAX_SEGMENTS)
+	//	Error("Level contains more than MAX_SEGMENTS(%d) segments.", MAX_SEGMENTS);
+	ResizeSegmentVectors(Num_segments);
 
 	for (i = 0; i < Num_vertices; i++)
 		read_vector(&(Vertices[i]), LoadFile);
@@ -871,6 +873,8 @@ int LoadMineD1(CFILE* LoadFile)
 
 	validate_segment_all();			// Fill in side type and normals.
 
+	Station.clear();
+
 	// Activate fuelcentes
 	for (i = 0; i < Num_segments; i++)
 	{
@@ -906,12 +910,15 @@ int LoadMineD2(CFILE *LoadFile)
 	//	Error("Got mine version %d when reading level file, expected %d.", version, COMPILED_MINE_VERSION);
 
 	Num_vertices = cfile_read_short(LoadFile);					// 2 bytes = Num_vertices
-	if (Num_vertices > MAX_VERTICES)
-		Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	//if (Num_vertices > MAX_VERTICES)
+	//	Error("Level contains more than MAX_VERTICES(%d) vertices.", MAX_VERTICES);
+	ResizeVertexVectors(Num_vertices);
 
 	Num_segments = cfile_read_short(LoadFile);					// 2 bytes = Num_segments
-	if (Num_segments > MAX_SEGMENTS)
-		Error("Level contains more than MAX_SEGMENTS(%d) segments.", MAX_SEGMENTS);
+	//if (Num_segments > MAX_SEGMENTS)
+	//	Error("Level contains more than MAX_SEGMENTS(%d) segments.", MAX_SEGMENTS);
+
+	ResizeSegmentVectors(Num_segments);
 
 	for (i = 0; i < Num_vertices; i++)
 		read_vector( &(Vertices[i]), LoadFile);

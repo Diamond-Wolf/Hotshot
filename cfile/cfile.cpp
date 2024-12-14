@@ -32,6 +32,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main/songs.h" //for D1 descent.sng patch hack
 #include "platform/mono.h"
 
+extern bool noHog;
+
 typedef struct hogfile
 {
 	char	name[13];
@@ -47,24 +49,29 @@ typedef struct hogfile
 #define HOG_FILENAME_MAX 64
 #endif
 
-hogfile HogFiles[MAX_HOGFILES];
-char Hogfile_initialized = 0;
-int Num_hogfiles = 0;
-
 hogfile D1HogFiles[MAX_HOGFILES];
 bool d1HogInitialized = 0;
 int numD1Hogfiles = 0;
 
+hogfile D2HogFiles[MAX_HOGFILES];
+bool d2HogInitialized = 0;
+int Num_hogfiles = 0;
+
 hogfile AltHogFiles[MAX_HOGFILES];
-char AltHogfile_initialized = 0;
+bool AltHogfile_initialized = 0;
 int AltNum_hogfiles = 0;
 
-char HogFilename[HOG_FILENAME_MAX];
-char AltHogFilename[HOG_FILENAME_MAX];
+hogfile VertigoHogFiles[MAX_HOGFILES];
+bool VertigoHogfile_initialized = 0;
+int VertigoNum_hogfiles = 0;
+
 char d1HogFilename[HOG_FILENAME_MAX];
+char d2HogFilename[HOG_FILENAME_MAX];
+char AltHogFilename[HOG_FILENAME_MAX];
+char vertigoHogFilename[HOG_FILENAME_MAX];
 
 char AltHogDir[HOG_FILENAME_MAX];
-char AltHogdir_initialized = 0;
+bool AltHogdir_initialized = 0;
 
 void cfile_use_alternate_hogdir(const char* path)
 {
@@ -84,18 +91,38 @@ void cfile_use_alternate_hogdir(const char* path)
 FILE* cfile_get_filehandle(const char* filename, const char* mode)
 {
 	FILE* fp;
+
+#ifdef CHOCOLATE_USE_LOCALIZED_PATHS
+	char temp[CHOCOLATE_MAX_FILE_PATH_SIZE];
+#else
 	char temp[HOG_FILENAME_MAX * 2];
+#endif
 
-	#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	if (!_strnicmp(filename, "descent.hog", 11)) {
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+	/*if (!_strnicmp(filename, "descent.hog", 11)) { //Check data dir instead for descent.hog
 			get_full_file_path(temp, "descent.hog", CHOCOLATE_SYSTEM_FILE_DIR);
-			//cfile_init_hogfile(HogFilename, HogFiles, &Num_hogfiles);
-			//Hogfile_initialized = 1;
 			return cfile_get_filehandle(temp, mode);
-	}
-	#endif
+	}*/
 
+	get_full_file_path(temp, filename, CHOCOLATE_SYSTEM_FILE_DIR);
+	fp = fopen(temp, mode);
+
+	if (!fp) {
+		get_full_file_path(temp, filename, CHOCOLATE_MISSIONS_DIR);
+		fp = fopen(temp, mode);
+	}
+#else
 	fp = fopen(filename, mode);
+
+	if (!fp) {
+#ifdef _WIN32
+		snprintf(temp, HOG_FILENAME_MAX * 2, ".\\missions\\%s", filename);
+#else
+		snprintf(temp, HOG_FILENAME_MAX * 2, "./missions/%s", filename);
+#endif
+		fp = fopen(temp, mode);
+	}
+#endif
 
 #ifndef _WINDOWS
 	if (!fp)
@@ -179,14 +206,14 @@ int cfile_init_hogfile(const char* fname, hogfile* hog_files, int* nfiles)
 }
 
 //Specify the name of the hogfile.  Returns 1 if hogfile found & had files
-int cfile_init(const char* hogname)
+int cfile_init_d2(const char* hogname)
 {
-	Assert(Hogfile_initialized == 0);
+	Assert(d2HogInitialized == 0);
 
-	if (cfile_init_hogfile(hogname, HogFiles, &Num_hogfiles)) 
+	if (cfile_init_hogfile(hogname, D2HogFiles, &Num_hogfiles)) 
 	{
-		strcpy(HogFilename, hogname);
-		Hogfile_initialized = 1;
+		strcpy(d2HogFilename, hogname);
+		d2HogInitialized = 1;
 		return 1;
 	}
 	else
@@ -207,7 +234,27 @@ int cfile_init_d1(const char* hogname)
 		return 0;	//not loaded!
 }
 
+int cfile_init_vertigo(const char* hogname)
+{
+	if (!d2HogInitialized)
+		return 0;
+
+	Assert(VertigoHogfile_initialized == 0);
+
+	if (cfile_init_hogfile(hogname, VertigoHogFiles, &VertigoNum_hogfiles))
+	{
+		strcpy(vertigoHogFilename, hogname);
+		VertigoHogfile_initialized = 1;
+		return 1;
+	}
+	else
+		return 0;	//not loaded!
+}
+
 FILE* FindFileInD1(const char* name, int* length) {
+
+	if (!d1HogInitialized)
+		return NULL;
 
 	//Hack to patch v1.5 descent.sng if needed
 	if (currentGame == G_DESCENT_1 && !_strnicmp(name, "descent.sng", 11))
@@ -233,15 +280,40 @@ FILE* FindFileInD1(const char* name, int* length) {
 
 FILE* FindFileInD2(const char* name, int* length) {
 
+	if (!d2HogInitialized)
+		return NULL;
+
 	FILE* fp;
 	for (int i = 0; i < Num_hogfiles; i++) 
 	{
-		if (!_stricmp(HogFiles[i].name, name))
+		if (!_stricmp(D2HogFiles[i].name, name))
 		{
-			fp = cfile_get_filehandle(HogFilename, "rb");
+			fp = cfile_get_filehandle(d2HogFilename, "rb");
 			if (fp == NULL) return NULL;
-			fseek(fp, HogFiles[i].offset, SEEK_SET);
-			*length = HogFiles[i].length;
+			fseek(fp, D2HogFiles[i].offset, SEEK_SET);
+			*length = D2HogFiles[i].length;
+			return fp;
+		}
+	}
+
+	return NULL;
+
+}
+
+FILE* FindFileInVertigo(const char* name, int* length) {
+
+	if (!VertigoHogfile_initialized)
+		return NULL;
+
+	FILE* fp;
+	for (int i = 0; i < Num_hogfiles; i++)
+	{
+		if (!_stricmp(VertigoHogFiles[i].name, name))
+		{
+			fp = cfile_get_filehandle(vertigoHogFilename, "rb");
+			if (fp == NULL) return NULL;
+			fseek(fp, VertigoHogFiles[i].offset, SEEK_SET);
+			*length = VertigoHogFiles[i].length;
 			return fp;
 		}
 	}
@@ -278,11 +350,19 @@ FILE* cfile_find_libfile(const char* name, int* length)
 		if (fp) 
 			return fp;
 
+		fp = FindFileInVertigo(name, length);
+		if (fp)
+			return fp;
+
 		return FindFileInD2(name, length);
 
 	} else {
 
 		//mprintf((1, "\nCurrent game is D2, trying D2 first (%s)\n", name));
+
+		fp = FindFileInVertigo(name, length);
+		if (fp)
+			return fp;
 
 		fp = FindFileInD2(name, length);
 		if (fp)
@@ -341,7 +421,6 @@ int cfexist(const char* filename)
 	return 0;		// Couldn't find it.
 }
 
-
 CFILE* cfopen(const char* filename, const char* mode)
 {
 	int length;
@@ -372,47 +451,40 @@ CFILE* cfopen(const char* filename, const char* mode)
 	while ((p = strchr(new_filename, 10)))
 		* p = '\0';
 
-	//[ISB] descent 2 code for handling '\x01'
-	if (filename[0] != '\x01')
-	{
-		fp = cfile_get_filehandle(filename, mode);		// Check for non-hog file first...
-	}
-	else
-	{
-		fp = NULL;		//don't look in dir, only in hogfile
+	if (filename[0] == '\x01')
 		filename++;
-	}
-	if (!fp) 
-	{
-		fp = cfile_find_libfile(filename, &length);
-		if (!fp)
-			return NULL;		// No file found
+
+	fp = cfile_find_libfile(filename, &length);
+	if (fp) {
 		cfile = (CFILE*)mem_malloc(sizeof(CFILE));
-		if (cfile == NULL) 
+		if (cfile != NULL)
 		{
+			cfile->file = fp;
+			cfile->size = length;
+			cfile->lib_offset = ftell(fp);
+			cfile->raw_position = 0;
+			return cfile;
+		} else {
 			fclose(fp);
 			return NULL;
 		}
-		cfile->file = fp;
-		cfile->size = length;
-		cfile->lib_offset = ftell(fp);
-		cfile->raw_position = 0;
-		return cfile;
-	}
-	else
+	} 
+
+	fp = cfile_get_filehandle(filename, "rb");
+	if (!fp)
+		return NULL;
+
+	cfile = (CFILE*)mem_malloc(sizeof(CFILE));
+	if (cfile == NULL) 
 	{
-		cfile = (CFILE*)mem_malloc(sizeof(CFILE));
-		if (cfile == NULL) 
-		{
-			fclose(fp);
-			return NULL;
-		}
-		cfile->file = fp;
-		cfile->size = _filelength(_fileno(fp));
-		cfile->lib_offset = 0;
-		cfile->raw_position = 0;
-		return cfile;
+		fclose(fp);
+		return NULL;
 	}
+	cfile->file = fp;
+	cfile->size = _filelength(_fileno(fp));
+	cfile->lib_offset = 0;
+	cfile->raw_position = 0;
+	return cfile;
 }
 
 int cfilelength(CFILE* fp)
@@ -441,23 +513,28 @@ char* cfgets(char* buf, size_t n, CFILE* fp)
 	int i;
 	int c;
 
+	if (fp->raw_position >= fp->size)
+	{
+		*buf = 0;
+		return NULL;
+	}
+
 	for (i = 0; i < (int)(n - 1); i++) 
 	{
-		do 
-		{
-			if (fp->raw_position >= fp->size) 
-			{
-				*buf = 0;
-				return NULL;
-			}
+		do {
 			c = fgetc(fp->file);
 			fp->raw_position++;
-		} while (c == 13);
+		} while (c == 13 && fp->raw_position < fp->size);
+
+		if (fp->raw_position >= fp->size)
+			break;
+
 		*buf++ = c;
 		if (c == 10)
 			c = '\n';
 		if (c == '\n') break;
 	}
+
 	*buf++ = 0;
 	return  t;
 }

@@ -1459,6 +1459,9 @@ int show_briefing_message(int screen_num, char* message)
 //	Return a pointer to the start of text for screen #screen_num.
 char* get_briefing_message(int screen_num)
 {
+	if (!Briefing_text)
+		return NULL;
+
 	char* tptr = Briefing_text;
 	int	cur_screen = 0;
 	int	ch;
@@ -1494,7 +1497,8 @@ int load_screen_text(const char* filename, char** buf)
 
 		strcpy(nfilename, filename);
 		ptr = strrchr(nfilename, '.');
-		*ptr = '\0';
+		if (ptr)
+			*ptr = '\0';
 		strcat(nfilename, ".txb");
 		if ((ifile = cfopen(nfilename, "rb")) == NULL)
 		{
@@ -1664,7 +1668,10 @@ void doBriefingD1(int level_num)
 
 	key_flush();
 
-	load_screen_text(level_num != REGISTERED_ENDING_LEVEL_NUM ? Briefing_text_filename : Ending_text_filename, &Briefing_text);
+	if (!load_screen_text(level_num != REGISTERED_ENDING_LEVEL_NUM ? Briefing_text_filename : Ending_text_filename, &Briefing_text));
+		return;
+
+	songs_play_song((level_num != REGISTERED_ENDING_LEVEL_NUM ? SONG_BRIEFING : SONG_ENDGAME), 1);
 
 	if (level_num == REGISTERED_ENDING_LEVEL_NUM) {
 		for (cur_briefing_screen = 0; cur_briefing_screen < MAX_BRIEFING_SCREEN_D1; cur_briefing_screen++)
@@ -1699,9 +1706,6 @@ void doBriefingD1(int level_num)
 void do_briefing_screens(const char* filename, int level_num)
 {
 
-	if (Current_mission_num != 1)
-		songs_play_song((level_num != REGISTERED_ENDING_LEVEL_NUM ? SONG_BRIEFING : SONG_ENDGAME), 1);
-
 	if (currentGame == G_DESCENT_1) {
 		doBriefingD1(level_num);
 		return;
@@ -1727,10 +1731,8 @@ void do_briefing_screens(const char* filename, int level_num)
 	if (!load_screen_text(filename, &Briefing_text))
 		return;
 
-	if (CurrentDataVersion == DataVer::DEMO)
+	if (Current_mission_num != 1)
 		songs_play_song(SONG_BRIEFING, 1);
-	else
-		songs_stop_all();
 
 	set_screen_mode(SCREEN_MENU);
 

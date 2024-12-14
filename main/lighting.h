@@ -28,7 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define BEAM_CUTOFF	0xa000		//what is out of beam?
 
 extern fix	Beam_brightness;
-extern fix	Dynamic_light[MAX_VERTICES];
+extern std::vector<fix> Dynamic_light;
 
 extern void set_dynamic_light(void);
 
@@ -37,7 +37,7 @@ extern void set_dynamic_light(void);
 //  point - the 3d coords of the point
 //  face_light - a scale factor derived from the surface normal of the face
 //If no surface normal effect is wanted, pass F1_0 for face_light
-fix compute_headlight_light(vms_vector* point, fix face_light);
+fix compute_headlight_light(vms_vector point, fix face_light);
 
 //compute the average dynamic light in a segment.  Takes the segment number
 fix compute_seg_dynamic_light(int segnum);

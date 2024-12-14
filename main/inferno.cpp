@@ -77,8 +77,7 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "movie.h"
 #include "compbit.h"
 #include "misc/types.h"
-
-extern void SwitchGame(uint8_t gameVersion);
+#include "newcheat.h"
 
 #define SANTA
 
@@ -525,20 +524,20 @@ int D_DescentMain(int argc, const char** argv)
 #define HOGNAME "descent2.hog"
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(hogfile_full_path, HOGNAME, CHOCOLATE_SYSTEM_FILE_DIR);
-	if (!cfile_init(hogfile_full_path))
+	if (!cfile_init_d2(hogfile_full_path))
 #else
-	if (!cfile_init(HOGNAME))
+	if (!cfile_init_d2(HOGNAME))
 #endif
 	{
 		//Failed to get registered Descent 2, try loading demo now. 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 		get_full_file_path(hogfile_full_path, "d2demo.hog", CHOCOLATE_SYSTEM_FILE_DIR);
-		if (!cfile_init(hogfile_full_path))
+		if (!cfile_init_d2(hogfile_full_path))
 #else
-		if (!cfile_init("d2demo.hog"))
+		if (!cfile_init_d2("d2demo.hog"))
 #endif
 		{
-			Error("Could not find required file <%s>", HOGNAME);
+			Warning("Could not find <%s>", HOGNAME);
 		}
 		else
 		{
@@ -553,9 +552,17 @@ int D_DescentMain(int argc, const char** argv)
 	}
 
 	if (!cfile_init_d1("descent.hog")) {
-		Error("Could not find required file descent.hog");
+		Warning("Could not find descent.hog");
 	}
 
+	if (!d1HogInitialized && !d2HogInitialized) {
+		Error("Could not load any game data!\nNeed at least one of descent.hog or descent2.hog");
+	}
+
+	if (!cfile_init_vertigo("d2x.hog")) {
+		Warning("Could not find d2x.hog");
+	}
+		
 	load_text(num_text_strings);
 
 	//print out the banner title
@@ -677,6 +684,7 @@ Here:
 	}
 
 #ifdef NETWORK
+	InitRemoteToLocal(MAX_OBJECTS);
 	do_network_init();
 #endif
 
@@ -828,6 +836,9 @@ Here:
 
 	//PA_DFX(pa_splash());
 
+	mprintf((0, "\nInitializing cheats.."));
+	InitializeCheats();
+
 	mprintf((0, "\nShowing loading screen..."));
 	{
 		//grs_bitmap title_bm;
@@ -858,32 +869,14 @@ Here:
 	}
 
 	mprintf((0, "\nDoing bm_init..."));
-	
-	if (!FindArg("-lowmem")) { //If enough memory, just init the tables now
-		d1Table.Init();
-		d2Table.Init();
-
-		currentGame = G_DESCENT_1;
-		d1Table.SetActive(); //Also set up D1 table for fast switching
-#ifdef EDITOR
-		bm_init_use_tbl();
-#else
-		bm_init();
-#endif
-	} else { //Otherwise, ensure only one is loaded at a time
-		shouldAutoClearBMTable = true;
-	}
 
 	currentGame = G_DESCENT_2;
-	d2Table.SetActive();
 
 #ifdef EDITOR
 	bm_init_use_tbl();
 #else
 	bm_init();
 #endif
-
-	printf("D1 tex / D2 tex: %d / %d", d1Table.textures.size(), d2Table.textures.size());
 
 #ifdef EDITOR
 	if (FindArg("-hoarddata") != 0) 
@@ -1024,8 +1017,6 @@ Here:
 		switch (Function_mode) 
 		{
 		case FMODE_MENU:
-			SwitchGame(2);
-
 			set_screen_mode(SCREEN_MENU);
 
 			if (Auto_demo) 

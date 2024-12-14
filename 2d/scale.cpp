@@ -275,6 +275,8 @@ void scale_row_asm_transparent(uint8_t* sbits, uint8_t* dbits, int width, fix u,
 		int next_u_int;
 
 		next_u_int = f2i(u) + 1;
+		if (next_u_int < 0)
+			next_u_int = 0;
 		c = sbits[next_u_int];
 		next_u = i2f(next_u_int);
 		if (c != TRANSPARENCY_COLOR) goto NonTransparent;

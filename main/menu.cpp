@@ -111,7 +111,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MENU_JOIN_TCP_NETGAME                   27
 #define MENU_START_APPLETALK_NETGAME			28
 #define MENU_JOIN_APPLETALK_NETGAME				30
-#define MENU_SWITCH_GAME						31
 
 //ADD_ITEM("Start netgame...", MENU_START_NETGAME, -1 );
 //ADD_ITEM("Send net message...", MENU_SEND_NET_MESSAGE, -1 );
@@ -283,6 +282,8 @@ void create_main_menu(newmenu_item * m, int* menu_choice, int* callers_num_optio
 //returns number of item chosen
 int DoMenu()
 {
+	SwitchGame(d2HogInitialized ? 2 : 1, true);
+
 	int menu_choice[25];
 	newmenu_item m[25];
 	int num_options = 0;
@@ -385,18 +386,20 @@ void do_option(int select)
 	case MENU_PLAY_SONG:
 	{
 		int i;
-		char* m[MAX_NUM_SONGS];
+		char** m = new char*[Songs.size()];
 
-		for (i = 0; i < Num_songs; i++)
+		for (i = 0; i < Songs.size(); i++)
 		{
 			m[i] = Songs[i].filename;
 		}
-		i = newmenu_listbox("Select Song", Num_songs, m, 1, NULL);
+		i = newmenu_listbox("Select Song", Songs.size(), m, 1, NULL);
 
 		if (i > -1)
 		{
 			songs_play_song(i, 0);
 		}
+
+		delete[] m;
 	}
 	break;
 	case MENU_LOAD_LEVEL:
@@ -420,7 +423,7 @@ void do_option(int select)
 		break;
 	}
 
-	case MENU_SWITCH_GAME:
+	/*case MENU_SWITCH_GAME:
 	{
 		if (currentGame == G_DESCENT_1) {
 			currentGame = G_DESCENT_2;
@@ -435,7 +438,7 @@ void do_option(int select)
 		//bm_init();
 
 		break;
-	}
+	}*/
 
 #endif
 
@@ -890,7 +893,34 @@ void do_new_game_menu()
 				default_mission = i;
 		}
 
-		new_mission_num = newmenu_listbox1("New Game\n\nSelect mission", n_missions, m, 1, default_mission, NULL);
+		new_mission_num = newmenu_listbox1("New Game\n\nSelect mission", n_missions, m, 1, default_mission, [](int* citem, int* nitems, char** items, int* keypress){
+			if (*keypress > 0) 
+			{
+				int ascii = key_to_ascii(*keypress);
+				if (ascii < 255) 
+				{
+					int cc, cc1;
+					cc = cc1 = *citem + 1;
+					if (cc1 < 0)  cc1 = 0;
+					if (cc1 >= *nitems)  cc1 = 0;
+					while (1)
+					{
+						if (cc < 0) cc = 0;
+						if (cc >= *nitems) cc = 0;
+						if (*citem == cc) break;
+
+						if (toupper(items[cc][4]) == toupper(ascii)) 
+						{
+							*citem = cc;
+							break;
+						}
+						cc++;
+					}
+				}
+			}
+
+			return 0;
+		});
 
 		if (new_mission_num == -1)
 			return;         //abort!
@@ -1182,7 +1212,7 @@ void do_sound_menu()
 
 		m[5].type = NM_TYPE_CHECK;  m[5].text = TXT_REVERSE_STEREO; m[5].value = Config_channels_reversed;
 
-		i = newmenu_do1(NULL, "Sound activeBMTable->eclips & Music", sizeof(m) / sizeof(*m), m, sound_menuset, i);
+		i = newmenu_do1(NULL, "Sound Effects & Music", sizeof(m) / sizeof(*m), m, sound_menuset, i);
 
 		Redbook_enabled = m[4].value;
 		Config_channels_reversed = m[5].value;

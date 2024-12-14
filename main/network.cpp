@@ -64,6 +64,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "playsave.h"
 #include "misc/rand.h"
 #include "gamestat.h"
+#include "songs.h"
 
 #define LHX(x)          ((x)*(MenuHires?2:1))
 #define LHY(y)          ((y)*(MenuHires?2.4:1))
@@ -875,11 +876,9 @@ void network_send_door_updates(int pnum)
 
 	int i;
 
-	pnum = pnum;
-
 	//   Assert (pnum>-1 && pnum<N_players);
 
-	for (i = 0; i < Num_walls; i++)
+	for (i = 0; i < Walls.size(); i++)
 	{
 		if ((Walls[i].type == WALL_DOOR) && ((Walls[i].state == WALL_DOOR_OPENING) || (Walls[i].state == WALL_DOOR_WAITING) || (Walls[i].state == WALL_DOOR_OPEN)))
 			multi_send_door_open_specific(pnum, Walls[i].segnum, Walls[i].sidenum, Walls[i].flags);
@@ -2125,7 +2124,7 @@ void dump_segments()
 	FILE* fp;
 
 	fp = fopen("TEST.DMP", "wb");
-	fwrite(Segments, sizeof(segment) * (Highest_segment_index + 1), 1, fp);
+	fwrite(Segments.data(), sizeof(segment) * (Highest_segment_index + 1), 1, fp);
 	fclose(fp);
 	mprintf((0, "SS=%d\n", sizeof(segment)));
 }
@@ -2338,7 +2337,7 @@ void network_read_object_packet(char* data)
 				if (obj->segnum != -1)
 					obj_unlink(objnum);
 				Assert(obj->segnum == -1);
-				Assert(objnum < MAX_OBJECTS);
+				Assert(objnum < local_to_remote.size());
 				netmisc_decode_object(data, &loc, obj);
 				segnum = obj->segnum;
 				obj->next = obj->prev = obj->segnum = -1;
@@ -3245,6 +3244,7 @@ void network_start_game()
 
 	if (network_select_players())
 	{
+		songs_init(); //reset descent.sng
 		StartNewLevel(Netgame.levelnum, 0);
 	}
 	else
@@ -5034,7 +5034,6 @@ void network_send_smash_lights(int pnum)
 			multi_send_light_specific(pnum, i, Light_subtracted[i]);
 }
 
-extern int Num_triggers;
 extern void multi_send_trigger_specific(char pnum, char);
 
 void network_send_fly_thru_triggers(int pnum)
@@ -5043,7 +5042,7 @@ void network_send_fly_thru_triggers(int pnum)
 
 	char i;
 
-	for (i = 0; i < Num_triggers; i++)
+	for (i = 0; i < Triggers.size(); i++)
 		if (Triggers[i].flags & TF_DISABLED)
 			multi_send_trigger_specific(pnum, i);
 }

@@ -52,6 +52,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gauges.h"
 #include "automap.h"
 #include "laser.h"
+#include "newcheat.h"
 //#include "pa_enabl.h"
 
 #include "bm.h"
@@ -195,9 +196,9 @@ int segment_is_reachable(int curseg, int sidenum)
 void create_bfs_list(int start_seg, short bfs_list[], int *length, int max_segs)
 {
 	int	i, head, tail;
-	int8_t	visited[MAX_SEGMENTS];
+	int8_t* visited = new int8_t[Segments.size()];
 
-	for (i=0; i<MAX_SEGMENTS; i++)
+	for (i=0; i<Segments.size(); i++)
 		visited[i] = 0;
 
 	head = 0;
@@ -229,13 +230,15 @@ void create_bfs_list(int start_seg, short bfs_list[], int *length, int max_segs)
 					if (head >= max_segs)
 						break;
 					visited[connected_seg] = 1;
-					Assert(head < MAX_SEGMENTS);
+					Assert(head < Segments.size());
 				}
 			}
 		}
 	}
 
 	*length = head;
+
+	delete[] visited;
 	
 }
 
@@ -248,7 +251,7 @@ int ok_for_buddy_to_talk(void)
 	int		i;
 	segment	*segp;
 
-	if (Objects[Buddy_objnum].type != OBJ_ROBOT) 
+	if (Buddy_objnum < 0 || Buddy_objnum >= Objects.size() || Objects[Buddy_objnum].type != OBJ_ROBOT) 
 	{
 		Buddy_allowed_to_talk = 0;
 		return 0;
@@ -664,18 +667,20 @@ int exists_in_mine_2(int segnum, int objtype, int objid, int special)
 int exists_in_mine(int start_seg, int objtype, int objid, int special)
 {
 	int	segindex, segnum;
-	short	bfs_list[MAX_SEGMENTS];
+	short* bfs_list = new short[Segments.size()];
 	int	length;
 
 //	mprintf((0, "exists_in_mine, type == %i, id == %i\n", objtype, objid));
 
-	create_bfs_list(start_seg, bfs_list, &length, MAX_SEGMENTS);
+	create_bfs_list(start_seg, bfs_list, &length, Segments.size());
 
 	if (objtype == FUELCEN_CHECK) {
 		for (segindex=0; segindex<length; segindex++) {
 			segnum = bfs_list[segindex];
-			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN)
+			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN) {
+				delete[] bfs_list;
 				return segnum;
+			}
 		}
 	} else {
 		for (segindex=0; segindex<length; segindex++) {
@@ -684,8 +689,10 @@ int exists_in_mine(int start_seg, int objtype, int objid, int special)
 			segnum = bfs_list[segindex];
 
 			objnum = exists_in_mine_2(segnum, objtype, objid, special);
-			if (objnum != -1)
+			if (objnum != -1) {
+				delete[] bfs_list;
 				return objnum;
+			}
 
 		}
 	}
@@ -695,17 +702,23 @@ int exists_in_mine(int start_seg, int objtype, int objid, int special)
 	//	which the buddybot doesn't understand.
 	if (objtype == FUELCEN_CHECK) {
 		for (segnum=0; segnum<=Highest_segment_index; segnum++)
-			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN)
+			if (Segment2s[segnum].special == SEGMENT_IS_FUELCEN) {
+				delete[] bfs_list;
 				return -2;
+			}
 	} else {
 		for (segnum=0; segnum<=Highest_segment_index; segnum++) {
 			int	objnum;
 
 			objnum = exists_in_mine_2(segnum, objtype, objid, special);
-			if (objnum != -1)
+			if (objnum != -1) {
+				delete[] bfs_list;
 				return -2;
+			}
 		}
 	}
+
+	delete[] bfs_list;
 
 	return -1;
 }
@@ -885,7 +898,7 @@ void escort_create_path_to_goal(object *objp)
 				buddy_message("Can't reach %s.", Escort_goal_text[Escort_goal_object-1]);
 				Looking_for_marker = -1;
 				Escort_goal_object = ESCORT_GOAL_SCRAM;
-				dist_to_player = find_connected_distance(&objp->pos, objp->segnum, &Believed_player_pos, Believed_player_seg, 100, WID_FLY_FLAG);
+				dist_to_player = find_connected_distance(objp->pos, objp->segnum, Believed_player_pos, Believed_player_seg, 100, WID_FLY_FLAG);
 				if (dist_to_player > MIN_ESCORT_DISTANCE)
 					create_path_to_player(objp, Max_escort_length, 1);	//	MK!: Last parm used to be 1!
 				else {
@@ -916,7 +929,7 @@ int escort_set_goal_object(void)
 	else if (!(ConsoleObject->flags & PLAYER_FLAGS_RED_KEY) && (exists_in_mine(ConsoleObject->segnum, OBJ_POWERUP, POW_KEY_RED, -1) != -1))
 		return ESCORT_GOAL_RED_KEY;
 	else if (Control_center_destroyed == 0) {
-		if (Num_boss_teleport_segs)
+		if (Boss_teleport_segs.size())
 			return ESCORT_GOAL_BOSS;
 		else
 			return ESCORT_GOAL_CONTROLCEN;
@@ -951,7 +964,6 @@ int time_to_visit_player(object *objp, ai_local *ailp, ai_static *aip)
 }
 
 //int	Buddy_objnum; //[ISB] what are old c compilers
-int Buddy_dude_cheat;
 fix	Last_come_back_message_time = 0;
 
 fix	Buddy_last_missile_time;
@@ -993,7 +1005,7 @@ int maybe_buddy_fire_mega(int objnum)
 
 	buddy_message("GAHOOGA!");
 
-	weapon_objnum = Laser_create_new_easy( &buddy_objp->orient.fvec, &buddy_objp->pos, objnum, MEGA_ID, 1);
+	weapon_objnum = Laser_create_new_easy( buddy_objp->orient.fvec, buddy_objp->pos, objnum, MEGA_ID, 1);
 
 	if (weapon_objnum != -1)
 		bash_buddy_weapon_info(weapon_objnum);
@@ -1021,7 +1033,7 @@ int maybe_buddy_fire_smart(int objnum)
 
 	buddy_message("WHAMMO!");
 
-	weapon_objnum = Laser_create_new_easy( &buddy_objp->orient.fvec, &buddy_objp->pos, objnum, SMART_ID, 1);
+	weapon_objnum = Laser_create_new_easy( buddy_objp->orient.fvec, buddy_objp->pos, objnum, SMART_ID, 1);
 
 	if (weapon_objnum != -1)
 		bash_buddy_weapon_info(weapon_objnum);
@@ -1068,7 +1080,7 @@ void do_escort_frame(object *objp, fix dist_to_player, int player_visibility)
 	ai_static	*aip = &objp->ctype.ai_info;
 	ai_local		*ailp = &Ai_local_info[objnum];
 
-	Buddy_objnum = objp-Objects.data();
+	Buddy_objnum = objnum;
 
 	if (player_visibility) {
 		Buddy_last_seen_player = GameTime;
@@ -1080,8 +1092,10 @@ void do_escort_frame(object *objp, fix dist_to_player, int player_visibility)
 
 	}
 
-	if (Buddy_dude_cheat)
+	if (cheatValues[CI_WINGNUT]) {
 		do_buddy_dude_stuff();
+		objp = &Objects[objnum];
+	}
 
 	if (Buddy_sorry_time + F1_0 > GameTime) {
 		Last_buddy_message_time = 0;	//	Force this message to get through.
@@ -1184,7 +1198,7 @@ void invalidate_escort_goal(void)
 }
 
 //	-------------------------------------------------------------------------------------------------
-void do_snipe_frame(object *objp, fix dist_to_player, int player_visibility, vms_vector *vec_to_player)
+void do_snipe_frame(object *objp, fix dist_to_player, int player_visibility, vms_vector vec_to_player)
 {
 	int			objnum = objp-Objects.data();
 	ai_local		*ailp = &Ai_local_info[objnum];
@@ -1202,7 +1216,7 @@ void do_snipe_frame(object *objp, fix dist_to_player, int player_visibility, vms
 
 			ailp->next_action_time = SNIPE_WAIT_TIME;
 
-			connected_distance = find_connected_distance(&objp->pos, objp->segnum, &Believed_player_pos, Believed_player_seg, 30, WID_FLY_FLAG);
+			connected_distance = find_connected_distance(objp->pos, objp->segnum, Believed_player_pos, Believed_player_seg, 30, WID_FLY_FLAG);
 			if (connected_distance < F1_0*500) {
 				// -- mprintf((0, "Object #%i entering attack mode.\n", objnum));
 				create_path_to_player(objp, 30, 1);
@@ -1295,7 +1309,7 @@ int choose_thief_recreation_segment(void)
 
 }
 
-extern object * create_morph_robot( segment *segp, vms_vector *object_pos, int object_id);
+extern object * create_morph_robot( segment *segp, vms_vector object_pos, int object_id);
 
 fix	Re_init_thief_time = 0x3f000000;
 
@@ -1309,7 +1323,7 @@ void recreate_thief(object *objp)
 	segnum = choose_thief_recreation_segment();
 	compute_segment_center(&center_point, &Segments[segnum]);
 
-	new_obj = create_morph_robot( &Segments[segnum], &center_point, objp->id);
+	new_obj = create_morph_robot( &Segments[segnum], center_point, objp->id);
 	init_ai_object(new_obj-Objects.data(), AIB_SNIPE, -1);
 	Re_init_thief_time = GameTime + F1_0*10;		//	In 10 seconds, re-initialize thief.
 }
@@ -1320,7 +1334,7 @@ void recreate_thief(object *objp)
 fix	Thief_wait_times[NDL] = {F1_0*30, F1_0*25, F1_0*20, F1_0*15, F1_0*10};
 
 //	-------------------------------------------------------------------------------------------------
-void do_thief_frame(object *objp, fix dist_to_player, int player_visibility, vms_vector *vec_to_player)
+void do_thief_frame(object *objp, fix dist_to_player, int player_visibility, vms_vector vec_to_player)
 {
 	int			objnum = objp-Objects.data();
 	ai_local		*ailp = &Ai_local_info[objnum];
@@ -1365,7 +1379,7 @@ void do_thief_frame(object *objp, fix dist_to_player, int player_visibility, vms
 
 			ailp->next_action_time = Thief_wait_times[Difficulty_level]/2;
 
-			connected_distance = find_connected_distance(&objp->pos, objp->segnum, &Believed_player_pos, Believed_player_seg, 30, WID_FLY_FLAG);
+			connected_distance = find_connected_distance(objp->pos, objp->segnum, Believed_player_pos, Believed_player_seg, 30, WID_FLY_FLAG);
 			if (connected_distance < F1_0*500) {
 				// -- mprintf((0, "Thief creating path to player.\n", objnum));
 				create_path_to_player(objp, 30, 1);
@@ -1435,7 +1449,7 @@ void do_thief_frame(object *objp, fix dist_to_player, int player_visibility, vms
 					//	If the player is close to looking at the thief, thief shall run away.
 					//	No more stupid thief trying to sneak up on you when you're looking right at him!
 					if (dist_to_player > F1_0*60) {
-						fix	dot = vm_vec_dot(vec_to_player, &ConsoleObject->orient.fvec);
+						fix	dot = vm_vec_dot(&vec_to_player, &ConsoleObject->orient.fvec);
 						if (dot < -F1_0/2) {	//	Looking at least towards thief, so thief will run!
 							create_n_segment_path(objp, 10, ConsoleObject->segnum);
 							Ai_local_info[objp-Objects.data()].next_action_time = Thief_wait_times[Difficulty_level]/2;
@@ -1726,7 +1740,7 @@ void drop_stolen_items(object *objp)
 
 	for (i=0; i<MAX_STOLEN_ITEMS; i++) {
 		if (Stolen_items[i] != 255)
-			drop_powerup(OBJ_POWERUP, Stolen_items[i], 1, &objp->mtype.phys_info.velocity, &objp->pos, objp->segnum);
+			drop_powerup(OBJ_POWERUP, Stolen_items[i], 1, objp->mtype.phys_info.velocity, objp->pos, objp->segnum);
 		Stolen_items[i] = 255;
 	}
 

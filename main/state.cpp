@@ -67,6 +67,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "controls.h"
 #include "laser.h"
 #include "multibot.h"
+#include "newcheat.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -108,9 +109,6 @@ extern void apply_all_changed_light(void);
 extern int Do_appearance_effect;
 extern fix Fusion_next_sound_time;
 
-extern int Laser_rapid_fire;
-extern int Physics_cheat_flag;
-extern int	Lunacy;
 extern void do_lunacy_on(void);
 extern void do_lunacy_off(void);
 extern int First_secret_visit;
@@ -686,7 +684,10 @@ int state_save_all(int between_levels, int secret_save, char* filename_override)
 #endif
 
 			fseek(tfp, DESC_OFFSET, SEEK_SET);
-			fwrite("[autosave backup]", sizeof(char) * DESC_LENGTH, 1, tfp);
+			fwrite("[autosave backup]", sizeof(char) * 18, 1, tfp); //[DW] Don't use DESC_LENGTH, it triggers a buffer overflow error with asan
+			auto test1 = 2345678;
+			auto test2 = "34567892340";
+			test1 = *test2;
 			fclose(tfp);
 			_unlink(newname);
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
@@ -974,7 +975,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 
 		//Save wall info
 
-		i = Num_walls;
+		i = Walls.size();
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
 		{
@@ -985,7 +986,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 
 		//Save exploding wall info
 
-		i = MAX_EXPLODING_WALLS; //[ISB] i dunno
+		i = expl_wall_list.size(); //[ISB] i dunno [DW] Makes life easy for me
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
 		{
@@ -998,7 +999,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 
 		//Save door info
 
-		i = Num_open_doors;
+		i = ActiveDoors.size();
 		file_write_int(fp, i);
 		for (elem = 0; elem < i; elem++)
 		{
@@ -1012,16 +1013,16 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		//fwrite(&i, sizeof(int), 1, fp);
 		//fwrite(CloakingWalls, sizeof(cloaking_wall), i, fp);
 
-		file_write_int(fp, Num_cloaking_walls);
-		for (elem = 0; elem < Num_cloaking_walls; elem++)
+		file_write_int(fp, CloakingWalls.size());
+		for (elem = 0; elem < CloakingWalls.size(); elem++)
 			P_WriteCloakingWall(&CloakingWalls[i], fp);
 
 		//Save trigger info
 		//fwrite(&Num_triggers, sizeof(int), 1, fp);
 		//fwrite(Triggers, sizeof(trigger) * Num_triggers, 1, fp);
 
-		file_write_int(fp, Num_triggers);
-		for (elem = 0; elem < Num_triggers; elem++)
+		file_write_int(fp, Triggers.size());
+		for (elem = 0; elem < Triggers.size(); elem++)
 		{
 			write_trigger(&Triggers[elem], fp);
 		}
@@ -1040,16 +1041,16 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		// Save the fuelcen info
 		file_write_int(fp, Control_center_destroyed);
 		file_write_int(fp, Countdown_timer);
-		file_write_int(fp, Num_robot_centers);
+		file_write_int(fp, RobotCenters.size());
 
-		for (elem = 0; elem < Num_robot_centers; elem++)
+		for (elem = 0; elem < RobotCenters.size(); elem++)
 		{
 			write_matcen(&RobotCenters[elem], fp);
 		}
 		write_reactor_triggers(&ControlCenterTriggers, fp);
 
-		file_write_int(fp, Num_fuelcenters);
-		for (elem = 0; elem < Num_fuelcenters; elem++)
+		file_write_int(fp, Station.size());
+		for (elem = 0; elem < Station.size(); elem++)
 		{
 			write_fuelcen(&Station[elem], fp);
 		}
@@ -1065,13 +1066,13 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		ai_save_state(fp);
 
 		// Save the automap visited info
-		fwrite(Automap_visited, sizeof(uint8_t) * MAX_SEGMENTS, 1, fp);
+		fwrite(Automap_visited.data(), sizeof(uint8_t) * Automap_visited.size(), 1, fp);
 
 	}
 	file_write_int(fp, state_game_id);
-	file_write_int(fp, Laser_rapid_fire);
-	file_write_int(fp, Lunacy); //[ISB]rip pletchxxx
-	file_write_int(fp, Lunacy);
+	file_write_int(fp, cheatValues[CI_RAPID_FIRE]);
+	file_write_int(fp, cheatValues[CI_LUNACY]); //[ISB]rip pletchxxx
+	file_write_int(fp, cheatValues[CI_LUNACY]);
 
 	// Save automap marker info
 
@@ -1103,7 +1104,7 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 	file_write_int(fp, PaletteGreenAdd);
 	file_write_int(fp, PaletteBlueAdd);
 
-	fwrite(Light_subtracted, sizeof(Light_subtracted[0]), MAX_SEGMENTS, fp);
+	fwrite(Light_subtracted.data(), sizeof(Light_subtracted[0]), Light_subtracted.size(), fp);
 
 	//fwrite(&First_secret_visit, sizeof(First_secret_visit), 1, fp);
 	file_write_int(fp, First_secret_visit);
@@ -1312,6 +1313,8 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	int nplayers;	//,playid[12],mynum;
 	player restore_players[MAX_PLAYERS];
 	fix	old_gametime = GameTime;
+
+	int cv = 0;
 
 	fp = fopen(filename, "rb");
 	if (!fp) return 0;
@@ -1530,10 +1533,11 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		}
 
 		Object_next_signature = 0;
-		if (Highest_object_index >= MAX_OBJECTS)
-		{
-			Error("state_restore_all_sub: Too many objects in save file.\n");
-			return 0;
+
+		if (Highest_object_index + 1 != Objects.size()) {
+			RelinkCache cache;
+			ResizeObjectVectors(Highest_object_index + 1, false);
+			RelinkSpecialObjectPointers(cache);
 		}
 		
 		for (i = 0; i <= Highest_object_index; i++)
@@ -1580,12 +1584,13 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//fread(&i, sizeof(int), 1, fp);
 		//Num_walls = i;
 
-		Num_walls = file_read_int(fp);
-		if (Num_walls > MAX_WALLS)
+		auto Num_walls = file_read_int(fp);
+		/*if (Num_walls > MAX_WALLS)
 		{
 			Error("state_restore_all_sub: Too many walls in save file.\n");
 			return 0;
-		}
+		}*/
+		Walls.resize(Num_walls);
 		for (i = 0; i < Num_walls; i++)
 		{
 			read_wall(&Walls[i], fp);
@@ -1594,23 +1599,19 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 
 		//now that we have the walls, check if any sounds are linked to
 		//walls that are now open
-		for (i = 0; i < Num_walls; i++)
+		for (auto& wall : Walls)
 		{
-			if (Walls[i].type == WALL_OPEN)
-				digi_kill_sound_linked_to_segment(Walls[i].segnum, Walls[i].sidenum, -1);	//-1 means kill any sound
+			if (wall.type == WALL_OPEN)
+				digi_kill_sound_linked_to_segment(wall.segnum, wall.sidenum, -1);	//-1 means kill any sound
 		}
 
 		//Restore exploding wall info
 		if (version >= 10)
 		{
 			//fread(&i, sizeof(int), 1, fp);
-			int heh = file_read_int(fp);
-			if (heh > 10)
-			{
-				Error("state_restore_all_sub: Too many exploding walls in save file.\n");
-				return 0;
-			}
-			for (i = 0; i < heh; i++)
+			int numExplWalls = file_read_int(fp);
+			expl_wall_list.resize(numExplWalls);
+			for (i = 0; i < numExplWalls; i++)
 			{
 				expl_wall_list[i].segnum = file_read_int(fp);
 				expl_wall_list[i].sidenum = file_read_int(fp);
@@ -1624,23 +1625,19 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//Num_open_doors = i;
 		//fread(ActiveDoors, sizeof(active_door) * Num_open_doors, 1, fp);
 
-		Num_open_doors = file_read_int(fp);
+		auto Num_open_doors = file_read_int(fp);
+		ActiveDoors.resize(Num_open_doors);
 		for (i = 0; i < Num_open_doors; i++)
 		{
 			read_active_door(&ActiveDoors[i], fp);
 		}
 
-
-
 		if (version >= 14) //Restore cloaking wall info
 		{
 			//fread(&i, sizeof(int), 1, fp);
-			Num_cloaking_walls = file_read_int(fp);
-			if (Num_cloaking_walls > 10)
-			{
-				Error("state_restore_all_sub: Too many cloaking walls in save file.\n");
-				return 0;
-			}
+			auto Num_cloaking_walls = file_read_int(fp);
+			CloakingWalls.resize(Num_cloaking_walls);
+			
 			for (i = 0; i < Num_cloaking_walls; i++)
 			{
 				P_ReadCloakingWall(&CloakingWalls[i], fp);
@@ -1652,12 +1649,13 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//fread(&Num_triggers, sizeof(int), 1, fp);
 		//fread(Triggers, sizeof(trigger) * Num_triggers, 1, fp);
 
-		Num_triggers = file_read_int(fp);
-		if (Num_triggers > MAX_TRIGGERS)
+		auto Num_triggers = file_read_int(fp);
+		/*if (Num_triggers > MAX_TRIGGERS)
 		{
 			Error("state_restore_all_sub: Too many triggers in save file.\n");
 			return 0;
-		}
+		}*/
+		Triggers.resize(Num_triggers);
 		for (i = 0; i < Num_triggers; i++)
 		{
 			read_trigger(&Triggers[i], fp);
@@ -1677,26 +1675,23 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		//Restore the fuelcen info
 		fread(&Control_center_destroyed, sizeof(int), 1, fp);
 		fread(&Countdown_timer, sizeof(int), 1, fp);
+
+		int Num_robot_centers;
+
 		fread(&Num_robot_centers, sizeof(int), 1, fp);
 
-		if (Num_robot_centers > MAX_ROBOT_CENTERS)
-		{
-			Error("state_restore_all_sub: Too many matcens in save file.\n");
-			return 0;
-		}
+		RobotCenters.resize(Num_robot_centers);
 		for (i = 0; i < Num_robot_centers; i++)
 		{
 			read_matcen(&RobotCenters[i], fp);
 		}
 		//fread(RobotCenters, sizeof(matcen_info) * Num_robot_centers, 1, fp);
 		fread(&ControlCenterTriggers, sizeof(control_center_triggers), 1, fp);
+
+		int Num_fuelcenters;
 		fread(&Num_fuelcenters, sizeof(int), 1, fp);
 		
-		if (Num_fuelcenters > MAX_NUM_FUELCENS)
-		{
-			Error("state_restore_all_sub: Too many matcens in save file.\n");
-			return 0;
-		}
+		Station.resize(Num_fuelcenters);
 		for (i = 0; i < Num_fuelcenters; i++)
 		{
 			read_fuelcen(&Station[i], fp);
@@ -1713,8 +1708,17 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		// Restore the AI state
 		ai_restore_state(fp, version);
 
+		if (Objects.size() < MAX_OBJECTS) { //Save games with only a few objects needlessly shrink the object array
+			int i = Objects.size();
+			ResizeObjectVectors(MAX_OBJECTS, false);
+			for (i; i < Objects.size(); i++) {
+				Objects[i].type = OBJ_NONE;
+				Objects[i].segnum = -1;
+			}
+		}
+
 		// Restore the automap visited info
-		fread(Automap_visited, sizeof(uint8_t) * MAX_SEGMENTS, 1, fp);
+		fread(Automap_visited.data(), sizeof(uint8_t) * Automap_visited.size(), 1, fp);
 
 		//	Restore hacked up weapon system stuff.
 		Fusion_next_sound_time = GameTime;
@@ -1729,10 +1733,12 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	if (version >= 7)
 	{
 		fread(&state_game_id, sizeof(uint32_t), 1, fp);
-		fread(&Laser_rapid_fire, sizeof(int), 1, fp);
-		fread(&Lunacy, sizeof(int), 1, fp);		//	Yes, writing this twice.  Removed the Ugly robot system, but didn't want to change savegame format.
-		fread(&Lunacy, sizeof(int), 1, fp);
-		if (Lunacy)
+		fread(&cv, sizeof(int), 1, fp);
+		cheatValues[CI_RAPID_FIRE] = (short)cv;
+		fread(&cv, sizeof(int), 1, fp);		//	Yes, writing this twice.  Removed the Ugly robot system, but didn't want to change savegame format.
+		fread(&cv, sizeof(int), 1, fp);
+		cheatValues[CI_LUNACY] = (short)cv;
+		if (cheatValues[CI_LUNACY])
 			do_lunacy_on();
 	}
 
@@ -1793,7 +1799,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 	//	Load Light_subtracted
 	if (version >= 16)
 	{
-		fread(Light_subtracted, sizeof(Light_subtracted[0]), MAX_SEGMENTS, fp);
+		fread(Light_subtracted.data(), sizeof(Light_subtracted[0]), Light_subtracted.size(), fp);
 		apply_all_changed_light();
 		compute_all_static_light();	//	set static_light field in segment struct.  See note at that function.
 	}

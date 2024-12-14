@@ -13,6 +13,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include <vector>
+
 #include "inferno.h"
 #include "misc/types.h"
 #include "platform/platform_filesys.h"
@@ -20,7 +22,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define MAX_MISSIONS 						300
 #define MAX_LEVELS_PER_MISSION			30
 #define MAX_SECRET_LEVELS_PER_MISSION	6
-#define MISSION_NAME_LEN 					25
+#define MISSION_NAME_LEN 					35
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 #define MISSION_FILENAME_LEN			CHOCOLATE_MAX_FILE_PATH_SIZE
 #else
@@ -46,8 +48,10 @@ extern int Current_mission_num;
 extern char *Current_mission_filename,*Current_mission_longname;
 
 //arrays of name of the level files
-extern char Level_names[MAX_LEVELS_PER_MISSION][FILENAME_LEN];
-extern char Secret_level_names[MAX_SECRET_LEVELS_PER_MISSION][FILENAME_LEN];
+extern std::vector<char*> Level_names;
+extern std::vector<char*> Secret_level_names;
+
+inline bool noHog;
 
 //fills in the global list of missions.  Returns the number of missions
 //in the list.  If anarchy_mode set, don't include non-anarchy levels.
@@ -63,4 +67,4 @@ int load_mission(int mission_num);
 //Returns true if mission loaded ok, else false.
 int load_mission_by_name(char *mission_name);
 
-void SwitchGame(uint8_t gameVersion);
+void SwitchGame(uint8_t gameVersion, bool reload);

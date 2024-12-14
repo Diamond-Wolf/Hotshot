@@ -37,6 +37,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fireball.h"
 #include "endlevel.h"
 #include "misc/rand.h"
+#include "newcheat.h"
 
 #include "fuelcen.h"
 
@@ -60,7 +61,7 @@ int	Control_center_present;
 
 //	-----------------------------------------------------------------------------
 //return the position & orientation of a gun on the control center object 
-void calc_controlcen_gun_point(vms_vector *gun_point,vms_vector *gun_dir,object *obj,int gun_num)
+void calc_controlcen_gun_point(vms_vector* gun_point,vms_vector* gun_dir,object *obj,int gun_num)
 {
 	reactor *reactor;
 	vms_matrix m;
@@ -85,7 +86,7 @@ void calc_controlcen_gun_point(vms_vector *gun_point,vms_vector *gun_dir,object 
 //	Look at control center guns, find best one to fire at *objp.
 //	Return best gun number (one whose direction dotted with vector to player is largest).
 //	If best gun has negative dot, return -1, meaning no gun is good.
-int calc_best_gun(int num_guns, std::vector<vms_vector>& gun_pos, std::vector<vms_vector>& gun_dir, vms_vector *objpos)
+int calc_best_gun(int num_guns, std::vector<vms_vector>& gun_pos, std::vector<vms_vector>& gun_dir, vms_vector objpos)
 {
 	int	i;
 	fix	best_dot;
@@ -98,7 +99,7 @@ int calc_best_gun(int num_guns, std::vector<vms_vector>& gun_pos, std::vector<vm
 		fix			dot;
 		vms_vector	gun_vec;
 
-		vm_vec_sub(&gun_vec, objpos, &gun_pos[i]);
+		vm_vec_sub(&gun_vec, &objpos, &gun_pos[i]);
 		vm_vec_normalize_quick(&gun_vec);
 		dot = vm_vec_dot(&gun_dir[i], &gun_vec);
 
@@ -265,7 +266,10 @@ void do_controlcen_destroyed_stuff(object *objp)
 		mprintf((0, "Deleting secret.sgc, return value = %i\n", rval));
 	}
 
-	if (CurrentDataVersion == DataVer::DEMO)
+	if (currentGame == G_DESCENT_1) {
+		Total_countdown_time = 30 + 5 * (NDL - Difficulty_level - 1);
+	}
+	else if (CurrentDataVersion == DataVer::DEMO)
 	{
 		Total_countdown_time = Base_control_center_explosion_time + Base_control_center_explosion_time * (NDL - Difficulty_level - 1) / 4 - 1;
 	}
@@ -302,10 +306,10 @@ void do_controlcen_frame(object *obj)
 		return;
 
 #ifndef NDEBUG
-	if (!Robot_firing_enabled || (Game_suspended & SUSP_ROBOTS))
+	if (cheatValues[CI_NO_FIRING_D1] || (Game_suspended & SUSP_ROBOTS))
 		return;
 #else
-	if (!Robot_firing_enabled)
+	if (cheatValues[CI_NO_FIRING_D1])
 		return;
 #endif
 
@@ -338,7 +342,7 @@ void do_controlcen_frame(object *obj)
 			vm_vec_sub(&vec_to_player, &ConsoleObject->pos, &obj->pos);
 			dist_to_player = vm_vec_normalize_quick(&vec_to_player);
 			if (dist_to_player < F1_0*200) {
-				Control_center_player_been_seen = player_is_visible_from_object(obj, &obj->pos, 0, &vec_to_player);
+				Control_center_player_been_seen = player_is_visible_from_object(obj, obj->pos, 0, vec_to_player);
 				Control_center_next_fire_time = 0;
 			}
 		}			
@@ -356,7 +360,7 @@ void do_controlcen_frame(object *obj)
 			dist_to_player = vm_vec_normalize_quick(&vec_to_player);
 			Last_time_cc_vis_check = GameTime;
 			if (dist_to_player < F1_0*120) {
-				Control_center_player_been_seen = player_is_visible_from_object(obj, &obj->pos, 0, &vec_to_player);
+				Control_center_player_been_seen = player_is_visible_from_object(obj, obj->pos, 0, vec_to_player);
 				if (!Control_center_player_been_seen)
 					Control_center_been_hit = 0;
 			}
@@ -366,9 +370,9 @@ void do_controlcen_frame(object *obj)
 
 	if ((Control_center_next_fire_time < 0) && !(Player_is_dead && (GameTime > Player_time_of_death+F1_0*2))) {
 		if (Players[Player_num].flags & PLAYER_FLAGS_CLOAKED)
-			best_gun_num = calc_best_gun(activeBMTable->reactorGunPos.size(), activeBMTable->reactorGunPos, activeBMTable->reactorGunDirs, &Believed_player_pos);
+			best_gun_num = calc_best_gun(activeBMTable->reactorGunPos.size(), activeBMTable->reactorGunPos, activeBMTable->reactorGunDirs, Believed_player_pos);
 		else
-			best_gun_num = calc_best_gun(activeBMTable->reactorGunPos.size(), activeBMTable->reactorGunPos, activeBMTable->reactorGunDirs, &ConsoleObject->pos);
+			best_gun_num = calc_best_gun(activeBMTable->reactorGunPos.size(), activeBMTable->reactorGunPos, activeBMTable->reactorGunDirs, ConsoleObject->pos);
 
 		if (best_gun_num != -1) {
 			int			rand_prob, count;
@@ -395,7 +399,7 @@ void do_controlcen_frame(object *obj)
 			if (Game_mode & GM_MULTI)
 				multi_send_controlcen_fire(&vec_to_goal, best_gun_num, obj-Objects.data());	
 			#endif
-			Laser_create_new_easy( &vec_to_goal, &activeBMTable->reactorGunPos[best_gun_num], obj-Objects.data(), CONTROLCEN_WEAPON_NUM, 1);
+			Laser_create_new_easy( vec_to_goal, activeBMTable->reactorGunPos[best_gun_num], obj-Objects.data(), CONTROLCEN_WEAPON_NUM, 1);
 
 			//	some of time, based on level, fire another thing, not directly at player, so it might hit him if he's constantly moving.
 			rand_prob = F1_0/(abs(Current_level_num)/4+2);
@@ -410,7 +414,7 @@ void do_controlcen_frame(object *obj)
 				if (Game_mode & GM_MULTI)
 					multi_send_controlcen_fire(&vec_to_goal, best_gun_num, obj-Objects.data());
 				#endif
-				Laser_create_new_easy( &vec_to_goal, &activeBMTable->reactorGunPos[best_gun_num], obj-Objects.data(), CONTROLCEN_WEAPON_NUM, 0);
+				Laser_create_new_easy(vec_to_goal, activeBMTable->reactorGunPos[best_gun_num], obj-Objects.data(), CONTROLCEN_WEAPON_NUM, 0);
 				count++;
 			}
 

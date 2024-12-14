@@ -31,7 +31,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 extern int Last_level,Last_secret_level;	//set by mission code
 #endif
 
-extern int Secret_level_table[MAX_SECRET_LEVELS_PER_MISSION];
+extern std::vector<int> Secret_level_table;
 
 #define LEVEL_NAME_LEN 36		//make sure this is multiple of 4!
 

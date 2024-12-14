@@ -63,7 +63,7 @@ int	Clear_window_color = -1;
 int	Clear_window = 2;			//	1 = Clear whole background window, 2 = clear view portals into rest of world, 0 = no clear
 
 int RL_framecount = -1;
-short Rotated_last[MAX_VERTICES];
+std::vector<short> Rotated_last(MAX_VERTICES);
 
 // When any render function needs to know what's looking at it, it should 
 // access Viewer members.
@@ -80,7 +80,7 @@ fix Render_zoom = 0xB000;
 #endif
 
 #ifndef NDEBUG
-uint8_t object_rendered[MAX_OBJECTS];
+std::vector<uint8_t> object_rendered(MAX_OBJECTS);
 #endif
 
 #define DEFAULT_RENDER_DEPTH 16
@@ -283,7 +283,7 @@ void flash_frame()
 //	hideously hacked in headlight system.
 //	vp is a pointer to vertex ids.
 //	tmap1, tmap2 are texture map ids.  tmap2 is the pasty one.
-void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap2, uvl* uvlp, int wid_flags, vms_vector* norm)
+void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap2, uvl* uvlp, int wid_flags, vms_vector norm)
 {
 	fix			face_light;
 	grs_bitmap* bm;
@@ -315,7 +315,7 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 		return;
 	}
 
-	face_light = -vm_vec_dot(&Viewer->orient.fvec,norm);
+	face_light = -vm_vec_dot(&Viewer->orient.fvec, &norm);
 
 	if (tmap1 >= activeBMTable->textures.size()
 )
@@ -368,7 +368,7 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 
 			//add in light from player's headlight
 			if (CurrentLogicVersion < LogicVer::FULL_1_0 || currentGame == G_DESCENT_1)
-				uvl_copy[i].l += compute_headlight_light(&Segment_points[vp[i]].p3_vec,face_light);
+				uvl_copy[i].l += compute_headlight_light(Segment_points[vp[i]].p3_vec,face_light);
 
 			//saturate at max value
 			if (uvl_copy[i].l > MAX_LIGHT)
@@ -482,7 +482,7 @@ void render_side(segment* segp, int sidenum)
 		// -- Old, slow way --	else
 		// -- Old, slow way --		vm_vec_normalized_dir(&tvec, &Viewer_eye, &Vertices[segp->verts[Side_to_verts[sidenum][0]]]);
 
-		get_side_verts(vertnum_list, segp - Segments, sidenum);
+		get_side_verts(vertnum_list, segp - Segments.data(), sidenum);
 		v_dot_n0 = vm_vec_dot(&tvec, &normals[0]);
 
 		// -- flare creates point -- {
@@ -527,9 +527,9 @@ void render_side(segment* segp, int sidenum)
 
 		if (v_dot_n0 >= 0)
 		{
-			render_face(segp - Segments, sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, normals[0]);
 #ifdef EDITOR
-			check_face(segp - Segments, sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+			check_face(segp - Segments.data(), sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 		}
 	}
@@ -541,7 +541,7 @@ void render_side(segment* segp, int sidenum)
 		else
 			vm_vec_normalized_dir_quick(&tvec, &Viewer_eye, &Vertices[segp->verts[Side_to_verts[sidenum][0]]]);
 
-		get_side_verts(vertnum_list, segp - Segments, sidenum);
+		get_side_verts(vertnum_list, segp - Segments.data(), sidenum);
 
 		v_dot_n0 = vm_vec_dot(&tvec, &normals[0]);
 
@@ -565,7 +565,7 @@ void render_side(segment* segp, int sidenum)
 		}
 
 		//	Determine whether to detriangulate side: (speed hack, assumes Tulate_min_ratio == F1_0*2, should fixmul(min_dot, Tulate_min_ratio))
-		if (Detriangulation_on && ((min_dot + F1_0 / 256 > max_dot) || ((Viewer->segnum != segp - Segments) && (min_dot > Tulate_min_dot) && (max_dot < min_dot * 2)))) {
+		if (Detriangulation_on && ((min_dot + F1_0 / 256 > max_dot) || ((Viewer->segnum != segp - Segments.data()) && (min_dot > Tulate_min_dot) && (max_dot < min_dot * 2)))) {
 			fix	n0_dot_n1;
 
 			//	The other detriangulation code doesn't deal well with badly non-planar sides.
@@ -573,50 +573,50 @@ void render_side(segment* segp, int sidenum)
 			if (n0_dot_n1 < Min_n0_n1_dot)
 				goto im_so_ashamed;
 
-			render_face(segp - Segments, sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+			render_face(segp - Segments.data(), sidenum, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, normals[0]);
 #ifdef EDITOR
-			check_face(segp - Segments, sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+			check_face(segp - Segments.data(), sidenum, 0, 4, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 		}
 		else {
 		im_so_ashamed:;
 			if (sidep->type == SIDE_IS_TRI_02) {
 				if (v_dot_n0 >= 0) {
-					render_face(segp - Segments, sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, &normals[0]);
+					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls, wid_flags, normals[0]);
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 
 				if (v_dot_n1 >= 0) {
 					temp_uvls[0] = sidep->uvls[0];		temp_uvls[1] = sidep->uvls[2];		temp_uvls[2] = sidep->uvls[3];
 					vertnum_list[1] = vertnum_list[2];	vertnum_list[2] = vertnum_list[3];	// want to render from vertices 0, 2, 3 on side
-					render_face(segp - Segments, sidenum, 3, &vertnum_list[0], sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[1]);
+					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[0], sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, normals[1]);
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 1, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 1, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 			}
 			else if (sidep->type == SIDE_IS_TRI_13) {
 				if (v_dot_n1 >= 0) {
-					render_face(segp - Segments, sidenum, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, &sidep->uvls[1], wid_flags, &normals[1]);	// rendering 1,2,3, so just skip 0
+					render_face(segp - Segments.data(), sidenum, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, &sidep->uvls[1], wid_flags, normals[1]);	// rendering 1,2,3, so just skip 0
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 1, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 1, 3, &vertnum_list[1], sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 
 				if (v_dot_n0 >= 0) {
 					temp_uvls[0] = sidep->uvls[0];		temp_uvls[1] = sidep->uvls[1];		temp_uvls[2] = sidep->uvls[3];
 					vertnum_list[2] = vertnum_list[3];		// want to render from vertices 0,1,3
-					render_face(segp - Segments, sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, &normals[0]);
+					render_face(segp - Segments.data(), sidenum, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, temp_uvls, wid_flags, normals[0]);
 #ifdef EDITOR
-					check_face(segp - Segments, sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
+					check_face(segp - Segments.data(), sidenum, 0, 3, vertnum_list, sidep->tmap_num, sidep->tmap_num2, sidep->uvls);
 #endif
 				}
 
 			}
 			else
-				Error("Illegal side type in render_side, type = %i, segment # = %i, side # = %i\n", sidep->type, segp - Segments, sidenum);
+				Error("Illegal side type in render_side, type = %i, segment # = %i, side # = %i\n", sidep->type, segp - Segments.data(), sidenum);
 		}
 	}
 
@@ -658,13 +658,17 @@ void do_render_object(int objnum, int window_num)
 #ifdef EDITOR
 	int save_3d_outline;
 #endif
+
+	Assert(objnum < Objects.size());
+	
 	object* obj = &Objects[objnum];
 	int count = 0;
 	int n;
 
-	Assert(objnum < MAX_OBJECTS);
-
 #ifndef NDEBUG
+	if (object_rendered.size() != Objects.size())
+		object_rendered.resize(Objects.size());
+
 	if (object_rendered[objnum]) {		//already rendered this...
 		Int3();		//get Matt!!!
 		return;
@@ -699,7 +703,7 @@ void do_render_object(int objnum, int window_num)
 		Window_rendered_data[window_num].rendered_objects[Window_rendered_data[window_num].num_objects++] = objnum;
 	}
 
-	if ((count++ > MAX_OBJECTS) || (obj->next == objnum)) {
+	if ((count++ > Objects.size()) || (obj->next == objnum)) {
 		Int3();					// infinite loop detected
 		obj->next = -1;		// won't this clean things up?
 		return;					// get out of this infinite loop!
@@ -725,6 +729,15 @@ void do_render_object(int objnum, int window_num)
 		render_object(obj);
 
 	for (n = obj->attached_obj; n != -1; n = Objects[n].ctype.expl_info.next_attach) {
+
+		if (Objects[n].type != OBJ_FIREBALL)
+			mprintf((1, "Bad type! %d in %d\n", Objects[n].type, n));
+
+		if (Objects[n].control_type != CT_EXPLOSION)
+			mprintf((1, "Bad ct! %d in %d\n", Objects[n].control_type, n));
+
+		if (!Objects[n].flags & OF_ATTACHED)
+			mprintf((1, "Bad flags! %d in %d\n", Objects[n].flags, n));
 
 		Assert(Objects[n].type == OBJ_FIREBALL);
 		Assert(Objects[n].control_type == CT_EXPLOSION);
@@ -769,7 +782,7 @@ void render_start_frame()
 
 	if (RL_framecount == 0) //wrap!
 	{
-		memset(Rotated_last, 0, sizeof(Rotated_last));		//clear all to zero
+		memset(Rotated_last.data(), 0, sizeof(Rotated_last[0]) * Rotated_last.size());		//clear all to zero
 		RL_framecount = 1;											//and set this frame to 1
 	}
 }
@@ -948,16 +961,16 @@ void draw_window_box(int color, short left, short top, short right, short bot)
 int matt_find_connect_side(int seg0, int seg1);
 
 #ifndef NDEBUG
-char visited2[MAX_SEGMENTS];
+std::vector<char> visited2(MAX_SEGMENTS);
 #endif
 
-char visited[MAX_SEGMENTS];
+std::vector<char> visited(MAX_SEGMENTS);
 short Render_list[MAX_RENDER_SEGS];
 short Seg_depth[MAX_RENDER_SEGS];		//depth for each seg in Render_list
 uint8_t processed[MAX_RENDER_SEGS];		//whether each entry has been processed
 int	lcnt_save, scnt_save;
 //@@short *persp_ptr;
-short render_pos[MAX_SEGMENTS];	//where in render_list does this segment appear?
+std::vector<short> render_pos(MAX_SEGMENTS);	//where in render_list does this segment appear?
 //uint8_t no_render_flag[MAX_RENDER_SEGS];
 window render_windows[MAX_RENDER_SEGS];
 
@@ -1203,7 +1216,6 @@ void add_obj_to_seglist(int objnum, int listnum)
 		if (marker != -1)
 		{
 			checkn = -marker;
-			//Assert(checkn < MAX_RENDER_SEGS+N_EXTRA_OBJ_LISTS);
 			if (checkn >= MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS)
 			{
 				Int3();
@@ -1230,12 +1242,12 @@ void add_obj_to_seglist(int objnum, int listnum)
 
 		//find an available sublist
 
-		for (lookn = MAX_RENDER_SEGS; render_obj_list[lookn][0] != -1 && lookn < MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS; lookn++);
+		for (lookn = MAX_RENDER_SEGS; lookn < MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS && render_obj_list[lookn][0] != -1; lookn++);
 
 		//Assert(lookn<MAX_RENDER_SEGS+N_EXTRA_OBJ_LISTS);
 		if (lookn >= MAX_RENDER_SEGS + N_EXTRA_OBJ_LISTS)
 		{
-			Int3();
+			//Int3();
 			return;
 		}
 
@@ -1253,8 +1265,10 @@ typedef struct sort_item
 	fix dist;
 } sort_item;
 
-sort_item sort_list[SORT_LIST_SIZE];
-int n_sort_items;
+//sort_item sort_list[SORT_LIST_SIZE];
+//int n_sort_items;
+
+std::vector<sort_item> sort_list(SORT_LIST_SIZE);
 
 //compare function for object sort. 
 int sort_func(const void* ai, const void* bi)
@@ -1332,7 +1346,7 @@ void build_object_lists(int n_segs)
 
 						did_migrate = 0;
 
-						m = get_seg_masks(&obj->pos, new_segnum, obj->size);
+						m = get_seg_masks(obj->pos, new_segnum, obj->size);
 
 						if (m.sidemask)
 						{
@@ -1383,82 +1397,28 @@ void build_object_lists(int n_segs)
 			//first count the number of objects & copy into sort list
 
 			lookn = nn;
-			i = n_sort_items = 0;
+			sort_list.clear();
+			i = 0;
 			while ((t = render_obj_list[lookn][i++]) != -1)
 				if (t < 0)
 				{
 					lookn = -t; i = 0;
 				}
-				else
-					if (n_sort_items < SORT_LIST_SIZE - 1) //add if room
-					{
-						sort_list[n_sort_items].objnum = t;
-						//NOTE: maybe use depth, not dist - quicker computation
-						sort_list[n_sort_items].dist = vm_vec_dist_quick(&Objects[t].pos, &Viewer_eye);
-						n_sort_items++;
-					}
-					else //no room for object
-					{
-						int ii;
-
-#ifndef NDEBUG
-						FILE* tfile = fopen("sortlist.out", "wt");
-
-						//I find this strange, so I'm going to write out
-						//some information to look at later
-						if (tfile)
-						{
-							for (ii = 0; ii < SORT_LIST_SIZE; ii++)
-							{
-								int objnum = sort_list[ii].objnum;
-
-								fprintf(tfile, "Obj %3d  Type = %2d  Id = %2d  Dist = %08x  Segnum = %3d\n",
-									objnum, Objects[objnum].type, Objects[objnum].id, sort_list[ii].dist, Objects[objnum].segnum);
-							}
-							fclose(tfile);
-						}
-#endif
-
-						Int3();	//Get Matt!!!
-
-						//Now try to find a place for this object by getting rid
-						//of an object we don't care about
-
-						for (ii = 0; ii < SORT_LIST_SIZE; ii++)
-						{
-							int objnum = sort_list[ii].objnum;
-							object* obj = &Objects[objnum];
-							int type = obj->type;
-
-							//replace debris & fireballs
-							if (type == OBJ_DEBRIS || type == OBJ_FIREBALL)
-							{
-								fix dist = vm_vec_dist_quick(&Objects[t].pos, &Viewer_eye);
-
-								//don't replace same kind of object unless new 
-								//one is closer
-
-								if (Objects[t].type != type || dist < sort_list[ii].dist)
-								{
-									sort_list[ii].objnum = t;
-									sort_list[ii].dist = dist;
-									break;
-								}
-							}
-						}
-
-						Int3();	//still couldn't find a slot
-					}
-
+				else {
+					sort_item s;
+					s.objnum = t;
+					s.dist = vm_vec_dist_quick(&Objects[t].pos, &Viewer_eye);
+					sort_list.push_back(std::move(s));
+				}
 
 			//now call qsort
-			qsort(sort_list, n_sort_items, sizeof(*sort_list), sort_func);
+			qsort(sort_list.data(), sort_list.size(), sizeof(sort_list[0]), sort_func);
 
 			//now copy back into list
 
 			lookn = nn;
 			i = 0;
-			n = n_sort_items;
+			n = sort_list.size();
 			while ((t = render_obj_list[lookn][i]) != -1 && n > 0)
 				if (t < 0)
 				{
@@ -1539,7 +1499,7 @@ void render_frame(fix eye_offset, int window_num)
 		Viewer_eye = Viewer->pos;
 #endif
 
-	start_seg_num = find_point_seg(&Viewer_eye, Viewer->segnum);
+	start_seg_num = find_point_seg(Viewer_eye, Viewer->segnum);
 
 	if (start_seg_num == -1)
 		start_seg_num = Viewer->segnum;
@@ -1620,13 +1580,13 @@ int build_segment_list(int start_seg_num, int window_num)
 	int	l, c;
 	int	ch;
 
-	memset(visited, 0, sizeof(visited[0]) * (Highest_segment_index + 1));
-	memset(render_pos, -1, sizeof(render_pos[0]) * (Highest_segment_index + 1));
+	memset(visited.data(), 0, sizeof(visited[0]) * (Highest_segment_index + 1));
+	memset(render_pos.data(), -1, sizeof(render_pos[0]) * (Highest_segment_index + 1));
 	//memset(no_render_flag, 0, sizeof(no_render_flag[0])*(MAX_RENDER_SEGS));
 	memset(processed, 0, sizeof(processed));
 
 #ifndef NDEBUG
-	memset(visited2, 0, sizeof(visited2[0]) * (Highest_segment_index + 1));
+	memset(visited2.data(), 0, sizeof(visited2[0]) * (Highest_segment_index + 1));
 #endif
 
 	lcnt = scnt = 0;
@@ -1879,6 +1839,8 @@ void render_mine(int start_seg_num, fix eye_offset, int window_num)
 #endif
 
 #ifndef NDEBUG
+	if (object_rendered.size() < Highest_object_index + 1)
+		object_rendered.resize(Highest_object_index + 1);
 	for (i = 0; i <= Highest_object_index; i++)
 		object_rendered[i] = 0;
 #endif

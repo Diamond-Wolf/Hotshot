@@ -18,8 +18,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "object.h"
 
 void collide_init();
-void collide_two_objects(object* A, object* B, vms_vector* collision_point);
-void collide_object_with_wall(object* A, fix hitspeed, short hitseg, short hitwall, vms_vector* hitpt);
+void collide_two_objects(object* A, object* B, vms_vector collision_point);
+void collide_object_with_wall(object* A, fix hitspeed, short hitseg, short hitwall, vms_vector hitpt);
 extern void apply_damage_to_player(object* player, object* killer, fix damage);
 
 //	Returns 1 if robot died, else 0.
@@ -27,19 +27,19 @@ extern int apply_damage_to_robot(object* robot, fix damage, int killer_objnum);
 
 extern int Immaterial;
 
-extern void collide_player_and_weapon(object* player, object* weapon, vms_vector* collision_point);
+extern void collide_player_and_weapon(object* player, object* weapon, vms_vector collision_point);
 extern void collide_player_and_materialization_center(object* objp);
 extern void collide_robot_and_materialization_center(object* objp);
 
-extern void scrape_object_on_wall(object* obj, short hitseg, short hitwall, vms_vector* hitpt);
-extern int maybe_detonate_weapon(object* obj0p, object* obj, vms_vector* pos);
+extern void scrape_object_on_wall(object* obj, short hitseg, short hitwall, vms_vector hitpt);
+extern int maybe_detonate_weapon(object* obj0p, object* obj, vms_vector pos);
 
-extern void collide_player_and_nasty_robot(object* player, object* robot, vms_vector* collision_point);
+extern void collide_player_and_nasty_robot(object* player, object* robot, vms_vector collision_point);
 
 extern void net_destroy_controlcen(object* controlcen);
-extern void collide_player_and_powerup(object* player, object* powerup, vms_vector* collision_point);
+extern void collide_player_and_powerup(object* player, object* powerup, vms_vector collision_point);
 
-extern int check_effect_blowup(segment* seg, int side, vms_vector* pnt, object* blower, int force_blowup_flag);
+extern int check_effect_blowup(segment* seg, int side, vms_vector pnt, object* blower, int force_blowup_flag, bool isDemo = false);
 
 extern void apply_damage_to_controlcen(object* controlcen, fix damage, short who);
-extern void bump_one_object(object* obj0, vms_vector* hit_dir, fix damage);
+extern void bump_one_object(object* obj0, vms_vector hit_dir, fix damage);

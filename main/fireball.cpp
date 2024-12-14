@@ -54,14 +54,16 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #define EXPLOSION_SCALE (F1_0*5/2)		//explosion is the obj size times this  
 
 fix	Flash_effect=0;
-//--unused-- ubyte	Frame_processed[MAX_OBJECTS];
 
 int	PK1=1, PK2=8;
 
-object *object_create_explosion_sub(object *objp, short segnum, vms_vector * position, fix size, int vclip_type, fix maxdamage, fix maxdistance, fix maxforce, int parent )
+object *object_create_explosion_sub(object *objp, short segnum, vms_vector position, fix size, int vclip_type, fix maxdamage, fix maxdistance, fix maxforce, int parent )
 {
 	int objnum;
 	object *obj;
+
+	size_t iobjnum = objp - Objects.data();
+	bool objpValid = (objp != NULL);
 
 	objnum = obj_create( OBJ_FIREBALL,vclip_type,segnum,position,&vmd_identity_matrix,size,
 					CT_EXPLOSION,MT_NONE,RT_FIREBALL);
@@ -71,6 +73,9 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 		mprintf((1, "Can't create object in object_create_explosion_sub.\n"));
 		return NULL;
 	}
+
+	if (objpValid)
+		objp = &Objects[iobjnum];
 
 	obj = &Objects[objnum];
 
@@ -93,12 +98,13 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 		vms_vector pos_hit, vforce;
 		fix damage;
 		int i;
-		object * obj0p = &Objects[0];
+		object* obj0p;
 			  
 		// -- now legal for badass explosions on a wall. Assert(objp != NULL);
 
 		for (i=0; i<=Highest_object_index; i++ )	
 		{
+			obj0p = &Objects[i];
 			//	Weapons used to be affected by badass explosions, but this introduces serious problems.
 			//	When a smart bomb blows up, if one of its children goes right towards a nearby wall, it will
 			//	blow up, blowing up all the children.  So I remove it.  MK, 09/11/94
@@ -122,21 +128,26 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 						switch ( obj0p->type )	
 						{
 							case OBJ_WEAPON:
-								phys_apply_force(obj0p,&vforce);
+								phys_apply_force(obj0p, vforce);
 
 								if (obj0p->id == PROXIMITY_ID || obj0p->id == SUPERPROX_ID) //prox bombs have chance of blowing up
 								{		
 									if (fixmul(dist,force) > i2f(8000)) 
 									{
 										obj0p->flags |= OF_SHOULD_BE_DEAD;
-										explode_badass_weapon(obj0p,&obj0p->pos);
+										explode_badass_weapon(obj0p, obj0p->pos);
+										if (objpValid) {  // [DW] Exploding robots can trigger this with a null objp. How this never tripped before is a mystery.
+											objp = &Objects[iobjnum];
+											create_smart_children(objp, NUM_SMART_CHILDREN);
+											objp = &Objects[iobjnum];
+										}
 									}
 								}
 								break;
 
 							case OBJ_ROBOT:
 								{
-								phys_apply_force(obj0p,&vforce);
+								phys_apply_force(obj0p, vforce);
 
 								//	If not a boss, stun for 2 seconds at 32 force, 1 second at 16 force
 								if ((objp != NULL) && (!activeBMTable->robots[obj0p->id].boss_flag) && (activeBMTable->weapons[objp->id].flash)) 
@@ -165,7 +176,7 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 									neg_vforce.x = vforce.x * -2 * (7 - Difficulty_level)/8;
 									neg_vforce.y = vforce.y * -2 * (7 - Difficulty_level)/8;
 									neg_vforce.z = vforce.z * -2 * (7 - Difficulty_level)/8;
-									phys_apply_rot(obj0p,&neg_vforce);
+									phys_apply_rot(obj0p, neg_vforce);
 								}
 								if ( obj0p->shields >= 0 ) 
 								{
@@ -237,9 +248,9 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 								}
 								vforce2.x /= 2;	vforce2.y /= 2;	vforce2.z /= 2;
 
-								phys_apply_force(obj0p,&vforce);
-								phys_apply_rot(obj0p,&vforce2);
-								if (Difficulty_level == 0)
+								phys_apply_force(obj0p, vforce);
+								phys_apply_rot(obj0p, vforce2);
+								if (Difficulty_level == 0 && currentGame == G_DESCENT_2)
 									damage /= 4;
 								if ( obj0p->shields >= 0 )
 									apply_damage_to_player(obj0p, killer, damage );
@@ -265,24 +276,25 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 }
 
 
-object *object_create_muzzle_flash(short segnum, vms_vector * position, fix size, int vclip_type )
+object *object_create_muzzle_flash(short segnum, vms_vector position, fix size, int vclip_type )
 {
 	return object_create_explosion_sub(NULL, segnum, position, size, vclip_type, 0, 0, 0, -1 );
 }
 
-object *object_create_explosion(short segnum, vms_vector * position, fix size, int vclip_type )
+object *object_create_explosion(short segnum, vms_vector position, fix size, int vclip_type )
 {
 	return object_create_explosion_sub(NULL, segnum, position, size, vclip_type, 0, 0, 0, -1 );
 }
 
-object *object_create_badass_explosion(object *objp, short segnum, vms_vector * position, fix size, int vclip_type, fix maxdamage, fix maxdistance, fix maxforce, int parent )
+object *object_create_badass_explosion(object *objp, short segnum, vms_vector position, fix size, int vclip_type, fix maxdamage, fix maxdistance, fix maxforce, int parent )
 {
 	object	*rval;
 
 	rval = object_create_explosion_sub(objp, segnum, position, size, vclip_type, maxdamage, maxdistance, maxforce, parent );
 
+	/* // [DW] Making non-exploding weapons also spawn children
 	if ((objp != NULL) && (objp->type == OBJ_WEAPON))
-		create_smart_children(objp, NUM_SMART_CHILDREN);
+		create_smart_children(objp, NUM_SMART_CHILDREN);*/
 
 // -- 	if (objp->type == OBJ_ROBOT)
 // -- 		if (activeBMTable->robots[objp->id].smart_blobs)
@@ -293,7 +305,7 @@ object *object_create_badass_explosion(object *objp, short segnum, vms_vector * 
 
 //blows up a badass weapon, creating the badass explosion
 //return the explosion object
-object *explode_badass_weapon(object *obj,vms_vector *pos)
+object *explode_badass_weapon(object *obj ,vms_vector pos)
 {
 	weapon_info *wi = &activeBMTable->weapons[obj->id];
 
@@ -318,7 +330,7 @@ object *explode_badass_object(object *objp, fix damage, fix distance, fix force)
 
 	object 	*rval;
 
-	rval = object_create_badass_explosion(objp, objp->segnum, &objp->pos, objp->size,
+	rval = object_create_badass_explosion(objp, objp->segnum, objp->pos, objp->size,
 					get_explosion_vclip(objp, 0),
 					damage, distance, force,
 					objp-Objects.data());
@@ -347,17 +359,19 @@ object *object_create_debris(object *parent, int subobj_num)
 
 	Assert((parent->type == OBJ_ROBOT) || (parent->type == OBJ_PLAYER)  );
 
-	objnum = obj_create(OBJ_DEBRIS,0,parent->segnum,&parent->pos,
+	size_t tempID = parent - Objects.data();
+
+	objnum = obj_create(OBJ_DEBRIS,0,parent->segnum, parent->pos,
 				&parent->orient,activeBMTable->models[parent->rtype.pobj_info.model_num].submodel_rads[subobj_num],
 				CT_DEBRIS,MT_PHYSICS,RT_POLYOBJ);
 
-	if ((objnum < 0 ) && (Highest_object_index >= MAX_OBJECTS-1)) {
+	if (objnum < 0) {
 		mprintf((1, "Can't create object in object_create_debris.\n"));
 		Int3();
 		return NULL;
 	}
-	if ( objnum < 0 )
-		return NULL;				// Not enough debris slots!
+
+	parent = &Objects[tempID];
 	obj = &Objects[objnum];
 
 	Assert(subobj_num < 32);
@@ -435,9 +449,9 @@ int pick_connected_segment(object *objp, int max_depth)
 	int		start_seg;
 	int		head, tail;
 	int		seg_queue[QUEUE_SIZE*2];
-	int8_t		visited[MAX_SEGMENTS];
-	int8_t		depth[MAX_SEGMENTS];
-	int8_t		side_rand[MAX_SIDES_PER_SEGMENT];
+	int8_t* visited = new int8_t[Segments.size()];
+	int8_t* depth = new int8_t[Segments.size()];
+	int8_t side_rand[MAX_SIDES_PER_SEGMENT];
 
 //	mprintf((0, "Finding a segment %i segments away from segment %i: ", max_depth, objp->segnum));
 
@@ -471,6 +485,8 @@ int pick_connected_segment(object *objp, int max_depth)
 
 		if (cur_depth >= max_depth) {
 //			mprintf((0, "selected segment %i\n", seg_queue[tail]));
+			delete[] visited;
+			delete[] depth;
 			return seg_queue[tail];
 		}
 
@@ -512,12 +528,16 @@ int pick_connected_segment(object *objp, int max_depth)
 		}
 		if ((seg_queue[tail] < 0) || (seg_queue[tail] > Highest_segment_index)) {
 			// -- Int3();	//	Something bad has happened.  Queue is trashed.  --MK, 12/13/94
+			delete[] visited;
+			delete[] depth;
 			return -1;
 		}
 		cur_depth = depth[seg_queue[tail]];
 	}
 
 	mprintf((0, "...failed at depth %i, returning -1\n", cur_depth));
+	delete[] visited;
+	delete[] depth;
 	return -1;
 }
 
@@ -535,7 +555,7 @@ int choose_drop_segment()
 	int	cur_drop_depth;
 	int	count;
 	int	player_seg;
-	vms_vector tempv,*player_pos;
+	vms_vector tempv, player_pos;
 
 	mprintf((0,"choose_drop_segment:"));
 
@@ -543,7 +563,7 @@ int choose_drop_segment()
 
 	cur_drop_depth = BASE_NET_DROP_DEPTH + ((P_Rand() * BASE_NET_DROP_DEPTH*2) >> 15);
 
-	player_pos = &Objects[Players[Player_num].objnum].pos;
+	player_pos = Objects[Players[Player_num].objnum].pos;
 	player_seg = Objects[Players[Player_num].objnum].segnum;
 
 	while ((segnum == -1) && (cur_drop_depth > BASE_NET_DROP_DEPTH/2)) 
@@ -593,7 +613,7 @@ int choose_drop_segment()
 		//bail if not far enough from original position
 		if (segnum != -1) {
 			compute_segment_center(&tempv, &Segments[segnum]);
-			if (find_connected_distance(player_pos,player_seg,&tempv,segnum,-1,WID_FLY_FLAG) < i2f(20)*cur_drop_depth) {
+			if (find_connected_distance(player_pos,player_seg, tempv,segnum,-1,WID_FLY_FLAG) < i2f(20)*cur_drop_depth) {
 				mprintf((0,"D"));
 				segnum = -1;
 			}
@@ -603,7 +623,7 @@ int choose_drop_segment()
 	}
 
 	if (segnum != -1)
-		mprintf((0," dist=%x\n",find_connected_distance(player_pos,player_seg,&tempv,segnum,-1,WID_FLY_FLAG)));
+		mprintf((0," dist=%x\n",find_connected_distance(player_pos,player_seg,tempv,segnum,-1,WID_FLY_FLAG)));
 
 	if (segnum == -1) {
 		mprintf((1, "Warning: Unable to find a connected segment.  Picking a random one.\n"));
@@ -644,7 +664,7 @@ void maybe_drop_net_powerup(int powerup_type)
 //--old-- 			segnum /= 2;
 
 		Net_create_loc = 0;
-		objnum = call_object_create_egg(&Objects[Players[Player_num].objnum], 1, OBJ_POWERUP, powerup_type);
+		objnum = call_object_create_egg(Players[Player_num].objnum, 1, OBJ_POWERUP, powerup_type);
 
 		if (objnum < 0)
 			return;
@@ -657,7 +677,7 @@ void maybe_drop_net_powerup(int powerup_type)
 		vm_vec_zero(&Objects[objnum].mtype.phys_info.velocity);
 		obj_relink(objnum, segnum);
 
-		object_create_explosion(segnum, &new_pos, i2f(5), VCLIP_POWERUP_DISAPPEARANCE );
+		object_create_explosion(segnum, new_pos, i2f(5), VCLIP_POWERUP_DISAPPEARANCE );
 //		mprintf(0, "Creating net powerup in segment %i at %7.3f %7.3f %7.3f\n", segnum, f2fl(new_pos.x), f2fl(new_pos.y), f2fl(new_pos.z));
 	}
 }
@@ -787,7 +807,7 @@ void maybe_replace_powerup_with_energy(object *del_obj)
 	}
 }
 
-int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *pos, int segnum)
+int drop_powerup(int type, int id, int num, vms_vector init_vel, vms_vector pos, int segnum)
 {
 	int		objnum=-1;
 	object	*obj;
@@ -799,8 +819,8 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 		case OBJ_POWERUP:
 			for (count=0; count<num; count++) {
 				int	rand_scale;
-				new_velocity = *init_vel;
-				old_mag = vm_vec_mag_quick(init_vel);
+				new_velocity = init_vel;
+				old_mag = vm_vec_mag_quick(&init_vel);
 
 				//	We want powerups to move more in network mode.
 				if ((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_ROBOTS)) {
@@ -820,7 +840,7 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 				if ((Game_mode & GM_MULTI) && (id >= POW_KEY_BLUE) && (id <= POW_KEY_GOLD))
 					vm_vec_zero(&new_velocity);
 
-				new_pos = *pos;
+				new_pos = pos;
 //				new_pos.x += (P_Rand()-16384)*8;
 //				new_pos.y += (P_Rand()-16384)*8;
 //				new_pos.z += (P_Rand()-16384)*8;
@@ -836,7 +856,7 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 					 return (-1);
 				}
 #endif
-				objnum = obj_create( type, id, segnum, &new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
+				objnum = obj_create( type, id, segnum, new_pos, &vmd_identity_matrix, activeBMTable->powerups[id].size, CT_POWERUP, MT_PHYSICS, RT_POWERUP);
 
 				if (objnum < 0 ) 
 				{
@@ -890,8 +910,8 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 			for (count=0; count<num; count++) 
 			{
 				int	rand_scale;
-				new_velocity = *init_vel;
-				old_mag = vm_vec_mag_quick(init_vel);
+				new_velocity = init_vel;
+				old_mag = vm_vec_mag_quick(&init_vel);
 
 				vm_vec_normalize_quick(&new_velocity);
 
@@ -907,13 +927,13 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 
 				vm_vec_normalize_quick(&new_velocity);
 				vm_vec_scale(&new_velocity, (F1_0*32 + old_mag) * rand_scale);
-				new_pos = *pos;
+				new_pos = pos;
 				//	This is dangerous, could be outside mine.
 //				new_pos.x += (P_Rand()-16384)*8;
 //				new_pos.y += (P_Rand()-16384)*7;
 //				new_pos.z += (P_Rand()-16384)*6;
 
-				objnum = obj_create(OBJ_ROBOT, id, segnum, &new_pos, &vmd_identity_matrix, activeBMTable->models[activeBMTable->robots[id].model_num].rad, CT_AI, MT_PHYSICS, RT_POLYOBJ);
+				objnum = obj_create(OBJ_ROBOT, id, segnum, new_pos, &vmd_identity_matrix, activeBMTable->models[activeBMTable->robots[id].model_num].rad, CT_AI, MT_PHYSICS, RT_POLYOBJ);
 
 				if ( objnum < 0 ) {
 					mprintf((1, "Can't create object in object_create_egg, robots.  Aborting.\n"));
@@ -973,9 +993,11 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 //	------------------------------------------------------------------------------------------------------
 //	Returns created object number.
 //	If object dropped by player, set flag.
-int object_create_egg(object *objp)
+int object_create_egg(size_t objnum)
 {
 	int	rval;
+
+	object* objp = &Objects[objnum];
 
 	if (!(Game_mode & GM_MULTI) & (objp->type != OBJ_PLAYER))
 		if (objp->contains_type == OBJ_POWERUP)
@@ -1005,7 +1027,8 @@ int object_create_egg(object *objp)
 				}
 			}
 
-	rval = drop_powerup(objp->contains_type, objp->contains_id, objp->contains_count, &objp->mtype.phys_info.velocity, &objp->pos, objp->segnum);
+	rval = drop_powerup(objp->contains_type, objp->contains_id, objp->contains_count, objp->mtype.phys_info.velocity, objp->pos, objp->segnum);
+	objp = &Objects[objnum];
 
 	if (rval != -1)
     {
@@ -1027,7 +1050,7 @@ int object_create_egg(object *objp)
 //	-------------------------------------------------------------------------------------------------------
 //	Put count objects of type type (eg, powerup), id = id (eg, energy) into *objp, then drop them!  Yippee!
 //	Returns created object number.
-int call_object_create_egg(object *objp, int count, int type, int id)
+int call_object_create_egg(size_t objnum, int count, int type, int id)
 {
 // -- 	if (!(Game_mode & GM_MULTI) && (objp == ConsoleObject))
 // -- 		if (P_Rand() < 32767/6) {
@@ -1036,10 +1059,10 @@ int call_object_create_egg(object *objp, int count, int type, int id)
 // -- 		}
 
 	if (count > 0) {
-		objp->contains_count = count;
-		objp->contains_type = type;
-		objp->contains_id = id;
-		return object_create_egg(objp);
+		Objects[objnum].contains_count = count;
+		Objects[objnum].contains_type = type;
+		Objects[objnum].contains_id = id;
+		return object_create_egg(objnum);
 	}
 
 	return -1;
@@ -1067,6 +1090,8 @@ void explode_model(object *obj)
 {
 	Assert(obj->render_type == RT_POLYOBJ);
 
+	size_t objnum = obj - Objects.data();
+
 	if (activeBMTable->dyingModels[obj->rtype.pobj_info.model_num] != -1)
 		obj->rtype.pobj_info.model_num = activeBMTable->dyingModels[obj->rtype.pobj_info.model_num];
 
@@ -1074,8 +1099,10 @@ void explode_model(object *obj)
 		int i;
 
 		for (i=1;i<activeBMTable->models[obj->rtype.pobj_info.model_num].n_models;i++)
-			if (!(obj->type == OBJ_ROBOT && obj->id == 44 && i == 5)) 	//energy sucker energy part
+			if (!(obj->type == OBJ_ROBOT && obj->id == 44 && i == 5)) { 	//energy sucker energy part
 				object_create_debris(obj,i);
+				obj = &Objects[objnum];
+			}
 
 		//make parent object only draw center part
 		obj->rtype.pobj_info.subobj_flags=1;
@@ -1101,6 +1128,8 @@ void maybe_delete_object(object *del_obj)
 //blow up an object.  Takes the object to destroy, and the point of impact
 void explode_object(object *hitobj,fix delay_time)
 {
+	size_t hobjnum = hitobj - Objects.data();
+
 	if (hitobj->flags & OF_EXPLODING) return;
 
 	if (delay_time) {		//wait a little while before creating explosion
@@ -1109,8 +1138,10 @@ void explode_object(object *hitobj,fix delay_time)
 
 		//create a placeholder object to do the delay, with id==-1
 
-		objnum = obj_create( OBJ_FIREBALL,-1,hitobj->segnum,&hitobj->pos,&vmd_identity_matrix,0,
+		objnum = obj_create( OBJ_FIREBALL,-1,hitobj->segnum, hitobj->pos,&vmd_identity_matrix,0,
 						CT_EXPLOSION,MT_NONE,RT_NONE);
+
+		hitobj = &Objects[hobjnum];
 	
 		if (objnum < 0 ) {
 			maybe_delete_object(hitobj);		//no explosion, die instantly
@@ -1139,8 +1170,9 @@ void explode_object(object *hitobj,fix delay_time)
 
 		vclip_num = get_explosion_vclip(hitobj,0);
 
-		expl_obj = object_create_explosion(hitobj->segnum, &hitobj->pos, fixmul(hitobj->size,EXPLOSION_SCALE), vclip_num );
-	
+		expl_obj = object_create_explosion(hitobj->segnum, hitobj->pos, fixmul(hitobj->size,EXPLOSION_SCALE), vclip_num );
+		hitobj = &Objects[hobjnum];
+
 		if (! expl_obj) {
 			maybe_delete_object(hitobj);		//no explosion, die instantly
 			mprintf((0,"Couldn't start explosion, deleting object now\n"));
@@ -1155,8 +1187,10 @@ void explode_object(object *hitobj,fix delay_time)
 			expl_obj->mtype.phys_info = hitobj->mtype.phys_info;
 		}
 	
-		if (hitobj->render_type==RT_POLYOBJ && hitobj->type!=OBJ_DEBRIS)
+		if (hitobj->render_type==RT_POLYOBJ && hitobj->type!=OBJ_DEBRIS) {
 			explode_model(hitobj);
+			hitobj = &Objects[hobjnum];
+		}
 
 		maybe_delete_object(hitobj);
 	}
@@ -1182,6 +1216,9 @@ extern void drop_stolen_items(object *objp);
 //do whatever needs to be done for this explosion for this frame
 void do_explosion_sequence(object *obj)
 {
+
+	size_t iobjnum = obj - Objects.data();
+
 	Assert(obj->control_type == CT_EXPLOSION);
 
 	//mprintf( 0, "Object %d life left is %d\n", obj-Objects.data(), obj->lifeleft );
@@ -1196,7 +1233,7 @@ void do_explosion_sequence(object *obj)
 	if (obj->lifeleft <= obj->ctype.expl_info.spawn_time) {
 		object *expl_obj,*del_obj;
 		int vclip_num;
-		vms_vector *spawn_pos;
+		vms_vector spawn_pos;
 
 		if ((obj->ctype.expl_info.delete_objnum < 0) || (obj->ctype.expl_info.delete_objnum > Highest_object_index)) {
 			mprintf((0, "Illegal value for delete_objnum in fireball.c\n"));
@@ -1204,9 +1241,10 @@ void do_explosion_sequence(object *obj)
 			return;
 		}
 
-		del_obj = &Objects[obj->ctype.expl_info.delete_objnum];
+		auto dobjnum = obj->ctype.expl_info.delete_objnum;
+		del_obj = &Objects[dobjnum];
 
-		spawn_pos = &del_obj->pos;
+		spawn_pos = del_obj->pos;
 
 		if (!((del_obj->type==OBJ_ROBOT || del_obj->type==OBJ_CLUTTER || del_obj->type==OBJ_CNTRLCEN || del_obj->type == OBJ_PLAYER) && (del_obj->segnum != -1))) {
 			Int3();	//pretty bad
@@ -1220,11 +1258,16 @@ void do_explosion_sequence(object *obj)
 		else
 			expl_obj = object_create_explosion( del_obj->segnum, spawn_pos, fixmul(del_obj->size, EXPLOSION_SCALE), vclip_num );
 
+		size_t eobjnum = expl_obj - Objects.data();
+
+		del_obj = &Objects[dobjnum];
+		obj = &Objects[iobjnum];
+
 		if ((del_obj->contains_count > 0) && !(Game_mode & GM_MULTI)) { // Multiplayer handled outside of this code!!
 			//	If dropping a weapon that the player has, drop energy instead, unless it's vulcan, in which case drop vulcan ammo.
 			if (del_obj->contains_type == OBJ_POWERUP)
 				maybe_replace_powerup_with_energy(del_obj);
-			object_create_egg(del_obj);
+			object_create_egg(obj->ctype.expl_info.delete_objnum);
 		} else if ((del_obj->type == OBJ_ROBOT) && !(Game_mode & GM_MULTI)) { // Multiplayer handled outside this code!!
 			robot_info	*robptr = &activeBMTable->robots[del_obj->id];
 			if (robptr->contains_count) {
@@ -1233,17 +1276,20 @@ void do_explosion_sequence(object *obj)
 					del_obj->contains_type = robptr->contains_type;
 					del_obj->contains_id = robptr->contains_id;
 					maybe_replace_powerup_with_energy(del_obj);
-					object_create_egg(del_obj);
+					object_create_egg(obj->ctype.expl_info.delete_objnum);
+					del_obj = &Objects[dobjnum];
 				}
 			}
 
 			if (robptr->thief)
 				drop_stolen_items(del_obj);
-
-			if (robptr->companion) {
+			else if (robptr->companion) {
 				DropBuddyMarker(del_obj);
 			}
 		}
+
+		obj = &Objects[iobjnum];
+		del_obj = &Objects[dobjnum];
 
 		if ( activeBMTable->robots[del_obj->id].exp2_sound_num > -1 )
 			digi_link_sound_to_pos( activeBMTable->robots[del_obj->id].exp2_sound_num, del_obj->segnum, 0, spawn_pos, 0, F1_0 );
@@ -1259,8 +1305,13 @@ void do_explosion_sequence(object *obj)
 		obj->ctype.expl_info.spawn_time = -1;
 
 		//make debris
-		if (del_obj->render_type==RT_POLYOBJ)
+		if (del_obj->render_type == RT_POLYOBJ) {
 			explode_model(del_obj);		//explode a polygon model
+			obj = &Objects[iobjnum];
+			del_obj = &Objects[dobjnum];
+		}
+
+		expl_obj = &Objects[eobjnum];
 
 		//set some parm in explosion
 		if (expl_obj) {
@@ -1271,7 +1322,7 @@ void do_explosion_sequence(object *obj)
 			}
 
 			expl_obj->ctype.expl_info.delete_time = expl_obj->lifeleft/2;
-			expl_obj->ctype.expl_info.delete_objnum = del_obj-Objects.data();
+			expl_obj->ctype.expl_info.delete_objnum = dobjnum;
 #ifndef NDEBUG
 			if (obj->ctype.expl_info.delete_objnum < 0)
 		  		Int3(); // See Rob!
@@ -1299,13 +1350,13 @@ void do_explosion_sequence(object *obj)
 #define EXPL_WALL_TOTAL_FIREBALLS	32
 #define EXPL_WALL_FIREBALL_SIZE 		(0x48000*6/10)	//smallest size
 
-expl_wall expl_wall_list[MAX_EXPLODING_WALLS];
+std::vector<expl_wall> expl_wall_list(MAX_EXPLODING_WALLS);
 
 void init_exploding_walls()
 {
 	int i;
 
-	for (i=0;i<MAX_EXPLODING_WALLS;i++)
+	for (i = 0; i < expl_wall_list.size(); i++)
 		expl_wall_list[i].segnum = -1;
 }
 
@@ -1317,12 +1368,10 @@ void explode_wall(int segnum,int sidenum)
 
 	//find a free slot
 
-	for (i=0;i<MAX_EXPLODING_WALLS && expl_wall_list[i].segnum != -1;i++);
+	for (i=0; i < expl_wall_list.size() && expl_wall_list[i].segnum != -1; i++);
 
-	if (i==MAX_EXPLODING_WALLS) {		//didn't find slot.
-		mprintf((0,"Couldn't find free slot for exploding wall!\n"));
-		Int3();
-		return;
+	if (i == expl_wall_list.size()) {		//didn't find slot.
+		expl_wall_list.emplace_back();
 	}
 
 	expl_wall_list[i].segnum	= segnum;
@@ -1331,7 +1380,7 @@ void explode_wall(int segnum,int sidenum)
 
 	//play one long sound for whole door wall explosion
 	compute_center_point_on_side(&pos,&Segments[segnum],sidenum);
-	digi_link_sound_to_pos( SOUND_EXPLODING_WALL,segnum, sidenum, &pos, 0, F1_0 );
+	digi_link_sound_to_pos( SOUND_EXPLODING_WALL,segnum, sidenum, pos, 0, F1_0 );
 
 }
 
@@ -1341,7 +1390,7 @@ void do_exploding_wall_frame()
 {
 	int i;
 
-	for (i=0;i<MAX_EXPLODING_WALLS;i++) {
+	for (i = 0; i < expl_wall_list.size(); i++) {
 		int segnum = expl_wall_list[i].segnum;
 
 		if (segnum != -1) {
@@ -1419,9 +1468,9 @@ void do_exploding_wall_frame()
 				#endif
 
 				if (e & 3)		//3 of 4 are normal
-					object_create_explosion(expl_wall_list[i].segnum,&pos,size,VCLIP_SMALL_EXPLOSION);
+					object_create_explosion(expl_wall_list[i].segnum,pos,size,VCLIP_SMALL_EXPLOSION);
 				else
-					object_create_badass_explosion( NULL, expl_wall_list[i].segnum, &pos, 
+					object_create_badass_explosion( NULL, expl_wall_list[i].segnum, pos, 
 					size, 
 					VCLIP_SMALL_EXPLOSION,
 					i2f(4),		// damage strength
@@ -1443,8 +1492,10 @@ void do_exploding_wall_frame()
 
 
 //creates afterburner blobs behind the specified object
-void drop_afterburner_blobs(object *obj, int count, fix size_scale, fix lifetime)
+void drop_afterburner_blobs(int objnum, int count, fix size_scale, fix lifetime)
 {
+	object* obj = &Objects[objnum];
+
 	vms_vector pos_left,pos_right;
 	int segnum;
 
@@ -1455,15 +1506,16 @@ void drop_afterburner_blobs(object *obj, int count, fix size_scale, fix lifetime
 	if (count == 1)
 		vm_vec_avg(&pos_left, &pos_left, &pos_right);
 
-	segnum = find_point_seg(&pos_left, obj->segnum);
-	if (segnum != -1)
-		object_create_explosion(segnum, &pos_left, size_scale, VCLIP_AFTERBURNER_BLOB );
+	segnum = find_point_seg(pos_left, obj->segnum);
+	if (segnum != -1) {
+		object_create_explosion(segnum, pos_left, size_scale, VCLIP_AFTERBURNER_BLOB );
+	}
 
 	if (count > 1) {
-		segnum = find_point_seg(&pos_right, obj->segnum);
+		segnum = find_point_seg(pos_right, Objects[objnum].segnum);
 		if (segnum != -1) {
 			object	*blob_obj;
-			blob_obj = object_create_explosion(segnum, &pos_right, size_scale, VCLIP_AFTERBURNER_BLOB );
+			blob_obj = object_create_explosion(segnum, pos_right, size_scale, VCLIP_AFTERBURNER_BLOB );
 			if (lifetime != -1)
 				blob_obj->lifeleft = lifetime;
 		}
