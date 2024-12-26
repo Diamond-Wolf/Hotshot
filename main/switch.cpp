@@ -480,38 +480,22 @@ int check_trigger_sub(int trigger_num, int pnum,int shot)
 	int had_no_net_trigger = 0;
 	int executed = 0;
 	
+	bool shouldExit = false;
+	bool shouldSecretExit = false;
+
 	if (type & HTT_EXIT && pnum == Player_num) {
 		executed++;
 		digi_stop_all();		//kill the sounds
 
-		if (Current_level_num > 0)
-		{
-			start_endlevel_sequence();
-			mprintf((0, "WOOHOO! (leaving the mine!)\n"));
-		} else if (Current_level_num < 0) {
-			if (!((Players[Player_num].shields < 0) || Player_is_dead)) {
-				if (currentGame == G_DESCENT_1)
-					start_endlevel_sequence();
-				else
-					ExitSecretLevel();
-			}
-		}
-		else
-		{
-#ifdef EDITOR
-			nm_messagebox("Yo!", 1, "You have hit the exit trigger!", "");
-#else
-			Int3();		//level num == 0, but no editor!
-#endif
-		}
+		shouldExit = true;
+
 		had_no_net_trigger = 1;
 	}
 
 	if (type & HTT_SECRET_EXIT)
 	{
 		executed++;
-		if (ExecSecretLevel(pnum))
-			had_no_net_trigger = 1;
+		shouldSecretExit = true;
 	}
 
 	if (type & HTT_OPEN_DOOR) {
@@ -601,6 +585,30 @@ int check_trigger_sub(int trigger_num, int pnum,int shot)
 
 	if (executed <= 0)
 		Int3();
+
+	if (shouldSecretExit) {
+		if (ExecSecretLevel(pnum))
+			had_no_net_trigger = 1;
+	} else if (shouldExit) {
+		if (Current_level_num > 0)
+		{
+			start_endlevel_sequence();
+			mprintf((0, "WOOHOO! (leaving the mine!)\n"));
+		} else if (Current_level_num < 0) {
+			if (!((Players[Player_num].shields < 0) || Player_is_dead)) {
+				if (currentGame == G_DESCENT_1)
+					start_endlevel_sequence();
+				else
+					ExitSecretLevel();
+			}
+		} else {
+#ifdef EDITOR
+			nm_messagebox("Yo!", 1, "You have hit the exit trigger!", "");
+#else
+			Int3();		//level num == 0, but no editor!
+#endif
+		}
+	}
 	
 	return had_no_net_trigger;
 }
