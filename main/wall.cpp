@@ -802,8 +802,7 @@ void do_door_open(int door_num)
 
 	csegp = &Segments[seg->children[side]];
 	Connectside = find_connect_side(seg, csegp);
-	Assert(Connectside != -1);
-
+	
 	d->time += FrameTime;
 
 	time_elapsed = d->time;
@@ -814,16 +813,18 @@ void do_door_open(int door_num)
 
 	i = time_elapsed / one_frame;
 
-	if (i < n)
+	if (i < n && Connectside >= 0)
 		wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, i);
 
 	if (i > n / 2) {
 		Walls[seg->sides[side].wall_num].flags |= WALL_DOOR_OPENED;
-		Walls[csegp->sides[Connectside].wall_num].flags |= WALL_DOOR_OPENED;
+		if (Connectside > 0)
+			Walls[csegp->sides[Connectside].wall_num].flags |= WALL_DOOR_OPENED;
 	}
 
 	if (i >= n - 1) {
-		wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, n - 1);
+		if (Connectside > 0)
+			wall_set_tmap_num(seg, side, csegp, Connectside, w->clip_num, n - 1);
 
 		// If our door is not automatic just remove it from the list.
 		if (!(Walls[seg->sides[side].wall_num].flags & WALL_DOOR_AUTO)) {
@@ -831,12 +832,14 @@ void do_door_open(int door_num)
 				ActiveDoors[i] = ActiveDoors[i + 1];
 			ActiveDoors.pop_back();
 			Walls[seg->sides[side].wall_num].state = WALL_DOOR_OPEN;
-			Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_OPEN;
+			if (Connectside > 0)
+				Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_OPEN;
 		}
 		else {
 
 			Walls[seg->sides[side].wall_num].state = WALL_DOOR_WAITING;
-			Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_WAITING;
+			if (Connectside > 0)
+				Walls[csegp->sides[Connectside].wall_num].state = WALL_DOOR_WAITING;
 
 			//ActiveDoors[Num_open_doors].time = 0;	//counts up
 		}

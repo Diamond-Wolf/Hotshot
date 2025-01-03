@@ -180,7 +180,7 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector posit
 								}
 								if ( obj0p->shields >= 0 ) 
 								{
-									if (activeBMTable->robots[obj0p->id].boss_flag)
+									if (activeBMTable->robots[obj0p->id].boss_flag >= BOSS_D2)
 										if (Boss_invulnerable_matter[activeBMTable->robots[obj0p->id].boss_flag-BOSS_D2])
 											damage /= 4;
 

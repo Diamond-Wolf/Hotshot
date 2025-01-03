@@ -360,7 +360,7 @@ void start_endlevel_sequence()
 	else
 		gr_palette_fade_out(gr_palette, 32, 0);
 
-	PlayerFinishedLevel(0);		//done with level
+	PlayerFinishedLevel(Current_level_num < 0);		//done with level
 }
 
 static int cockpit_mode_save;
@@ -1516,7 +1516,7 @@ try_again:
 		if (!ifile)
 			if (level_num==1) 
 			{
-				Warning("Cannot load file text of binary version of <%s>",filename);
+				mprintf((1, "Cannot load file text of binary version of <%s>",filename));
 				return;
 			}
 			else {
