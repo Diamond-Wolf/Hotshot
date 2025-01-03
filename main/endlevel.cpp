@@ -1516,7 +1516,7 @@ try_again:
 		if (!ifile)
 			if (level_num==1) 
 			{
-				Warning("Cannot load file text of binary version of <%s>",filename);
+				mprintf((1, "Cannot load file text of binary version of <%s>",filename));
 				return;
 			}
 			else {
