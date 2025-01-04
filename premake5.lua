@@ -11,7 +11,7 @@ newoption {
 newoption {
 	trigger = "sdl2-path",
 	value = "path",
-	description = "Path to SDL2 version, including trailing slash"
+	description = "Path to SDL3 version, including trailing slash"
 }
 
 newoption {
@@ -47,10 +47,15 @@ workspace "Hotshot"
 		optimize "Full"
 		defines "NDEBUG"
 
-	--Don't name non-bundles ".app", Mac isn't smart enough to realize it's just a file
+	--Assemble app bundle
 	filter { "system:macosx" }
 		targetextension ""
-
+		--todo: Have clean remove the bundle, once I figure out what will let me do anything with clean
+		filter { "configurations:Debug" }
+			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Debug \"%{wks.location}\"" }
+		filter { "configurations:Release" }
+			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Release \"%{wks.location}\"" }
+		
 	filter {}
 
 	files {
@@ -121,34 +126,37 @@ workspace "Hotshot"
 			"_UNIX"
 		}
 		
+		linkoptions {
+			"-rpath /usr/local/lib"
+		}
+		
 	filter {}
 	
-	--sdl2 = os.findlib("sdl2")
-	--openal = os.findlib("openal")
-	--fluidsynth = os.findlib("fluidsynth")
-	
-	sdl2 = _OPTIONS["sdl2-path"]
+	sdl = _OPTIONS["sdl2-path"]
 	openal = _OPTIONS["openal-path"]
 	fluidsynth = _OPTIONS["fluidsynth-path"]
 	
 	libdirs {
-		sdl2 .. "/lib",
-		sdl2 .. "/lib/x64",
+		sdl,
+		sdl .. "/lib",
+		sdl .. "/lib/x64",
 		openal .. "/lib",
 		openal .. "/libs/Win64",
 		fluidsynth .. "/lib"
 	}
 	
 	includedirs {
-		sdl2 .. "/include",
-		sdl2 .. "/include/SDL2",
+		sdl .. "/include",
+		sdl .. "/include/SDL2",
 		openal .. "/include",
 		fluidsynth .. "/include",
 	}
 	
+	prebuildcommands {'echo ' .. sdl .. "/include/SDL2"}
+	
 	links {
-		"sdl2",
-		"sdl2main"
+		"SDL2",
+		"SDL2main"
 	}
 	
 	filter { "system:not windows" }
@@ -158,23 +166,8 @@ workspace "Hotshot"
 		}
 	
 	filter { "system:windows" }
-
+	
 		links "OpenAL32"
-
-		--is it bad when you have to tell the engine to override itself to use the
-		--right file, rather than something simple like specifying the right file?
-		--AND IT DOESNT EVEN WORK
-		--[[premake.override(premake.tools.msc, "getLibraryExtensions", 
-			function(oldfn)
-				local extensions = oldfn()
-				extensions["a"] = true
-				extensions["lib"] = false
-				return extensions
-			end
-		)
-			
-		links "libfluidsynth"
-		]]
 
 	filter {}
 	
