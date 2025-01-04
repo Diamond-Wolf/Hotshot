@@ -54,9 +54,9 @@ void I_KeyHandler(int sc, dbool down)
 		scancode = translationTable[sc];
 	}
 
-	if (down == SDL_PRESSED)
+	if (down)
 		KeyPressed(scancode);
-	else if (down == SDL_RELEASED)
+	else
 		KeyReleased(scancode);
 }
 

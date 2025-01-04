@@ -694,7 +694,7 @@ void plat_display_error(const char* msg)
 
 // Mouse API:
 
-void mouse_get_pos(int* x, int* y)
+void mouse_get_pos(float* x, float* y)
 {
 	POINT pos = { 0 };
 	GetCursorPos(&pos);

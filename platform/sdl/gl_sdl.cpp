@@ -208,7 +208,7 @@ bool I_InitGLContext(SDL_Window *win)
 
 	//The window size is constant, so just do this now
 	int w, h;
-	SDL_GL_GetDrawableSize(win, &w, &h);
+	SDL_GetWindowSizeInPixels(win, &w, &h);
 	sglViewport(0, 0, w, h);
 
 	//Only need one VAO, so create that now
@@ -358,7 +358,7 @@ void I_ShutdownGL()
 
 		sglBindVertexArray(0);
 		sglDeleteVertexArrays(1, &vaoName);
-		SDL_GL_DeleteContext(context);
+		SDL_GL_DestroyContext(context);
 	}
 }
 

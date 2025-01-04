@@ -1236,7 +1236,7 @@ void kc_change_mouseaxis(kc_item * item)
 {
 	int i, n, k;
 	uint8_t code;
-	int dx, dy;
+	float dx, dy;
 
 	WIN(DDGRLOCK(dd_grd_curcanv));
 	gr_set_fontcolor(BM_XRGB(28, 28, 28), -1);
@@ -1423,7 +1423,7 @@ void controls_read_all()
 {
 	int i;
 	int slide_on, bank_on;
-	int dx, dy;
+	float dx, dy;
 	int idx, idy;
 	fix ctime;
 	fix mouse_axis[2];

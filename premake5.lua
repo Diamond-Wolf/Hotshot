@@ -9,7 +9,7 @@ newoption {
 }
 
 newoption {
-	trigger = "sdl2-path",
+	trigger = "sdl-path",
 	value = "path",
 	description = "Path to SDL3 version, including trailing slash"
 }
@@ -132,7 +132,7 @@ workspace "Hotshot"
 		
 	filter {}
 	
-	sdl = _OPTIONS["sdl2-path"]
+	sdl = _OPTIONS["sdl-path"]
 	openal = _OPTIONS["openal-path"]
 	fluidsynth = _OPTIONS["fluidsynth-path"]
 	
@@ -147,16 +147,13 @@ workspace "Hotshot"
 	
 	includedirs {
 		sdl .. "/include",
-		sdl .. "/include/SDL2",
+		sdl .. "/include/SDL3",
 		openal .. "/include",
 		fluidsynth .. "/include",
 	}
 	
-	prebuildcommands {'echo ' .. sdl .. "/include/SDL2"}
-	
 	links {
-		"SDL2",
-		"SDL2main"
+		"SDL3"
 	}
 	
 	filter { "system:not windows" }
