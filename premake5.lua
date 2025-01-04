@@ -132,10 +132,6 @@ workspace "Hotshot"
 		
 	filter {}
 	
-	--sdl2 = os.findlib("sdl2")
-	--openal = os.findlib("openal")
-	--fluidsynth = os.findlib("fluidsynth")
-	
 	sdl = _OPTIONS["sdl2-path"]
 	openal = _OPTIONS["openal-path"]
 	fluidsynth = _OPTIONS["fluidsynth-path"]
@@ -151,13 +147,16 @@ workspace "Hotshot"
 	
 	includedirs {
 		sdl .. "/include",
-		sdl .. "/include/SDL3",
+		sdl .. "/include/SDL2",
 		openal .. "/include",
 		fluidsynth .. "/include",
 	}
 	
+	prebuildcommands {'echo ' .. sdl .. "/include/SDL2"}
+	
 	links {
-		"SDL3"
+		"SDL2",
+		"SDL2main"
 	}
 	
 	filter { "system:not windows" }
@@ -167,23 +166,8 @@ workspace "Hotshot"
 		}
 	
 	filter { "system:windows" }
-
+	
 		links "OpenAL32"
-
-		--is it bad when you have to tell the engine to override itself to use the
-		--right file, rather than something simple like specifying the right file?
-		--AND IT DOESNT EVEN WORK
-		--[[premake.override(premake.tools.msc, "getLibraryExtensions", 
-			function(oldfn)
-				local extensions = oldfn()
-				extensions["a"] = true
-				extensions["lib"] = false
-				return extensions
-			end
-		)
-			
-		links "libfluidsynth"
-		]]
 
 	filter {}
 	
