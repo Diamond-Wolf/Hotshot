@@ -11,7 +11,7 @@ newoption {
 newoption {
 	trigger = "sdl2-path",
 	value = "path",
-	description = "Path to SDL3 version, including trailing slash"
+	description = "Path to SDL2 version, including trailing slash"
 }
 
 newoption {
@@ -151,8 +151,6 @@ workspace "Hotshot"
 		openal .. "/include",
 		fluidsynth .. "/include",
 	}
-	
-	prebuildcommands {'echo ' .. sdl .. "/include/SDL2"}
 	
 	links {
 		"SDL2",
