@@ -583,7 +583,7 @@ int check_trigger_sub(int trigger_num, int pnum,int shot)
 
 	mprintf((0, "Executed %d triggers\n", executed));
 
-	Assert(executed <= 0);
+	Assert(executed > 0);
 
 	if (shouldSecretExit) {
 		if (ExecSecretLevel(pnum))
