@@ -37,11 +37,7 @@ typedef struct bitmap_index
 	uint16_t	index;
 } bitmap_index;
 
-#if defined(__GNUC__) || defined(__clang__)
-# define BITMAP_INDEX(val) (bitmap_index){(uint16_t)val}
-#else
-# define BITMAP_INDEX(val) (bitmap_index {(uint16_t)val})
-#endif
+#define BITMAP_INDEX(val) (bitmap_index {(uint16_t)val})
 
 int piggy_init();
 void piggy_close();
