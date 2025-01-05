@@ -51,9 +51,9 @@ workspace "Hotshot"
 	filter { "system:macosx" }
 		targetextension ""
 		--todo: Have clean remove the bundle, once I figure out what will let me do anything with clean
-		filter { "system:macosx and configurations:Debug" }
+		filter { "system:macosx", "configurations:Debug" }
 			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Debug \"%{wks.location}\"" }
-		filter { "system:macosx and configurations:Release" }
+		filter { "system:macosx", "configurations:Release" }
 			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Release \"%{wks.location}\"" }
 		
 	filter {}
