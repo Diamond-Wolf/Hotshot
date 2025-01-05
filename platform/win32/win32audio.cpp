@@ -1,5 +1,5 @@
 
-#ifndef USE_OPENAL
+#ifndef USE_SDL
 
 #include "platform/i_sound.h"
 #include "platform/s_sequencer.h"

@@ -51,9 +51,9 @@ workspace "Hotshot"
 	filter { "system:macosx" }
 		targetextension ""
 		--todo: Have clean remove the bundle, once I figure out what will let me do anything with clean
-		filter { "configurations:Debug" }
+		filter { "system:macosx and configurations:Debug" }
 			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Debug \"%{wks.location}\"" }
-		filter { "configurations:Release" }
+		filter { "system:macosx and configurations:Release" }
 			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Release \"%{wks.location}\"" }
 		
 	filter {}
@@ -140,15 +140,15 @@ workspace "Hotshot"
 		sdl,
 		sdl .. "/lib",
 		sdl .. "/lib/x64",
-		openal .. "/lib",
-		openal .. "/libs/Win64",
+		--openal .. "/lib",
+		--openal .. "/libs/Win64",
 		fluidsynth .. "/lib"
 	}
 	
 	includedirs {
 		sdl .. "/include",
 		sdl .. "/include/SDL3",
-		openal .. "/include",
+		--openal .. "/include",
 		fluidsynth .. "/include",
 	}
 	
@@ -159,18 +159,17 @@ workspace "Hotshot"
 	filter { "system:not windows" }
 		links {
 			"fluidsynth",
-			"openal",
+			--"openal",
 		}
 	
-	filter { "system:windows" }
-	
-		links "OpenAL32"
+--	filter { "system:windows" }
+--		links "OpenAL32"
 
 	filter {}
 	
 	defines {
 		"USE_SDL",
-		"USE_OPENAL",
+		--"USE_OPENAL",
 		"USE_FLUIDSYNTH"
 	}
 
