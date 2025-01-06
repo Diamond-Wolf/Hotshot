@@ -7,24 +7,24 @@ as described in copying.txt.
 
 #pragma once
 
+#ifdef USE_TSFMIDI
+
 #include "platform/s_midi.h"
+#include "tsf.h"
 
-#include <Windows.h>
-
-class MidiWin32Synth : MidiSynth
+class TSFMidiSynth : MidiSynth
 {
-	HMIDIOUT OutputDevice;
-	uint8_t VolumeLevels[16];
-	int MasterVolume;
-
+	tsf* engine = nullptr;
+	int sampleRate = MIDI_SAMPLERATE;
 public:
-	MidiWin32Synth();
+	TSFMidiSynth();
+	~TSFMidiSynth() override;
 	void SetSoundfont(const char* filename);
 	void SetSampleRate(uint32_t newSampleRate) override;
 	void CreateSynth() override;
 	int ClassifySynth() override
 	{
-		return MIDISYNTH_LIVE;
+		return MIDISYNTH_SOFT;
 	}
 	void DoMidiEvent(midievent_t* ev) override;
 	void RenderMIDI(int numTicks, short* buffer) override;
@@ -34,3 +34,5 @@ public:
 	void PerformBranchResets(BranchEntry* entry, int chan) override;
 	void SetVolume(int volume) override;
 };
+
+#endif

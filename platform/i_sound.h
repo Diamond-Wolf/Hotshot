@@ -80,7 +80,7 @@ bool midi_queue_slots_available(void* opaquesource);
 void midi_dequeue_midi_buffers(void* opaquesource);
 //Queues a new buffer into the music source, at a specified sample rate.
 //This is used for both MIDI and CD music right now
-void midi_queue_buffer(void* opaquesource, int numSamples, uint16_t* data);
+void midi_queue_buffer(void* opaquesource, int numSamples, int16_t* data);
 
 //Readies the source for playing MIDI music. Returns an opaque pointer for the source.
 void* midi_start_source();

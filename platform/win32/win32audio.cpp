@@ -681,7 +681,7 @@ void midi_dequeue_midi_buffers(void* opaquesource)
 {
 }
 
-void midi_queue_buffer(void* opaquesource, int numTicks, uint16_t *data)
+void midi_queue_buffer(void* opaquesource, int numTicks, int16_t *data)
 {
 }
 

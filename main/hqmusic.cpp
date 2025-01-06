@@ -205,7 +205,7 @@ void RBAThread()
 				RBAThreadDecodeSamples();
 				if (RBA_Vorbis_frame_size > 0)
 				{
-					midi_queue_buffer(mysource, RBA_Vorbis_frame_size, (uint16_t*)RBA_Vorbis_frame_data);
+					midi_queue_buffer(mysource, RBA_Vorbis_frame_size, RBA_Vorbis_frame_data);
 				}
 				midi_check_status(mysource);
 			}

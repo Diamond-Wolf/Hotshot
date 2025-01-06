@@ -22,9 +22,14 @@ as described in copying.txt.
 #include "platform/fluidsynth/fluid_midi.h"
 #endif
 
+#ifdef USE_TSFMIDI
+#include "platform/tsfmidi/tsf_midi.h"
+#endif
+
 #ifdef _WINDOWS
 #include "platform/win32/win32midi.h"
 #endif
+#include "mono.h"
 
 //[ISB] Uncomment to enable MIDI file diagonstics. Extremely slow on windows. And probably linux tbh.
 //Will probably overflow your console buffer, so make it really long if you must
@@ -33,7 +38,7 @@ as described in copying.txt.
 //Uncomment to enable diagonstics of SOS's special MIDI controllers. 
 //#define DEBUG_SPECIAL_CONTROLLERS
 
-GenDevices PreferredGenDevice = GenDevices::FluidSynthDevice;
+GenDevices PreferredGenDevice = GenDevices::TSFSynthDevice;
 int CurrentDevice = 0;
 int PreferredMMEDevice = -1;
 
@@ -105,6 +110,7 @@ int S_InitMusic(int device)
 
 		//Validate that the preferred device is actually available. 
 		//Messy macro abuse ahoy. 
+
 #ifndef USE_FLUIDSYNTH
 		if (genMidiDevice == GenDevices::FluidSynthDevice)
 		{
@@ -121,6 +127,18 @@ int S_InitMusic(int device)
 		{
 #ifdef USE_FLUIDSYNTH
 			genMidiDevice = GenDevices::FluidSynthDevice;
+#else
+			genMidiDevice = GenDevices::NullDevice;
+#endif
+		}
+#endif
+
+
+#ifndef USE_TSFMIDI
+		if (genMidiDevice == GenDevices::TSFSynthDevice)
+		{
+#ifdef _WINDOWS
+			genMidiDevice = GenDevices::MMEDevice;
 #else
 			genMidiDevice = GenDevices::NullDevice;
 #endif
@@ -145,6 +163,18 @@ int S_InitMusic(int device)
 		}
 			break;
 #endif
+
+#ifdef USE_TSFMIDI
+		case GenDevices::TSFSynthDevice: {
+			TSFMidiSynth* newsynth = new TSFMidiSynth();
+			newsynth->SetSampleRate(plat_get_preferred_midi_sample_rate());
+			newsynth->SetSoundfont(SoundFontFilename);
+			newsynth->CreateSynth(); // [DW] TSF needs to be created with the soundfont, then it can be set up, but don't wanna change the API
+			synth = (MidiSynth*)newsynth;
+			break;
+		}
+#endif
+
 #ifdef _WINDOWS
 		case GenDevices::MMEDevice:
 		{
@@ -159,7 +189,9 @@ int S_InitMusic(int device)
 		}
 			break;
 #endif
+
 		default:
+			mprintf((1, "Could not create requested synth. Creating dummy synth instead.\n"));
 			synth = new DummyMidiSynth();
 			break;
 		}
@@ -663,7 +695,7 @@ void HMPFile::Rescale(int newTempo)
 
 //Amount of ticks to render before attempting to queue again. 
 //Was running into problems with OpenAL backend occasionally starving
-#define NUMSOFTTICKS 4
+#define NUMSOFTTICKS 8
 
 MidiPlayer::MidiPlayer(MidiSequencer* newSequencer, MidiSynth* newSynth)
 {
@@ -684,8 +716,11 @@ MidiPlayer::MidiPlayer(MidiSequencer* newSequencer, MidiSynth* newSynth)
 	hasChangedSong = false;
 	midiThread = nullptr;
 
-	songBuffer = new uint16_t[(MIDI_SAMPLERATE / 120) * 4 * NUMSOFTTICKS];
-	memset(songBuffer, 0, sizeof(uint16_t) * (MIDI_SAMPLERATE / 120) * 4 * NUMSOFTTICKS);
+	//const auto bufferSize = (MIDI_SAMPLERATE / MIDI_FREQUENCY) * NUMSOFTTICKS * 2;
+	const auto bufferSize = MIDI_SAMPLERATE;
+
+	songBuffer = new int16_t[bufferSize];
+	memset(songBuffer, 0, sizeof(int16_t) * bufferSize);
 }
 
 bool MidiPlayer::IsError()
@@ -785,7 +820,7 @@ void MidiPlayer::Run()
 			//printf("Starting new song\n");
 			sequencer->StartSong(nextSong, nextLoop);
 			midi_set_music_samplerate(mysource, MIDI_SAMPLERATE);
-			TickFracDelta = (65536 * nextSong->GetTempo()) / 120;
+			TickFracDelta = (65536 * nextSong->GetTempo()) / MIDI_FREQUENCY;
 			curSong = nextSong;
 			nextSong = nullptr;
 			hasChangedSong = true;
@@ -798,7 +833,7 @@ void MidiPlayer::Run()
 		//when a song gets loaded and some events exist. 
 		if (!songLoaded)
 		{
-			I_DelayUS(4000);
+			I_DelayUS(1000);
 		}
 		else
 		{
@@ -808,7 +843,7 @@ void MidiPlayer::Run()
 				//Ugh. This is hideous.
 				//Queue buffers as fast as possible. When done, sleep for a while. This comes close enough to avoiding starvation.
 				//Anything less than 5 120hz ticks of latency will result in OpenAL occasionally starving. It's the most I can do...
-				midi_dequeue_midi_buffers(mysource);
+				/*midi_dequeue_midi_buffers(mysource);
 				while (midi_queue_slots_available(mysource))
 				{
 					for (i = 0; i < NUMSOFTTICKS; i++)
@@ -819,13 +854,25 @@ void MidiPlayer::Run()
 							sequencer->Tick();
 							currentTickFrac -= 65536;
 						}
-						sequencer->Render(MIDI_SAMPLERATE / 120, songBuffer + (MIDI_SAMPLERATE / 120 * 2) * i);
+						sequencer->Render(MIDI_SAMPLERATE / MIDI_FREQUENCY, songBuffer + (MIDI_SAMPLERATE / MIDI_TICK_DIV * 2) * i);
 					}
-					midi_queue_buffer(mysource, MIDI_SAMPLERATE / 120 * NUMSOFTTICKS, songBuffer);
-				}
+					midi_queue_buffer(mysource, MIDI_SAMPLERATE / MIDI_FREQUENCY * NUMSOFTTICKS, songBuffer);
+				}*/ // [DW] openal lame
 
+				//for (i = 0; i < NUMSOFTTICKS; i++) {
+				currentTickFrac += TickFracDelta;
+				while (currentTickFrac >= 65536)
+				{
+					sequencer->Tick();
+					currentTickFrac -= 65536;
+				}
+				sequencer->Render(1, songBuffer);
+				midi_queue_buffer(mysource, MIDI_SAMPLERATE / MIDI_FREQUENCY, songBuffer);
+				//}
+				
 				midi_check_status(mysource);
-				I_DelayUS(4000);
+				//I_DelayUS(1000 * NUMSOFTTICKS);
+				I_DelayUS(1000000 / MIDI_FREQUENCY);
 			}
 			else if (synth->ClassifySynth() == MIDISYNTH_LIVE)
 			{
@@ -839,7 +886,7 @@ void MidiPlayer::Run()
 						currentTickFrac -= 65536;
 					}
 
-					nextTimerTick += (1000000 / 120);
+					nextTimerTick += (1000000 / MIDI_FREQUENCY);
 
 					delta = nextTimerTick - I_GetUS();
 					if (delta > 2000)

@@ -1425,10 +1425,11 @@ void do_chocolate_midi_menu()
 		m[0].type = NM_TYPE_TEXT; m[0].text = const_cast<char*>("Preferred general MIDI device");
 		m[1].type = NM_TYPE_RADIO; m[1].text = const_cast<char*>("None"); m[1].group = 0; m[1].value = PreferredGenDevice == GenDevices::NullDevice;
 		m[2].type = NM_TYPE_RADIO; m[2].text = const_cast<char*>("FluidSynth (if available)"); m[2].group = 0; m[2].value = PreferredGenDevice == GenDevices::FluidSynthDevice;
-		m[3].type = NM_TYPE_TEXT; m[3].text = const_cast<char*>("Soundfont path");
-		m[4].type = NM_TYPE_INPUT; m[4].text = SoundFontFilename; m[4].text_len = _MAX_PATH - 1;
-		m[5].type = NM_TYPE_RADIO; m[5].text = const_cast<char*>("MS/Native MIDI (if available)"); m[5].group = 0; m[5].value = PreferredGenDevice == GenDevices::MMEDevice;
-		m[6].type = NM_TYPE_MENU; m[6].text = const_cast<char*>("Select MME device");
+		m[3].type = NM_TYPE_RADIO; m[3].text = const_cast<char*>("TinySoundFont MIDI (if available)"); m[3].group = 0; m[3].value = PreferredGenDevice == GenDevices::TSFSynthDevice;
+		m[4].type = NM_TYPE_TEXT; m[4].text = const_cast<char*>("Soundfont path");
+		m[5].type = NM_TYPE_INPUT; m[5].text = SoundFontFilename; m[5].text_len = _MAX_PATH - 1;
+		m[6].type = NM_TYPE_RADIO; m[6].text = const_cast<char*>("MS/Native MIDI (if available)"); m[6].group = 0; m[6].value = PreferredGenDevice == GenDevices::MMEDevice;
+		m[7].type = NM_TYPE_MENU; m[7].text = const_cast<char*>("Select MME device");
 
 		i = newmenu_do1(NULL, "MIDI Options", 7, m, nullptr, i);
 
@@ -1461,7 +1462,9 @@ void do_chocolate_midi_menu()
 
 	if (m[2].value)
 		new_preferred_device = GenDevices::FluidSynthDevice;
-	else if (m[5].value)
+	else if (m[3].value)
+		new_preferred_device = GenDevices::TSFSynthDevice;
+	else if (m[6].value)
 		new_preferred_device = GenDevices::MMEDevice;
 	else
 		new_preferred_device = GenDevices::NullDevice;

@@ -28,16 +28,11 @@ Instead, it is released under the terms of the MIT License.
 #define SAMPLE_RATE_11K		11025
 #define SAMPLE_RATE_22K		22050
 
-//ALCdevice *ALDevice = NULL;
-//ALCcontext *ALContext = NULL;
-
-SDL_AudioDeviceID musicDevice;
-SDL_AudioDeviceID sfxDevice;
+SDL_AudioDeviceID musicDevice = 0;
+SDL_AudioDeviceID sfxDevice = 0;
 
 SDL_AudioStream* musicStream = NULL;
 SDL_AudioStream* movieStream = NULL;
-
-const auto NUM_MUSIC_STREAMS = 2;
 
 int AL_initialized = 0;
 
@@ -68,15 +63,28 @@ std::thread MIDIThread;
 	bool Playing; //True if the source has been started for the first time. 
 };*/
 
+struct SDLMusicSource {
+	bool playing;
+};
+
 struct SDLSound {
+
+#ifndef NDEBUG
+	int id;
+#endif
 
     SDL_AudioStream* inputStream = NULL;
 	SDL_AudioStream* outputStream = NULL;
-    bool free;
-    bool loop;
-
+    
     unsigned char* rawData = NULL;
     int dataLen;
+
+	float xang;
+	float yang;
+
+	bool free;
+	bool loop;
+	bool initialized;
 
 };
 
@@ -91,25 +99,6 @@ int MusicVolume;
 
 MidiPlayer* midiPlayer;
 
-/*void AL_ErrorCheck(const char* context)
-{
-    return;
-	int error;
-	error = alGetError();
-	if (error != AL_NO_ERROR)
-	{
-		fprintf(stderr, "Error in context %s: ", context);
-		if (error == AL_INVALID_ENUM)
-			fprintf(stderr, "Invalid enum\n");
-		else if (error == AL_INVALID_NAME)
-			fprintf(stderr, "Invalid name\n");
-		else if (error == AL_INVALID_OPERATION)
-			fprintf(stderr, "Invalid operation\n");
-		else if (error == AL_INVALID_VALUE)
-			fprintf(stderr, "Invalid value\n");
-	}
-}*/
-
 void* I_CreateMusicSource();
 
 void LockSDLStreams(SDLSound& sound) {
@@ -123,15 +112,19 @@ void UnlockSDLStreams(SDLSound& sound) {
 }
 
 const SDL_AudioSpec sfxSpec = { SDL_AUDIO_U8, 1, SAMPLE_RATE_22K };
-const SDL_AudioSpec intermediateSpec = { SDL_AUDIO_S32, 2, SAMPLE_RATE_22K };
+//const SDL_AudioSpec intermediateSpec = { SDL_AUDIO_S8, 2, SAMPLE_RATE_22K }
+const SDL_AudioSpec intermediateSpec = { SDL_AUDIO_S32, 2, 48000 };
 const SDL_AudioSpec musicSpec = { SDL_AUDIO_S16, 2, MIDI_SAMPLERATE };
 SDL_AudioSpec outputSpec;
+
+typedef int32_t intermediate_data_t;
 
 //uint8_t silence[4096];
 
 int plat_init_audio() {
 
     SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &outputSpec, NULL);
+	outputSpec.channels = 2;
     mprintf((0, "Audio output spec: format %d, %d channels, %dkhz\n", outputSpec.format, outputSpec.channels, outputSpec.freq));
 
     musicDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &outputSpec);
@@ -181,7 +174,16 @@ int plat_init_audio() {
     //auto silentValue = SDL_GetSilenceValueForFormat(sfxSpec.format);
     //memset(silence, silentValue, 4096);
 
+#ifndef NDEBUG
+	int id = 0;
+#endif
+
     for (auto& sound : soundPool) {
+
+#ifndef NDEBUG
+		sound.id = id;
+		id++;
+#endif
 
         sound.inputStream = SDL_CreateAudioStream(&sfxSpec, &intermediateSpec);
 		if (!sound.inputStream) {
@@ -194,61 +196,87 @@ int plat_init_audio() {
 		}
 
         sound.free = true;
+		sound.initialized = false;
 
-        SDL_SetAudioStreamGetCallback(sound.inputStream, 
-            [](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
-                SDLSound* sound = reinterpret_cast<SDLSound*>(userdata);
+		if (sound.inputStream) {
+			SDL_SetAudioStreamGetCallback(sound.inputStream,
+				[](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
+					auto sound = reinterpret_cast<SDLSound*>(userdata);
 
-                auto available = SDL_GetAudioStreamAvailable(audioStream);
-                if (available < 0) {
-                    mprintf((1, "Error getting available audio stream data for mix: %s", SDL_GetError()));
-                    Int3();
-                }
-
-				if (totalAmount >= available) {
-				
-					if (sound->loop) {
-						SDL_PutAudioStreamData(audioStream, sound->rawData, sound->dataLen);
-					} else if (available == 0) {
-						if (!sound->free) {
-							sound->free = true;
-							sound->loop = false;
-							delete[] sound->rawData;
-						}
-						//SDL_PutAudioStreamData(audioStream, silence, (totalAmount < 4096 ? totalAmount : 4096));
+					auto available = SDL_GetAudioStreamAvailable(audioStream);
+					if (available < 0) {
+						mprintf((1, "Error getting available audio stream data for mix: %s", SDL_GetError()));
+						Int3();
 					}
 
-				}
-            }, 
-            &sound);
+					if (totalAmount >= available) {
 
-		SDL_SetAudioStreamGetCallback(sound.outputStream,
-			[](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
-				SDLSound* sound = reinterpret_cast<SDLSound*>(userdata);
+						if (sound->loop) {
+							SDL_PutAudioStreamData(audioStream, sound->rawData, sound->dataLen);
+						}
+						else if (available == 0) {
+							if (!sound->free && sound->initialized) {
+#ifndef NDEBUG
+								mprintf((0, "Freeing sound %d\n", sound->id));
+#endif
+								sound->free = true;
+								sound->loop = false;
+								sound->initialized = false;
+								delete[] sound->rawData;
+								sound->rawData = NULL;
+							}
+							//SDL_PutAudioStreamData(audioStream, silence, (totalAmount < 4096 ? totalAmount : 4096));
+						}
 
-				if (sound->free)
-					return;
-				
-				float* read = new float[additionalAmount * sizeof(float)];
+					}
+				},
+				&sound);
 
-				SDL_LockAudioStream(sound->inputStream);
+		}
 
-				int bytes = SDL_GetAudioStreamData(sound->inputStream, read, additionalAmount * sizeof(float));
-				if (bytes < 0) 
-					Warning("Error getting stream data! %s", SDL_GetError());
+		if (sound.outputStream) {
+			SDL_SetAudioStreamGetCallback(sound.outputStream,
+				[](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
+					auto sound = reinterpret_cast<SDLSound*>(userdata);
 
-				SDL_UnlockAudioStream(sound->inputStream);
+					if (sound->free)
+						return;
 
-				//Process positional
+					intermediate_data_t* read = new intermediate_data_t[(additionalAmount + 1) / sizeof(intermediate_data_t)];
 
-				SDL_PutAudioStreamData(audioStream, read, bytes);
-				
-				delete[] read;
-				
-			},
-			&sound);
+					SDL_LockAudioStream(sound->inputStream);
 
-        SDL_BindAudioStream(sfxDevice, sound.outputStream);
+					int bytes = SDL_GetAudioStreamData(sound->inputStream, read, additionalAmount);
+					if (bytes < 0)
+						Warning("Error getting stream data! %s", SDL_GetError());
+
+					Assert(bytes <= additionalAmount);
+
+					SDL_UnlockAudioStream(sound->inputStream);
+
+					for (int i = 0; i < bytes / sizeof(intermediate_data_t); i += 2) {
+						auto right = read[i];
+						auto left = read[i + 1];
+
+						auto pan = (sound->xang + 1) / 2;
+						//auto scale = abs(sound->yang);
+
+
+						right = (intermediate_data_t)(right * sqrtf(pan));
+						left = (intermediate_data_t)(left * sqrtf(1 - pan));
+						read[i] = right;
+						read[i + 1] = left;
+					}
+
+					SDL_PutAudioStreamData(audioStream, read, bytes);
+
+					delete[] read;
+
+				},
+				&sound);
+
+			SDL_BindAudioStream(sfxDevice, sound.outputStream);
+		}
 
     }
 
@@ -257,8 +285,6 @@ int plat_init_audio() {
 }
 
 void plat_close_audio() {
-
-	SDL_AudioStream* musicStreams[] = { musicStream, movieStream };
 
 	if (musicStream) {
 		SDL_DestroyAudioStream(musicStream);
@@ -270,14 +296,22 @@ void plat_close_audio() {
 	}
 	
     for (auto& sound : soundPool) {
+
 		if (sound.outputStream) {
 			SDL_DestroyAudioStream(sound.outputStream);
 			sound.outputStream = NULL;
 		}
+
 		if (sound.inputStream) {
 			SDL_DestroyAudioStream(sound.inputStream);
 			sound.inputStream = NULL;
 		}
+
+		if (sound.rawData) {
+			delete[] sound.rawData;
+			sound.rawData = NULL;
+		}
+
     }
 
 	SDL_CloseAudioDevice(musicDevice);
@@ -288,30 +322,41 @@ void plat_close_audio() {
 int plat_get_new_sound_handle() {
 
     for (int i = 0; i < _MAX_VOICES; i++) {
-        if (soundPool[i].free) {
+		
+		LockSDLStreams(soundPool[i]);
+        
+		if (soundPool[i].free) {
 
-			LockSDLStreams(soundPool[i]);
+#ifndef NDEBUG
+			mprintf((0, "Allocating sound %d\n", soundPool[i].id));
+#endif
 
             soundPool[i].free = false;
+			soundPool[i].initialized = false;
             SDL_ClearAudioStream(soundPool[i].inputStream);
 			
 			UnlockSDLStreams(soundPool[i]);
-            
-			return i;
+            return i;
 
         }
-    }
+		
+		UnlockSDLStreams(soundPool[i]);
+    
+	}
 
     return _ERR_NO_SLOTS;
 }
 
 void plat_set_sound_data(int handle, unsigned char* data, int length, int sampleRate) {
+	if (handle >= _ERR_NO_SLOTS)
+		return;
+
     auto& sound = soundPool[handle];
-    SDL_AudioSpec newFormat = {SDL_AUDIO_U8, 1, sampleRate};
+    SDL_AudioSpec newFormat = { SDL_AUDIO_U8, 1, sampleRate };
     SDL_SetAudioStreamFormat(sound.inputStream, &newFormat, &outputSpec);
 
     sound.dataLen = length;
-    sound.rawData = new unsigned char[length];
+    sound.rawData = new uint8_t[length];
     memcpy(sound.rawData, data, length);
 
 	LockSDLStreams(sound);
@@ -319,27 +364,51 @@ void plat_set_sound_data(int handle, unsigned char* data, int length, int sample
 	SDL_PutAudioStreamData(sound.inputStream, data, length);
 	SDL_FlushAudioStream(sound.inputStream);
 	
+	sound.initialized = true;
+
 	UnlockSDLStreams(sound);
 }
 
 void plat_set_sound_position(int handle, int volume, int angle) {
+	if (handle >= _ERR_NO_SLOTS)
+		return;
+
     plat_set_sound_volume(handle, volume);
     plat_set_sound_angle(handle, angle);
 }
 
-void plat_set_sound_angle(int handle, int angle) {}
+void plat_set_sound_angle(int handle, int angle) {
+	if (handle >= _ERR_NO_SLOTS)
+		return;
+
+	auto& sound = soundPool[handle];
+
+	float flang = f2fl(angle) * (3.1415927f);
+
+	sound.xang = (float)cos(flang);
+	sound.yang = (float)sin(flang);
+}
 
 void plat_set_sound_volume(int handle, int volume) {
+	if (handle >= _ERR_NO_SLOTS)
+		return;
+
 	SDL_SetAudioStreamGain(soundPool[handle].inputStream, volume / 32768.0f);
 }
 
 void plat_set_sound_loop_points(int handle, int start, int end) {}
 
 void plat_start_sound(int handle, int loop) {
+	if (handle >= _ERR_NO_SLOTS)
+		return;
+
     soundPool[handle].loop = loop;
 }
 
 void plat_stop_sound(int handle) {
+	if (handle >= _ERR_NO_SLOTS)
+		return;
+
     auto& sound = soundPool[handle];
 
 	LockSDLStreams(sound);
@@ -348,19 +417,26 @@ void plat_stop_sound(int handle) {
     sound.free = true;
     SDL_ClearAudioStream(sound.inputStream);
     delete[] sound.rawData;
+	sound.rawData = NULL;
 
 	UnlockSDLStreams(sound);
 }
 
 int plat_check_if_sound_playing(int handle) { 
+	if (handle >= _ERR_NO_SLOTS)
+		return false;
+
     return !soundPool[handle].free;
 }
 
 int plat_check_if_sound_finished(int handle) {
+	if (handle >= _ERR_NO_SLOTS)
+		return false;
+
     return !plat_check_if_sound_playing(handle);
 }
 
-int plat_start_midi(MidiSequencer *sequencer) {return 1;}
+int plat_start_midi(MidiSequencer *sequencer) { return 0; }
 
 uint32_t plat_get_preferred_midi_sample_rate() {
     return MIDI_SAMPLERATE;
@@ -368,26 +444,73 @@ uint32_t plat_get_preferred_midi_sample_rate() {
 
 void plat_close_midi() {}
 
-void plat_set_music_volume(int volume) {}
+void plat_set_music_volume(int volume) {
+	SDL_SetAudioDeviceGain(musicDevice, volume / 127.0f);
+}
 
 void plat_start_midi_song(HMPFile* song, bool loop) {}
-void plat_stop_midi_song() {}
 
-void midi_set_music_samplerate(void* opaquesource, uint32_t samplerate) {}
+void plat_stop_midi_song() {
+	SDL_ClearAudioStream(musicStream);
+}
 
-bool midi_queue_slots_available(void* opaquesource) {return false;}
+void midi_set_music_samplerate(void* opaquesource, uint32_t samplerate) {
+	SDL_AudioSpec midiSpec = { SDL_AUDIO_S16, 2, samplerate };
+	SDL_SetAudioStreamFormat(musicStream, &midiSpec, &outputSpec);
+}
 
+bool midi_queue_slots_available(void* opaquesource) { return false; }
 void midi_dequeue_midi_buffers(void* opaquesource) {}
 
-void midi_queue_buffer(void* opaquesource, int numSamples, uint16_t* data) {}
+void midi_queue_buffer(void* opaquesource, int numSamples, int16_t* data) {
+	SDL_PutAudioStreamData(musicStream, data, numSamples * sizeof(*data));
+}
 
-void* midi_start_source() {return NULL;}
+void* midi_start_source() {
+	auto source = new SDLMusicSource();
+	SDL_SetAudioStreamGetCallback(
+		musicStream,
+		[](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
+			auto source = reinterpret_cast<SDLMusicSource*>(userdata);
+			
+			auto available = SDL_GetAudioStreamAvailable(audioStream);
+			if (available < 0) {
+				mprintf((1, "Error getting available audio stream data for midi: %s", SDL_GetError()));
+				Int3();
+			}
 
-void midi_stop_source(void* opaquesource) {}
+			auto queued = SDL_GetAudioStreamQueued(audioStream);
+			if (queued < 0) {
+				mprintf((1, "Error getting available queued stream data for midi: %s", SDL_GetError()));
+				Int3();
+			}
+
+			source->playing = !(available == 0 && queued == 0);
+		}
+		, source);
+
+	return source;
+}
+
+void midi_stop_source(void* opaquesource) {
+	auto source = reinterpret_cast<SDLMusicSource*>(opaquesource);
+
+	SDL_LockAudioStream(musicStream);
+
+	SDL_SetAudioStreamGetCallback(musicStream, NULL, NULL);
+	SDL_ClearAudioStream(musicStream);
+
+	delete source;
+
+	SDL_UnlockAudioStream(musicStream);
+}
 
 void midi_check_status(void* opaquesource) {}
 
-bool midi_check_finished(void* opaquesource) {return false;}
+bool midi_check_finished(void* opaquesource) {
+	auto source = reinterpret_cast<SDLMusicSource*>(opaquesource);
+	return !source->playing;
+}
 
 void plat_start_hq_song(int sample_rate, std::vector<float>&& song_data, bool loop) {}
 void plat_stop_hq_song() {}
@@ -667,6 +790,10 @@ void I_DestroyMusicSource(void* opaquesource)
 
 	delete source;
 }
+
+*/
+
+/*
 
 void midi_set_music_samplerate(void* opaquesource, uint32_t samplerate)
 {

@@ -80,10 +80,12 @@ workspace "Hotshot"
 		"mve/*.h",
 		"platform/*.cpp",
 		"platform/*.h",
-		"platform/fluidsynth/*.cpp",
-		"platform/fluidsynth/*.h",
+		--"platform/fluidsynth/*.cpp",
+		--"platform/fluidsynth/*.h",
 		--"platform/openal/*.cpp",
 		--"platform/openal/*.h",
+		"platform/tsfmidi/*.cpp",
+		"platform/tsfmidi/*.h",
 		"platform/sdl/*.cpp",
 		"platform/sdl/*.h",
 		"texmap/*.cpp",
@@ -142,35 +144,36 @@ workspace "Hotshot"
 		sdl .. "/lib/x64",
 		--openal .. "/lib",
 		--openal .. "/libs/Win64",
-		fluidsynth .. "/lib"
+		--fluidsynth .. "/lib"
 	}
 	
 	includedirs {
 		sdl .. "/include",
 		sdl .. "/include/SDL3",
 		--openal .. "/include",
-		fluidsynth .. "/include",
+		--fluidsynth .. "/include",
 	}
 	
 	links {
 		"SDL3"
 	}
 	
-	filter { "system:not windows" }
+	--[[filter { "system:not windows" }
 		links {
 			"fluidsynth",
-			--"openal",
+			"openal",
 		}
 	
---	filter { "system:windows" }
---		links "OpenAL32"
+	filter { "system:windows" }
+		links "OpenAL32"]]--
 
 	filter {}
 	
 	defines {
 		"USE_SDL",
+		"USE_TSFMIDI"
 		--"USE_OPENAL",
-		"USE_FLUIDSYNTH"
+		--"USE_FLUIDSYNTH"
 	}
 
 project "Hotshot"

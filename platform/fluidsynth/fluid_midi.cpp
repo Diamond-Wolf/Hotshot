@@ -14,11 +14,11 @@ as described in copying.txt.
 #include "fluid_midi.h"
 #include "platform/s_midi.h"
 
+#ifdef USE_FLUIDSYNTH
+
 #ifdef _WIN32
 # pragma comment(lib, "libfluidsynth.dll.a") //As nice as premake is, it doesn't play nice with anything non-standard
 #endif
-
-#ifdef USE_FLUIDSYNTH
 
 MidiFluidSynth::MidiFluidSynth()
 {
@@ -62,7 +62,7 @@ void MidiFluidSynth::SetSoundfont(const char* filename)
 	fluid_synth_sfload(FluidSynth, filename, 1);
 }
 
-void MidiFluidSynth::RenderMIDI(int numTicks, unsigned short* buffer)
+void MidiFluidSynth::RenderMIDI(int numTicks, short* buffer)
 {
 	fluid_synth_write_s16(FluidSynth, numTicks, (void*)buffer, 0, 2, (void*)buffer, 1, 2);
 }
