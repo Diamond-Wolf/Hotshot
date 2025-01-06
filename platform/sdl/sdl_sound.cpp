@@ -125,13 +125,14 @@ void UnlockSDLStreams(SDLSound& sound) {
 const SDL_AudioSpec sfxSpec = { SDL_AUDIO_U8, 1, SAMPLE_RATE_22K };
 const SDL_AudioSpec intermediateSpec = { SDL_AUDIO_S32, 2, SAMPLE_RATE_22K };
 const SDL_AudioSpec musicSpec = { SDL_AUDIO_S16, 2, MIDI_SAMPLERATE };
-SDL_AudioSpec outputSpec = { SDL_AUDIO_S32, 2, 48000 };
+SDL_AudioSpec outputSpec;
 
 //uint8_t silence[4096];
 
 int plat_init_audio() {
 
     SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &outputSpec, NULL);
+    mprintf((0, "Audio output spec: format %d, %d channels, %dkhz\n", outputSpec.format, outputSpec.channels, outputSpec.freq));
 
     musicDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &outputSpec);
 	if (!musicDevice) {
