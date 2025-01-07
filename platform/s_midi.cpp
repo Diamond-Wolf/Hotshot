@@ -4,11 +4,12 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License,
 as described in copying.txt.
 */
+#include <chrono>
+#include <mutex>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <thread>
-#include <mutex>
 
 #include "platform/platform_filesys.h"
 #include "platform/i_sound.h"
@@ -716,6 +717,8 @@ MidiPlayer::MidiPlayer(MidiSequencer* newSequencer, MidiSynth* newSynth)
 	hasChangedSong = false;
 	midiThread = nullptr;
 
+	tickClock;
+
 	//const auto bufferSize = (MIDI_SAMPLERATE / MIDI_FREQUENCY) * NUMSOFTTICKS * 2;
 	const auto bufferSize = MIDI_SAMPLERATE;
 
@@ -790,6 +793,8 @@ void MidiPlayer::Run()
 	void* mysource = midi_start_source();
 	int i;
 
+	tickPoint = tickClock.now();
+
 	for (;;)
 	{
 		//printf("I'm goin\n");
@@ -838,41 +843,30 @@ void MidiPlayer::Run()
 		else
 		{
 			//Soft synth operation
+
 			if (synth->ClassifySynth() == MIDISYNTH_SOFT)
 			{
-				//Ugh. This is hideous.
-				//Queue buffers as fast as possible. When done, sleep for a while. This comes close enough to avoiding starvation.
-				//Anything less than 5 120hz ticks of latency will result in OpenAL occasionally starving. It's the most I can do...
-				/*midi_dequeue_midi_buffers(mysource);
-				while (midi_queue_slots_available(mysource))
-				{
-					for (i = 0; i < NUMSOFTTICKS; i++)
-					{
-						currentTickFrac += TickFracDelta;
-						while (currentTickFrac >= 65536)
-						{
-							sequencer->Tick();
-							currentTickFrac -= 65536;
-						}
-						sequencer->Render(MIDI_SAMPLERATE / MIDI_FREQUENCY, songBuffer + (MIDI_SAMPLERATE / MIDI_TICK_DIV * 2) * i);
-					}
-					midi_queue_buffer(mysource, MIDI_SAMPLERATE / MIDI_FREQUENCY * NUMSOFTTICKS, songBuffer);
-				}*/ // [DW] openal lame
+				auto time = timer_get_fixed_seconds();
 
-				//for (i = 0; i < NUMSOFTTICKS; i++) {
-				currentTickFrac += TickFracDelta;
+				currentTickFrac += TickFracDelta / 2;
 				while (currentTickFrac >= 65536)
 				{
 					sequencer->Tick();
 					currentTickFrac -= 65536;
 				}
-				sequencer->Render(1, songBuffer);
+				sequencer->Render(MIDI_SAMPLERATE / MIDI_FREQUENCY, songBuffer);
 				midi_queue_buffer(mysource, MIDI_SAMPLERATE / MIDI_FREQUENCY, songBuffer);
-				//}
 				
 				midi_check_status(mysource);
-				//I_DelayUS(1000 * NUMSOFTTICKS);
-				I_DelayUS(1000000 / MIDI_FREQUENCY);
+				
+				auto now = tickClock.now();
+				auto diff = now - tickPoint;
+
+				auto delay = std::chrono::duration_cast<std::chrono::microseconds>(diff);
+				I_DelayUS(delay.count());
+
+				tickPoint = tickClock.now();
+
 			}
 			else if (synth->ClassifySynth() == MIDISYNTH_LIVE)
 			{

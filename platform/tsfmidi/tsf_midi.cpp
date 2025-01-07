@@ -23,7 +23,10 @@ as described in copying.txt.
 TSFMidiSynth::TSFMidiSynth() { }
 
 TSFMidiSynth::~TSFMidiSynth() {
-	Shutdown();
+	if (engine) {
+		tsf_close(engine);
+		engine = nullptr;
+	}
 }
 
 void TSFMidiSynth::SetSampleRate(uint32_t newSampleRate)
@@ -43,34 +46,33 @@ void TSFMidiSynth::CreateSynth()
 
 void TSFMidiSynth::Shutdown()
 {
-	if (engine) {
-		tsf_close(engine);
-		engine = nullptr;
-	}
+	
 }
 
 void TSFMidiSynth::SetSoundfont(const char* filename)
 {
+	if (engine)
+		tsf_close(engine);
+
 	engine = tsf_load_filename(filename);
 	if (!engine)
 		Warning("Could not load soundfont %s", filename);
 }
 
-void TSFMidiSynth::RenderMIDI(int numTicks, short* buffer)
+void TSFMidiSynth::RenderMIDI(int numSamples, short* buffer)
 {
 	if (!engine)
 		return;
 	
-	auto sampleCount = numTicks * sampleRate / MIDI_FREQUENCY;
-
-	tsf_render_short(engine, buffer, sampleCount);
+	tsf_render_short(engine, buffer, numSamples / 2);
 
 	/*int check = 0;
 	for (int i = 0; i < sampleCount; i++) {
 		if (buffer[i] != 0)
 			check++;
 	}
-	mprintf((0, "Found %d/%d when rendering midi\n", check, sampleCount));*/
+	if (check > 0)
+		mprintf((0, "Found %d/%d nonzero samples when rendering midi\n", check, sampleCount));*/
 }
 
 //I_MidiEvent(chunk->events[chunk->nextEvent]);
@@ -84,11 +86,7 @@ void TSFMidiSynth::DoMidiEvent(midievent_t *ev)
 	switch (ev->GetType())
 	{
 	case EVENT_NOTEON:
-		mprintf((0, "Note on: %d %d | ", ev->param1, ev->param2));
-		tsf_channel_note_on(engine, channel, ev->param1, ev->param2);
-
-		mprintf((0, "Meta: %f %d %d %f\n", tsf_channel_get_volume, tsf_channel_get_preset_number, tsf_channel_get_preset_bank, tsf_channel_get_pan));
-
+		tsf_channel_note_on(engine, channel, ev->param1, ev->param2 / 127.0f);
 		break;
 	case EVENT_NOTEOFF:
 		tsf_channel_note_off(engine, channel, ev->param1);
@@ -99,13 +97,12 @@ void TSFMidiSynth::DoMidiEvent(midievent_t *ev)
 		mprintf((1, "Aftertouch event not supported\n"));
 		break;
 	case EVENT_PRESSURE:
-		tsf_channel_set_volume(engine, channel, ev->param1);
+		tsf_channel_set_volume(engine, channel, ev->param1 / 127.0f);
 		break;
 	case EVENT_PITCH:
 		tsf_channel_set_pitchwheel(engine, channel, ev->param1 + (ev->param2 << 7));
 		break;
 	case EVENT_PATCH:
-		mprintf((0, "Setting patch %d on %d\n", ev->param1, channel));
 		tsf_channel_set_presetnumber(engine, channel, ev->param1, (channel == 9));
 		break;
 	case EVENT_CONTROLLER:
@@ -152,7 +149,7 @@ void TSFMidiSynth::SetDefaults()
 		tsf_channel_midi_control(engine, chan, 68, 0);
 		tsf_channel_midi_control(engine, chan, 69, 0);
 		//tsf_channel_midi_control(engine, chan, 42, 64); //pan
-		tsf_channel_set_pan(engine, chan, 64);
+		tsf_channel_set_pan(engine, chan, 0.5f);
 
 		tsf_channel_set_volume(engine, chan, 0);
 		//tsf_channel_set_pitchwheel(engine, chan, 0x2000);

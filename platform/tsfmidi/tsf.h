@@ -469,7 +469,7 @@ struct tsf_channels
 {
 	void (*setupVoice)(tsf* f, struct tsf_voice* voice);
 	int channelNum, activeChannel;
-	struct tsf_channel channels[100];
+	struct tsf_channel channels[16];
 };
 
 static double tsf_timecents2Secsd(double timecents) { return TSF_POW(2.0, timecents / 1200.0); }

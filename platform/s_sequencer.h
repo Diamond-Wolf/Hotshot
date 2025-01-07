@@ -44,6 +44,6 @@ public:
 	void RewindSong(bool resetLoop);
 
 	void Tick();
-	void Render(int ticksToRender, short* buffer);
+	void Render(int samplesToRender, short* buffer);
 	MidiSynth* GetSynth();
 };

@@ -65,6 +65,7 @@ std::thread MIDIThread;
 
 struct SDLMusicSource {
 	bool playing;
+	bool active = true;
 };
 
 struct SDLSound {
@@ -98,8 +99,6 @@ bool HQMusicPlaying = false;
 int MusicVolume;
 
 MidiPlayer* midiPlayer;
-
-void* I_CreateMusicSource();
 
 void LockSDLStreams(SDLSound& sound) {
 	SDL_LockAudioStream(sound.outputStream);
@@ -454,6 +453,8 @@ void plat_stop_midi_song() {
 	SDL_ClearAudioStream(musicStream);
 }
 
+bool midiStopped = true;
+
 void midi_set_music_samplerate(void* opaquesource, uint32_t samplerate) {
 	SDL_AudioSpec midiSpec = { SDL_AUDIO_S16, 2, samplerate };
 	SDL_SetAudioStreamFormat(musicStream, &midiSpec, &outputSpec);
@@ -463,6 +464,9 @@ bool midi_queue_slots_available(void* opaquesource) { return false; }
 void midi_dequeue_midi_buffers(void* opaquesource) {}
 
 void midi_queue_buffer(void* opaquesource, int numSamples, int16_t* data) {
+	if (midiStopped)
+		return;
+
 	SDL_PutAudioStreamData(musicStream, data, numSamples * sizeof(*data));
 }
 
@@ -489,11 +493,15 @@ void* midi_start_source() {
 		}
 		, source);
 
+	midiStopped = false;
+
 	return source;
 }
 
 void midi_stop_source(void* opaquesource) {
 	auto source = reinterpret_cast<SDLMusicSource*>(opaquesource);
+
+	midiStopped = true;
 
 	SDL_LockAudioStream(musicStream);
 

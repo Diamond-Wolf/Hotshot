@@ -301,7 +301,7 @@ public:
 	void SetSampleRate(uint32_t newSampleRate) override { }
 	void CreateSynth() override { }
 	void DoMidiEvent(midievent_t* ev) override { }
-	void RenderMIDI(int numTicks, short* buffer) override { }
+	void RenderMIDI(int numSamples, short* buffer) override { }
 	void StopSound() override { }
 	void Shutdown() override { }
 	void SetDefaults() override { }
@@ -332,6 +332,9 @@ class MidiPlayer
 
 	int numSubTicks; //Queue midi ticks in terms of "sub-ticks", 100 sample slices. 
 	int currentTickFrac, TickFracDelta;
+
+	std::chrono::steady_clock tickClock;
+	std::chrono::time_point<std::chrono::steady_clock> tickPoint;
 
 	//Status flags, these indicate when an event has happened
 	//Hardly a shining example of how to do communication
