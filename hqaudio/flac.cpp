@@ -10,7 +10,7 @@ Instead, it is released under the terms of the MIT License.
 #include "lib/dr_flac.h"
 
 
-FLACLoader::FLACLoader(std::string& filename) : SoundLoader(filename) {
+FLACLoader::FLACLoader(const std::string& filename) : SoundLoader(filename) {
 
 }
 

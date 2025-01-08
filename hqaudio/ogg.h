@@ -17,7 +17,7 @@ struct OGGLoader : SoundLoader {
 	virtual bool Rewind();
 	virtual void Close();
 
-	OGGLoader(std::string& filename);
+	OGGLoader(const std::string& filename);
 
 	stb_vorbis* ogg;
 	int channels;

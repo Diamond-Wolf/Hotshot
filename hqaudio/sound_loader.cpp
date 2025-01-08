@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 
 #include "platform/posixstub.h"
 
-SoundLoader* RequestSoundLoader(std::string filename) {
+SoundLoader* RequestSoundLoader(const std::string filename) {
 
 	fs::path path = filename;
 	std::string ext = path.extension().string();
@@ -53,6 +53,6 @@ SoundLoader* RequestSoundLoader(std::string filename) {
 
 }
 
-SoundLoader::SoundLoader(std::string& filename) : filename(filename) {};
+SoundLoader::SoundLoader(const std::string& filename) : filename(filename) {};
 
 SoundLoader::~SoundLoader() {}

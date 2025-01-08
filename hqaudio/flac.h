@@ -16,5 +16,5 @@ struct FLACLoader : SoundLoader {
 	virtual bool Rewind();
 	virtual void Close();
 
-	FLACLoader(std::string& filename);
+	FLACLoader(const std::string& filename);
 };

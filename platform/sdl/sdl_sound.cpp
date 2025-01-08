@@ -552,7 +552,32 @@ void plat_start_hq_song(SoundLoader* loader, bool loop) {
 		return;
 	
 	auto& properties = loader->properties;
-	SDL_AudioSpec musicSpec = { (properties.format == SF_SHORT ? SDL_AUDIO_S16 : SDL_AUDIO_F32), properties.channels, properties.sampleRate };
+	SDL_AudioSpec musicSpec = { SDL_AUDIO_UNKNOWN, properties.channels, properties.sampleRate };
+
+	switch (properties.format) {
+
+		case SF_BYTE:
+			musicSpec.format = SDL_AUDIO_S8;
+		break;
+		
+		case SF_UBYTE:
+			musicSpec.format = SDL_AUDIO_U8;
+		break;
+		
+		case SF_SHORT:
+			musicSpec.format = SDL_AUDIO_S16;
+		break;
+		
+		case SF_LONG:
+			musicSpec.format = SDL_AUDIO_S32;
+		break;
+
+		case SF_FLOAT:
+			musicSpec.format = SDL_AUDIO_F32;
+		break;
+			
+	}
+
 	SDL_SetAudioStreamFormat(musicStream, &musicSpec, &outputSpec);
 
 	SDL_SetAudioStreamGetCallback(musicStream,
@@ -566,9 +591,9 @@ void plat_start_hq_song(SoundLoader* loader, bool loop) {
 			if (read < 0) {
 				mprintf((1, "Error in music stream callback\n"));
 				source->playing = false;
-			} else if (read == 0 && !source->loop)
+			} else if (read == 0 && !source->loop) {
 				source->playing = false;
-			else {
+			} else {
 				if (read > 0)
 					SDL_PutAudioStreamData(audioStream, buffer, read);
 				
@@ -1059,6 +1084,10 @@ void midi_stop_source(void* opaquesource)
 	I_DestroyMusicSource(opaquesource);
 	AL_ErrorCheck("Destroying source");
 }
+
+*/ 
+
+/*
 
 //-----------------------------------------------------------------------------
 // Emitting buffered movie sound at player

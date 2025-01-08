@@ -11,8 +11,11 @@ Instead, it is released under the terms of the MIT License.
 
 //The sample format that the sound loader will output. Does not necessarily need to match the format of the file itself.
 enum SampleFormat {
+	SF_BYTE,
+	SF_UBYTE,
 	SF_SHORT,
 	SF_FLOAT,
+	SF_LONG,
 
 	SF_UNSUPPORTED
 };
@@ -27,7 +30,7 @@ struct SoundProperties {
 //Container class for a given HQ audio file. Create a loader by calling RequestSoundLoader.
 struct SoundLoader {
 
-	std::string filename;
+	const std::string filename;
 	SoundProperties properties;
 
 	//Opens the sound file associated with this loader.
@@ -48,7 +51,7 @@ struct SoundLoader {
 	virtual ~SoundLoader();
 
 protected:
-	SoundLoader(std::string& filename);
+	SoundLoader(const std::string& filename);
 
 };
 

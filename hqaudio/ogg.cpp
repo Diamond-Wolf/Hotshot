@@ -9,12 +9,12 @@ Instead, it is released under the terms of the MIT License.
 
 #include "platform/mono.h"
 
-OGGLoader::OGGLoader(std::string& filename) : SoundLoader(filename) {}
+OGGLoader::OGGLoader(const std::string& filename) : SoundLoader(filename) {}
 
 bool OGGLoader::Open() {
 	
 	int error = 0;
-	ogg = stb_vorbis_open_filename(filename.data(), &error, nullptr);
+	ogg = stb_vorbis_open_filename(const_cast<char*>(filename.c_str()), &error, nullptr);
 
 	if (!ogg) {
 		mprintf((1, "Could not open OGG file %s", filename.c_str()));
