@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "s_midi.h"
+#include "hqaudio/sound_loader.h"
 
 //-----------------------------------------------------------------------------
 // Constants
@@ -96,8 +97,9 @@ bool midi_check_finished(void* opaquesource);
 // Emitting recordings of pleasing rythmic sequences at player
 //-----------------------------------------------------------------------------
 
-void plat_start_hq_song(int sample_rate, std::vector<float>&& song_data, bool loop);
+void plat_start_hq_song(SoundLoader* loader, bool loop);
 void plat_stop_hq_song();
+bool plat_is_hq_song_playing();
 
 //-----------------------------------------------------------------------------
 // Emitting buffered movie sound at player

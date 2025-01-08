@@ -28,6 +28,8 @@ Instead, it is released under the terms of the MIT License.
 #define SAMPLE_RATE_11K		11025
 #define SAMPLE_RATE_22K		22050
 
+#define STREAM_GET_CALLBACK() [](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount)
+
 SDL_AudioDeviceID musicDevice = 0;
 SDL_AudioDeviceID sfxDevice = 0;
 
@@ -48,20 +50,6 @@ bool LoopMusic;
 
 std::mutex MIDIMutex;
 std::thread MIDIThread;
-
-/*struct ALMusicSource
-{
-	int MusicVolume; //Current volume level of the source. Compare against the current MusicVolume while servicing.
-	int NumFreeBuffers; //Number of free buffers
-	int NumUsedBuffers; //Number of used buffers
-	int AvailableBuffers[MAX_BUFFERS_QUEUED]; //All available buffer names
-	int UsedBuffers[MAX_BUFFERS_QUEUED]; //All currently queued buffer names. 
-	ALuint SourceBuffers[MAX_BUFFERS_QUEUED]; //The source names this music source will use. 
-	ALuint BufferQueue[MAX_BUFFERS_QUEUED]; 
-	ALuint MusicSource; //Source name for the music
-	ALuint MusicSampleRate; //Sample rate for the current music. 
-	bool Playing; //True if the source has been started for the first time. 
-};*/
 
 struct SDLMusicSource {
 	bool playing;
@@ -91,9 +79,6 @@ struct SDLSound {
 
 std::array<SDLSound, _MAX_VOICES> soundPool;
 
-//HQ audio fields
-//ALuint HQMusicSource;
-//ALuint HQMusicBuffer;
 bool HQMusicPlaying = false;
 
 int MusicVolume;
@@ -199,7 +184,7 @@ int plat_init_audio() {
 
 		if (sound.inputStream) {
 			SDL_SetAudioStreamGetCallback(sound.inputStream,
-				[](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
+				STREAM_GET_CALLBACK() {
 					auto sound = reinterpret_cast<SDLSound*>(userdata);
 
 					auto available = SDL_GetAudioStreamAvailable(audioStream);
@@ -235,7 +220,7 @@ int plat_init_audio() {
 
 		if (sound.outputStream) {
 			SDL_SetAudioStreamGetCallback(sound.outputStream,
-				[](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
+				STREAM_GET_CALLBACK() {
 					auto sound = reinterpret_cast<SDLSound*>(userdata);
 
 					if (sound->free)
@@ -474,7 +459,7 @@ void* midi_start_source() {
 	auto source = new SDLMusicSource();
 	SDL_SetAudioStreamGetCallback(
 		musicStream,
-		[](void* userdata, SDL_AudioStream* audioStream, int additionalAmount, int totalAmount) {
+		STREAM_GET_CALLBACK() {
 			auto source = reinterpret_cast<SDLMusicSource*>(userdata);
 			
 			auto available = SDL_GetAudioStreamAvailable(audioStream);
@@ -520,8 +505,83 @@ bool midi_check_finished(void* opaquesource) {
 	return !source->playing;
 }
 
-void plat_start_hq_song(int sample_rate, std::vector<float>&& song_data, bool loop) {}
-void plat_stop_hq_song() {}
+struct HQMusicSource {
+	SoundLoader* loader = nullptr;
+	bool loop = false;
+	bool playing = false;
+} activeHQSource;
+
+void plat_start_hq_song(SoundLoader* loader, bool loop) {
+
+	auto& properties = loader->properties;
+	SDL_AudioSpec musicSpec = { (properties.format == SF_SHORT ? SDL_AUDIO_S16 : SDL_AUDIO_F32), properties.channels, properties.sampleRate };
+	SDL_SetAudioStreamFormat(musicStream, &musicSpec, &outputSpec);
+
+	SDL_SetAudioStreamGetCallback(musicStream,
+		STREAM_GET_CALLBACK() {
+			auto source = reinterpret_cast<HQMusicSource*>(userdata);
+			auto& loader = source->loader;
+			
+			char* buffer = new char[additionalAmount];
+			auto read = loader->GetSamples(buffer, additionalAmount);
+
+			if (read < 0) {
+				mprintf((1, "Error in music stream callback\n"));
+				source->playing = false;
+			} else if (read == 0 && !source->loop)
+				source->playing = false;
+			else {
+				if (read > 0)
+					SDL_PutAudioStreamData(audioStream, buffer, read);
+				
+				if (source->loop && read < additionalAmount) {
+
+					if (!loader->Rewind()) {
+						mprintf((1, "Error rewinding in music stream callback"));
+						source->playing = false;
+					} else {
+
+						auto remaining = additionalAmount - read;
+						remaining = loader->GetSamples(buffer + read, remaining);
+						if (remaining < 0)
+							mprintf((1, "Error in music stream callback after rewind\n"));
+						else if (remaining > 0)
+							SDL_PutAudioStreamData(audioStream, buffer + read, remaining);
+
+					}
+
+				}
+			}
+
+			delete[] buffer;
+		}
+		, &activeHQSource);
+
+	
+	activeHQSource.loader = loader;
+	activeHQSource.loop = loop;
+	activeHQSource.playing = true;
+
+}
+
+void plat_stop_hq_song() {
+
+	SDL_LockAudioStream(musicStream);
+
+	SDL_SetAudioStreamGetCallback(musicStream, NULL, NULL);
+	SDL_ClearAudioStream(musicStream);
+	
+	activeHQSource.loader = nullptr;
+	activeHQSource.loop = false;
+	activeHQSource.playing = false;
+
+	SDL_UnlockAudioStream(musicStream);
+	
+}
+
+bool plat_is_hq_song_playing() {
+	return activeHQSource.playing;
+}
 
 void mvesnd_init_audio(int format, int samplerate, int stereo) {}
 void mvesnd_queue_audio_buffer(int len, short* data) {}

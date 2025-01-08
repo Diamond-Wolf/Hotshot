@@ -4,15 +4,16 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License.
 */
 
-#define STB_VORBIS_HEADER_ONLY
-#include "misc/stb_vorbis.c"
+#include "hqaudio/sound_loader.h"
 
-
+#include <filesystem>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <vector>
 #include <thread>
+
+namespace fs = std::filesystem;
 
 #include "platform/mono.h"
 #include "platform/i_sound.h"
@@ -20,12 +21,152 @@ Instead, it is released under the terms of the MIT License.
 #include "platform/timer.h"
 #include "misc/error.h"
 
+SoundLoader* loader = nullptr;
+
+bool PlayHQSong(const char* filename, bool loop) {
+	
+	loader = RequestSoundLoader(filename);
+	
+	if (!loader) {
+		Warning("Unrecognized filetype for HQ file %s", filename);
+		return false;
+	}
+
+	if (!loader->Open()) {
+		Warning("Could not open loader for %s", filename);
+		return false;
+	}
+	
+	plat_start_hq_song(loader, loop);
+	return true;
+}
+
+//Stops playback of an OGG file
+void StopHQSong() {
+	
+	plat_stop_hq_song();
+
+	if (loader) {
+		delete loader;
+		loader = nullptr;
+	}
+
+}
+
+//Redbook music emulation functions
+
+bool rbaInitialized = false;
+
+std::vector<std::string> tracks;
+
+int currentTrack;
+int firstTrack, lastTrack;
+
+std::thread rbaThread;
+bool quitThread = false;
+
+void RBAInit() { // [DW] TODO: redbook.sng override
+	int i;
+	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
+	char track_name[16];
+
+	rbaInitialized = false;
+
+	//Simple hack to figure out how many CD tracks there are.
+	for (i = 0; i < 99; i++)
+	{
+		snprintf(track_name, 15, "track%02d.ogg", i + 1);
+
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+		get_full_file_path(filename_full_path, track_name, CHOCOLATE_MUSIC_DIR);
+#else
+		snprintf(filename_full_path, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", track_name);
+		filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
+#endif
+
+		if (fs::is_regular_file(filename_full_path))
+			tracks.push_back(filename_full_path);
+		else
+			break;
+
+	}
+	
+	if (tracks.size() >= 3) //Need sufficient tracks
+		rbaInitialized = true;
+	else
+		tracks.clear();
+}
+
+bool RBAEnabled() { 
+	return rbaInitialized; 
+}
+
+void RBAStop() {
+
+	if (rbaThread.joinable()) {
+		quitThread = true;
+		rbaThread.join();
+	}
+
+	StopHQSong();
+
+}
+
+int RBAGetNumberOfTracks() { 
+	return tracks.size(); 
+}
+
+int RBAGetTrackNum() { 
+	return currentTrack; 
+}
+
+int RBAPlayTrack(int track) { 
+	return PlayHQSong(tracks[track - 1].data(), false);
+}
+
+int RBAPlayTracks(int first, int last) { 
+	
+	if (rbaThread.joinable())
+		RBAStop();
+
+	quitThread = false;
+
+	rbaThread = std::thread([first, last]() {
+		
+		currentTrack = first;
+
+		while (!quitThread && currentTrack <= last) {
+
+			if (!plat_is_hq_song_playing()) {
+				RBAPlayTrack(currentTrack);
+				currentTrack++;
+			}
+
+			I_DelayUS(1000);
+
+		}
+
+	});
+
+	return true;
+
+}
+
+bool RBAPeekPlayStatus() { 
+	return plat_is_hq_song_playing(); 
+}
+
+/*
+
 bool PlayHQSong(const char* filename, bool loop)
 {
 	// Load ogg into memory:
 
-	std::string name = filename;
-	name = name.substr(0, name.size() - 4); // cut off extension
+	//std::string name = filename;
+	//name = name.substr(0, name.size() - 4); // cut off extension
+	fs::path filepath = filename;
+	std::string name = filepath.filename().string();
+	std::string ext = filepath.extension().string();
 
 	FILE* file = fopen(("music/" + name + ".ogg").c_str(), "rb");
 	if (!file) return false;
@@ -88,6 +229,10 @@ void StopHQSong()
 {
 	plat_stop_hq_song();
 }
+
+*/
+
+/*
 
 //Redbook music emulation functions
 int RBA_Num_tracks;
@@ -242,6 +387,9 @@ void RBAThread()
 	midi_stop_source(mysource);
 	return;
 }
+*/
+
+/*
 
 void RBAInit()
 {
@@ -324,4 +472,4 @@ int RBAPlayTracks(int first, int last)
 	mprintf((0, "Playing tracks %d to %d\n", first, last));
 	RBAStartThread();
 	return 1;
-}
+}*/

@@ -1,6 +1,6 @@
 newoption {
 	trigger = "build-editor",
-	description = "Build with internal editor (untested)"
+	description = "Build with internal editor (unmaintained)"
 }
 
 newoption {
@@ -12,18 +12,6 @@ newoption {
 	trigger = "sdl-path",
 	value = "path",
 	description = "Path to SDL3 version, including trailing slash"
-}
-
-newoption {
-	trigger = "openal-path",
-	value = "path",
-	description = "Path to OpenAL version, including trailing slash"
-}
-
-newoption {
-	trigger = "fluidsynth-path",
-	value = "path",
-	description = "Path to FluidSynth version, including trailing slash"
 }
 
 workspace "Hotshot"
@@ -67,6 +55,10 @@ workspace "Hotshot"
 		"cfile/*.h",
 		"fix/*.cpp",
 		"fix/*.h",
+		"hqaudio/*.cpp",
+		"hqaudio/*.h",
+		"hqaudio/lib/*.cpp",
+		"hqaudio/lib/*.h",
 		"iff/*.cpp",
 		"iff/*.h",
 		"main/*.cpp",
@@ -135,8 +127,6 @@ workspace "Hotshot"
 	filter {}
 	
 	sdl = _OPTIONS["sdl-path"]
-	openal = _OPTIONS["openal-path"]
-	fluidsynth = _OPTIONS["fluidsynth-path"]
 	
 	libdirs {
 		sdl,
