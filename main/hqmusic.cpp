@@ -75,7 +75,7 @@ void RBAInit() { // [DW] TODO: redbook.sng override
 	//Simple hack to figure out how many CD tracks there are.
 	for (i = 0; i < 99; i++)
 	{
-		snprintf(track_name, 15, "track%02d.mp3", i + 1);
+		snprintf(track_name, 15, "track%02d.ogg", i + 1);
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 		get_full_file_path(filename_full_path, track_name, CHOCOLATE_MUSIC_DIR);
