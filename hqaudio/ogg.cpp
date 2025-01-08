@@ -27,6 +27,8 @@ bool OGGLoader::Open() {
 	properties.sampleRate = info.sample_rate;
 	properties.format = SF_SHORT; //Supports either arbitrarily, so may as well give it shorts
 
+	return true;
+
 }
 
 size_t OGGLoader::GetSamples(void* buffer, size_t bufferSize) {

@@ -1094,6 +1094,7 @@ Here:
 		show_mem_info = 1;		// Make memory statistics show
 #endif
 
+	digi_close();
 	plat_close();
 	return(0);		//presumably successful exit
 }

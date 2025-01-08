@@ -125,7 +125,7 @@ void songs_init()
 				set_redbook_volume(Config_redbook_volume);
 			}
 		}
-		atexit(RBAStop);	// stop song on exit
+		//atexit(RBAStop);	// stop song on exit [DW] digi_close does this automatically with more guarantees on valid order of destroying things
 	}
 
 	Songs_initialized = 1;

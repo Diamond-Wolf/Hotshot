@@ -16,35 +16,35 @@ namespace fs = std::filesystem;
 #include "ogg.h"
 #include "wav.h"
 
+#include "platform/posixstub.h"
+
 SoundLoader* RequestSoundLoader(std::string filename) {
 
 	fs::path path = filename;
 	std::string ext = path.extension().string();
-	for (auto& c : ext)
-		c = tolower(c);
 
 	SoundLoader* loader;
 
 #if FLAC_SUPPORTED
-	if (ext == ".flac") {
+	if (!_strnicmp(ext.c_str(), ".flac", 5)) {
 		return new FLACLoader(filename);
 	}
 #endif
 
 #if MP3_SUPPORTED
-	if (ext == ".mp3") {
+	if (!_strnicmp(ext.c_str(), ".mp3", 4)) {
 		return new MP3Loader(filename);
 	}
 #endif
 
 #if OGG_SUPPORTED
-	if (ext == ".ogg") {
+	if (!_strnicmp(ext.c_str(), ".ogg", 4)) {
 		return new OGGLoader(filename);
 	}
 #endif
 
 #if WAV_SUPPORTED
-	if (ext == ".wav") {
+	if (!_strnicmp(ext.c_str(), ".wav", 4)) {
 		return new WAVLoader(filename);
 	}
 #endif

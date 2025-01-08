@@ -36,7 +36,7 @@ SDL_AudioDeviceID sfxDevice = 0;
 SDL_AudioStream* musicStream = NULL;
 SDL_AudioStream* movieStream = NULL;
 
-int AL_initialized = 0;
+bool soundInitialized = false;
 
 //ALuint bufferNames[_MAX_VOICES];
 //ALuint sourceNames[_MAX_VOICES];
@@ -121,6 +121,7 @@ int plat_init_audio() {
 	if (!musicStream) {
 		Warning("Could not create music stream! %s", SDL_GetError());
 		SDL_CloseAudioDevice(musicDevice);
+		musicDevice = NULL;
 		return 1;
 	}
 	
@@ -129,6 +130,8 @@ int plat_init_audio() {
 		Warning("Could not create movie stream! %s", SDL_GetError());
 		SDL_DestroyAudioStream(musicStream);
 		SDL_CloseAudioDevice(musicDevice);
+		musicStream = NULL;
+		musicDevice = NULL;
 		return 1;
 	}
 
@@ -141,6 +144,10 @@ int plat_init_audio() {
 		SDL_DestroyAudioStream(movieStream);
 		SDL_CloseAudioDevice(musicDevice);
 
+		musicStream = NULL;
+		movieStream = NULL;
+		musicDevice = NULL;
+
 		return 1;
 	}
 
@@ -151,6 +158,10 @@ int plat_init_audio() {
 		SDL_DestroyAudioStream(musicStream);
 		SDL_DestroyAudioStream(movieStream);
 		SDL_CloseAudioDevice(musicDevice);
+
+		musicStream = NULL;
+		movieStream = NULL;
+		musicDevice = NULL;
 
 		return 1;
 	}
@@ -171,98 +182,99 @@ int plat_init_audio() {
 
         sound.inputStream = SDL_CreateAudioStream(&sfxSpec, &intermediateSpec);
 		if (!sound.inputStream) {
-			Warning("Could not create input stream! %s", SDL_GetError());
+			mprintf((1, "Could not create input stream! %s", SDL_GetError()));
+			continue;
 		}
 		
 		sound.outputStream = SDL_CreateAudioStream(&intermediateSpec, &outputSpec);
 		if (!sound.outputStream) {
-			Warning("Could not create output stream! %s", SDL_GetError());
+			mprintf((1, "Could not create output stream! %s", SDL_GetError()));
+			SDL_DestroyAudioStream(sound.inputStream);
+			sound.inputStream = NULL;
+			continue;
 		}
 
         sound.free = true;
 		sound.initialized = false;
 
-		if (sound.inputStream) {
-			SDL_SetAudioStreamGetCallback(sound.inputStream,
-				STREAM_GET_CALLBACK() {
-					auto sound = reinterpret_cast<SDLSound*>(userdata);
+		SDL_SetAudioStreamGetCallback(sound.inputStream,
+			STREAM_GET_CALLBACK() {
+				auto sound = reinterpret_cast<SDLSound*>(userdata);
 
-					auto available = SDL_GetAudioStreamAvailable(audioStream);
-					if (available < 0) {
-						mprintf((1, "Error getting available audio stream data for mix: %s", SDL_GetError()));
-						Int3();
+				auto available = SDL_GetAudioStreamAvailable(audioStream);
+				if (available < 0) {
+					mprintf((1, "Error getting available audio stream data for mix: %s", SDL_GetError()));
+					Int3();
+				}
+
+				if (totalAmount >= available) {
+
+					if (sound->loop) {
+						SDL_PutAudioStreamData(audioStream, sound->rawData, sound->dataLen);
 					}
-
-					if (totalAmount >= available) {
-
-						if (sound->loop) {
-							SDL_PutAudioStreamData(audioStream, sound->rawData, sound->dataLen);
-						}
-						else if (available == 0) {
-							if (!sound->free && sound->initialized) {
+					else if (available == 0) {
+						if (!sound->free && sound->initialized) {
 #ifndef NDEBUG
-								mprintf((0, "Freeing sound %d\n", sound->id));
+							mprintf((0, "Freeing sound %d\n", sound->id));
 #endif
-								sound->free = true;
-								sound->loop = false;
-								sound->initialized = false;
-								delete[] sound->rawData;
-								sound->rawData = NULL;
-							}
-							//SDL_PutAudioStreamData(audioStream, silence, (totalAmount < 4096 ? totalAmount : 4096));
+							sound->free = true;
+							sound->loop = false;
+							sound->initialized = false;
+							delete[] sound->rawData;
+							sound->rawData = NULL;
 						}
-
-					}
-				},
-				&sound);
-
-		}
-
-		if (sound.outputStream) {
-			SDL_SetAudioStreamGetCallback(sound.outputStream,
-				STREAM_GET_CALLBACK() {
-					auto sound = reinterpret_cast<SDLSound*>(userdata);
-
-					if (sound->free)
-						return;
-
-					intermediate_data_t* read = new intermediate_data_t[(additionalAmount + 1) / sizeof(intermediate_data_t)];
-
-					SDL_LockAudioStream(sound->inputStream);
-
-					int bytes = SDL_GetAudioStreamData(sound->inputStream, read, additionalAmount);
-					if (bytes < 0)
-						Warning("Error getting stream data! %s", SDL_GetError());
-
-					Assert(bytes <= additionalAmount);
-
-					SDL_UnlockAudioStream(sound->inputStream);
-
-					for (int i = 0; i < bytes / sizeof(intermediate_data_t); i += 2) {
-						auto right = read[i];
-						auto left = read[i + 1];
-
-						auto pan = (sound->xang + 1) / 2;
-						//auto scale = abs(sound->yang);
-
-
-						right = (intermediate_data_t)(right * sqrtf(pan));
-						left = (intermediate_data_t)(left * sqrtf(1 - pan));
-						read[i] = right;
-						read[i + 1] = left;
+						//SDL_PutAudioStreamData(audioStream, silence, (totalAmount < 4096 ? totalAmount : 4096));
 					}
 
-					SDL_PutAudioStreamData(audioStream, read, bytes);
+				}
+			},
+			&sound);
 
-					delete[] read;
+		SDL_SetAudioStreamGetCallback(sound.outputStream,
+			STREAM_GET_CALLBACK() {
+				auto sound = reinterpret_cast<SDLSound*>(userdata);
 
-				},
-				&sound);
+				if (sound->free)
+					return;
 
-			SDL_BindAudioStream(sfxDevice, sound.outputStream);
-		}
+				intermediate_data_t* read = new intermediate_data_t[(additionalAmount + 1) / sizeof(intermediate_data_t)];
+
+				SDL_LockAudioStream(sound->inputStream);
+
+				int bytes = SDL_GetAudioStreamData(sound->inputStream, read, additionalAmount);
+				if (bytes < 0)
+					Warning("Error getting stream data! %s", SDL_GetError());
+
+				Assert(bytes <= additionalAmount);
+
+				SDL_UnlockAudioStream(sound->inputStream);
+
+				for (int i = 0; i < bytes / sizeof(intermediate_data_t); i += 2) {
+					auto right = read[i];
+					auto left = read[i + 1];
+
+					auto pan = (sound->xang + 1) / 2;
+					//auto scale = abs(sound->yang);
+
+
+					right = (intermediate_data_t)(right * sqrtf(pan));
+					left = (intermediate_data_t)(left * sqrtf(1 - pan));
+					read[i] = right;
+					read[i + 1] = left;
+				}
+
+				SDL_PutAudioStreamData(audioStream, read, bytes);
+
+				delete[] read;
+
+			},
+			&sound);
+
+		SDL_BindAudioStream(sfxDevice, sound.outputStream);
 
     }
+
+	soundInitialized = true;
 
 	return 0;
 
@@ -270,10 +282,13 @@ int plat_init_audio() {
 
 void plat_close_audio() {
 
+	soundInitialized = false;
+
 	if (musicStream) {
 		SDL_DestroyAudioStream(musicStream);
 		musicStream = NULL;
 	}
+
 	if (movieStream) {
 		SDL_DestroyAudioStream(movieStream);
 		movieStream = NULL;
@@ -305,11 +320,14 @@ void plat_close_audio() {
 
 int plat_get_new_sound_handle() {
 
+	if (!soundInitialized)
+		return _ERR_NO_SLOTS;
+
     for (int i = 0; i < _MAX_VOICES; i++) {
 		
 		LockSDLStreams(soundPool[i]);
         
-		if (soundPool[i].free) {
+		if (soundPool[i].free && soundPool[i].outputStream) {
 
 #ifndef NDEBUG
 			mprintf((0, "Allocating sound %d\n", soundPool[i].id));
@@ -332,7 +350,7 @@ int plat_get_new_sound_handle() {
 }
 
 void plat_set_sound_data(int handle, unsigned char* data, int length, int sampleRate) {
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return;
 
     auto& sound = soundPool[handle];
@@ -354,7 +372,7 @@ void plat_set_sound_data(int handle, unsigned char* data, int length, int sample
 }
 
 void plat_set_sound_position(int handle, int volume, int angle) {
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return;
 
     plat_set_sound_volume(handle, volume);
@@ -362,7 +380,7 @@ void plat_set_sound_position(int handle, int volume, int angle) {
 }
 
 void plat_set_sound_angle(int handle, int angle) {
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return;
 
 	auto& sound = soundPool[handle];
@@ -374,7 +392,7 @@ void plat_set_sound_angle(int handle, int angle) {
 }
 
 void plat_set_sound_volume(int handle, int volume) {
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return;
 
 	SDL_SetAudioStreamGain(soundPool[handle].inputStream, volume / 32768.0f);
@@ -383,14 +401,14 @@ void plat_set_sound_volume(int handle, int volume) {
 void plat_set_sound_loop_points(int handle, int start, int end) {}
 
 void plat_start_sound(int handle, int loop) {
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return;
 
     soundPool[handle].loop = loop;
 }
 
 void plat_stop_sound(int handle) {
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return;
 
     auto& sound = soundPool[handle];
@@ -407,14 +425,14 @@ void plat_stop_sound(int handle) {
 }
 
 int plat_check_if_sound_playing(int handle) { 
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return false;
 
     return !soundPool[handle].free;
 }
 
 int plat_check_if_sound_finished(int handle) {
-	if (handle >= _ERR_NO_SLOTS)
+	if (handle >= _ERR_NO_SLOTS || !soundInitialized)
 		return false;
 
     return !plat_check_if_sound_playing(handle);
@@ -429,19 +447,28 @@ uint32_t plat_get_preferred_midi_sample_rate() {
 void plat_close_midi() {}
 
 void plat_set_music_volume(int volume) {
+	if (!soundInitialized)
+		return;
+
 	SDL_SetAudioDeviceGain(musicDevice, volume / 127.0f);
 }
 
 void plat_start_midi_song(HMPFile* song, bool loop) {}
 
 void plat_stop_midi_song() {
+	if (!soundInitialized)
+		return;
+	
 	SDL_ClearAudioStream(musicStream);
 }
 
 bool midiStopped = true;
 
 void midi_set_music_samplerate(void* opaquesource, uint32_t samplerate) {
-	SDL_AudioSpec midiSpec = { SDL_AUDIO_S16, 2, samplerate };
+	if (!soundInitialized)
+		return;
+	
+	SDL_AudioSpec midiSpec = { SDL_AUDIO_S16, 2, (int)samplerate };
 	SDL_SetAudioStreamFormat(musicStream, &midiSpec, &outputSpec);
 }
 
@@ -449,13 +476,16 @@ bool midi_queue_slots_available(void* opaquesource) { return false; }
 void midi_dequeue_midi_buffers(void* opaquesource) {}
 
 void midi_queue_buffer(void* opaquesource, int numSamples, int16_t* data) {
-	if (midiStopped)
+	if (midiStopped || !soundInitialized)
 		return;
 
 	SDL_PutAudioStreamData(musicStream, data, numSamples * sizeof(*data));
 }
 
 void* midi_start_source() {
+	if (!soundInitialized)
+		return NULL;
+	
 	auto source = new SDLMusicSource();
 	SDL_SetAudioStreamGetCallback(
 		musicStream,
@@ -484,6 +514,9 @@ void* midi_start_source() {
 }
 
 void midi_stop_source(void* opaquesource) {
+	if (!soundInitialized || !musicStream)
+		return;
+	
 	auto source = reinterpret_cast<SDLMusicSource*>(opaquesource);
 
 	midiStopped = true;
@@ -501,6 +534,9 @@ void midi_stop_source(void* opaquesource) {
 void midi_check_status(void* opaquesource) {}
 
 bool midi_check_finished(void* opaquesource) {
+	if (!soundInitialized)
+		return false;
+	
 	auto source = reinterpret_cast<SDLMusicSource*>(opaquesource);
 	return !source->playing;
 }
@@ -512,7 +548,9 @@ struct HQMusicSource {
 } activeHQSource;
 
 void plat_start_hq_song(SoundLoader* loader, bool loop) {
-
+	if (!soundInitialized)
+		return;
+	
 	auto& properties = loader->properties;
 	SDL_AudioSpec musicSpec = { (properties.format == SF_SHORT ? SDL_AUDIO_S16 : SDL_AUDIO_F32), properties.channels, properties.sampleRate };
 	SDL_SetAudioStreamFormat(musicStream, &musicSpec, &outputSpec);
@@ -561,11 +599,12 @@ void plat_start_hq_song(SoundLoader* loader, bool loop) {
 	activeHQSource.loader = loader;
 	activeHQSource.loop = loop;
 	activeHQSource.playing = true;
-
 }
 
 void plat_stop_hq_song() {
-
+	if (!soundInitialized || !musicStream)
+		return;
+	
 	SDL_LockAudioStream(musicStream);
 
 	SDL_SetAudioStreamGetCallback(musicStream, NULL, NULL);
@@ -576,19 +615,34 @@ void plat_stop_hq_song() {
 	activeHQSource.playing = false;
 
 	SDL_UnlockAudioStream(musicStream);
-	
 }
 
 bool plat_is_hq_song_playing() {
-	return activeHQSource.playing;
+	return soundInitialized && activeHQSource.playing;
 }
 
-void mvesnd_init_audio(int format, int samplerate, int stereo) {}
-void mvesnd_queue_audio_buffer(int len, short* data) {}
-void mvesnd_close() {}
+void mvesnd_init_audio(int format, int samplerate, int stereo) {
+	if (!soundInitialized)
+		return;
+}
+void mvesnd_queue_audio_buffer(int len, short* data) {
+	if (!soundInitialized)
+		return;
+}
+void mvesnd_close() {
+	if (!soundInitialized)
+		return;
+}
 
-void mvesnd_pause() {}
-void mvesnd_resume() {}
+void mvesnd_pause() {
+	if (!soundInitialized)
+		return;
+}
+
+void mvesnd_resume() {
+	if (!soundInitialized)
+		return;
+}
 
 /*
 int plat_init_audio()

@@ -300,11 +300,11 @@ int digi_init()
 	if (digi_init_digi()) return 1;
 	if (digi_init_midi()) return 1;
 
-	if (!digi_atexit_called)	
+	/*if (!digi_atexit_called)	
 	{
 		atexit( digi_close );
 		digi_atexit_called = 1;
-	}
+	}*/
 
 	next_channel = 0;
 	for (i=0; i<MAX_CHANNELS; i++ )
