@@ -894,8 +894,8 @@ RePaintNewmenu4:
 
 		if (item[i].type == NM_TYPE_INPUT)
 		{
-			Assert(strlen(item[i].text) < NM_MAX_TEXT_LEN);
-			strcpy(item[i].saved_text, item[i].text);
+			//Assert(strlen(item[i].text) < NM_MAX_TEXT_LEN);
+			strncpy(item[i].saved_text, item[i].text, NM_MAX_TEXT_LEN); // [DW] Need to make this accept longer strings eventually
 			nothers++;
 			string_width = item[i].text_len * grd_curcanv->cv_font->ft_w + ((MenuHires ? 3 : 1) * item[i].text_len);
 			if (string_width > MAX_TEXT_WIDTH)
