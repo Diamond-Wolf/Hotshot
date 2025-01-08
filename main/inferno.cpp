@@ -1095,6 +1095,7 @@ Here:
 #endif
 
 	digi_close();
+	gr_close();
 	plat_close();
 	return(0);		//presumably successful exit
 }
