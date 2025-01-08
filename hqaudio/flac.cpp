@@ -9,23 +9,37 @@ Instead, it is released under the terms of the MIT License.
 #define DR_FLAC_IMPLEMENTATION
 #include "lib/dr_flac.h"
 
+#include "platform/mono.h"
 
-FLACLoader::FLACLoader(const std::string& filename) : SoundLoader(filename) {
 
-}
+FLACLoader::FLACLoader(const std::string& filename) : SoundLoader(filename) {}
 
 bool FLACLoader::Open() {
-	return false;
+	
+	flac = drflac_open_file(filename.c_str(), NULL);
+
+	if (!flac) {
+		mprintf((1, "Error opening FLAC\n"));
+		return false;
+	}
+
+	properties.sampleRate = flac->sampleRate;
+	properties.channels = flac->channels;
+	properties.format = SF_LONG;
+
+	return true;
+
 }
 
 size_t FLACLoader::GetSamples(void* buffer, size_t bufferSize) {
-	return -1;
+	auto read = drflac_read_pcm_frames_s32(flac, bufferSize / sizeof(int32_t) / properties.channels, reinterpret_cast<drflac_int32*>(buffer));
+	return read * sizeof(int32_t) * properties.channels;
 }
 
 bool FLACLoader::Rewind() {
-	return false;
+	drflac_seek_to_pcm_frame(flac, 0);
 }
 
 void FLACLoader::Close() {
-
+	drflac_close(flac);
 }

@@ -239,8 +239,10 @@ extern "C" {
 #define DRFLAC_VERSION_STRING    DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MAJOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_MINOR) "." DRFLAC_XSTRINGIFY(DRFLAC_VERSION_REVISION)
 
 #include <stddef.h> /* For size_t. */
+#include <stdint.h>
 
 /* Sized Types */
+/*
 typedef   signed char           drflac_int8;
 typedef unsigned char           drflac_uint8;
 typedef   signed short          drflac_int16;
@@ -270,10 +272,25 @@ typedef unsigned int            drflac_uint32;
     typedef drflac_uint32       drflac_uintptr;
 #endif
 typedef drflac_uint8            drflac_bool8;
-typedef drflac_uint32           drflac_bool32;
+typedef drflac_uint32           drflac_bool32;*/
 #define DRFLAC_TRUE             1
 #define DRFLAC_FALSE            0
 /* End Sized Types */
+
+// [DW] Again with self-defining the types!
+
+typedef int8_t   drflac_int8;
+typedef uint8_t  drflac_uint8;
+typedef int16_t  drflac_int16;
+typedef uint16_t drflac_uint16;
+typedef int32_t  drflac_int32;
+typedef uint32_t drflac_uint32;
+typedef int64_t  drflac_int64;
+typedef uint64_t drflac_uint64;
+typedef size_t   drflac_uintptr;
+
+typedef drflac_uint8  drflac_bool8;
+typedef drflac_uint32 drflac_bool32;
 
 /* Decorations */
 #if !defined(DRFLAC_API)

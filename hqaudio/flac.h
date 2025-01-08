@@ -9,6 +9,7 @@ Instead, it is released under the terms of the MIT License.
 #include <string>
 
 #include "hqaudio/sound_loader.h"
+#include "lib/dr_flac.h"
 
 struct FLACLoader : SoundLoader {
 	virtual bool Open();
@@ -17,4 +18,7 @@ struct FLACLoader : SoundLoader {
 	virtual void Close();
 
 	FLACLoader(const std::string& filename);
+
+	drflac* flac = nullptr;
+
 };
