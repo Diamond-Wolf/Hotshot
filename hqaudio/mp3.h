@@ -9,6 +9,11 @@ Instead, it is released under the terms of the MIT License.
 #include <string>
 
 #include "hqaudio/sound_loader.h"
+#include "lib/minimp3.h"
+#include "lib/minimp3_ex.h"
+
+inline bool mp3Initialized = false;
+inline mp3dec_t engine;
 
 struct MP3Loader : SoundLoader {
 	virtual bool Open();
@@ -16,5 +21,8 @@ struct MP3Loader : SoundLoader {
 	virtual bool Rewind();
 	virtual void Close();
 
-	MP3Loader(std::string& filename);
+	MP3Loader(const std::string& filename);
+
+	mp3dec_ex_t mp3;
+
 };

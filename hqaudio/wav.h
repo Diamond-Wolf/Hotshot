@@ -17,7 +17,11 @@ struct WAVLoader : SoundLoader {
 	virtual bool Rewind();
 	virtual void Close();
 
-	WAVLoader(std::string& filename);
+	WAVLoader(const std::string& filename);
+
+	uint8_t* soundBuffer;
+	uint32_t soundBufferSize;
+	size_t bufferHead;
 };
 
 #else
