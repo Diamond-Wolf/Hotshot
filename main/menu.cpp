@@ -1162,6 +1162,8 @@ void sound_menuset(int nitems, newmenu_item * items, int* last_key, int citem)
 
 				mprintf((1, "Redbook_enabled = %d\n", Redbook_enabled));
 
+				songs_stop_all();
+
 				if (Function_mode == FMODE_MENU)
 					songs_play_song(SONG_TITLE, 1);
 				else if (Function_mode == FMODE_GAME)

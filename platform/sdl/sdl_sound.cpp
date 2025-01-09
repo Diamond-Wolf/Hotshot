@@ -580,6 +580,9 @@ void plat_start_hq_song(SoundLoader* loader, bool loop) {
 
 	SDL_SetAudioStreamFormat(musicStream, &musicSpec, &outputSpec);
 
+	activeHQSource.loader = loader;
+	activeHQSource.loop = loop;
+	
 	SDL_SetAudioStreamGetCallback(musicStream,
 		STREAM_GET_CALLBACK() {
 			auto source = reinterpret_cast<HQMusicSource*>(userdata);
@@ -592,6 +595,7 @@ void plat_start_hq_song(SoundLoader* loader, bool loop) {
 				mprintf((1, "Error in music stream callback\n"));
 				source->playing = false;
 			} else if (read == 0 && !source->loop) {
+				mprintf((1, "HQ audio couldn't get data!"));
 				source->playing = false;
 			} else {
 				if (read > 0)
@@ -620,9 +624,8 @@ void plat_start_hq_song(SoundLoader* loader, bool loop) {
 		}
 		, &activeHQSource);
 
-	activeHQSource.loader = loader;
-	activeHQSource.loop = loop;
 	activeHQSource.playing = true;
+
 }
 
 void plat_stop_hq_song() {

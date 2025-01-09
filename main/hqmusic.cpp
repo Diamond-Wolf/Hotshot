@@ -6,13 +6,14 @@ Instead, it is released under the terms of the MIT License.
 
 #include "hqmusic.h"
 
+#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -28,8 +29,21 @@ SoundLoader* loader = nullptr;
 RedbookEndMode rbaEndMode = REM_CONTINUE;
 RedbookExtraTracksMode rbaExtraTracksMode = RETM_REDBOOK_2;
 
+bool rbaInitialized = false;
+
+std::vector<std::string> tracks;
+
+int currentTrack;
+int firstTrack, lastTrack;
+
+std::thread rbaThread;
+bool quitThread = false;
+
 bool PlayHQSong(const char* filename, bool loop) {
 	
+	if (!filename)
+		return false;
+
 	loader = RequestSoundLoader(filename);
 	
 	if (!loader) {
@@ -49,9 +63,16 @@ bool PlayHQSong(const char* filename, bool loop) {
 //Stops playback of an OGG file
 void StopHQSong() {
 	
+	quitThread = true;
+
+	if (rbaThread.joinable()) {
+		rbaThread.join();
+	}
+
 	plat_stop_hq_song();
 
 	if (loader) {
+		loader->Close();
 		delete loader;
 		loader = nullptr;
 	}
@@ -59,16 +80,6 @@ void StopHQSong() {
 }
 
 //Redbook music emulation functions
-
-bool rbaInitialized = false;
-
-std::vector<std::string> tracks;
-
-int currentTrack;
-int firstTrack, lastTrack;
-
-std::thread rbaThread;
-bool quitThread = false;
 
 void InitDefault() {
 	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -153,7 +164,7 @@ void InitFromSNG(std::string filename) {
 
 }
 
-void RBAInit() { // [DW] TODO: redbook.sng override
+void RBAInit() {
 
 	rbaInitialized = false;
 	tracks.clear();
@@ -181,12 +192,6 @@ bool RBAEnabled() {
 void RBAStop() {
 
 	rbaInitialized = false;
-	quitThread = true;
-
-	if (rbaThread.joinable()) {
-		rbaThread.join();
-	}
-
 	StopHQSong();
 
 }
@@ -200,11 +205,19 @@ int RBAGetTrackNum() {
 }
 
 int RBAPlayTrack(int track, bool loop) { 
-	return PlayHQSong(tracks[track - 1].data(), loop);
+	if (!rbaInitialized)
+		return false;
+
+	mprintf((0, "Track %d requested\n", track));
+	return PlayHQSong(tracks[track - 1].c_str(), loop);
 }
 
+std::atomic<bool> threadStarted = false;
+
 int RBAPlayTracks(int first, int last) { 
-	
+	if (!rbaInitialized)
+		return false;
+
 	if (first == last)
 		return RBAPlayTrack(first, true);
 
@@ -212,6 +225,7 @@ int RBAPlayTracks(int first, int last) {
 		RBAStop();
 
 	quitThread = false;
+	threadStarted = false;
 
 	rbaThread = std::thread([first, last]() {
 		
@@ -224,11 +238,19 @@ int RBAPlayTracks(int first, int last) {
 				currentTrack++;
 			}
 
+			threadStarted = true;
+			threadStarted.notify_all();
+
 			I_DelayUS(1000);
 
 		}
 
+		threadStarted = true; //in case of emergency
+		threadStarted.notify_all();
+
 	});
+
+	threadStarted.wait(false);
 
 	return true;
 

@@ -17,13 +17,18 @@ bool OGGLoader::Open() {
 	ogg = stb_vorbis_open_filename(const_cast<char*>(filename.c_str()), &error, nullptr);
 
 	if (!ogg) {
-		mprintf((1, "Could not open OGG file %s", filename.c_str()));
+		mprintf((1, "Could not open OGG file %s: %d", filename.c_str(), error));
+		return false;
+	}
+
+	if (error != 0) {
+		mprintf((1, "Error opening OGG file %s: %d", filename.c_str(), error));
 		return false;
 	}
 
 	auto info = stb_vorbis_get_info(ogg);
 
-	properties.channels = channels = info.channels;
+	properties.channels = info.channels;
 	properties.sampleRate = info.sample_rate;
 	properties.format = SF_SHORT; //Supports either arbitrarily, so may as well give it shorts
 
@@ -33,15 +38,15 @@ bool OGGLoader::Open() {
 
 size_t OGGLoader::GetSamples(void* buffer, size_t bufferSize) {
 
-	auto samples = stb_vorbis_get_samples_short_interleaved(ogg, channels, (short*)buffer, bufferSize / sizeof(int16_t));
+	auto samples = stb_vorbis_get_samples_short_interleaved(ogg, properties.channels, (short*)buffer, bufferSize / sizeof(int16_t));
 
 	auto error = stb_vorbis_get_error(ogg);
-	if (error) {
+	if (error != 0) {
 		mprintf((1, "OGG decode: stb_vorbis gave error code %d\n", error));
 		return -1;
 	}
 
-	return samples * channels * sizeof(int16_t);
+	return samples * properties.channels * sizeof(int16_t);
 
 }
 

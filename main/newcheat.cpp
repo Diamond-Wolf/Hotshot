@@ -397,6 +397,7 @@ bool CheckCheats(char newKeyIn) {
             if (item != -1) {
                 new_level_num = atoi(m.text);
                 if (new_level_num != 0 && new_level_num >= 0 && new_level_num <= Last_level) {
+                    digi_stop_all();
                     StartNewLevel(new_level_num, 0);
                     do_cheat_penalty();
                 }

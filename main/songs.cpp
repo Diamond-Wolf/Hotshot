@@ -193,8 +193,6 @@ int play_redbook_track(int tracknum,int keep_playing)
 {
 	Redbook_playing = 0;
 
-	
-
 	if (!RBAEnabled() && Redbook_enabled && !FindArg("-noredbook"))
 		reinit_redbook();
 
@@ -300,7 +298,6 @@ void songs_play_level_song( int levelnum )
 
 	songnum = (levelnum>0)?(levelnum-1):(-levelnum);
 	
-	
 	if (!RBAEnabled() && Redbook_enabled && !FindArg("-noredbook"))
 		reinit_redbook();
 
@@ -313,8 +310,10 @@ void songs_play_level_song( int levelnum )
 	if (Redbook_enabled && RBAEnabled() && (n_tracks = RBAGetNumberOfTracks()) > 1) 
 	{
 		//try to play redbook
-		mprintf((0,"n_tracks = %d\n",n_tracks));
-		play_redbook_track(REDBOOK_FIRST_LEVEL_TRACK + (songnum % (n_tracks-REDBOOK_FIRST_LEVEL_TRACK+1)),1);
+		mprintf((0,"n_tracks = %d, songnum %d\n", n_tracks, songnum));
+		auto tracknum = REDBOOK_FIRST_LEVEL_TRACK + (songnum % (n_tracks-REDBOOK_FIRST_LEVEL_TRACK+1));
+		mprintf((0, "Playing track %d for level %d\n", tracknum, levelnum));
+		play_redbook_track(tracknum, 1);
 	}
 	
 	if (!Redbook_playing) //not playing redbook, so play midi

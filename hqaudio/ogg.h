@@ -20,6 +20,4 @@ struct OGGLoader : SoundLoader {
 	OGGLoader(const std::string& filename);
 
 	stb_vorbis* ogg;
-	int channels;
-
 };
