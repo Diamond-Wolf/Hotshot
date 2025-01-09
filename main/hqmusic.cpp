@@ -152,7 +152,7 @@ void InitFromSNG(std::string filename) {
 			get_full_file_path(fullFilePath, line, CHOCOLATE_MUSIC_DIR);
 #else
 			snprintf(fullFilePath, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", line);
-			filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
+			fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
 #endif
 
 			tracks.push_back(line);

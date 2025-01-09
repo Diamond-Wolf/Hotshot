@@ -37,7 +37,7 @@ size_t FLACLoader::GetSamples(void* buffer, size_t bufferSize) {
 }
 
 bool FLACLoader::Rewind() {
-	drflac_seek_to_pcm_frame(flac, 0);
+	return drflac_seek_to_pcm_frame(flac, 0);
 }
 
 void FLACLoader::Close() {
