@@ -1211,7 +1211,7 @@ void do_sound_menu()
 
 		m[3].type = NM_TYPE_TEXT; m[3].text = const_cast<char*>("");
 
-		m[4].type = NM_TYPE_CHECK;  m[4].text = const_cast<char*>("CD Music (Redbook) enabled"); m[4].value = (Redbook_playing != 0);
+		m[4].type = NM_TYPE_CHECK;  m[4].text = const_cast<char*>("CD Music (Redbook) enabled"); m[4].value = (Redbook_enabled != 0);
 #endif
 
 		m[5].type = NM_TYPE_CHECK;  m[5].text = TXT_REVERSE_STEREO; m[5].value = Config_channels_reversed;
@@ -1224,9 +1224,10 @@ void do_sound_menu()
 	} while (i > -1);
 
 	if (Config_midi_volume < 1)
-	{
 		digi_play_midi_song(NULL, NULL, NULL, 0);
-	}
+
+	if (Config_redbook_volume < 1)
+		songs_stop_redbook();
 
 }
 
