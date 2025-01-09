@@ -4,9 +4,10 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License.
 */
 
-#include "hqaudio/sound_loader.h"
+#include "hqmusic.h"
 
 #include <filesystem>
+#include <fstream>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -15,13 +16,17 @@ Instead, it is released under the terms of the MIT License.
 
 namespace fs = std::filesystem;
 
-#include "platform/mono.h"
-#include "platform/i_sound.h"
-#include "platform/platform_filesys.h"
-#include "platform/timer.h"
+#include "hqaudio/sound_loader.h"
 #include "misc/error.h"
+#include "platform/i_sound.h"
+#include "platform/mono.h"
+#include "platform/platform_filesys.h"
+#include "platform/posixstub.h"
+#include "platform/timer.h"
 
 SoundLoader* loader = nullptr;
+RedbookEndMode rbaEndMode = REM_CONTINUE;
+RedbookExtraTracksMode rbaExtraTracksMode = RETM_REDBOOK_2;
 
 bool PlayHQSong(const char* filename, bool loop) {
 	
@@ -65,15 +70,12 @@ int firstTrack, lastTrack;
 std::thread rbaThread;
 bool quitThread = false;
 
-void RBAInit() { // [DW] TODO: redbook.sng override
-	int i;
+void InitDefault() {
 	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
 	char track_name[16];
 
-	rbaInitialized = false;
-
 	//Simple hack to figure out how many CD tracks there are.
-	for (i = 0; i < 99; i++)
+	for (int i = 0; i < 99; i++)
 	{
 		snprintf(track_name, 15, "track%02d.ogg", i + 1);
 
@@ -90,11 +92,86 @@ void RBAInit() { // [DW] TODO: redbook.sng override
 			break;
 
 	}
-	
+
 	if (tracks.size() >= 3) //Need sufficient tracks
 		rbaInitialized = true;
 	else
 		tracks.clear();
+
+}
+
+void InitFromSNG(std::string filename) {
+	
+	std::ifstream file(filename);
+	if (!file.is_open()) {
+		Warning("Error opening redbook.sng");
+		return;
+	}
+
+	rbaEndMode = REM_CONTINUE;
+	rbaExtraTracksMode = RETM_REDBOOK_2;
+
+	char line[512];
+	char fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE];
+
+	while (file.getline(line, 512)) {
+		if (!_strnicmp(line, "endmode=", 8)) {
+			if (!_strnicmp(line + 8, "continue", 8))
+				rbaEndMode = REM_CONTINUE;
+			else if (!_strnicmp(line + 8, "loop", 4))
+				rbaEndMode = REM_LOOP;
+			else {
+				Warning("Invalid endmode specified in redbook.sng");
+				tracks.clear();
+				return;
+			}
+		} else if (!_strnicmp(line, "extras=", 7)) {
+			if (!_strnicmp(line + 7, "redbook", 7))
+				rbaExtraTracksMode = RETM_REDBOOK_2;
+			else if (!_strnicmp(line + 7, "midi", 4))
+				rbaExtraTracksMode = RETM_MIDI_5;
+			else {
+				Warning("Invalid extra tracks mode specified in redbook.sng");
+				tracks.clear();
+				return;
+			}
+		} else {
+
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+			get_full_file_path(fullFilePath, line, CHOCOLATE_MUSIC_DIR);
+#else
+			snprintf(fullFilePath, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", line);
+			filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
+#endif
+
+			tracks.push_back(line);
+			
+		}
+	}
+
+	rbaInitialized = true;
+
+}
+
+void RBAInit() { // [DW] TODO: redbook.sng override
+
+	rbaInitialized = false;
+	tracks.clear();
+
+	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
+
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+	get_full_file_path(filename_full_path, "redbook.sng", CHOCOLATE_MUSIC_DIR);
+#else
+	//snprintf(filename_full_path, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", "track_name");
+	strncpy(filename_full_path, "CDMusic/redbook.sng", 20);
+#endif
+
+	if (fs::is_regular_file(filename_full_path)) 
+		InitFromSNG(filename_full_path);
+	else
+		InitDefault();
+
 }
 
 bool RBAEnabled() { 
@@ -103,8 +180,10 @@ bool RBAEnabled() {
 
 void RBAStop() {
 
+	rbaInitialized = false;
+	quitThread = true;
+
 	if (rbaThread.joinable()) {
-		quitThread = true;
 		rbaThread.join();
 	}
 
@@ -120,12 +199,15 @@ int RBAGetTrackNum() {
 	return currentTrack; 
 }
 
-int RBAPlayTrack(int track) { 
-	return PlayHQSong(tracks[track - 1].data(), false);
+int RBAPlayTrack(int track, bool loop) { 
+	return PlayHQSong(tracks[track - 1].data(), loop);
 }
 
 int RBAPlayTracks(int first, int last) { 
 	
+	if (first == last)
+		return RBAPlayTrack(first, true);
+
 	if (rbaThread.joinable())
 		RBAStop();
 
@@ -138,7 +220,7 @@ int RBAPlayTracks(int first, int last) {
 		while (!quitThread && currentTrack <= last) {
 
 			if (!plat_is_hq_song_playing()) {
-				RBAPlayTrack(currentTrack);
+				RBAPlayTrack(currentTrack, false);
 				currentTrack++;
 			}
 
@@ -153,7 +235,7 @@ int RBAPlayTracks(int first, int last) {
 }
 
 bool RBAPeekPlayStatus() { 
-	return plat_is_hq_song_playing(); 
+	return rbaInitialized && plat_is_hq_song_playing(); 
 }
 
 /*

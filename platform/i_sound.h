@@ -108,7 +108,7 @@ bool plat_is_hq_song_playing();
 #define MVESND_S16LSB 1
 #define MVESND_U8 2
 
-void mvesnd_init_audio(int format, int samplerate, int stereo);
+void mvesnd_init_audio(SampleFormat format, int samplerate, int channels);
 void mvesnd_queue_audio_buffer(int len, short* data);
 void mvesnd_close();
 

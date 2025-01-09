@@ -620,7 +620,6 @@ void plat_start_hq_song(SoundLoader* loader, bool loop) {
 		}
 		, &activeHQSource);
 
-	
 	activeHQSource.loader = loader;
 	activeHQSource.loop = loop;
 	activeHQSource.playing = true;
@@ -646,27 +645,49 @@ bool plat_is_hq_song_playing() {
 	return soundInitialized && activeHQSource.playing;
 }
 
-void mvesnd_init_audio(int format, int samplerate, int stereo) {
+void mvesnd_init_audio(SampleFormat format, int samplerate, int channels) {
 	if (!soundInitialized)
 		return;
+
+	SDL_AudioSpec movieSpec = { SDL_AUDIO_U8, channels, samplerate };
+	if (format == SF_SHORT)
+		movieSpec.format = SDL_AUDIO_S16;
+
+	SDL_SetAudioStreamFormat(movieStream, &movieSpec, &outputSpec);
+
 }
 void mvesnd_queue_audio_buffer(int len, short* data) {
 	if (!soundInitialized)
 		return;
+
+	SDL_PutAudioStreamData(movieStream, data, len);
 }
 void mvesnd_close() {
 	if (!soundInitialized)
 		return;
+
+	SDL_ClearAudioStream(movieStream);
+
+	/*if (!soundInitialized || !movieStream)
+		return;
+
+	SDL_DestroyAudioStream(movieStream);
+	movieStream = NULL;*/
 }
 
 void mvesnd_pause() {
 	if (!soundInitialized)
 		return;
+
+	SDL_PauseAudioDevice(musicDevice);
+
 }
 
 void mvesnd_resume() {
 	if (!soundInitialized)
 		return;
+
+	SDL_ResumeAudioDevice(musicDevice);
 }
 
 /*
