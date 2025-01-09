@@ -2072,42 +2072,46 @@ void drop_player_eggs(size_t pobjnum)
 		if (Players[pnum].flags & PLAYER_FLAGS_CLOAKED)
 			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_CLOAK);
 
-		if (Players[pnum].flags & PLAYER_FLAGS_MAP_ALL)
-			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FULL_MAP);
+		if (currentGame == G_DESCENT_2) {
 
-		if (Players[pnum].flags & PLAYER_FLAGS_AFTERBURNER)
-			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_AFTERBURNER);
+			if (Players[pnum].flags & PLAYER_FLAGS_MAP_ALL)
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FULL_MAP);
 
-		if (Players[pnum].flags & PLAYER_FLAGS_AMMO_RACK)
-			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_AMMO_RACK);
+			if (Players[pnum].flags & PLAYER_FLAGS_AFTERBURNER)
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_AFTERBURNER);
 
-		if (Players[pnum].flags & PLAYER_FLAGS_CONVERTER)
-			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_CONVERTER);
+			if (Players[pnum].flags & PLAYER_FLAGS_AMMO_RACK)
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_AMMO_RACK);
 
-		if (Players[pnum].flags & PLAYER_FLAGS_HEADLIGHT)
-			call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_HEADLIGHT);
+			if (Players[pnum].flags & PLAYER_FLAGS_CONVERTER)
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_CONVERTER);
 
-		// drop the other enemies flag if you have it
+			if (Players[pnum].flags & PLAYER_FLAGS_HEADLIGHT)
+				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_HEADLIGHT);
 
-		if ((Game_mode & GM_CAPTURE) && (Players[pnum].flags & PLAYER_FLAGS_FLAG))
+			// drop the other enemies flag if you have it
+
+			if ((Game_mode & GM_CAPTURE) && (Players[pnum].flags & PLAYER_FLAGS_FLAG))
 #ifdef NETWORK
-			if ((get_team(pnum) == TEAM_RED))
-				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FLAG_BLUE);
-			else
-				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FLAG_RED);
+				if ((get_team(pnum) == TEAM_RED))
+					call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FLAG_BLUE);
+				else
+					call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_FLAG_RED);
 #endif
 
-		if (Game_mode & GM_HOARD)
-		{
-			// Drop hoard orbs
+			if (Game_mode & GM_HOARD)
+			{
+				// Drop hoard orbs
 
-			int max_count, i;
+				int max_count, i;
 
-			mprintf((0, "HOARD MODE: Dropping %d orbs\n", Players[pnum].secondary_ammo[PROXIMITY_INDEX]));
+				mprintf((0, "HOARD MODE: Dropping %d orbs\n", Players[pnum].secondary_ammo[PROXIMITY_INDEX]));
 
-			max_count = std::min(Players[pnum].secondary_ammo[PROXIMITY_INDEX], (uint16_t)12);
-			for (i = 0; i < max_count; i++)
-				call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_HOARD_ORB);
+				max_count = std::min(Players[pnum].secondary_ammo[PROXIMITY_INDEX], (uint16_t)12);
+				for (i = 0; i < max_count; i++)
+					call_object_create_egg(pobjnum, 1, OBJ_POWERUP, POW_HOARD_ORB);
+			}
+
 		}
 
 		//Drop the vulcan, gauss, and ammo
