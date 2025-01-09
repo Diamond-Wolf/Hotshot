@@ -1164,6 +1164,8 @@ void sound_menuset(int nitems, newmenu_item * items, int* last_key, int citem)
 
 				songs_stop_all();
 
+				digi_reset(); digi_reset();
+
 				if (Function_mode == FMODE_MENU)
 					songs_play_song(SONG_TITLE, 1);
 				else if (Function_mode == FMODE_GAME)
