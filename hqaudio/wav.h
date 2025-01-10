@@ -8,6 +8,9 @@ Instead, it is released under the terms of the MIT License.
 
 #include <string>
 
+#ifndef WAV_H
+#define WAV_H
+
 #ifdef USE_SDL
 # define WAV_SUPPORTED 1
 
@@ -26,4 +29,6 @@ struct WAVLoader : SoundLoader {
 
 #else
 # define WAV_SUPPORTED 0
+#endif
+
 #endif

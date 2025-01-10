@@ -4,6 +4,9 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License.
 */
 
+#ifndef MP3_H
+#define MP3_H
+
 #define MP3_SUPPORTED 1
 
 #include <string>
@@ -26,3 +29,5 @@ struct MP3Loader : SoundLoader {
 	mp3dec_ex_t mp3;
 
 };
+
+#endif

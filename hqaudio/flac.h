@@ -4,6 +4,9 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License.
 */
 
+#ifndef FLAC_H
+#define FLAC_H
+
 #define FLAC_SUPPORTED 1
 
 #include <string>
@@ -22,3 +25,5 @@ struct FLACLoader : SoundLoader {
 	drflac* flac = nullptr;
 
 };
+
+#endif

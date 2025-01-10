@@ -4,6 +4,9 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License.
 */
 
+#ifndef OGG_H
+#define OGG_H
+
 #define OGG_SUPPORTED 1
 
 #include <string>
@@ -21,3 +24,5 @@ struct OGGLoader : SoundLoader {
 
 	stb_vorbis* ogg;
 };
+
+#endif
