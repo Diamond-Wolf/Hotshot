@@ -215,7 +215,7 @@ int plat_init_audio() {
 					else if (available == 0) {
 						if (!sound->free && sound->initialized) {
 #ifndef NDEBUG
-							mprintf((0, "Freeing sound %d\n", sound->id));
+							//mprintf((0, "Freeing sound %d\n", sound->id));
 #endif
 							sound->free = true;
 							sound->loop = false;
@@ -330,7 +330,7 @@ int plat_get_new_sound_handle() {
 		if (soundPool[i].free && soundPool[i].outputStream) {
 
 #ifndef NDEBUG
-			mprintf((0, "Allocating sound %d\n", soundPool[i].id));
+			//mprintf((0, "Allocating sound %d\n", soundPool[i].id));
 #endif
 
             soundPool[i].free = false;
