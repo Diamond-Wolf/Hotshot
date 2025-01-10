@@ -289,6 +289,8 @@ public:
 	virtual void PerformBranchResets(BranchEntry* entry, int chan) = 0;
 	//Sets the volume of the synthesizer. Range is 0-127. 
 	virtual void SetVolume(int volume) = 0;
+	//Sets the soundfont for the synthesizer.
+	virtual void SetSoundfont(const char* filename);
 };
 
 class DummyMidiSynth : public MidiSynth
@@ -352,3 +354,5 @@ public:
 	//dumb things, pls improve
 	bool IsError();
 };
+
+MidiSynth* RequestMidiSynth();

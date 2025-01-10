@@ -107,101 +107,13 @@ int S_InitMusic(int device)
 	{
 	case _MIDI_GEN:
 	{
-		GenDevices genMidiDevice = PreferredGenDevice;
-
-		//Validate that the preferred device is actually available. 
-		//Messy macro abuse ahoy. 
-
-#ifndef USE_FLUIDSYNTH
-		if (genMidiDevice == GenDevices::FluidSynthDevice)
-		{
-#ifdef _WINDOWS
-			genMidiDevice = GenDevices::MMEDevice;
-#else
-			genMidiDevice = GenDevices::NullDevice;
-#endif
-		}
-#endif
-
-#ifndef _WINDOWS
-		if (genMidiDevice == GenDevices::MMEDevice)
-		{
-#ifdef USE_FLUIDSYNTH
-			genMidiDevice = GenDevices::FluidSynthDevice;
-#else
-			genMidiDevice = GenDevices::NullDevice;
-#endif
-		}
-#endif
-
-
-#ifndef USE_TSFMIDI
-		if (genMidiDevice == GenDevices::TSFSynthDevice)
-		{
-#ifdef _WINDOWS
-			genMidiDevice = GenDevices::MMEDevice;
-#else
-			genMidiDevice = GenDevices::NullDevice;
-#endif
-		}
-#endif
-
-		switch (genMidiDevice)
-		{
-#ifdef USE_FLUIDSYNTH
-		case GenDevices::FluidSynthDevice:
-		{
-			MidiFluidSynth* fluidSynth = new MidiFluidSynth();
-			if (fluidSynth == nullptr)
-			{
-				Error("S_InitMusic: Fatal: Cannot allocate fluid synth.");
-				return 1;
-			}
-			fluidSynth->SetSampleRate(plat_get_preferred_midi_sample_rate());
-			fluidSynth->CreateSynth();
-			fluidSynth->SetSoundfont(SoundFontFilename);
-			synth = (MidiSynth*)fluidSynth;
-		}
-			break;
-#endif
-
-#ifdef USE_TSFMIDI
-		case GenDevices::TSFSynthDevice: {
-			TSFMidiSynth* newsynth = new TSFMidiSynth();
-			newsynth->SetSampleRate(plat_get_preferred_midi_sample_rate());
-			newsynth->SetSoundfont(SoundFontFilename);
-			newsynth->CreateSynth(); // [DW] TSF needs to be created with the soundfont, then it can be set up, but don't wanna change the API
-			synth = (MidiSynth*)newsynth;
-			break;
-		}
-#endif
-
-#ifdef _WINDOWS
-		case GenDevices::MMEDevice:
-		{
-			MidiWin32Synth* winsynth = new MidiWin32Synth();
-			if (winsynth == nullptr)
-			{
-				Error("S_InitMusic: Fatal: Cannot allocate win32 synth.");
-				return 1;
-			}
-			winsynth->CreateSynth();
-			synth = (MidiSynth*)winsynth;
-		}
-			break;
-#endif
-
-		default:
-			mprintf((1, "Could not create requested synth. Creating dummy synth instead.\n"));
-			synth = new DummyMidiSynth();
-			break;
-		}
+		synth = RequestMidiSynth();
 	}
 		break;
 	}
-	if (synth == nullptr)
+	if (!synth)
 	{
-		Warning("S_InitMusic: Unknown device.\n");
+		Warning("S_InitMusic: Could not create midi synth.\n");
 		return 1;
 	}
 	sequencer = new MidiSequencer(synth, plat_get_preferred_midi_sample_rate());
@@ -863,7 +775,6 @@ void MidiPlayer::Run()
 				auto diff = now - tickPoint;
 
 				auto delay = std::chrono::duration_cast<std::chrono::microseconds>(diff);
-				I_DelayUS(delay.count());
 
 				tickPoint = tickClock.now();
 
@@ -896,3 +807,97 @@ void MidiPlayer::Run()
 	hasEnded = true;
 	//printf("Midi thread rip\n");
 }
+
+MidiSynth* RequestMidiSynth() {
+	GenDevices genMidiDevice = PreferredGenDevice;
+
+	//Validate that the preferred device is actually available. 
+	//Messy macro abuse ahoy. 
+
+#ifndef USE_FLUIDSYNTH
+	if (genMidiDevice == GenDevices::FluidSynthDevice)
+	{
+#ifdef _WINDOWS
+		genMidiDevice = GenDevices::MMEDevice;
+#else
+		genMidiDevice = GenDevices::NullDevice;
+#endif
+	}
+#endif
+
+#ifndef _WINDOWS
+	if (genMidiDevice == GenDevices::MMEDevice)
+	{
+#ifdef USE_FLUIDSYNTH
+		genMidiDevice = GenDevices::FluidSynthDevice;
+#else
+		genMidiDevice = GenDevices::NullDevice;
+#endif
+	}
+#endif
+
+
+#ifndef USE_TSFMIDI
+	if (genMidiDevice == GenDevices::TSFSynthDevice)
+	{
+#ifdef _WINDOWS
+		genMidiDevice = GenDevices::MMEDevice;
+#else
+		genMidiDevice = GenDevices::NullDevice;
+#endif
+	}
+#endif
+
+	switch (genMidiDevice)
+	{
+#ifdef USE_FLUIDSYNTH
+	case GenDevices::FluidSynthDevice:
+	{
+		MidiFluidSynth* fluidSynth = new MidiFluidSynth();
+		if (fluidSynth == nullptr)
+		{
+			Error("S_InitMusic: Fatal: Cannot allocate fluid synth.");
+			return nullptr;
+		}
+		fluidSynth->SetSampleRate(plat_get_preferred_midi_sample_rate());
+		fluidSynth->CreateSynth();
+		fluidSynth->SetSoundfont(SoundFontFilename);
+		return (MidiSynth*)fluidSynth;
+	}
+	break;
+#endif
+
+#ifdef USE_TSFMIDI
+	case GenDevices::TSFSynthDevice: {
+		TSFMidiSynth* newsynth = new TSFMidiSynth();
+		newsynth->SetSampleRate(plat_get_preferred_midi_sample_rate());
+		newsynth->SetSoundfont(SoundFontFilename);
+		newsynth->CreateSynth(); // [DW] TSF needs to be created with the soundfont, then it can be set up, but don't wanna change the API
+		return (MidiSynth*)newsynth;
+		break;
+	}
+#endif
+
+#ifdef _WINDOWS
+	case GenDevices::MMEDevice:
+	{
+		MidiWin32Synth* winsynth = new MidiWin32Synth();
+		if (winsynth == nullptr)
+		{
+			Error("S_InitMusic: Fatal: Cannot allocate win32 synth.");
+			return nullptr;
+		}
+		winsynth->CreateSynth();
+		return (MidiSynth*)winsynth;
+	}
+	break;
+#endif
+
+	default:
+		mprintf((1, "Could not create requested synth. Creating dummy synth instead.\n"));
+		return new DummyMidiSynth();
+		break;
+	}
+}
+
+void MidiSynth::SetSoundfont(const char* filename) {};

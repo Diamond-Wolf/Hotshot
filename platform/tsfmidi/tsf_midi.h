@@ -19,7 +19,7 @@ class TSFMidiSynth : MidiSynth
 public:
 	TSFMidiSynth();
 	~TSFMidiSynth() override;
-	void SetSoundfont(const char* filename);
+	void SetSoundfont(const char* filename) override;
 	void SetSampleRate(uint32_t newSampleRate) override;
 	void CreateSynth() override;
 	int ClassifySynth() override

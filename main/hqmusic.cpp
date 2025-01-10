@@ -155,7 +155,7 @@ void InitFromSNG(std::string filename) {
 			fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
 #endif
 
-			tracks.push_back(line);
+			tracks.push_back(fullFilePath);
 			
 		}
 	}
@@ -245,8 +245,10 @@ int RBAPlayTracks(int first, int last) {
 
 		}
 
-		threadStarted = true; //in case of emergency
-		threadStarted.notify_all();
+		if (!threadStarted) {
+			threadStarted = true; //in case of emergency
+			threadStarted.notify_all();
+		}
 
 	});
 
