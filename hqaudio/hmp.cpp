@@ -225,7 +225,7 @@ size_t HMPLoader::GetSamples(void* buffer, size_t bufferSize) {
 	auto diff = chr::duration_cast<timediff_t>(now - time).count();
 	time = now;
 
-	mprintf((0, "|%ull|", diff));
+	//mprintf((0, "|%ull|", diff));
 
 	currentPlaybackTime += diff;
 	//auto div = currentPlaybackTime / TICK_TIME;

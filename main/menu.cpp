@@ -986,6 +986,7 @@ void do_new_game_menu()
 extern void GameLoop(int, int);
 
 extern int Redbook_enabled;
+extern bool ForceLegacyMidi;
 
 void do_sound_menu();
 void do_toggles_menu();
@@ -1120,72 +1121,111 @@ void set_redbook_volume(int volume);
 //WIN(extern int RBCDROM_State);
 //WIN(static BOOL windigi_driver_off=FALSE);
 
-void sound_menuset(int nitems, newmenu_item * items, int* last_key, int citem)
+enum SoundMenuItemNum {
+	SMIN_FX_VOLUME,
+	SMIN_MUSIC_VOLUME,
+	SMIN_SPACER_1,
+	SMIN_USE_LEGACY,
+	SMIN_USE_CDMUSIC,
+	SMIN_REVERSE_STEREO,
+	SMIN_TOTAL,
+
+	SMIN_OLD_MIDIVOLUME = 1,
+	SMIN_OLD_CDVOLUME = 2,
+};
+
+void sound_menuset(int nitems, newmenu_item* items, int* last_key, int citem)
 {
 	nitems = nitems;
 	*last_key = *last_key;
 
-	if (Config_digi_volume != items[0].value)
+	if (Config_digi_volume != items[SMIN_FX_VOLUME].value)
 	{
-		Config_digi_volume = items[0].value;
+		Config_digi_volume = items[SMIN_FX_VOLUME].value;
 
 		digi_set_digi_volume((Config_digi_volume * 32768) / 8);
 		digi_play_sample_once(SOUND_DROP_BOMB, F1_0);
 	}
 
-	if (Config_midi_volume != items[1].value)
+	if (Config_midi_volume != items[SMIN_MUSIC_VOLUME].value)
 	{
-		Config_midi_volume = items[1].value;
+		Config_midi_volume = items[SMIN_MUSIC_VOLUME].value;
+		Config_redbook_volume = Config_midi_volume;
 		digi_set_midi_volume((Config_midi_volume * 128) / 8);
+		set_redbook_volume(Config_redbook_volume);
 	}
 
 	// don't enable redbook for a non-apple demo version of the shareware demo
-	if (CurrentDataVersion != DataVer::DEMO)
-	{
-		if (Config_redbook_volume != items[2].value)
+	//if (CurrentDataVersion != DataVer::DEMO)
+	//{
+		/*if (Config_redbook_volume != items[2].value)
 		{
 			Config_redbook_volume = items[2].value;
 			set_redbook_volume(Config_redbook_volume);
-		}
+		}*/
 
-		if (items[4].value != (Redbook_playing != 0))
+	bool replay = false;
+
+	if (items[SMIN_USE_LEGACY].value != ForceLegacyMidi)
+	{
+		if (!items[SMIN_USE_LEGACY].value && FindArg("-noredbook"))
 		{
-			if (items[4].value && FindArg("-noredbook"))
-			{
-				nm_messagebox(TXT_SORRY, 1, TXT_OK, "Redbook audio has been disabled\non the command line");
-				items[4].value = 0;
-				items[4].redraw = 1;
-			}
-			else
-			{
-				Redbook_enabled = items[4].value;
-
-				mprintf((1, "Redbook_enabled = %d\n", Redbook_enabled));
-
-				songs_stop_all();
-
-				digi_reset(); digi_reset();
-
-				if (Function_mode == FMODE_MENU)
-					songs_play_song(SONG_TITLE, 1);
-				else if (Function_mode == FMODE_GAME)
-					songs_play_level_song(Current_level_num);
-				else
-					Int3();
-
-				if (items[4].value && !Redbook_playing)
-				{
-					nm_messagebox(TXT_SORRY, 1, TXT_OK, "Cannot start CD Music. OGG files\nshould be placed in the cdmusic\ndirectory with the filenames\ntrack01.ogg, track02.ogg and so on.");
-					items[4].value = 0;
-					items[4].redraw = 1;
-				}
-
-				items[1].type = (Redbook_playing ? NM_TYPE_TEXT : NM_TYPE_SLIDER);
-				items[1].redraw = 1;
-				items[2].type = (Redbook_playing ? NM_TYPE_SLIDER : NM_TYPE_TEXT);
-				items[2].redraw = 1;
-			}
+			nm_messagebox(TXT_SORRY, 1, TXT_OK, "Redbook audio has been disabled\non the command line");
+			items[SMIN_USE_LEGACY].value = 1;
+			items[SMIN_USE_LEGACY].redraw = 1;
 		}
+		else
+		{
+			ForceLegacyMidi = items[SMIN_USE_LEGACY].value;
+			mprintf((1, "ForceLegacyMidi = %d\n", ForceLegacyMidi));
+
+			replay = true;
+
+			if (ForceLegacyMidi) {
+				
+			}
+
+			Redbook_enabled = false;
+			//items[SMIN_USE_CDMUSIC].value = 0;
+			items[SMIN_USE_CDMUSIC].type = (ForceLegacyMidi ? NM_TYPE_TEXT : NM_TYPE_CHECK);
+			items[SMIN_USE_CDMUSIC].redraw = 1;
+
+			/*items[1].type = (Redbook_playing ? NM_TYPE_TEXT : NM_TYPE_SLIDER);
+			items[1].redraw = 1;
+			items[2].type = (Redbook_playing ? NM_TYPE_SLIDER : NM_TYPE_TEXT);
+			items[2].redraw = 1;*/
+		}
+	}
+	//} 
+	if (!ForceLegacyMidi && items[SMIN_USE_CDMUSIC].value != Redbook_enabled) {
+	
+		Redbook_enabled = items[SMIN_USE_CDMUSIC].value;
+		mprintf((1, "Redbook_enabled = %d\n", Redbook_enabled));
+
+		replay = true;
+	
+	}
+
+	if (replay) {
+		
+		songs_stop_all();
+
+		digi_reset(); digi_reset();
+
+		if (Function_mode == FMODE_MENU)
+			songs_play_song(SONG_TITLE, 1);
+		else if (Function_mode == FMODE_GAME)
+			songs_play_level_song(Current_level_num);
+		else
+			Int3();
+
+		if (items[SMIN_USE_CDMUSIC].value && !Redbook_playing)
+		{
+			nm_messagebox(TXT_SORRY, 1, TXT_OK, "Cannot start CD Music. OGG files\nshould be placed in the cdmusic\ndirectory with the filenames\ntrack01.ogg, track02.ogg and so on.");
+			items[SMIN_USE_CDMUSIC].value = 0;
+			items[SMIN_USE_CDMUSIC].redraw = 1;
+		}
+
 	}
 
 	citem++;		//kill warning
@@ -1198,23 +1238,30 @@ void do_sound_menu()
 
 	do
 	{
-		m[0].type = NM_TYPE_SLIDER; m[0].text = TXT_FX_VOLUME; m[0].value = Config_digi_volume; m[0].min_value = 0; m[0].max_value = 8;
-		m[1].type = (Redbook_playing ? NM_TYPE_TEXT : NM_TYPE_SLIDER); m[1].text = const_cast<char*>("MIDI music volume"); m[1].value = Config_midi_volume; m[1].min_value = 0; m[1].max_value = 8;
+		int mn = SMIN_FX_VOLUME;
+		m[mn].type = NM_TYPE_SLIDER; m[mn].text = TXT_FX_VOLUME; m[mn].value = Config_digi_volume; m[mn].min_value = 0; m[mn].max_value = 8;
+		mn = SMIN_MUSIC_VOLUME;
+		m[mn].type = (Redbook_playing ? NM_TYPE_TEXT : NM_TYPE_SLIDER); m[mn].text = const_cast<char*>("MIDI music volume"); m[mn].value = Config_midi_volume; m[mn].min_value = 0; m[mn].max_value = 8;
 
-#ifdef SHAREWARE
+/*#ifdef SHAREWARE
 		m[2].type = NM_TYPE_TEXT; m[2].text = const_cast<char*>("");
 		m[3].type = NM_TYPE_TEXT; m[3].text = const_cast<char*>("");
 		m[4].type = NM_TYPE_TEXT; m[4].text = const_cast<char*>("");
 
-#else		// ifdef SHAREWARE
-		m[2].type = (Redbook_playing ? NM_TYPE_SLIDER : NM_TYPE_TEXT); m[2].text = const_cast<char*>("CD music volume"); m[2].value = Config_redbook_volume; m[2].min_value = 0; m[2].max_value = 8;
+#else		// ifdef SHAREWARE*/
+		//m[mn].type = (Redbook_playing ? NM_TYPE_SLIDER : NM_TYPE_TEXT); m[mn].text = const_cast<char*>("CD music volume"); m[mn].value = Config_redbook_volume; m[mn].min_value = 0; m[mn].max_value = 8;
 
-		m[3].type = NM_TYPE_TEXT; m[3].text = const_cast<char*>("");
+		mn = SMIN_SPACER_1;
+		m[mn].type = NM_TYPE_TEXT; m[mn].text = const_cast<char*>("");
 
-		m[4].type = NM_TYPE_CHECK;  m[4].text = const_cast<char*>("CD Music (Redbook) enabled"); m[4].value = (Redbook_enabled != 0);
-#endif
+		mn = SMIN_USE_LEGACY;
+		m[mn].type = NM_TYPE_CHECK;  m[mn].text = const_cast<char*>("Use legacy MIDI"); m[mn].value = ForceLegacyMidi;
+//#endif
+		mn = SMIN_USE_CDMUSIC;
+		m[mn].type = NM_TYPE_CHECK; m[mn].text = const_cast<char*>("Use CDMusic source"); m[mn].value = (Redbook_enabled != 0);
 
-		m[5].type = NM_TYPE_CHECK;  m[5].text = TXT_REVERSE_STEREO; m[5].value = Config_channels_reversed;
+		mn = SMIN_REVERSE_STEREO;
+		m[mn].type = NM_TYPE_CHECK;  m[mn].text = TXT_REVERSE_STEREO; m[mn].value = Config_channels_reversed;
 
 		i = newmenu_do1(NULL, "Sound Effects & Music", sizeof(m) / sizeof(*m), m, sound_menuset, i);
 

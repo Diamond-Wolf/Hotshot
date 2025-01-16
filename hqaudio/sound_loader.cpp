@@ -65,7 +65,8 @@ SoundLoader* RequestSoundLoader(const std::string filename) {
 #endif
 
 	// [DW] if HMP isn't supported, something is horribly wrong
-	if (strlen(extc) == 4 && !_strnicmp(extc, ".hmp", 4)) {
+	if (strlen(extc) == 4 && !_strnicmp(extc, ".hmp", 4)
+	|| strlen(extc) == 4 && !_strnicmp(extc, ".hmq", 4)) {
 		return new HMPLoader(filename);
 	}
 	

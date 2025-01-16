@@ -9,6 +9,7 @@ Instead, it is released under the terms of the MIT License.
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <regex>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -17,7 +18,10 @@ Instead, it is released under the terms of the MIT License.
 
 namespace fs = std::filesystem;
 
+#include "cfile/cfile.h"
 #include "hqaudio/sound_loader.h"
+#include "inferno.h"
+#include "songs.h";
 #include "misc/error.h"
 #include "platform/i_sound.h"
 #include "platform/mono.h"
@@ -38,6 +42,7 @@ int firstTrack, lastTrack;
 
 std::thread rbaThread;
 bool quitThread = false;
+bool threadWasEverInitialized = false;
 
 bool PlayHQSong(const char* filename, bool loop) {
 	
@@ -47,15 +52,63 @@ bool PlayHQSong(const char* filename, bool loop) {
 	loader = RequestSoundLoader(filename);
 	
 	if (!loader) {
-		Warning("Unrecognized filetype for HQ file %s", filename);
+		//Warning("Unrecognized filetype for HQ file %s", filename);
+		hqaWarning.Put("Unrecognized filetype for HQ file " + std::string(filename));
+		mprintf((1, "Unrecognized filetype for HQ file %s", filename));
 		return false;
 	}
 
-	if (!loader->Open()) {
-		Warning("Could not open loader for %s", filename);
-		return false;
+	if (Redbook_enabled) {
+
+		if (!loader->Open()) {
+			//Warning("Could not open loader for %s", filename);
+			hqaWarning.Put("Could not open loader for " + std::string(filename));
+			mprintf((1, "Could not open loader for %s", filename));
+			delete loader;
+			loader = nullptr;
+			return false;
+		}
+
+	} else {
+
+		auto cfile = cfopen(filename, "rb");
+		if (!cfile) {
+			//Warning("Could not open %s", filename);
+			hqaWarning.Put("Could not open " + std::string(filename));
+			mprintf((1, "Could not open %s", filename));
+			delete loader;
+			loader = nullptr;
+			return false;
+		}
+
+		auto size = cfile->size;
+		auto data = new char[size];
+		auto read = cfread(data, 1, cfile->size, cfile);
+		cfclose(cfile);
+
+		if (read < size) {
+			mprintf((1, "cfread: Requested %d / %d, got %d", 1, size, read));
+			//Warning("Error reading %s", filename);
+			hqaWarning.Put("Error reading " + std::string(filename));
+			mprintf((1, "Error reading %s", filename));
+			delete loader;
+			loader = nullptr;
+			delete[] data;
+			return false;
+		}
+
+		if (!loader->OpenMemory(data, size, true)) {
+			//Warning("Could not open loader for %s", filename);
+			hqaWarning.message = "Could not open loader for " + std::string(filename);
+			hqaWarning.show = true;
+			delete loader;
+			loader = nullptr;
+			// [DW] Don't delete data, since the loader's dtor will do that
+			return false;
+		}
+
 	}
-	
+
 	plat_start_hq_song(loader, loop);
 	return true;
 }
@@ -65,7 +118,7 @@ void StopHQSong() {
 	
 	quitThread = true;
 
-	if (rbaThread.joinable()) {
+	if (threadWasEverInitialized && rbaThread.joinable()) {
 		rbaThread.join();
 	}
 
@@ -80,6 +133,72 @@ void StopHQSong() {
 }
 
 //Redbook music emulation functions
+
+void ProcessRSNGLine(char* line) {
+
+	static char fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE];
+
+	if (!_strnicmp(line, ":", 0)) {
+		if (!_strnicmp(line, ":endmode=", 9)) {
+			mprintf((0, "Found end mode: %s\n", line));
+			if (!_strnicmp(line + 9, "continue", 8))
+				rbaEndMode = REM_CONTINUE;
+			else if (!_strnicmp(line + 9, "loop", 4))
+				rbaEndMode = REM_LOOP;
+			else {
+				mprintf((1, "Invalid endmode specified in redbook.sng"));
+				//tracks.clear();
+				//return;
+			}
+		}
+		else if (!_strnicmp(line, ":extras=", 8)) {
+			mprintf((0, "Found extras mode: %s\n", line));
+			if (!_strnicmp(line + 8, "redbook", 7))
+				rbaExtraTracksMode = RETM_REDBOOK_2;
+			else if (!_strnicmp(line + 8, "midi", 4))
+				rbaExtraTracksMode = RETM_MIDI_5;
+			else {
+				mprintf((1, "Invalid extra tracks mode specified in redbook.sng"));
+				//tracks.clear();
+				//return;
+			}
+		}
+		else {
+			mprintf((1, "Invalid RSNG directive %s", line));
+		}
+	}
+	else {
+
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+		get_full_file_path(fullFilePath, line, CHOCOLATE_MUSIC_DIR);
+#else
+		snprintf(fullFilePath, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", line);
+		fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
+#endif
+
+		tracks.push_back(fullFilePath);
+
+	}
+}
+
+void ReadRSNGFromDisk(std::string filename) {
+
+	std::ifstream file(filename);
+	if (!file.is_open()) {
+		Warning("Error opening redbook.sng");
+		return;
+	}
+
+	rbaEndMode = REM_CONTINUE;
+	rbaExtraTracksMode = RETM_REDBOOK_2;
+
+	char line[512];
+
+	while (file.getline(line, 512)) {
+		ProcessRSNGLine(line);
+	}
+
+}
 
 void InitDefault() {
 	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
@@ -104,65 +223,60 @@ void InitDefault() {
 
 	}
 
-	if (tracks.size() >= 3) //Need sufficient tracks
+	int needed = (rbaExtraTracksMode == RETM_REDBOOK_2 ? 3 : 6);
+	if (tracks.size() >= needed) //Need sufficient tracks
 		rbaInitialized = true;
 	else
 		tracks.clear();
 
 }
 
-void InitFromSNG(std::string filename) {
+bool ReadSNGFromCFile(CFILE* cfile, bool useWholeLine, bool allowDirectives, bool d1OverrideHack) {
+	if (!cfile)
+		return false;
+
+	char line[81];
+	memset(line, '\0', 81);
 	
-	std::ifstream file(filename);
-	if (!file.is_open()) {
-		Warning("Error opening redbook.sng");
-		return;
-	}
-
+	rbaEndMode = REM_LOOP;
 	rbaEndMode = REM_CONTINUE;
-	rbaExtraTracksMode = RETM_REDBOOK_2;
+	rbaExtraTracksMode = RETM_MIDI_5;
 
-	char line[512];
-	char fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE];
+	while (cfgets(line, 80, cfile))
+	{
+		char* p = strchr(line, '\n');
+		if (p) *p = '\0';
 
-	while (file.getline(line, 512)) {
-		if (!_strnicmp(line, ":endmode=", 9)) {
-			mprintf((0, "Found end mode: %s\n", line));
-			if (!_strnicmp(line + 9, "continue", 8))
-				rbaEndMode = REM_CONTINUE;
-			else if (!_strnicmp(line + 9, "loop", 4))
-				rbaEndMode = REM_LOOP;
-			else {
-				Warning("Invalid endmode specified in redbook.sng");
-				//tracks.clear();
-				//return;
+		if (!useWholeLine) {
+			const static std::regex spaceRe("\\s+");
+			//strncpy(line, std::regex_replace(line, spaceRe, "\0").c_str(), 80);
+			p = strchr(line, ' ');
+			if (p) *p = '\0';
+			p = strchr(line, '\t');
+			if (p) *p = '\0';
+		}
+
+		if (strlen(line))
+		{
+			//song_info song;
+			//sscanf(inputline, "%15s %15s %15s", song.filename, song.melodic_bank_file, song.drum_bank_file);
+			//Songs.push_back(song);
+			if (allowDirectives)
+				ProcessRSNGLine(line);
+			else
+				tracks.push_back(line);
+		}
+
+		if (d1OverrideHack && currentGame == G_DESCENT_1 && needToMaybePatchD1SongFile && tracks.size() == SONG_FIRST_LEVEL_SONG + 7) {
+			for (int i = 7; i < 22; i++) {
+				int index = SONG_FIRST_LEVEL_SONG + i;
+				snprintf(line, 11, "game%02u.hmp", i + 1);
+				tracks.push_back(line);
 			}
-		} else if (!_strnicmp(line, ":extras=", 8)) {
-			mprintf((0, "Found extras mode: %s\n", line));
-			if (!_strnicmp(line + 8, "redbook", 7))
-				rbaExtraTracksMode = RETM_REDBOOK_2;
-			else if (!_strnicmp(line + 8, "midi", 4))
-				rbaExtraTracksMode = RETM_MIDI_5;
-			else {
-				Warning("Invalid extra tracks mode specified in redbook.sng");
-				//tracks.clear();
-				//return;
-			}
-		} else {
-
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-			get_full_file_path(fullFilePath, line, CHOCOLATE_MUSIC_DIR);
-#else
-			snprintf(fullFilePath, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", line);
-			fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE - 1] = '\0';
-#endif
-
-			tracks.push_back(fullFilePath);
-			
 		}
 	}
 
-	rbaInitialized = true;
+	return true;
 
 }
 
@@ -173,17 +287,31 @@ void RBAInit() {
 
 	char filename_full_path[CHOCOLATE_MAX_FILE_PATH_SIZE];
 
-#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
-	get_full_file_path(filename_full_path, "redbook.sng", CHOCOLATE_MUSIC_DIR);
-#else
-	//snprintf(filename_full_path, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", "track_name");
-	strncpy(filename_full_path, "CDMusic/redbook.sng", 20);
-#endif
+	if (Redbook_enabled) {
 
-	if (fs::is_regular_file(filename_full_path)) 
-		InitFromSNG(filename_full_path);
-	else
-		InitDefault();
+#if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
+		get_full_file_path(filename_full_path, "redbook.sng", CHOCOLATE_MUSIC_DIR);
+#else
+		snprintf(filename_full_path, CHOCOLATE_MAX_FILE_PATH_SIZE, "CDMusic/%s", "track_name");
+#endif
+		if (fs::is_regular_file(filename_full_path)) {
+			ReadRSNGFromDisk(filename_full_path);
+			rbaInitialized = true;
+		} else {
+			InitDefault();
+		}
+
+	} else {
+		
+		if (!ReadSNGFromCFile(cfopen("hotshot.sng", "rb"), true, true, false))
+			if (!ReadSNGFromCFile(cfopen("dxx-r.sng", "rb"), true, false, false))
+				if (!ReadSNGFromCFile(cfopen("descent.sng", "rb"), false, false, true)) {
+					Warning("Could not find valid SNG. Need one of hotshot.sng, dxx-r.sng, or descent.sng.");
+				}
+					
+	}
+
+	rbaInitialized = true;
 
 }
 
@@ -214,7 +342,9 @@ int RBAPlayTrack(int track, bool loop) {
 	return PlayHQSong(tracks[track - 1].c_str(), loop);
 }
 
-std::atomic<bool> threadStarted = false;
+//std::atomic<bool> threadStarted = false;
+bool threadStarted = false;
+int rbaTrackActive = 0;
 
 int RBAPlayTracks(int first, int last) { 
 	if (!rbaInitialized)
@@ -223,11 +353,13 @@ int RBAPlayTracks(int first, int last) {
 	if (first == last)
 		return RBAPlayTrack(first, true);
 
-	if (rbaThread.joinable())
-		RBAStop();
+	if (threadWasEverInitialized && rbaThread.joinable()) {
+		StopHQSong();
+	}
 
 	quitThread = false;
 	threadStarted = false;
+	rbaTrackActive = 0;
 
 	rbaThread = std::thread([first, last]() {
 		
@@ -236,25 +368,36 @@ int RBAPlayTracks(int first, int last) {
 		while (!quitThread && currentTrack <= last) {
 
 			if (!plat_is_hq_song_playing()) {
-				RBAPlayTrack(currentTrack, false);
+				if (RBAPlayTrack(currentTrack, false))
+					rbaTrackActive = currentTrack;
+				else
+					rbaTrackActive = 0;
+
 				currentTrack++;
 			}
 
 			threadStarted = true;
-			threadStarted.notify_all();
+			//threadStarted.notify_all();
 
 			I_DelayUS(1000);
 
 		}
 
-		if (!threadStarted) {
-			threadStarted = true; //in case of emergency
-			threadStarted.notify_all();
-		}
+		threadStarted = true;
 
 	});
 
-	threadStarted.wait(false);
+	threadWasEverInitialized = true;
+
+	while (threadStarted && rbaThread.joinable()) {
+		if (hqaWarning.show) {
+			Warning(hqaWarning.Get().c_str());
+		}
+	}
+
+	if (hqaWarning.show) {
+		Warning(hqaWarning.Get().c_str());
+	}
 
 	return true;
 

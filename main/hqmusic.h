@@ -6,6 +6,9 @@ Instead, it is released under the terms of the MIT License.
 
 #pragma once
 
+#include <mutex>
+#include <string>
+
 //Basic HQ music functions
 
 //Plays an OGG file
@@ -39,3 +42,30 @@ enum RedbookExtraTracksMode {
 
 extern RedbookEndMode rbaEndMode;
 extern RedbookExtraTracksMode rbaExtraTracksMode;
+
+inline struct HQAWarning {
+
+	bool show = false;
+	std::string message;
+
+	std::mutex m;
+
+	void Put(std::string message) {
+		m.lock();
+		this->message = message;
+		show = true;
+		m.unlock();
+	}
+
+	std::string Get() {
+		std::string message;
+
+		m.lock();
+		message = this->message;
+		show = false;
+		m.unlock();
+
+		return message;
+	}
+
+} hqaWarning;

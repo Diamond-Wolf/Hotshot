@@ -42,6 +42,8 @@ int Redbook_enabled = 1;
 //0 if redbook is no playing, else the track number
 int Redbook_playing = 0;
 
+bool ForceLegacyMidi = false;
+
 #define NumLevelSongs (Songs.size() - SONG_FIRST_LEVEL_SONG)
 
 #define REDBOOK_VOLUME_SCALE  (127/3) //changed to 127 since this uses the same interface as the MIDI sound system
@@ -191,9 +193,10 @@ int reinit_redbook()
 //play only specified track
 int play_redbook_track(int tracknum,int keep_playing)
 {
-	Redbook_playing = 0;
+	//Redbook_playing = 0;
+	songs_stop_all();
 
-	if (!RBAEnabled() && Redbook_enabled && !FindArg("-noredbook"))
+	if (!RBAEnabled() && !ForceLegacyMidi && !FindArg("-noredbook"))
 		reinit_redbook();
 
 	/*if (force_rb_register)
@@ -202,14 +205,16 @@ int play_redbook_track(int tracknum,int keep_playing)
 		force_rb_register = 0;
 	}*/
 
-	if (Redbook_enabled && RBAEnabled()) 
+	if (!ForceLegacyMidi && RBAEnabled()) 
 	{
 		int num_tracks = RBAGetNumberOfTracks();
 		if (tracknum <= num_tracks) {
 			if (rbaEndMode == REM_CONTINUE) {
+				mprintf((0, "Continue\n"));
 				if (RBAPlayTracks(tracknum, keep_playing ? num_tracks : tracknum))
 					Redbook_playing = tracknum;
 			} else {
+				mprintf((0, "Loop\n"));
 				if (RBAPlayTrack(tracknum, true))
 					Redbook_playing = tracknum;
 			}
@@ -273,7 +278,7 @@ void songs_play_song( int songnum, int repeat )
 		force_rb_register = 0;
 	}*/
 
-	//if (Redbook_enabled) {
+	if (!ForceLegacyMidi) {
 
 		//mprintf((0, "RETM:%d\n", rbaExtraTracksMode));
 
@@ -290,12 +295,17 @@ void songs_play_song( int songnum, int repeat )
 
 		}
 
-	/* }
+		if (!Redbook_playing) {
+			mprintf((1, "Could not play song through redbook!\n"));
+		}
+
+	}
 
 	if (!Redbook_playing) //not playing redbook, so play midi
 	{		
+		mprintf((0, "Playing song from legacy\n"));
 		digi_play_midi_song( Songs[songnum].filename, Songs[songnum].melodic_bank_file, Songs[songnum].drum_bank_file, repeat );
-	}*/
+	}
 }
 
 int current_song_level;
@@ -316,7 +326,7 @@ void songs_play_level_song( int levelnum )
 
 	songnum = (levelnum>0)?(levelnum-1):(-levelnum);
 	
-	if (!RBAEnabled() && Redbook_enabled && !FindArg("-noredbook"))
+	if (!RBAEnabled() && !ForceLegacyMidi && !FindArg("-noredbook"))
 		reinit_redbook();
 
 	/*if (force_rb_register) 
@@ -325,18 +335,24 @@ void songs_play_level_song( int levelnum )
 		force_rb_register = 0;
 	}*/
 
-	if (/*Redbook_enabled && */RBAEnabled() && (n_tracks = RBAGetNumberOfTracks()) > 1)
+	if (!ForceLegacyMidi && RBAEnabled() && (n_tracks = RBAGetNumberOfTracks()) > 1)
 	{
 		//try to play redbook
 		mprintf((0,"n_tracks = %d, songnum %d\n", n_tracks, songnum));
 		auto first = (rbaExtraTracksMode == RETM_REDBOOK_2 ? REDBOOK_FIRST_LEVEL_TRACK : SONG_FIRST_LEVEL_SONG + 1);
 		auto tracknum = first + (songnum % (n_tracks - first + 1));
 		mprintf((0, "Playing track %d for level %d\n", tracknum, levelnum));
-		play_redbook_track(tracknum, 1);
+		play_redbook_track(tracknum, rbaEndMode == REM_CONTINUE);
+
+		if (!Redbook_playing) {
+			mprintf((1, "Could not play song through redbook!\n"));
+		}
+
 	}
 	
 	if (!Redbook_playing) //not playing redbook, so play midi
 	{			
+		mprintf((0, "Playing level song from legacy\n"));
 		songnum = SONG_FIRST_LEVEL_SONG + (songnum % NumLevelSongs);
 		digi_play_midi_song( Songs[songnum].filename, Songs[songnum].melodic_bank_file, Songs[songnum].drum_bank_file, 1 );
 	}
@@ -345,6 +361,10 @@ void songs_play_level_song( int levelnum )
 //this should be called regularly to check for redbook restart
 void songs_check_redbook_repeat()
 {
+	if (hqaWarning.show) {
+		Warning(hqaWarning.Get().c_str());
+	}
+
 	static fix last_check_time;
 	fix current_time;
 

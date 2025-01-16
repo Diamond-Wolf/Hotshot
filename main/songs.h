@@ -47,6 +47,8 @@ extern bool needToMaybePatchD1SongFile;
 extern int Redbook_enabled;
 extern int Redbook_playing;		// track that is currently playing
 
+extern bool ForceLegacyMidi;
+
 void songs_play_song( int songnum, int repeat );
 void songs_play_level_song( int levelnum );
 
