@@ -20,7 +20,7 @@ bool MP3Loader::Open() {
 		mp3dec_init(&engine);
 	}
 
-	if (mp3dec_ex_open(&mp3, filename.c_str(), MP3D_SEEK_TO_SAMPLE)) {
+	if (mp3dec_ex_open(&mp3, filename.c_str(), MP3D_SEEK_TO_SAMPLE) != 0) {
 		mprintf((1, "Error loading MP3 file\n"));
 		return false;
 	}
@@ -31,6 +31,25 @@ bool MP3Loader::Open() {
 
 	return true;
 
+}
+
+bool MP3Loader::OpenMemory(void* memory, size_t len, bool autoFree) {
+	SoundLoader::OpenMemory(memory, len, autoFree);
+
+	if (!mp3Initialized) {
+		mp3dec_init(&engine);
+	}
+
+	if (mp3dec_ex_open_buf(&mp3, (uint8_t*)memory, len, MP3D_SEEK_TO_SAMPLE) != 0) {
+		mprintf((1, "Error loading MP3 file\n"));
+		return false;
+	}
+
+	properties.channels = mp3.info.channels;
+	properties.sampleRate = mp3.info.hz;
+	properties.format = SF_SHORT;
+
+	return true;
 }
 
 size_t MP3Loader::GetSamples(void* buffer, size_t bufferSize) {

@@ -20,13 +20,7 @@ namespace chr = std::chrono;
 
 MIDILoader::MIDILoader(const std::string& filename) : SoundLoader(filename) {}
 
-bool MIDILoader::Open() {
-	
-	midiMessage = tml_load_filename(filename.c_str());
-	if (!midiMessage) {
-		mprintf((1, "Error opening midi file %s\n", filename.c_str()));
-		return false;
-	}
+bool MIDILoader::LoadCommon() {
 
 	midi = tsf_load_filename(SoundFontFilename);
 	if (!midi) {
@@ -54,6 +48,31 @@ bool MIDILoader::Open() {
 	time = clock.now();
 
 	return true;
+
+}
+
+bool MIDILoader::Open() {
+	
+	midiMessage = tml_load_filename(filename.c_str());
+	if (!midiMessage) {
+		mprintf((1, "Error opening midi file %s\n", filename.c_str()));
+		return false;
+	}
+
+	return LoadCommon();
+
+}
+
+bool MIDILoader::OpenMemory(void* memory, size_t len, bool autoFree) {
+	SoundLoader::OpenMemory(memory, len, autoFree);
+
+	midiMessage = tml_load_memory(memory, len);
+	if (!midiMessage) {
+		mprintf((1, "Error opening midi file %s\n", filename.c_str()));
+		return false;
+	}
+
+	return LoadCommon();
 
 }
 

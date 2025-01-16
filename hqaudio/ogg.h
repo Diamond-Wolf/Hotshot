@@ -16,6 +16,7 @@ Instead, it is released under the terms of the MIT License.
 
 struct OGGLoader : SoundLoader {
 	virtual bool Open();
+	virtual bool OpenMemory(void* memory, size_t len, bool autoFree);
 	virtual size_t GetSamples(void* buffer, size_t bufferSize);
 	virtual bool Rewind();
 	virtual void Close();

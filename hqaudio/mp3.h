@@ -20,6 +20,7 @@ inline mp3dec_t engine;
 
 struct MP3Loader : SoundLoader {
 	virtual bool Open();
+	virtual bool OpenMemory(void* memory, size_t len, bool autoFree);
 	virtual size_t GetSamples(void* buffer, size_t bufferSize);
 	virtual bool Rewind();
 	virtual void Close();

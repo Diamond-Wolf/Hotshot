@@ -126,25 +126,27 @@ void InitFromSNG(std::string filename) {
 	char fullFilePath[CHOCOLATE_MAX_FILE_PATH_SIZE];
 
 	while (file.getline(line, 512)) {
-		if (!_strnicmp(line, "endmode=", 8)) {
-			if (!_strnicmp(line + 8, "continue", 8))
+		if (!_strnicmp(line, ":endmode=", 9)) {
+			mprintf((0, "Found end mode: %s\n", line));
+			if (!_strnicmp(line + 9, "continue", 8))
 				rbaEndMode = REM_CONTINUE;
-			else if (!_strnicmp(line + 8, "loop", 4))
+			else if (!_strnicmp(line + 9, "loop", 4))
 				rbaEndMode = REM_LOOP;
 			else {
 				Warning("Invalid endmode specified in redbook.sng");
-				tracks.clear();
-				return;
+				//tracks.clear();
+				//return;
 			}
-		} else if (!_strnicmp(line, "extras=", 7)) {
-			if (!_strnicmp(line + 7, "redbook", 7))
+		} else if (!_strnicmp(line, ":extras=", 8)) {
+			mprintf((0, "Found extras mode: %s\n", line));
+			if (!_strnicmp(line + 8, "redbook", 7))
 				rbaExtraTracksMode = RETM_REDBOOK_2;
-			else if (!_strnicmp(line + 7, "midi", 4))
+			else if (!_strnicmp(line + 8, "midi", 4))
 				rbaExtraTracksMode = RETM_MIDI_5;
 			else {
 				Warning("Invalid extra tracks mode specified in redbook.sng");
-				tracks.clear();
-				return;
+				//tracks.clear();
+				//return;
 			}
 		} else {
 

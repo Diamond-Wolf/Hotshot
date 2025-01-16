@@ -27,15 +27,20 @@ struct SoundProperties {
 	SampleFormat format;
 };
 
-//Container class for a given HQ audio file. Create a loader by calling RequestSoundLoader.
+//Encapsulates a single audio file. Create an instance by calling RequestSoundLoader.
 struct SoundLoader {
 
-	const std::string filename;
+	std::string filename;
 	SoundProperties properties;
+
+	void* memory = nullptr;
+	size_t memoryLen = 0;
+	bool autoFree = false;
 
 	//Opens the sound file associated with this loader.
 	//Returns true if successful.
 	virtual bool Open() = 0;
+	virtual bool OpenMemory(void* memory, size_t len, bool autoFree);
 
 	//Fills buffer with bufferSize bytes.
 	//Returns the number of bytes filled, or -1 on error.

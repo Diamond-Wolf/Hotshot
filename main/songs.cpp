@@ -205,11 +205,15 @@ int play_redbook_track(int tracknum,int keep_playing)
 	if (Redbook_enabled && RBAEnabled()) 
 	{
 		int num_tracks = RBAGetNumberOfTracks();
-		if (tracknum <= num_tracks)
-			if (RBAPlayTracks(tracknum,keep_playing?num_tracks:tracknum))  
-			{
-				Redbook_playing = tracknum;
+		if (tracknum <= num_tracks) {
+			if (rbaEndMode == REM_CONTINUE) {
+				if (RBAPlayTracks(tracknum, keep_playing ? num_tracks : tracknum))
+					Redbook_playing = tracknum;
+			} else {
+				if (RBAPlayTrack(tracknum, true))
+					Redbook_playing = tracknum;
 			}
+		}
 	}
 
 	return (Redbook_playing != 0);
@@ -269,15 +273,29 @@ void songs_play_song( int songnum, int repeat )
 		force_rb_register = 0;
 	}*/
 
-	if (songnum == SONG_TITLE)
-		play_redbook_track(REDBOOK_TITLE_TRACK,0);
-	else if (songnum == SONG_CREDITS)
-		play_redbook_track(REDBOOK_CREDITS_TRACK,0);
+	//if (Redbook_enabled) {
+
+		//mprintf((0, "RETM:%d\n", rbaExtraTracksMode));
+
+		if (rbaExtraTracksMode == RETM_REDBOOK_2) {
+			
+			if (songnum == SONG_TITLE)
+				play_redbook_track(REDBOOK_TITLE_TRACK, 0);
+			else if (songnum == SONG_CREDITS)
+				play_redbook_track(REDBOOK_CREDITS_TRACK, 0);
+
+		} else {
+
+			play_redbook_track(songnum + 1, 0);
+
+		}
+
+	/* }
 
 	if (!Redbook_playing) //not playing redbook, so play midi
 	{		
 		digi_play_midi_song( Songs[songnum].filename, Songs[songnum].melodic_bank_file, Songs[songnum].drum_bank_file, repeat );
-	}
+	}*/
 }
 
 int current_song_level;
@@ -307,11 +325,12 @@ void songs_play_level_song( int levelnum )
 		force_rb_register = 0;
 	}*/
 
-	if (Redbook_enabled && RBAEnabled() && (n_tracks = RBAGetNumberOfTracks()) > 1) 
+	if (/*Redbook_enabled && */RBAEnabled() && (n_tracks = RBAGetNumberOfTracks()) > 1)
 	{
 		//try to play redbook
 		mprintf((0,"n_tracks = %d, songnum %d\n", n_tracks, songnum));
-		auto tracknum = REDBOOK_FIRST_LEVEL_TRACK + (songnum % (n_tracks-REDBOOK_FIRST_LEVEL_TRACK+1));
+		auto first = (rbaExtraTracksMode == RETM_REDBOOK_2 ? REDBOOK_FIRST_LEVEL_TRACK : SONG_FIRST_LEVEL_SONG + 1);
+		auto tracknum = first + (songnum % (n_tracks - first + 1));
 		mprintf((0, "Playing track %d for level %d\n", tracknum, levelnum));
 		play_redbook_track(tracknum, 1);
 	}
@@ -339,7 +358,7 @@ void songs_check_redbook_repeat()
 			//stop_time();
 			// if title ends, start credit music
 			// if credits music ends, restart it
-			if (Redbook_playing == REDBOOK_TITLE_TRACK || Redbook_playing == REDBOOK_CREDITS_TRACK)
+			if (rbaExtraTracksMode == RETM_REDBOOK_2 && (Redbook_playing == REDBOOK_TITLE_TRACK || Redbook_playing == REDBOOK_CREDITS_TRACK))
 				play_redbook_track(REDBOOK_CREDITS_TRACK,0);
 			else 
 			{

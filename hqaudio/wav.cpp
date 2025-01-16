@@ -13,6 +13,44 @@ Instead, it is released under the terms of the MIT License.
 
 WAVLoader::WAVLoader(const std::string& filename) : SoundLoader(filename) {}
 
+bool WAVLoader::LoadCommon(const SDL_AudioSpec& spec) {
+
+	properties.sampleRate = spec.freq;
+	properties.channels = spec.channels;
+
+	switch (spec.format) {
+
+	case SDL_AUDIO_S8:
+		properties.format = SF_BYTE;
+		break;
+
+	case SDL_AUDIO_U8:
+		properties.format = SF_UBYTE;
+		break;
+
+	case SDL_AUDIO_S16:
+		properties.format = SF_SHORT;
+		break;
+
+	case SDL_AUDIO_S32:
+		properties.format = SF_LONG;
+		break;
+
+	case SDL_AUDIO_F32:
+		properties.format = SF_FLOAT;
+		break;
+
+	default:
+		properties.format = SF_UNSUPPORTED;
+		SDL_free(soundBuffer);
+		return false;
+
+	}
+
+	return true;
+
+}
+
 bool WAVLoader::Open() {
 	
 	SDL_AudioSpec spec;
@@ -22,39 +60,23 @@ bool WAVLoader::Open() {
 		return false;
 	}
 
-	properties.sampleRate = spec.freq;
-	properties.channels = spec.channels;
-	
-	switch (spec.format) {
+	return LoadCommon(spec);
 
-		case SDL_AUDIO_S8:
-			properties.format = SF_BYTE;
-		break;
+}
 
-		case SDL_AUDIO_U8:
-			properties.format = SF_UBYTE;
-		break;
+bool WAVLoader::OpenMemory(void* memory, size_t len, bool autoFree) {
+	SoundLoader::OpenMemory(memory, len, autoFree);
 
-		case SDL_AUDIO_S16:
-			properties.format = SF_SHORT;
-		break;
+	SDL_AudioSpec spec;
 
-		case SDL_AUDIO_S32:
-			properties.format = SF_LONG;
-		break;
-
-		case SDL_AUDIO_F32:
-			properties.format = SF_FLOAT;
-		break;
-
-		default:
-			properties.format = SF_UNSUPPORTED;
-			SDL_free(soundBuffer);
-			return false;
-
+	auto mem = SDL_IOFromMem(memory, len);
+	if (!SDL_LoadWAV_IO(mem, false, &spec, &soundBuffer, &soundBufferSize)) {
+		mprintf((1, "Error loading WAV: %s\n", SDL_GetError()));
+		return false;
 	}
+	SDL_CloseIO(mem);
 
-	return true;
+	return LoadCommon(spec);
 
 }
 

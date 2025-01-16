@@ -12,11 +12,13 @@ namespace fs = std::filesystem;
 #include "sound_loader.h"
 
 #include "flac.h"
+#include "hmp.h"
 #include "midi.h"
 #include "mp3.h"
 #include "ogg.h"
 #include "wav.h"
 
+#include "cfile/cfile.h"
 #include "platform/posixstub.h"
 
 SoundLoader* RequestSoundLoader(const std::string filename) {
@@ -61,11 +63,29 @@ SoundLoader* RequestSoundLoader(const std::string filename) {
 		return new MIDILoader(filename);
 	}
 #endif
+
+	// [DW] if HMP isn't supported, something is horribly wrong
+	if (strlen(extc) == 4 && !_strnicmp(extc, ".hmp", 4)) {
+		return new HMPLoader(filename);
+	}
 	
 	return nullptr;
 
 }
 
+bool SoundLoader::OpenMemory(void* memory, size_t len, bool autoFree) {
+	this->memory = memory;
+	this->memoryLen = len;
+	this->autoFree = autoFree;
+	return true;
+}
+
 SoundLoader::SoundLoader(const std::string& filename) : filename(filename) {};
 
-SoundLoader::~SoundLoader() {}
+SoundLoader::~SoundLoader() {
+	if (memory && autoFree) {
+		delete[] memory;
+		memory = nullptr;
+		memoryLen = 0;
+	}
+}

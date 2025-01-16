@@ -4,40 +4,44 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License.
 */
 
-#ifndef MIDI_H
-#define MIDI_H
+#ifndef HMP_H
+#define HMP_H
 
-#include "hqaudio/sound_loader.h"
+#include "sound_loader.h"
 
 #include <string>
 
 #ifdef USE_TSFMIDI
-#define MIDI_SUPPORTED 1
+#define HMP_SUPPORTED 1
 
 #include <chrono>
 
+#include "platform/s_midi.h"
 #include "platform/tsfmidi/tsf.h"
-#include "lib/tml.h"
 
-struct MIDILoader : SoundLoader {
+struct HMPLoader : SoundLoader {
 	virtual bool Open();
 	virtual bool OpenMemory(void* memory, size_t len, bool autoFree);
 	virtual size_t GetSamples(void* buffer, size_t bufferSize);
 	virtual bool Rewind();
 	virtual void Close();
 
-	bool LoadCommon();
+	void BranchRewind();
+	bool CheckDone();
+	void Reset();
+	void ResetBranch(BranchEntry* branch, int channel);
+	void Tick();
+	void RunEvent(midievent_t* ev);
 
-	MIDILoader(const std::string& filename);
-
-	tml_message* midiMessage = nullptr;
-	tml_message* firstMidiMessage = nullptr;
+	HMPLoader(const std::string& filename);
+	
+	HMPFile* hmp = nullptr;
 	tsf* midi = nullptr;
 
-	unsigned int currentPlaybackTime = 0;
+	unsigned long long currentPlaybackTime = 0;
 	std::chrono::steady_clock clock;
 	std::chrono::time_point<std::chrono::steady_clock> time;
-	
+
 };
 
 #endif
