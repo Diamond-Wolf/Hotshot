@@ -5,12 +5,13 @@ Instead, it is released under the terms of the MIT License,
 as described in copying.txt.
 */
 
+// [DW] As of the Redbook audio unification, this now represents the legacy MIDI system.
+// Unlike the current Redbook setup, where the audio engine requests samples as needed,
+// the legacy system gives the audio system samples on its own terms.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
-//#include "fluidsynth.h"
-//#include "fluid_midi.h"
 
 #include "tsf_midi.h"
 
