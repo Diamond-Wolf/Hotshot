@@ -211,11 +211,11 @@ int play_redbook_track(int tracknum,int keep_playing)
 		int num_tracks = RBAGetNumberOfTracks();
 		if (tracknum <= num_tracks) {
 			if (rbaEndMode == REM_CONTINUE) {
-				mprintf((0, "Continue\n"));
+				mprintf((0, "rbaEndMode: Continue\n"));
 				if (RBAPlayTracks(tracknum, keep_playing ? num_tracks : tracknum))
 					Redbook_playing = tracknum;
 			} else {
-				mprintf((0, "Loop\n"));
+				mprintf((0, "rbaEndMode: Loop\n"));
 				if (RBAPlayTrack(tracknum, true))
 					Redbook_playing = tracknum;
 			}
@@ -326,6 +326,8 @@ void songs_play_level_song( int levelnum )
 	current_song_level = levelnum;
 
 	songnum = (levelnum>0)?(levelnum-1):(-levelnum);
+
+	digi_reset(); digi_reset();
 	
 	if (!RBAEnabled() && !ForceLegacyMidi && !FindArg("-noredbook"))
 		reinit_redbook();

@@ -43,7 +43,7 @@ enum RedbookExtraTracksMode {
 extern RedbookEndMode rbaEndMode;
 extern RedbookExtraTracksMode rbaExtraTracksMode;
 
-inline struct HQAWarning {
+extern struct HQAWarning {
 
 	bool show = false;
 	std::string message;

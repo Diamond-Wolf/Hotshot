@@ -45,6 +45,8 @@ std::thread rbaThread;
 bool quitThread = false;
 bool threadWasEverInitialized = false;
 
+HQAWarning hqaWarning;
+
 bool PlayHQSong(const char* filename, bool loop) {
 	
 	if (!filename)
@@ -379,8 +381,8 @@ int RBAPlayTracks(int first, int last) {
 				currentTrack++;
 			}
 
-			threadStarted = true;
 			//threadStarted.notify_all();
+			threadStarted = true;
 
 			I_DelayUS(1000);
 

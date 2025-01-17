@@ -2355,6 +2355,9 @@ void StartNewLevel(int level_num, int secret_flag)
 	}
 
 	ShowLevelIntro(level_num);
+
+	//digi_reset(); digi_reset();
+
 	WIN(DEFINE_SCREEN(NULL));		// ALT-TAB: no restore of background.
 	StartNewLevelSub(level_num, 1, secret_flag);
 }
