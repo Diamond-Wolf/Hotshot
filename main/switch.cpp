@@ -277,7 +277,7 @@ int do_change_walls(int8_t trigger_num)
 						Walls[segp->sides[side].wall_num].type = new_wall_type;
 						digi_kill_sound_linked_to_segment(segp - Segments.data(), side, SOUND_FORCEFIELD_HUM);
 					}
-					if (csegp->sides[side].wall_num >= 0) {
+					if (csegp->sides[cside].wall_num >= 0) {
 						Walls[csegp->sides[cside].wall_num].type = new_wall_type;
 						digi_kill_sound_linked_to_segment(csegp - Segments.data(), cside, SOUND_FORCEFIELD_HUM);
 					}
