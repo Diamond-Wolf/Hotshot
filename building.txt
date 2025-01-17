@@ -14,7 +14,7 @@ tested with gmake2 on Mac and vs2022 on Windows.
 Additional options are available:
  --build-network builds network support (broken)
  
-On Mac: After running Premake, navigate to the build directory. Run make to build both games in debug
+Using Make: After running Premake, navigate to the build directory. Run make to build both games in debug
 configuration. You can also specify config=release for an optimized release build.
 
 See platform_notes.txt for further info.
