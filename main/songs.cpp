@@ -57,7 +57,8 @@ void set_redbook_volume(int volume)
 	RBASetVolume(0);		// makes the macs sound really funny
 	#endif
 	RBASetVolume(volume*REDBOOK_VOLUME_SCALE/8);*/
-	music_set_volume(volume * REDBOOK_VOLUME_SCALE / 8);
+	//music_set_volume(volume * REDBOOK_VOLUME_SCALE / 8);
+	music_set_volume(volume);
 }
 
 extern char CDROM_dir[];
@@ -177,12 +178,12 @@ int reinit_redbook()
 {
 	RBAInit();
 
-	if (RBAEnabled())
+	/*if (RBAEnabled())
 	{
-		set_redbook_volume(Config_redbook_volume);
+		music_set_volume(Config_redbook_volume);
 		//RBARegisterCD();
 		//force_rb_register=0;
-	}
+	}*/
 
 	return 0;
 }

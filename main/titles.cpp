@@ -1668,7 +1668,7 @@ void doBriefingD1(int level_num)
 
 	key_flush();
 
-	if (!load_screen_text(level_num != REGISTERED_ENDING_LEVEL_NUM ? Briefing_text_filename : Ending_text_filename, &Briefing_text));
+	if (!load_screen_text(level_num != REGISTERED_ENDING_LEVEL_NUM ? Briefing_text_filename : Ending_text_filename, &Briefing_text))
 		return;
 
 	songs_play_song((level_num != REGISTERED_ENDING_LEVEL_NUM ? SONG_BRIEFING : SONG_ENDGAME), 1);

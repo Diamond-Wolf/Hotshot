@@ -74,6 +74,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 //#include "rbaudio.h"
 #include "powerup.h"
 #include "platform/i_net.h"
+#include "platform/s_midi.h"
 
 #define SANTA
 
@@ -1151,8 +1152,13 @@ void sound_menuset(int nitems, newmenu_item* items, int* last_key, int citem)
 	{
 		Config_midi_volume = items[SMIN_MUSIC_VOLUME].value;
 		Config_redbook_volume = Config_midi_volume;
-		digi_set_midi_volume((Config_midi_volume * 128) / 8);
-		set_redbook_volume(Config_redbook_volume);
+		//if (ForceLegacyMidi)
+		//	digi_set_midi_volume((Config_midi_volume * 128) / 8);
+		//else
+		//	set_redbook_volume(Config_midi_volume * 8);
+		int volume = (int)(Config_midi_volume * 127.0 / items[SMIN_MUSIC_VOLUME].max_value);
+		digi_set_midi_volume(volume);
+		music_set_volume(volume);
 	}
 
 	// don't enable redbook for a non-apple demo version of the shareware demo
@@ -1180,10 +1186,6 @@ void sound_menuset(int nitems, newmenu_item* items, int* last_key, int citem)
 			mprintf((1, "ForceLegacyMidi = %d\n", ForceLegacyMidi));
 
 			replay = true;
-
-			if (ForceLegacyMidi) {
-				
-			}
 
 			Redbook_enabled = false;
 			//items[SMIN_USE_CDMUSIC].value = 0;
@@ -1219,6 +1221,10 @@ void sound_menuset(int nitems, newmenu_item* items, int* last_key, int citem)
 		else
 			Int3();
 
+		/*int volume = (int)(Config_midi_volume * 127.0 / items[SMIN_MUSIC_VOLUME].max_value);
+		digi_set_midi_volume(volume);
+		music_set_volume(volume);*/
+
 		if (items[SMIN_USE_CDMUSIC].value && !Redbook_playing)
 		{
 			nm_messagebox(TXT_SORRY, 1, TXT_OK, "Cannot start CD Music. OGG files\nshould be placed in the cdmusic\ndirectory with the filenames\ntrack01.ogg, track02.ogg and so on.");
@@ -1241,8 +1247,8 @@ void do_sound_menu()
 		int mn = SMIN_FX_VOLUME;
 		m[mn].type = NM_TYPE_SLIDER; m[mn].text = TXT_FX_VOLUME; m[mn].value = Config_digi_volume; m[mn].min_value = 0; m[mn].max_value = 8;
 		mn = SMIN_MUSIC_VOLUME;
-		m[mn].type = (Redbook_playing ? NM_TYPE_TEXT : NM_TYPE_SLIDER); m[mn].text = const_cast<char*>("MIDI music volume"); m[mn].value = Config_midi_volume; m[mn].min_value = 0; m[mn].max_value = 8;
-
+		m[mn].type = NM_TYPE_SLIDER; m[mn].text = TXT_MUSIC_VOLUME; m[mn].value = Config_midi_volume; m[mn].min_value = 0; m[mn].max_value = 8;
+		
 /*#ifdef SHAREWARE
 		m[2].type = NM_TYPE_TEXT; m[2].text = const_cast<char*>("");
 		m[3].type = NM_TYPE_TEXT; m[3].text = const_cast<char*>("");
@@ -1258,7 +1264,7 @@ void do_sound_menu()
 		m[mn].type = NM_TYPE_CHECK;  m[mn].text = const_cast<char*>("Use legacy MIDI"); m[mn].value = ForceLegacyMidi;
 //#endif
 		mn = SMIN_USE_CDMUSIC;
-		m[mn].type = NM_TYPE_CHECK; m[mn].text = const_cast<char*>("Use CDMusic source"); m[mn].value = (Redbook_enabled != 0);
+		m[mn].type = (ForceLegacyMidi ? NM_TYPE_TEXT : NM_TYPE_CHECK); m[mn].text = const_cast<char*>("Use CDMusic source"); m[mn].value = (Redbook_enabled != 0);
 
 		mn = SMIN_REVERSE_STEREO;
 		m[mn].type = NM_TYPE_CHECK;  m[mn].text = TXT_REVERSE_STEREO; m[mn].value = Config_channels_reversed;

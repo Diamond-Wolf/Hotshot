@@ -21,13 +21,14 @@ namespace fs = std::filesystem;
 #include "cfile/cfile.h"
 #include "hqaudio/sound_loader.h"
 #include "inferno.h"
-#include "songs.h";
+#include "main/config.h"
 #include "misc/error.h"
 #include "platform/i_sound.h"
 #include "platform/mono.h"
 #include "platform/platform_filesys.h"
 #include "platform/posixstub.h"
 #include "platform/timer.h"
+#include "songs.h";
 
 SoundLoader* loader = nullptr;
 RedbookEndMode rbaEndMode = REM_CONTINUE;
@@ -310,6 +311,8 @@ void RBAInit() {
 				}
 					
 	}
+
+	music_set_volume(Config_midi_volume * 127 / 8);
 
 	rbaInitialized = true;
 
