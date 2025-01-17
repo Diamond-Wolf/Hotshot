@@ -8,14 +8,18 @@ Windows platform notes
 Currently, Hotshot only builds through Visual Studio. Due to a bug in Premake,
 you may need to manually change Hotshot to build on x64. To do this, go to each
 project's settings, go to Advanced under Configuration Properties, and change
-Preferred Build Tool Architecture from default to 64-bit (x64).
+Preferred Build Tool Architecture from default to 64-bit (x64). This seems to
+be less of a problem since the switch to SDL3 and removal of extra libraries
+however.
 
 -------------------------------------------------------------------------------
 macOS platform notes
 -------------------------------------------------------------------------------
 
-Unlike Chocolate Descent, Hotshot builds as a standalone executable rather than
-an app bundle. This may change in the future.
+Hotshot builds a bundle now! The standalone app is left for your convenience.
+Note that currently make clean and other automated cleanup systems likely will
+not find and remove this, unless they recursively delete the entire build/bin
+directory.
 
 The macOS port of Hotshot includes a granular directory structure
 based on the user's home directory.
@@ -24,7 +28,8 @@ NOTE: All files are expected to have entirely lowercase filenames.  This may
 require some renaming if your original game files (such as from the DOS
 version) are all uppercase.
 
-Currently, multiplayer is untested, as there are build issues with it.
+Multiplayer builds, but crashes frequently. This will not be patched; I am
+planning to address this with a more comprehensive rewrite.
 
 In order to run the game with all the bells and whistles, place your resources
 in the following locations:
@@ -86,3 +91,8 @@ your Hotshot config file (hotshot.cfg) with the filename.
 Note that you should not put the path information in the configuration file,
 as Hotshot will look in this directory for the filename specified
 in hotshot.cfg.
+
+~/Library/Application Support/Hotshot/Data/CDMusic
+This location holds all HQ music. Unlike Chocolate, but like Rebirth's jukebox,
+a variety of formats are supported. This currently includes mid/midi, ogg, mp3,
+flac, wav, and even hmp.
