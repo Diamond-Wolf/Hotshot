@@ -58,12 +58,14 @@ SDL_Color colors[256];
 int refreshDuration = US_70FPS;
 bool usingSoftware = false;
 
+SDL_ScaleMode scaleMode;
+
 int plat_init()
 {
 	int res;
 
-	res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
-	if (res)
+	res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD);
+	if (!res)
 	{
 		Error("Error initalizing SDL: %s\n", SDL_GetError());
 		return res;
@@ -94,9 +96,9 @@ int plat_create_window()
 	else
 		usingSoftware = true;
 	if (Fullscreen)
-		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_BORDERLESS;
+		flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
 	//SDL is good, create a game window
-	gameWindow = SDL_CreateWindow(titleMsg, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WindowWidth, WindowHeight, flags);
+	gameWindow = SDL_CreateWindow(titleMsg, WindowWidth, WindowHeight, flags);
 	//int result = SDL_CreateWindowAndRenderer(WindowWidth, WindowHeight, flags, &gameWindow, &renderer);
 
 	if (!gameWindow)
@@ -114,7 +116,7 @@ int plat_create_window()
 		usingSoftware = true;
 
 		flags &= ~SDL_WINDOW_OPENGL;
-		gameWindow = SDL_CreateWindow(titleMsg, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WindowWidth, WindowHeight, flags);
+		gameWindow = SDL_CreateWindow(titleMsg, WindowWidth, WindowHeight, flags);
 		if (!gameWindow)
 		{
 			Error("Error creating game window, after falling back to software: %s\n", SDL_GetError());
@@ -183,11 +185,13 @@ void I_SetScreenRect(int w, int h)
 	{
 		if (BestFit == FITMODE_FILTERED && h <= 400)
 		{
-			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+			//SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+			scaleMode = SDL_SCALEMODE_LINEAR;
 			w *= 2; h *= 2;
 		}
 		else
-			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+			//SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+			scaleMode = SDL_SCALEMODE_NEAREST;
 	}
 
 	if (BestFit == FITMODE_BEST)
@@ -212,9 +216,10 @@ void I_SetScreenRect(int w, int h)
 	else
 	{
 		if (softwareSurf)
-			SDL_FreeSurface(softwareSurf);
+			SDL_DestroySurface(softwareSurf);
 		
-		softwareSurf = SDL_CreateRGBSurface(0, w, h, 32, 0, 0, 0, 0);
+		softwareSurf = SDL_CreateSurface(w, h, 
+			SDL_GetPixelFormatForMasks(32, 0, 0, 0, 0));
 		if (!softwareSurf)
 			Error("Error creating software surface: %s\n", SDL_GetError());
 	}
@@ -224,7 +229,7 @@ void plat_toggle_fullscreen()
 {
 	if (Fullscreen)
 	{
-		SDL_SetWindowFullscreen(gameWindow, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		SDL_SetWindowFullscreen(gameWindow, SDL_WINDOW_FULLSCREEN);
 		SDL_GetWindowSize(gameWindow, &CurWindowWidth, &CurWindowHeight);
 	}
 	else
@@ -323,7 +328,7 @@ int plat_set_gr_mode(int mode)
 	return 0;
 }
 
-void I_ScaleMouseToWindow(int* x, int* y)
+void I_ScaleMouseToWindow(float* x, float* y)
 {
 	//printf("in: (%d, %d) ", *x, *y);
 	*x = (*x * screenRectangle.w / CurWindowWidth);
@@ -341,41 +346,44 @@ void plat_do_events()
 		switch (ev.type)
 		{
 			//Flush input if you click the window, so that you don't abort your game when clicking back in at the ESC menu. heh...
-		case SDL_WINDOWEVENT:
+		/*case SDL_WINDOWEVENT:
 		{
 			SDL_WindowEvent winEv = ev.window;
 			switch (winEv.event)
 			{
-			case SDL_WINDOWEVENT_FOCUS_GAINED:
-				SDL_FlushEvents(SDL_MOUSEBUTTONDOWN, SDL_MOUSEBUTTONUP);
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
+				SDL_FlushEvents(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP);
 				break;
 			}
-		}
-		case SDL_MOUSEBUTTONDOWN:
-		case SDL_MOUSEBUTTONUP:
-			I_MouseHandler(ev.button.button, ev.button.state);
+		}*/
+		case SDL_EVENT_WINDOW_FOCUS_GAINED: 
+			SDL_FlushEvents(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP);
+		break;
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
+			I_MouseHandler(ev.button.button, ev.button.down);
 			break;
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
-			if (ev.key.keysym.scancode == SDL_SCANCODE_RETURN && ev.key.state == SDL_PRESSED && ev.key.keysym.mod & KMOD_ALT)
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
+			if (ev.key.scancode == SDL_SCANCODE_RETURN && ev.key.down && ev.key.mod & SDL_KMOD_ALT)
 			{
 				Fullscreen ^= 1;
 				plat_toggle_fullscreen();
 			}
 			else
-				I_KeyHandler(ev.key.keysym.scancode, ev.key.state);
+				I_KeyHandler(ev.key.scancode, ev.key.down);
 			break;
 			//[ISB] kill this. Descent's joystick code expects buttons to report that they're constantly being held down, and these button events only fire when the state changes
 /*
-		case SDL_CONTROLLERAXISMOTION:
-		case SDL_CONTROLLERBUTTONDOWN:
-		case SDL_CONTROLLERBUTTONUP:
+		case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+		case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+		case SDL_EVENT_GAMEPAD_BUTTON_UP:
 			I_ControllerHandler();
 			break;
-		case SDL_JOYAXISMOTION:
-		case SDL_JOYBUTTONDOWN:
-		case SDL_JOYBUTTONUP:
-		case SDL_JOYHATMOTION:
+		case SDL_EVENT_JOYSTICK_AXIS_MOTION:
+		case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+		case SDL_EVENT_JOYSTICK_BUTTON_UP:
+		case SDL_EVENT_JOYSTICK_HAT_MOTION:
 			I_JoystickHandler();
 			break;*/
 		}
@@ -387,11 +395,11 @@ void plat_do_events()
 
 void plat_set_mouse_relative_mode(int state)
 {
-	SDL_bool formerState = SDL_GetRelativeMouseMode();
-	SDL_SetRelativeMouseMode((SDL_bool)state); 
+	bool formerState = SDL_GetWindowRelativeMouseMode(gameWindow);
+	SDL_SetWindowRelativeMouseMode(gameWindow, (bool)state); 
 	if (state && !formerState)
 	{
-		int bogusX, bogusY;
+		float bogusX, bogusY;
 		SDL_GetRelativeMouseState(&bogusX, &bogusY);
 	}
 	//else if (!state && formerState) 
@@ -471,7 +479,7 @@ void I_SoftwareBlit()
 
 	SDL_Surface* windowSurf = SDL_GetWindowSurface(gameWindow);
 	//SDL_BlitSurface(softwareSurf, &sourceRectangle, windowSurf, &sourceRectangle);
-	SDL_BlitScaled(softwareSurf, &sourceRectangle, windowSurf, &screenRectangle);
+	SDL_BlitSurfaceScaled(softwareSurf, &sourceRectangle, windowSurf, &screenRectangle, scaleMode);
 }
 
 void plat_present_canvas(int sync)

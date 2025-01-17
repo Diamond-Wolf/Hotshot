@@ -454,13 +454,13 @@ int digi_link_sound_to_pos2( int org_soundnum, short segnum, short sidenum, vms_
 	if ((segnum<0)||(segnum>Highest_segment_index))
 		return -1;
 
-	if ( !forever )//&& GameSounds[soundnum - SOUND_OFFSET].length < SOUND_3D_THRESHHOLD)	{
+	/*if ( !forever )//&& GameSounds[soundnum - SOUND_OFFSET].length < SOUND_3D_THRESHHOLD)	{
 	{ 	
 		// Hack to keep sounds from building up...
 		digi_get_sound_loc(Viewer->orient, Viewer->pos, Viewer->segnum, pos, segnum, max_volume, &volume, &pan, max_distance );
 		digi_play_sample_3d( org_soundnum, pan, volume, 0 );
 		return -1;
-	}
+	}*/
 
 	for (i=0; i<MAX_SOUND_OBJECTS; i++)
 		if (SoundObjects[i].flags==0)

@@ -60,10 +60,13 @@ as described in copying.txt
 
 #define MIDI_SAMPLERATE 48000 //changed from 44100 since 44100/120 = 367.5 which causes timing anomalies for MIDI
 
+const int MIDI_FREQUENCY = 120;
+
 enum class GenDevices
 {
 	NullDevice,
 	FluidSynthDevice,
+	TSFSynthDevice,
 	MMEDevice
 };
 
@@ -276,7 +279,7 @@ public:
 	//Executes a midi event.
 	virtual void DoMidiEvent(midievent_t* ev) = 0;
 	//Renders a softsynth's output into a buffer. For stereo sounds samples are interleaved.
-	virtual void RenderMIDI(int numTicks, unsigned short* buffer) = 0;
+	virtual void RenderMIDI(int numTicks, short* buffer) = 0;
 	//Stops all sounds from the synthesizer.
 	virtual void StopSound() = 0;
 	//Closes the midi synth.
@@ -286,6 +289,8 @@ public:
 	virtual void PerformBranchResets(BranchEntry* entry, int chan) = 0;
 	//Sets the volume of the synthesizer. Range is 0-127. 
 	virtual void SetVolume(int volume) = 0;
+	//Sets the soundfont for the synthesizer.
+	virtual void SetSoundfont(const char* filename);
 };
 
 class DummyMidiSynth : public MidiSynth
@@ -298,7 +303,7 @@ public:
 	void SetSampleRate(uint32_t newSampleRate) override { }
 	void CreateSynth() override { }
 	void DoMidiEvent(midievent_t* ev) override { }
-	void RenderMIDI(int numTicks, unsigned short* buffer) override { }
+	void RenderMIDI(int numSamples, short* buffer) override { }
 	void StopSound() override { }
 	void Shutdown() override { }
 	void SetDefaults() override { }
@@ -322,13 +327,16 @@ class MidiPlayer
 	std::thread *midiThread;
 	std::mutex songMutex;
 
-	uint16_t* songBuffer;
+	int16_t* songBuffer;
 
 	uint64_t nextTimerTick;
 	bool shouldEnd;
 
 	int numSubTicks; //Queue midi ticks in terms of "sub-ticks", 100 sample slices. 
 	int currentTickFrac, TickFracDelta;
+
+	std::chrono::steady_clock tickClock;
+	std::chrono::time_point<std::chrono::steady_clock> tickPoint;
 
 	//Status flags, these indicate when an event has happened
 	//Hardly a shining example of how to do communication
@@ -346,3 +354,5 @@ public:
 	//dumb things, pls improve
 	bool IsError();
 };
+
+MidiSynth* RequestMidiSynth();

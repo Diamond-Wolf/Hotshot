@@ -1,6 +1,6 @@
 newoption {
 	trigger = "build-editor",
-	description = "Build with internal editor (untested)"
+	description = "Build with internal editor (unmaintained)"
 }
 
 newoption {
@@ -9,21 +9,9 @@ newoption {
 }
 
 newoption {
-	trigger = "sdl2-path",
+	trigger = "sdl-path",
 	value = "path",
 	description = "Path to SDL2 version, including trailing slash"
-}
-
-newoption {
-	trigger = "openal-path",
-	value = "path",
-	description = "Path to OpenAL version, including trailing slash"
-}
-
-newoption {
-	trigger = "fluidsynth-path",
-	value = "path",
-	description = "Path to FluidSynth version, including trailing slash"
 }
 
 workspace "Hotshot"
@@ -51,9 +39,9 @@ workspace "Hotshot"
 	filter { "system:macosx" }
 		targetextension ""
 		--todo: Have clean remove the bundle, once I figure out what will let me do anything with clean
-		filter { "configurations:Debug" }
+		filter { "system:macosx", "configurations:Debug" }
 			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Debug \"%{wks.location}\"" }
-		filter { "configurations:Release" }
+		filter { "system:macosx", "configurations:Release" }
 			postbuildcommands { "\"" .. _MAIN_SCRIPT_DIR .. "/platform/macos/bundle.sh\" \"" .. _MAIN_SCRIPT_DIR .. "\" Release \"%{wks.location}\"" }
 		
 	filter {}
@@ -67,6 +55,10 @@ workspace "Hotshot"
 		"cfile/*.h",
 		"fix/*.cpp",
 		"fix/*.h",
+		"hqaudio/*.cpp",
+		"hqaudio/*.h",
+		"hqaudio/lib/*.cpp",
+		"hqaudio/lib/*.h",
 		"iff/*.cpp",
 		"iff/*.h",
 		"main/*.cpp",
@@ -80,10 +72,8 @@ workspace "Hotshot"
 		"mve/*.h",
 		"platform/*.cpp",
 		"platform/*.h",
-		"platform/fluidsynth/*.cpp",
-		"platform/fluidsynth/*.h",
-		"platform/openal/*.cpp",
-		"platform/openal/*.h",
+		"platform/tsfmidi/*.cpp",
+		"platform/tsfmidi/*.h",
 		"platform/sdl/*.cpp",
 		"platform/sdl/*.h",
 		"texmap/*.cpp",
@@ -132,47 +122,28 @@ workspace "Hotshot"
 		
 	filter {}
 	
-	sdl = _OPTIONS["sdl2-path"]
-	openal = _OPTIONS["openal-path"]
-	fluidsynth = _OPTIONS["fluidsynth-path"]
+	sdl = _OPTIONS["sdl-path"]
 	
 	libdirs {
 		sdl,
 		sdl .. "/lib",
 		sdl .. "/lib/x64",
-		openal .. "/lib",
-		openal .. "/libs/Win64",
-		fluidsynth .. "/lib"
 	}
 	
 	includedirs {
 		sdl .. "/include",
-		sdl .. "/include/SDL2",
-		openal .. "/include",
-		fluidsynth .. "/include",
+		sdl .. "/include/SDL3",
 	}
 	
 	links {
-		"SDL2",
-		"SDL2main"
+		"SDL3"
 	}
 	
-	filter { "system:not windows" }
-		links {
-			"fluidsynth",
-			"openal",
-		}
-	
-	filter { "system:windows" }
-	
-		links "OpenAL32"
-
 	filter {}
 	
 	defines {
 		"USE_SDL",
-		"USE_OPENAL",
-		"USE_FLUIDSYNTH"
+		"USE_TSFMIDI"
 	}
 
 project "Hotshot"

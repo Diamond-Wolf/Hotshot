@@ -13,7 +13,9 @@ as described in copying.txt.
 #include "main/inferno.h"
 #include "platform/platform.h"
 
-#include "SDL.h" 
+#include <SDL.h>
+#include <SDL_main.h>
+
 
 int main(int argc, char** argv) //[ISB] oops, must be called with c linkage...
 {

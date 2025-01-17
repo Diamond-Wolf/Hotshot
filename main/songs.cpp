@@ -42,6 +42,8 @@ int Redbook_enabled = 1;
 //0 if redbook is no playing, else the track number
 int Redbook_playing = 0;
 
+bool ForceLegacyMidi = false;
+
 #define NumLevelSongs (Songs.size() - SONG_FIRST_LEVEL_SONG)
 
 #define REDBOOK_VOLUME_SCALE  (127/3) //changed to 127 since this uses the same interface as the MIDI sound system
@@ -55,7 +57,8 @@ void set_redbook_volume(int volume)
 	RBASetVolume(0);		// makes the macs sound really funny
 	#endif
 	RBASetVolume(volume*REDBOOK_VOLUME_SCALE/8);*/
-	music_set_volume(volume * REDBOOK_VOLUME_SCALE / 8);
+	//music_set_volume(volume * REDBOOK_VOLUME_SCALE / 8);
+	music_set_volume(volume);
 }
 
 extern char CDROM_dir[];
@@ -125,7 +128,7 @@ void songs_init()
 				set_redbook_volume(Config_redbook_volume);
 			}
 		}
-		atexit(RBAStop);	// stop song on exit
+		//atexit(RBAStop);	// stop song on exit [DW] digi_close does this automatically with more guarantees on valid order of destroying things
 	}
 
 	Songs_initialized = 1;
@@ -175,12 +178,12 @@ int reinit_redbook()
 {
 	RBAInit();
 
-	if (RBAEnabled())
+	/*if (RBAEnabled())
 	{
-		set_redbook_volume(Config_redbook_volume);
+		music_set_volume(Config_redbook_volume);
 		//RBARegisterCD();
 		//force_rb_register=0;
-	}
+	}*/
 
 	return 0;
 }
@@ -191,11 +194,10 @@ int reinit_redbook()
 //play only specified track
 int play_redbook_track(int tracknum,int keep_playing)
 {
-	Redbook_playing = 0;
+	//Redbook_playing = 0;
+	songs_stop_all();
 
-	
-
-	if (!RBAEnabled() && Redbook_enabled && !FindArg("-noredbook"))
+	if (!RBAEnabled() && !ForceLegacyMidi && !FindArg("-noredbook"))
 		reinit_redbook();
 
 	/*if (force_rb_register)
@@ -204,14 +206,20 @@ int play_redbook_track(int tracknum,int keep_playing)
 		force_rb_register = 0;
 	}*/
 
-	if (Redbook_enabled && RBAEnabled()) 
+	if (!ForceLegacyMidi && RBAEnabled()) 
 	{
 		int num_tracks = RBAGetNumberOfTracks();
-		if (tracknum <= num_tracks)
-			if (RBAPlayTracks(tracknum,keep_playing?num_tracks:tracknum))  
-			{
-				Redbook_playing = tracknum;
+		if (tracknum <= num_tracks) {
+			if (rbaEndMode == REM_CONTINUE) {
+				mprintf((0, "rbaEndMode: Continue\n"));
+				if (RBAPlayTracks(tracknum, keep_playing ? num_tracks : tracknum))
+					Redbook_playing = tracknum;
+			} else {
+				mprintf((0, "rbaEndMode: Loop\n"));
+				if (RBAPlayTrack(tracknum, true))
+					Redbook_playing = tracknum;
 			}
+		}
 	}
 
 	return (Redbook_playing != 0);
@@ -271,13 +279,32 @@ void songs_play_song( int songnum, int repeat )
 		force_rb_register = 0;
 	}*/
 
-	if (songnum == SONG_TITLE)
-		play_redbook_track(REDBOOK_TITLE_TRACK,0);
-	else if (songnum == SONG_CREDITS)
-		play_redbook_track(REDBOOK_CREDITS_TRACK,0);
+	if (!ForceLegacyMidi) {
+
+		//mprintf((0, "RETM:%d\n", rbaExtraTracksMode));
+
+		if (rbaExtraTracksMode == RETM_REDBOOK_2) {
+			
+			if (songnum == SONG_TITLE)
+				play_redbook_track(REDBOOK_TITLE_TRACK, 0);
+			else if (songnum == SONG_CREDITS)
+				play_redbook_track(REDBOOK_CREDITS_TRACK, 0);
+
+		} else {
+
+			play_redbook_track(songnum + 1, 0);
+
+		}
+
+		if (!Redbook_playing) {
+			mprintf((1, "Could not play song through redbook!\n"));
+		}
+
+	}
 
 	if (!Redbook_playing) //not playing redbook, so play midi
 	{		
+		mprintf((0, "Playing song from legacy\n"));
 		digi_play_midi_song( Songs[songnum].filename, Songs[songnum].melodic_bank_file, Songs[songnum].drum_bank_file, repeat );
 	}
 }
@@ -299,9 +326,10 @@ void songs_play_level_song( int levelnum )
 	current_song_level = levelnum;
 
 	songnum = (levelnum>0)?(levelnum-1):(-levelnum);
+
+	digi_reset(); digi_reset();
 	
-	
-	if (!RBAEnabled() && Redbook_enabled && !FindArg("-noredbook"))
+	if (!RBAEnabled() && !ForceLegacyMidi && !FindArg("-noredbook"))
 		reinit_redbook();
 
 	/*if (force_rb_register) 
@@ -310,15 +338,24 @@ void songs_play_level_song( int levelnum )
 		force_rb_register = 0;
 	}*/
 
-	if (Redbook_enabled && RBAEnabled() && (n_tracks = RBAGetNumberOfTracks()) > 1) 
+	if (!ForceLegacyMidi && RBAEnabled() && (n_tracks = RBAGetNumberOfTracks()) > 1)
 	{
 		//try to play redbook
-		mprintf((0,"n_tracks = %d\n",n_tracks));
-		play_redbook_track(REDBOOK_FIRST_LEVEL_TRACK + (songnum % (n_tracks-REDBOOK_FIRST_LEVEL_TRACK+1)),1);
+		mprintf((0,"n_tracks = %d, songnum %d\n", n_tracks, songnum));
+		auto first = (rbaExtraTracksMode == RETM_REDBOOK_2 ? REDBOOK_FIRST_LEVEL_TRACK : SONG_FIRST_LEVEL_SONG + 1);
+		auto tracknum = first + (songnum % (n_tracks - first + 1));
+		mprintf((0, "Playing track %d for level %d\n", tracknum, levelnum));
+		play_redbook_track(tracknum, rbaEndMode == REM_CONTINUE);
+
+		if (!Redbook_playing) {
+			mprintf((1, "Could not play song through redbook!\n"));
+		}
+
 	}
 	
 	if (!Redbook_playing) //not playing redbook, so play midi
 	{			
+		mprintf((0, "Playing level song from legacy\n"));
 		songnum = SONG_FIRST_LEVEL_SONG + (songnum % NumLevelSongs);
 		digi_play_midi_song( Songs[songnum].filename, Songs[songnum].melodic_bank_file, Songs[songnum].drum_bank_file, 1 );
 	}
@@ -327,6 +364,10 @@ void songs_play_level_song( int levelnum )
 //this should be called regularly to check for redbook restart
 void songs_check_redbook_repeat()
 {
+	if (hqaWarning.show) {
+		Warning(hqaWarning.Get().c_str());
+	}
+
 	static fix last_check_time;
 	fix current_time;
 
@@ -340,7 +381,7 @@ void songs_check_redbook_repeat()
 			//stop_time();
 			// if title ends, start credit music
 			// if credits music ends, restart it
-			if (Redbook_playing == REDBOOK_TITLE_TRACK || Redbook_playing == REDBOOK_CREDITS_TRACK)
+			if (rbaExtraTracksMode == RETM_REDBOOK_2 && (Redbook_playing == REDBOOK_TITLE_TRACK || Redbook_playing == REDBOOK_CREDITS_TRACK))
 				play_redbook_track(REDBOOK_CREDITS_TRACK,0);
 			else 
 			{

@@ -173,11 +173,11 @@ static int create_audiobuf_handler(unsigned char major, unsigned char minor, uns
 	int sample_rate;
 	int desired_buffer;
 
-	int stereo;
+	int channels;
 	int bitsize;
 	int compressed;
 
-	int format;
+	SampleFormat format;
 
 	if (!mve_audio_enabled)
 		return 1;
@@ -188,7 +188,7 @@ static int create_audiobuf_handler(unsigned char major, unsigned char minor, uns
 
 	//mprintf((0, "flags: %d, sample rate: %d, desired_buffer: %d\n", flags, sample_rate, desired_buffer));
 
-	stereo = (flags & MVE_AUDIO_FLAGS_STEREO) ? 1 : 0;
+	channels = (flags & MVE_AUDIO_FLAGS_STEREO) ? 2 : 1;
 	bitsize = (flags & MVE_AUDIO_FLAGS_16BIT) ? 1 : 0;
 
 	if (minor > 0) 
@@ -203,14 +203,14 @@ static int create_audiobuf_handler(unsigned char major, unsigned char minor, uns
 
 	if (bitsize == 1)
 	{
-		format = MVESND_S16LSB;
+		format = SF_SHORT;
 	} 
 	else 
 	{
-		format = MVESND_U8;
+		format = SF_UBYTE;
 	}
 
-	mvesnd_init_audio(format, sample_rate, stereo);
+	mvesnd_init_audio(format, sample_rate, channels);
 	mve_audio_canplay = 1;
 
 	return 1;

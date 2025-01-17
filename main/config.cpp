@@ -49,6 +49,7 @@ static const char *digi_dma16_str = "DigiDma16";
 static const char *digi_volume_str = "DigiVolume";
 static const char *midi_volume_str = "MidiVolume";
 static const char *redbook_enabled_str = "RedbookEnabled";
+static const char* force_legacy_str = "ForceLegacyMIDI";
 static const char *redbook_volume_str = "RedbookVolume";
 static const char *midi_dev_str = "MidiDeviceID";
 static const char *midi_port_str = "MidiPort";
@@ -101,6 +102,7 @@ void set_custom_detail_vars(void);
 //MovieHires might be changed by -nohighres, so save a "real" copy of it
 int SaveMovieHires;
 int save_redbook_enabled;
+int save_force_legacy;
 
 int ReadConfigFile()
 {
@@ -138,6 +140,7 @@ int ReadConfigFile()
 	//set these here in case no cfg file
 	SaveMovieHires = MovieHires;
 	save_redbook_enabled = Redbook_enabled;
+	save_force_legacy = ForceLegacyMidi;
 
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(filename, "descent.cfg", CHOCOLATE_CONFIG_DIR);
@@ -182,10 +185,12 @@ int ReadConfigFile()
 				digi_midi_port = strtol(value, NULL, 16);
 			else if (!strcmp(token, midi_volume_str))
 				Config_midi_volume = strtol(value, NULL, 10);
-			else if (CurrentDataVersion != DataVer::DEMO && !strcmp(token, redbook_enabled_str))
+			else if (!strcmp(token, redbook_enabled_str))
 				Redbook_enabled = save_redbook_enabled = strtol(value, NULL, 10);
-			else if (CurrentDataVersion != DataVer::DEMO && !strcmp(token, redbook_volume_str))
-				Config_redbook_volume = strtol(value, NULL, 10);
+			else if (!strcmp(token, force_legacy_str))
+				ForceLegacyMidi = save_force_legacy = strtol(value, NULL, 10);
+			/**else if (CurrentDataVersion != DataVer::DEMO && !strcmp(token, redbook_volume_str))
+				Config_redbook_volume = strtol(value, NULL, 10);*/
 			else if (!strcmp(token, stereo_rev_str))
 				Config_channels_reversed = strtol(value, NULL, 10);
 			else if (!strcmp(token, gamma_level_str)) 
@@ -374,6 +379,8 @@ int WriteConfigFile()
 	if (CurrentDataVersion != DataVer::DEMO)
 	{
 		snprintf(str, 256, "%s=%d\n", redbook_enabled_str, FindArg("-noredbook") ? save_redbook_enabled : Redbook_enabled);
+		fputs(str, infile);
+		snprintf(str, 256, "%s=%d\n", force_legacy_str, FindArg("-noredbook") ? save_force_legacy : ForceLegacyMidi);
 		fputs(str, infile);
 		snprintf(str, 256, "%s=%d\n", redbook_volume_str, Config_redbook_volume);
 		fputs(str, infile);

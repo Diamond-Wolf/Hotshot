@@ -250,6 +250,7 @@ unsigned int key_down_count(int scancode)
 
 // Returns number of times key has went from down to up since last call.
 unsigned int key_up_count(int scancode) {
+
 	int n;
 
 	if ((scancode < 0) || (scancode > 255)) return 0;
@@ -262,6 +263,9 @@ unsigned int key_up_count(int scancode) {
 
 void KeyPressed(int scancode)
 {
+	if (scancode < 0 || scancode >= 256)
+		return;
+	
 	// Key going down
 	keyd_last_pressed = scancode;
 	keyd_time_when_last_pressed = timer_get_fixed_seconds();
@@ -321,6 +325,9 @@ void KeyPressed(int scancode)
 void KeyReleased(int scancode)
 {
 	// Key going up
+	if (scancode < 0 || scancode >= 256)
+		return;
+
 	keyd_last_released = scancode;
 	keyd_pressed[scancode] = 0;
 	key_data.NumUps[scancode]++;

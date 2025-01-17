@@ -300,11 +300,11 @@ int digi_init()
 	if (digi_init_digi()) return 1;
 	if (digi_init_midi()) return 1;
 
-	if (!digi_atexit_called)	
+	/*if (!digi_atexit_called)	
 	{
 		atexit( digi_close );
 		digi_atexit_called = 1;
-	}
+	}*/
 
 	next_channel = 0;
 	for (i=0; i<MAX_CHANNELS; i++ )
@@ -758,8 +758,8 @@ void digi_play_midi_song( char * filename, char * melodic_bank, char * drum_bank
 
 	if ( filename == NULL )	return;
 
-	if (PlayHQSong(filename, loop)) //[ISB] moved here to prevent a null pointer problem
-		return;
+	/*if (PlayHQSong(filename, loop)) //[ISB] moved here to prevent a null pointer problem
+		return;*/					  //[DW] Was causing problems with new redbook system, partially because Redbook isn't supposed to be enabled here
 
 	strcpy( digi_last_midi_song, filename );
 	strcpy( digi_last_melodic_bank, melodic_bank );

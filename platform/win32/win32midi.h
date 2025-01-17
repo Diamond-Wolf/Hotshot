@@ -27,7 +27,7 @@ public:
 		return MIDISYNTH_LIVE;
 	}
 	void DoMidiEvent(midievent_t* ev) override;
-	void RenderMIDI(int numTicks, unsigned short* buffer) override;
+	void RenderMIDI(int numTicks, short* buffer) override;
 	void StopSound() override;
 	void Shutdown() override;
 	void SetDefaults() override;

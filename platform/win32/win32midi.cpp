@@ -87,7 +87,7 @@ void MidiWin32Synth::DoMidiEvent(midievent_t* ev)
 	}
 }
 
-void MidiWin32Synth::RenderMIDI(int numTicks, unsigned short* buffer)
+void MidiWin32Synth::RenderMIDI(int numTicks, short* buffer)
 {
 	//todo API change
 }

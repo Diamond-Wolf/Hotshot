@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "s_midi.h"
+#include "hqaudio/sound_loader.h"
 
 //-----------------------------------------------------------------------------
 // Constants
@@ -80,7 +81,7 @@ bool midi_queue_slots_available(void* opaquesource);
 void midi_dequeue_midi_buffers(void* opaquesource);
 //Queues a new buffer into the music source, at a specified sample rate.
 //This is used for both MIDI and CD music right now
-void midi_queue_buffer(void* opaquesource, int numSamples, uint16_t* data);
+void midi_queue_buffer(void* opaquesource, int numSamples, int16_t* data);
 
 //Readies the source for playing MIDI music. Returns an opaque pointer for the source.
 void* midi_start_source();
@@ -96,8 +97,9 @@ bool midi_check_finished(void* opaquesource);
 // Emitting recordings of pleasing rythmic sequences at player
 //-----------------------------------------------------------------------------
 
-void plat_start_hq_song(int sample_rate, std::vector<float>&& song_data, bool loop);
+void plat_start_hq_song(SoundLoader* loader, bool loop);
 void plat_stop_hq_song();
+bool plat_is_hq_song_playing();
 
 //-----------------------------------------------------------------------------
 // Emitting buffered movie sound at player
@@ -106,7 +108,7 @@ void plat_stop_hq_song();
 #define MVESND_S16LSB 1
 #define MVESND_U8 2
 
-void mvesnd_init_audio(int format, int samplerate, int stereo);
+void mvesnd_init_audio(SampleFormat format, int samplerate, int channels);
 void mvesnd_queue_audio_buffer(int len, short* data);
 void mvesnd_close();
 

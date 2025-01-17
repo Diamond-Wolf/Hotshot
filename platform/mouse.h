@@ -51,8 +51,8 @@ extern void mouse_flush();	// clears all mice events...
 extern void mouse_close();
 
 //========================================================================
-extern void mouse_get_pos(int* x, int* y);
-extern void mouse_get_delta(int* dx, int* dy);
+extern void mouse_get_pos(float* x, float* y);
+extern void mouse_get_delta(float* dx, float* dy);
 extern int mouse_get_btns();
 extern void mouse_set_pos(int x, int y);
 extern void mouse_get_cyberman_pos(int* x, int* y);

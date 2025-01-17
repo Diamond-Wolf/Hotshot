@@ -145,7 +145,7 @@ void MidiSequencer::Tick()
 }
 
 //Returns the next tick that an event has to be performed
-void MidiSequencer::Render(int samplesToRender, unsigned short* buffer)
+void MidiSequencer::Render(int samplesToRender, short* buffer)
 {
 	//If there's no song, just render out the requested amount of ticks so that lingering notes fade out even over the fade to black
 	synth->RenderMIDI(samplesToRender, buffer);

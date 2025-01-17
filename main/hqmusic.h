@@ -6,6 +6,9 @@ Instead, it is released under the terms of the MIT License.
 
 #pragma once
 
+#include <mutex>
+#include <string>
+
 //Basic HQ music functions
 
 //Plays an OGG file
@@ -21,7 +24,48 @@ bool RBAEnabled();
 void RBAStop();
 int RBAGetNumberOfTracks();
 int RBAGetTrackNum();
-int RBAPlayTrack(int track);
+int RBAPlayTrack(int track, bool loop);
 int RBAPlayTracks(int first, int last);
 bool RBAPeekPlayStatus();
 
+//What to do at the end of a song
+enum RedbookEndMode {
+    REM_CONTINUE,
+    REM_LOOP,
+};
+
+//How many extra tracks? Just title and credits, or add briefing, endlevel, and endgame
+enum RedbookExtraTracksMode {
+    RETM_REDBOOK_2,
+    RETM_MIDI_5,
+};
+
+extern RedbookEndMode rbaEndMode;
+extern RedbookExtraTracksMode rbaExtraTracksMode;
+
+extern struct HQAWarning {
+
+	bool show = false;
+	std::string message;
+
+	std::mutex m;
+
+	void Put(std::string message) {
+		m.lock();
+		this->message = message;
+		show = true;
+		m.unlock();
+	}
+
+	std::string Get() {
+		std::string message;
+
+		m.lock();
+		message = this->message;
+		show = false;
+		m.unlock();
+
+		return message;
+	}
+
+} hqaWarning;
