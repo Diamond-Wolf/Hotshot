@@ -1,15 +1,20 @@
 Building is handled through Premake, and as far as I have tested shouldn't have too many issues.
 
-First, you need to install Premake 5; you can get the from https://premake.github.io. You also need SDL2, FluidSynth, and OpenAL Soft. Find the folder these are located in; specifically, you want the folder for the correct version, which contains the include and lib folders.
+First, you need to install Premake 5; you can get the from https://premake.github.io. You also need SDL3.
+Find the folder these are located in; specifically, you want the folder for the correct version, which
+contains the include and lib folders. On Mac, this is based on the dylib; the framework will not be
+structured correctly.
 
 Once you have all dependencies located, run Premake:
 
-premake5 <action> --sdl2-path=<SDL2 path> --openal-path=<OpenAL path> --fluidsynth-path=<FluidSynth path>
+premake5 <action> --sdl-path=<SDL3 path>
 
-Action is one of the actions specified at https://premake.github.io/docs/Using-Premake. Hotshot has been tested with gmake2 on Mac and vs2022 on Windows.
+Action is one of the actions specified at https://premake.github.io/docs/Using-Premake. Hotshot has been
+tested with gmake2 on Mac and vs2022 on Windows.
 Additional options are available:
- --build-network builds network support (untested)
+ --build-network builds network support (broken)
  
-After running Premake, navigate to the build directory. Run make to build both games in debug configuration. You can also specify config=release for an optimized release build.
+On Mac: After running Premake, navigate to the build directory. Run make to build both games in debug
+configuration. You can also specify config=release for an optimized release build.
 
 See platform_notes.txt for further info.
