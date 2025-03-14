@@ -300,7 +300,7 @@ bool CheckCheats(char newKeyIn) {
             digi_play_sample(SOUND_CHEATER, F1_0);
             Players[Player_num].shields = i2f(1);
 			Players[Player_num].energy = i2f(1);
-            HUD_init_message("Gotcha! :D");
+            HUD_init_message("Made you look!");
 
             return true;
         break;

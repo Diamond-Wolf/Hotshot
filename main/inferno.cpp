@@ -521,6 +521,10 @@ int D_DescentMain(int argc, const char** argv)
 	if (FindArg("-verbose"))
 		Inferno_verbose = 1;
 
+	if (!cfile_init_hotshot("hotshot.hog")) {
+		Error("Could not find hotshot.hog");
+	}
+
 #define HOGNAME "descent2.hog"
 #if defined(CHOCOLATE_USE_LOCALIZED_PATHS)
 	get_full_file_path(hogfile_full_path, HOGNAME, CHOCOLATE_SYSTEM_FILE_DIR);

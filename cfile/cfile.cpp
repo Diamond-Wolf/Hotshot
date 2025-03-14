@@ -50,25 +50,30 @@ typedef struct hogfile
 #endif
 
 hogfile D1HogFiles[MAX_HOGFILES];
-bool d1HogInitialized = 0;
+bool d1HogInitialized = false;
 int numD1Hogfiles = 0;
 
 hogfile D2HogFiles[MAX_HOGFILES];
-bool d2HogInitialized = 0;
+bool d2HogInitialized = false;
 int Num_hogfiles = 0;
 
 hogfile AltHogFiles[MAX_HOGFILES];
-bool AltHogfile_initialized = 0;
+bool AltHogfile_initialized = false;
 int AltNum_hogfiles = 0;
 
 hogfile VertigoHogFiles[MAX_HOGFILES];
-bool VertigoHogfile_initialized = 0;
+bool VertigoHogfile_initialized = false;
 int VertigoNum_hogfiles = 0;
+
+hogfile HotshotHogFiles[MAX_HOGFILES];
+bool hotshotHogInitialized = false;
+int numHotshotHogFiles = 0;
 
 char d1HogFilename[HOG_FILENAME_MAX];
 char d2HogFilename[HOG_FILENAME_MAX];
 char AltHogFilename[HOG_FILENAME_MAX];
 char vertigoHogFilename[HOG_FILENAME_MAX];
+char hotshotHogFilename[HOG_FILENAME_MAX];
 
 char AltHogDir[HOG_FILENAME_MAX];
 bool AltHogdir_initialized = 0;
@@ -234,6 +239,20 @@ int cfile_init_d1(const char* hogname)
 		return 0;	//not loaded!
 }
 
+int cfile_init_hotshot(const char* hogname)
+{
+	Assert(hotshotHogInitialized == 0);
+
+	if (cfile_init_hogfile(hogname, HotshotHogFiles, &numD1Hogfiles))
+	{
+		strcpy(hotshotHogFilename, hogname);
+		hotshotHogInitialized = 1;
+		return 1;
+	}
+	else
+		return 0;	//not loaded!
+}
+
 int cfile_init_vertigo(const char* hogname)
 {
 	if (!d2HogInitialized)
@@ -300,6 +319,28 @@ FILE* FindFileInD2(const char* name, int* length) {
 
 }
 
+FILE* FindFileInHotshot(const char* name, int* length) {
+
+	if (!hotshotHogInitialized)
+		return NULL;
+
+	FILE* fp;
+	for (int i = 0; i < numHotshotHogFiles; i++)
+	{
+		if (!_stricmp(HotshotHogFiles[i].name, name))
+		{
+			fp = cfile_get_filehandle(hotshotHogFilename, "rb");
+			if (fp == NULL) return NULL;
+			fseek(fp, HotshotHogFiles[i].offset, SEEK_SET);
+			*length = HotshotHogFiles[i].length;
+			return fp;
+		}
+	}
+
+	return NULL;
+
+}
+
 FILE* FindFileInVertigo(const char* name, int* length) {
 
 	if (!VertigoHogfile_initialized)
@@ -342,7 +383,13 @@ FILE* cfile_find_libfile(const char* name, int* length)
 		}
 	}
 
-	if (currentGame == G_DESCENT_1) { //Search the correct game's files first
+	//Check Hotshot files first
+
+	fp = FindFileInHotshot(name, length);
+	if (fp)
+		return fp;
+
+	if (currentGame == G_DESCENT_1) { //Search the correct game's files next
 
 		//mprintf((1, "\nCurrent game is D1, trying D1 first (%s)\n", name));
 

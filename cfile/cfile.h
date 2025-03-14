@@ -33,6 +33,7 @@ extern bool d2HogInitialized;
 int cfile_init_d1(const char* hogname);
 int cfile_init_d2(const char* hogname);
 int cfile_init_vertigo(const char* hogname);
+int cfile_init_hotshot(const char* hogname);
 
 CFILE* cfopen(const char* filename, const char* mode);
 int cfilelength(CFILE* fp);							// Returns actual size of file...
