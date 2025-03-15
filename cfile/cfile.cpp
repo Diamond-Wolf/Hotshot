@@ -243,7 +243,7 @@ int cfile_init_hotshot(const char* hogname)
 {
 	Assert(hotshotHogInitialized == 0);
 
-	if (cfile_init_hogfile(hogname, HotshotHogFiles, &numD1Hogfiles))
+	if (cfile_init_hogfile(hogname, HotshotHogFiles, &numHotshotHogFiles))
 	{
 		strcpy(hotshotHogFilename, hogname);
 		hotshotHogInitialized = 1;
@@ -384,7 +384,6 @@ FILE* cfile_find_libfile(const char* name, int* length)
 	}
 
 	//Check Hotshot files first
-
 	fp = FindFileInHotshot(name, length);
 	if (fp)
 		return fp;

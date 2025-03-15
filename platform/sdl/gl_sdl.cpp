@@ -11,6 +11,7 @@ Instead, it is released under the terms of the MIT License.
 #include "SDL_video.h"
 
 #include "gl_sdl.h"
+#include "cfile/cfile.h"
 #include "2d/gr.h"
 #include "platform/platform.h"
 #include "misc/error.h"
@@ -25,40 +26,8 @@ const float buf[] = { -1.0f, 3.0f, 0.0f, 0.0f,
 					  1.0f, 1.0f, 1.0f, 0.0f}; //rip
 
 //TODO: Need to downgrade these to 150 or so
-const char* vertexSource =
-"#version 330 core\n"
-"\n"
-"layout(location=0) in vec2 point;\n"
-"layout(location=1) in vec2 uvCoord;\n"
-"\n"
-"smooth out vec2 uv;\n"
-"\n"
-"void main()\n"
-"{\n"
-"	gl_Position = vec4(point.x, point.y, 0.0, 1.0);\n"
-"	uv = uvCoord;"
-"}\n"
-"\n";
-
-const char* fragmentSource =
-"#version 330 core\n"
-"\n"
-"smooth in vec2 uv;\n"
-"\n"
-"out vec4 color;\n"
-"\n"
-"uniform sampler1D palette;\n"
-"uniform usampler2D srcfb;\n"
-"\n"
-"void main()\n"
-"{\n"
-"	color = texelFetch(palette, int(texture(srcfb, uv).r), 0).bgra;\n"
-//"	color = texture(palette, gl_FragCoord.x / 256.0);\n"
-//"	color = vec4(0.0, 0.0, 0.5, 1.0);\n"
-//"	float h = texture(srcfb, vec2(gl_FragCoord.x / 640.0, gl_FragCoord.y / 480.0)).r / 255.0;\n"
-//"	color = vec4(h, h, h, 1.0);\n"
-"}\n"
-"\n";
+char* vertexSource = NULL;
+char* fragmentSource = NULL;
 
 void GL_ErrorCheck(const char* context)
 {
@@ -235,6 +204,22 @@ bool I_InitGLContext(SDL_Window *win)
 	sglBindTexture(GL_TEXTURE_2D, sourceFBName);
 
 	//Compile the shaders and link the phase 1 program
+	CFILE* shader = cfopen("scr-v.gls", "rb");
+	if (!shader)
+		Error("Could not open scr-v.gls!");
+
+	vertexSource = new char[shader->size];
+	cfread(vertexSource, shader->size, 1, shader);
+	cfclose(shader);
+
+	shader = cfopen("scr-f.gls", "rb");
+	if (!shader)
+		Error("Could not open scr-f.gls!");
+
+	fragmentSource = new char[shader->size];
+	cfread(fragmentSource, shader->size, 1, shader);
+	cfclose(shader);
+
 	GLuint p1vert = GL_CompileShader(vertexSource, GL_VERTEX_SHADER);
 	GLuint p1frag = GL_CompileShader(fragmentSource, GL_FRAGMENT_SHADER);
 	GL_ErrorCheck("Compiling shaders");
