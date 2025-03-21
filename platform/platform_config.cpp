@@ -35,7 +35,7 @@ static const char* GenDeviceStr = "PreferredGenMidiDevice";
 static const char* MMEDeviceStr = "MMEDevice";
 static const char* CommandKeyCombosStr = "CommandKeyCombos";
 
-bool NoOpenGL = false;
+bool NoOpenGL = true;
 
 //[ISB] to be honest, I hate this configuration parser. I should try to create something more flexible at some point.
 int plat_read_chocolate_cfg()
@@ -99,8 +99,8 @@ int plat_read_chocolate_cfg()
 				p = strchr(SoundFontFilename, '\n');
 				if (p)*p = 0;
 			}
-			else if (!strcmp(token, NoOpenGLStr))
-				NoOpenGL = strtol(value, NULL, 10) != 0;
+			//else if (!strcmp(token, NoOpenGLStr))
+			//	NoOpenGL = strtol(value, NULL, 10) != 0;
 			else if (!strcmp(token, GenDeviceStr))
 				PreferredGenDevice = (GenDevices)strtol(value, NULL, 10);
 			else if (!strcmp(token, MMEDeviceStr))
@@ -141,7 +141,7 @@ void plat_save_chocolate_cfg()
 		fprintf(infile, "%s=%d\n", SwapIntervalStr, SwapInterval);
 		if (SoundFontFilename[0])
 			fprintf(infile, "%s=%s\n", SoundFontPath, SoundFontFilename);
-		fprintf(infile, "%s=%d\n", NoOpenGLStr, NoOpenGL);
+		//fprintf(infile, "%s=%d\n", NoOpenGLStr, NoOpenGL);
 		fprintf(infile, "%s=%d\n", GenDeviceStr, (int)PreferredGenDevice);
 		fprintf(infile, "%s=%d\n", MMEDeviceStr, PreferredMMEDevice);
 		fprintf(infile, "%s=%d\n", CommandKeyCombosStr, CommandKeyCombos);

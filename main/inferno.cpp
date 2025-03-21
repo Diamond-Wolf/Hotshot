@@ -28,6 +28,7 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "platform/platform_filesys.h"
 #include "platform/posixstub.h"
 #include "platform/platform.h"
+#include "platform/renderapi.h"
 //#include "pa_enabl.h"       //$$POLY_ACC
 #include "2d/gr.h"
 #include "platform/mono.h"
@@ -173,6 +174,10 @@ int init_graphics()
 	int result;
 
 	//vga_init();
+
+	/*result = HRender::InitRenderAPI();
+	if (result != 0) 
+		return result;*/
 
 #if defined(POLY_ACC)
 	result = gr_check_mode(SM_640x480x15xPA);
@@ -1099,6 +1104,7 @@ Here:
 #endif
 
 	digi_close();
+	HRender::ShutdownRenderAPI();
 	gr_close();
 	plat_close();
 	return(0);		//presumably successful exit

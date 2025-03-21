@@ -28,6 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/mono.h"
 #include "2d/palette.h"
 #include "platform/platform.h"
+#include "platform/renderapi.h"
 
 uint8_t* gr_video_memory = (unsigned char*)NULL;
 

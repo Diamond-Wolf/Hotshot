@@ -22,19 +22,24 @@ Instead, it is released under the terms of the MIT License.
 #include "SDL_render.h"
 
 #include "2d/gr.h"
-#include "platform/platform.h"
 #include "misc/error.h"
 #include "misc/types.h"
 
 #include "platform/joy.h"
+#include "platform/mono.h"
 #include "platform/mouse.h"
+#include "platform/platform.h"
+#include "platform/renderapi.h"
 #include "platform/key.h"
 #include "platform/timer.h"
 
 #include "platform/sdl/gl_sdl.h"
 
+
 #define FITMODE_BEST 1
 #define FITMODE_FILTERED 2
+
+#define usingSoftware false
 
 const char* titleMsg = "Hotshot (" __DATE__ ")";
 
@@ -56,7 +61,6 @@ uint32_t localPal[256];
 SDL_Color colors[256];
 
 int refreshDuration = US_70FPS;
-bool usingSoftware = false;
 
 SDL_ScaleMode scaleMode;
 
@@ -84,19 +88,17 @@ int plat_init()
 int plat_create_window()
 {
 	//Attributes like this must be set before windows are created, apparently. 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
 	CurWindowWidth = WindowWidth;
 	CurWindowHeight = WindowHeight;
-	int flags = SDL_WINDOW_HIDDEN;
-	if (!NoOpenGL)
-		flags |= SDL_WINDOW_OPENGL;
-	else
-		usingSoftware = true;
+	int flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_VULKAN;
+	
 	if (Fullscreen)
 		flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
+
 	//SDL is good, create a game window
 	gameWindow = SDL_CreateWindow(titleMsg, WindowWidth, WindowHeight, flags);
 	//int result = SDL_CreateWindowAndRenderer(WindowWidth, WindowHeight, flags, &gameWindow, &renderer);
@@ -109,7 +111,7 @@ int plat_create_window()
 	//where else do i do this...
 	I_InitSDLJoysticks();
 
-	if (!NoOpenGL && I_InitGLContext(gameWindow))
+	/*if (!NoOpenGL && I_InitGLContext(gameWindow))
 	{
 		//Failed to initialize OpenGL, try simple surface code instead
 		SDL_DestroyWindow(gameWindow);
@@ -122,6 +124,24 @@ int plat_create_window()
 			Error("Error creating game window, after falling back to software: %s\n", SDL_GetError());
 			return 1;
 		}
+	}*/
+
+	int error = HRender::InitRenderAPI();
+	if (error != 0) {
+
+		Error("Init render API error: %d", 0);
+
+		/*SDL_DestroyWindow(gameWindow);
+		//usingSoftware = true;
+
+		flags &= ~SDL_WINDOW_VULKAN;
+		gameWindow = SDL_CreateWindow(titleMsg, WindowWidth, WindowHeight, flags);
+		if (!gameWindow)
+		{
+			Error("Error creating game window, after falling back to software: %s\n", SDL_GetError());
+			return 1;
+		}*/
+		
 	}
 
 	SDL_ShowWindow(gameWindow);
@@ -134,11 +154,9 @@ int plat_create_window()
 
 void plat_close_window()
 {
+	
 	if (gameWindow)
 	{
-		if (!usingSoftware)
-			I_ShutdownGL();
-
 		SDL_DestroyWindow(gameWindow);
 		gameWindow = NULL;
 	}
@@ -211,10 +229,10 @@ void I_SetScreenRect(int w, int h)
 		screenRectangle.y = (CurWindowHeight - screenRectangle.h) / 2;
 	}
 
-	if (!usingSoftware)
-		GL_SetVideoMode(w, h, &screenRectangle);
-	else
-	{
+	if (!usingSoftware) {
+		//GL_SetVideoMode(w, h, &screenRectangle);
+		HRender::ResizeRenderTarget(w, h);
+	} else {
 		if (softwareSurf)
 			SDL_DestroySurface(softwareSurf);
 		
@@ -238,6 +256,7 @@ void plat_toggle_fullscreen()
 		SDL_SetWindowSize(gameWindow, WindowWidth, WindowHeight);
 		CurWindowWidth = WindowWidth; CurWindowHeight = WindowHeight;
 		SDL_SetWindowPosition(gameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		HRender::ResizeWindow(WindowWidth, WindowHeight);
 	}
 
 	I_SetScreenRect(grd_curscreen->sc_w, grd_curscreen->sc_h);
@@ -247,6 +266,8 @@ void plat_update_window()
 {
 	SDL_SetWindowSize(gameWindow, WindowWidth, WindowHeight);
 	SDL_SetWindowPosition(gameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+	HRender::ResizeWindow(WindowWidth, WindowHeight);
 
 	plat_toggle_fullscreen();
 
@@ -411,7 +432,7 @@ void plat_set_mouse_relative_mode(int state)
 
 void plat_write_palette(int start, int end, uint8_t* data)
 {
-	int i;
+	/*int i;
 
 	//TODO: don't waste time storing in the SDL color array
 	for (i = 0; i <= end-start; i++)
@@ -422,7 +443,16 @@ void plat_write_palette(int start, int end, uint8_t* data)
 		localPal[start+i] = (255 << 24) | (colors[i].r << 16) | (colors[i].g << 8) | (colors[i].b);
 	}
 	if (!usingSoftware)
-		GL_SetPalette(localPal);
+		GL_SetPalette(localPal);*/
+
+	uint8_t newPal[sizeof(gr_palette)];
+	memcpy(newPal, gr_palette, sizeof(gr_palette));
+	for (int i = 0; i <= end - start; i++) {
+		newPal[start + i] = data[i];
+	}
+
+	HRender::UploadPalette(newPal);
+
 }
 
 void plat_blank_palette()
@@ -489,6 +519,8 @@ void plat_present_canvas(int sync)
 		SDL_Delay(1000 / 70);
 	}
 
+	return;
+
 	if (!usingSoftware)
 	{
 		GL_DrawPhase1();
@@ -504,8 +536,9 @@ void plat_present_canvas(int sync)
 void plat_blit_canvas(grs_canvas *canv)
 {
 	//[ISB] Under the assumption that the screen buffer is always static and valid, memcpy the contents of the canvas into it
-	if (canv->cv_bitmap.bm_type == BM_SVGA)
-		memcpy(gr_video_memory, canv->cv_bitmap.bm_data, canv->cv_bitmap.bm_w * canv->cv_bitmap.bm_h);
+	//if (canv->cv_bitmap.bm_type == BM_SVGA)
+	//	memcpy(gr_video_memory, canv->cv_bitmap.bm_data, canv->cv_bitmap.bm_w * canv->cv_bitmap.bm_h);
+	HRender::RenderScreenCanvas(canv);
 }
 
 void plat_close()
