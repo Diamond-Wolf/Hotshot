@@ -279,7 +279,7 @@ namespace HRender {
 
 	void InitScreenRendering(SDL_GPUCopyPass* cpass) {
 	
-		rendererState.screenPipeline = CreateGraphicsPipeline(rendererState.screenVert, rendererState.screenFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+		rendererState.screenPipeline = CreateGraphicsPipeline<1,1>(rendererState.screenVert, rendererState.screenFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
 			std::array { SDL_GPUVertexBufferDescription { //Because the official examples give an error that the array needs to be an expression in VS
 				.slot = 0,
 				.pitch = sizeof(float) * 4,
@@ -292,7 +292,7 @@ namespace HRender {
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 				.offset = 0,
 			} }
-			);
+		);
 
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
@@ -458,7 +458,7 @@ namespace HRender {
 
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = (uint32_t)bmSize * sizeof(float)
+			.size = (uint32_t)(bmSize * sizeof(float))
 		};
 
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, true);
