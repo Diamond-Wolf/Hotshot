@@ -25,6 +25,7 @@ Instead, it is released under the terms of the MIT License.
 #endif
 
 extern SDL_Window* gameWindow;
+extern int CurWindowWidth, CurWindowHeight;
 
 namespace HRender {
 
@@ -44,7 +45,7 @@ namespace HRender {
 
 		uint32_t renderWidth, renderHeight;
 
-		SDL_GPUTexture* windowTexture;
+		SDL_GPUTexture* windowTexture = NULL;
 
 		SDL_GPUBuffer* portalBufferFront = NULL;
 		SDL_GPUBuffer* portalBufferRear = NULL;
@@ -55,16 +56,16 @@ namespace HRender {
 
 		SDL_GPUBuffer* screenVertBuffer = NULL;
 		SDL_GPUBuffer* screenIndBuffer = NULL;
-		SDL_GPUSampler* screenSampler = NULL;
+		SDL_GPUSampler* defaultSampler = NULL;
 
 		SDL_GPUGraphicsPipeline* screenPipeline = NULL;;
 
 		SDL_GPUColorTargetInfo ctarget {
 			.texture = NULL,
 			.mip_level = 0,
-			.load_op = SDL_GPU_LOADOP_DONT_CARE,
-			.store_op = SDL_GPU_STOREOP_DONT_CARE,
-			.cycle = true
+			.load_op = SDL_GPU_LOADOP_LOAD,
+			.store_op = SDL_GPU_STOREOP_STORE,
+			.cycle = false
 		};
 
 		SDL_GPUDepthStencilTargetInfo dtarget {
@@ -168,6 +169,7 @@ namespace HRender {
 		CFILE* shaderCode = cfopen(name, "rb");
 		if (shaderCode == NULL) {
 			Error("Could not open shader <%s>!", name);
+			return;
 		}
 		uint8_t* codeBytes = new uint8_t[shaderCode->size];
 		cfread(codeBytes, shaderCode->size, 1, shaderCode);
@@ -194,25 +196,29 @@ namespace HRender {
 
 	void UploadPalette(uint8_t* palette) {
 
-		const int PALETTE_SIZE = sizeof(gr_palette);
+		const int PALETTE_SIZE = SDL_arraysize(gr_palette);
 
 		InitCommandBuffer();
 
+		static float expandedPalette[PALETTE_SIZE / 3 * 4];
+
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = PALETTE_SIZE * sizeof(uint32_t)
+			.size = sizeof(expandedPalette)
 		};
 
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
 
-		static uint32_t expandedPalette[PALETTE_SIZE];
-		for (int i = 0; i < PALETTE_SIZE; i++) {
-			expandedPalette[i] = palette[i];
+		const float DIV_FACTOR = 63.f;
+		for (int i = 0; i < PALETTE_SIZE / 3; i++) { //std430 packs nicely, but SDL thought it would be a good idea to upload std140 data anyway
+			expandedPalette[i * 4] = palette[i * 3] / DIV_FACTOR;
+			expandedPalette[i * 4 + 1] = palette[i * 3 + 1] / DIV_FACTOR;
+			expandedPalette[i * 4 + 2] = palette[i * 3 + 2] / DIV_FACTOR;
+			//expandedPalette[i * 4 + 3] = 1;
 		}
 
-		SDL_memcpy(tbuf.memoryMap, expandedPalette, PALETTE_SIZE * sizeof(uint32_t));
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-
+		SDL_memcpy(tbuf.memoryMap, expandedPalette, sizeof(expandedPalette));
+		
 		SDL_GPUCopyPass* pass = SDL_BeginGPUCopyPass(rendererState.mainCommandBuffer);
 
 		SDL_GPUTransferBufferLocation tbloc {
@@ -223,10 +229,13 @@ namespace HRender {
 		SDL_GPUBufferRegion breg {
 			.buffer = rendererState.paletteBuffer,
 			.offset = 0,
-			.size = PALETTE_SIZE * sizeof(uint32_t)
+			.size = sizeof(expandedPalette)
 		};
 
 		SDL_UploadToGPUBuffer(pass, &tbloc, &breg, false);
+
+		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
+		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 
 		SDL_EndGPUCopyPass(pass);
 
@@ -236,10 +245,10 @@ namespace HRender {
 		UploadPalette(gr_palette);
 	}
 
-	void ResizeWindow(const int w, const int h) {
-		InitCommandBuffer();
-		if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, NULL, NULL))
-			Error("Error acquiring swapchain texture: %s", SDL_GetError());
+	void ResizeWindow() {
+		//InitCommandBuffer();
+		//if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, NULL, NULL))
+		//	Error("Error acquiring swapchain texture: %s", SDL_GetError());
 	}
 
 	void ResizeRenderTarget(const unsigned int w, const unsigned int h) {
@@ -249,10 +258,10 @@ namespace HRender {
 
 		// TODO - Cache rear view size
 
-		SDL_GPUTextureCreateInfo texCreateInfo{
+		SDL_GPUTextureCreateInfo texCreateInfo {
 			.type = SDL_GPU_TEXTURETYPE_2D,
 			.format = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT,
-			.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+			.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,
 			.width = w,
 			.height = h,
 			.layer_count_or_depth = 1,
@@ -266,6 +275,10 @@ namespace HRender {
 
 		rendererState.dtarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
 
+	}
+
+	void InitScreenRendering(SDL_GPUCopyPass* cpass) {
+	
 		rendererState.screenPipeline = CreateGraphicsPipeline(rendererState.screenVert, rendererState.screenFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
 			std::array { SDL_GPUVertexBufferDescription { //Because the official examples give an error that the array needs to be an expression in VS
 				.slot = 0,
@@ -279,12 +292,8 @@ namespace HRender {
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 				.offset = 0,
 			} }
-		);
+			);
 
-	}
-
-	void InitScreenRendering(SDL_GPUCopyPass* cpass) {
-	
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 			.size = sizeof(float) * 4 * 4
@@ -293,14 +302,13 @@ namespace HRender {
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
 
 		std::array<float, 4 * 4> verts {
-			-1.f, -1.f, 0.5f, 0.f,
-			1.f, -1.f, 0.5f, 0.f,
 			-1.f, 1.f, 0.5f, 0.f,
 			1.f, 1.f, 0.5f, 0.f,
+			-1.f, -1.f, 0.5f, 0.f,
+			1.f, -1.f, 0.5f, 0.f,
 		};
 		SDL_memcpy(tbuf.memoryMap, verts.data(), verts.size() * sizeof(float));
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-
+		
 		SDL_GPUBufferCreateInfo bci {
 			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
 			.size = sizeof(float) * 4 * 4
@@ -321,6 +329,7 @@ namespace HRender {
 
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, false);
 
+		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 
 		tbci.size = sizeof(uint16_t) * 4;
@@ -330,8 +339,7 @@ namespace HRender {
 			0, 1, 2, 3
 		};
 		memcpy(tbuf.memoryMap, inds.data(), inds.size() * sizeof(uint16_t));
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-
+		
 		bci = {
 			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
 			.size = sizeof(uint16_t) * 4
@@ -344,7 +352,10 @@ namespace HRender {
 
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, false);
 
-		rendererState.screenSampler = SDL_CreateGPUSampler(rendererState.device, &rendererState.defaultSamplerInfo);
+		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
+		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
+
+		rendererState.defaultSampler = SDL_CreateGPUSampler(rendererState.device, &rendererState.defaultSamplerInfo);
 
 	}
 
@@ -365,7 +376,7 @@ namespace HRender {
 			return 3;
 		}
 
-		BuildShader("screenf.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 0, 1);
+		BuildShader("screenf.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 1, 1);
 		BuildShader("screenv.spv", SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.screenVert);
 
 		bool error = false;
@@ -385,13 +396,16 @@ namespace HRender {
 			return 4;
 		}
 
-		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		//SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		InitCommandBuffer();
+		
+		ResizeWindow();
 
-		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(cbuf);
+		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(rendererState.mainCommandBuffer);
 
 		SDL_GPUBufferCreateInfo bci {
 			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = sizeof(gr_palette) * sizeof(uint32_t)
+			.size = SDL_arraysize(gr_palette) * sizeof(float) * 4/3
 		};
 		
 		rendererState.paletteBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
@@ -399,7 +413,8 @@ namespace HRender {
 		InitScreenRendering(cpass);
 
 		SDL_EndGPUCopyPass(cpass);
-		SDL_SubmitGPUCommandBuffer(cbuf);
+		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
+		rendererState.mainCommandBuffer = NULL;
 
 		return 0;
 
@@ -414,12 +429,18 @@ namespace HRender {
 
 	void RenderScreenBitmap(grs_bitmap* bm) {
 
+		//mprintf((0, "Drawing screen bitmap\n"));
+
+		//mprintf((0, "%hd %hd %hhd %hhd %hhd", bm->bm_w, bm->bm_h, bm->bm_data[100], bm->bm_data[200], bm->bm_data[200] - bm->bm_data[100]));
+
+		InitCommandBuffer();
+
 		int bmSize = bm->bm_w * bm->bm_h;
 
 		SDL_GPUTextureCreateInfo tci {
 			.type = SDL_GPU_TEXTURETYPE_2D,
-			.format = SDL_GPU_TEXTUREFORMAT_R8_UINT,
-			.usage = SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ,
+			.format = SDL_GPU_TEXTUREFORMAT_R32_FLOAT,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
 			.width = (uint32_t)bm->bm_w,
 			.height = (uint32_t)bm->bm_h,
 			.layer_count_or_depth = 1,
@@ -437,15 +458,20 @@ namespace HRender {
 
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = (uint32_t)bmSize
+			.size = (uint32_t)bmSize * sizeof(float)
 		};
 
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, true);
+		float* floatMemMap = reinterpret_cast<float*>(tbuf.memoryMap);
 
-		SDL_memcpy(tbuf.memoryMap, bm->bm_data, bmSize);
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-
-		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(rendererState.mainCommandBuffer);
+		//SDL_memcpy(tbuf.memoryMap, bm->bm_data, bmSize); //Need to expand texture
+		for (int i = 0; i < bmSize; i++) {
+			floatMemMap[i] = bm->bm_data[i];
+		}
+		//mprintf((0, "%f %f\n", floatMemMap[100], floatMemMap[200]));
+		
+		SDL_GPUCommandBuffer* copycmd = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(copycmd);
 
 		SDL_GPUTextureTransferInfo tti {
 			.transfer_buffer = tbuf.buffer,
@@ -461,10 +487,14 @@ namespace HRender {
 
 		SDL_UploadToGPUTexture(cpass, &tti, &tr, true);
 
+		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 		SDL_EndGPUCopyPass(cpass);
+		SDL_SubmitGPUCommandBuffer(copycmd);
 
+		SDL_ReleaseGPUTexture(rendererState.device, bmTex);
 
+		//--End copy, begin render--
 
 		SDL_GPURenderPass* rpass = BeginDefaultRenderPass();
 
@@ -481,7 +511,7 @@ namespace HRender {
 
 		SDL_GPUTextureSamplerBinding tsb {
 			.texture = bmTex,
-			.sampler = rendererState.screenSampler
+			.sampler = rendererState.defaultSampler
 		};
 		SDL_BindGPUFragmentSamplers(rpass, 0, &tsb, 1);
 
@@ -507,6 +537,11 @@ namespace HRender {
 		//if (rendererState.currentRenderPass != NULL)
 		//	SDL_EndGPURenderPass(rendererState.currentRenderPass);
 
+		if (rendererState.mainCommandBuffer == NULL)
+			return;
+
+		//mprintf((0, "render\n"));
+
 		for (auto& cp : texturedDrawCalls) {
 			TexturePage* page = cp.first;
 			
@@ -518,6 +553,48 @@ namespace HRender {
 			//end render pass
 
 		}
+
+		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
+		if (fence == NULL) {
+			mprintf((1, "Error submitting stage 1 command buffer and acquiring fence: %s", SDL_GetError()));
+		}
+		
+		rendererState.mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+
+		uint32_t windowWidth, windowHeight;
+		
+		if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, &windowWidth, &windowHeight))
+			Error("Error acquiring swapchain texture: %s", SDL_GetError());
+
+		SDL_GPUBlitInfo bi {
+			.source = {
+				.texture = rendererState.ctarget.texture,
+				//.layer_or_depth_plane = 1,
+				.x = 0,
+				.y = 0,
+				.w = rendererState.renderWidth,
+				.h = rendererState.renderHeight
+			},
+			.destination = {
+				.texture = rendererState.windowTexture,
+				//.layer_or_depth_plane = 1,
+				.x = 0,
+				.y = 0,
+				.w = windowWidth,
+				.h = windowHeight,
+			},
+			.load_op = SDL_GPU_LOADOP_LOAD,
+			.cycle = false
+		};
+
+		//if (fence) {
+
+			SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
+			SDL_ReleaseGPUFence(rendererState.device, fence);
+
+		//}
+
+		SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
 
 		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
 		rendererState.mainCommandBuffer = NULL;

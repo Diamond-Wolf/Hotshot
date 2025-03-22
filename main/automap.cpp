@@ -1040,6 +1040,7 @@ void do_automap(int key_code)
 			gr_palette_load(gr_palette);
 		}
 
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 
 		plat_set_mouse_relative_mode(1);

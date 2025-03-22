@@ -184,6 +184,7 @@ int show_title_screen(const char* filename, int allow_keys, int from_hog_only)
 	while (1)
 	{
 		plat_do_events();
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		if (local_key_inkey() && allow_keys) break;
 		if (timer_get_fixed_seconds() > timer) break;
@@ -580,6 +581,7 @@ int show_char_delay(char the_char, int delay, int robot_num, int cursor_flag)
 		if (RobotPlaying && delay != 0)
 		{
 			plat_do_events();
+			plat_blit_canvas(&grd_curscreen->sc_canvas);
 			plat_present_canvas(0);
 			RotateRobot();
 		}
@@ -593,6 +595,7 @@ int show_char_delay(char the_char, int delay, int robot_num, int cursor_flag)
 	if (delay != 0)
 	{
 		plat_do_events();
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 	}
 	//[ISB] draw right before the erase
@@ -872,6 +875,7 @@ int showBriefingMessageD1(int screen_num, char* message)
 					}
 					while (timer_get_fixed_seconds() < start_time + KEY_DELAY_DEFAULT / 2)
 					{
+						plat_blit_canvas(&grd_curscreen->sc_canvas);
 						plat_present_canvas(0);
 						plat_do_events();
 					};
@@ -983,6 +987,7 @@ int showBriefingMessageD1(int screen_num, char* message)
 				while (timer_get_approx_seconds() < start_time + KEY_DELAY_DEFAULT / 2)
 				{
 					//[ISB] the amount of frames that will get 2 events done is going to be high
+					plat_blit_canvas(&grd_curscreen->sc_canvas);
 					plat_present_canvas(0);
 					plat_do_events();
 				};
@@ -1234,6 +1239,7 @@ int show_briefing_message(int screen_num, char* message)
 				while ((keypress = local_key_inkey()) == 0) //	Wait for a key
 				{
 					//[ISB] the amount of frames that will get 2 events done is going to be high
+					plat_blit_canvas(&grd_curscreen->sc_canvas);
 					plat_present_canvas(0);
 					plat_do_events();
 					while (timer_get_fixed_seconds() < start_time + KEY_DELAY_DEFAULT / 2)
@@ -1401,6 +1407,7 @@ int show_briefing_message(int screen_num, char* message)
 					break;
 				}
 #endif
+				plat_blit_canvas(&grd_curscreen->sc_canvas);
 				plat_present_canvas(0);
 				plat_do_events();
 				while (timer_get_fixed_seconds() < start_time + KEY_DELAY_DEFAULT / 2)

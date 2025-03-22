@@ -30,6 +30,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/rand.h"
 
 #include "platform/platform.h"
+#include "platform/renderapi.h"
 //#include "pa_enabl.h"       //$$POLY_ACC //[ISB] todo figure out something here aaa
 #include "inferno.h"
 #include "game.h"
@@ -568,6 +569,8 @@ int menuHiresCache = -1;
 //mode if cannot init requested mode)
 int set_screen_mode(int sm)
 {
+	HRender::BeginRenderFrame();
+
 #ifdef EDITOR
 	if ( (sm==SCREEN_MENU) && (Screen_mode==SCREEN_EDITOR) )	
 	{
@@ -1837,6 +1840,7 @@ void game()
 				longjmp(LeaveGame,0);
 			#endif
 
+			plat_blit_canvas(&grd_curscreen->sc_canvas);
 			plat_present_canvas(0);
 			plat_do_events();
 			//waiting loop for polled fps mode

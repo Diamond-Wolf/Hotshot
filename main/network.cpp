@@ -2787,6 +2787,7 @@ int network_find_game(void)
 	network_send_game_list_request();
 	t1 = timer_get_approx_seconds() + F1_0 * 3;
 
+	plat_blit_canvas(&grd_curscreen->sc_canvas);
 	plat_present_canvas(0);
 
 	while (timer_get_approx_seconds() < t1) // Wait 3 seconds for replies
@@ -3831,6 +3832,7 @@ void network_join_game_at(char* address)
 	start_time = timer_get_fixed_seconds();
 
 	show_boxed_message(TXT_WAIT);
+	plat_blit_canvas(&grd_curscreen->sc_canvas);
 	plat_present_canvas(0);
 
 	num_active_games = 0;

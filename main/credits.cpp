@@ -446,6 +446,7 @@ get_line:;
 				return;
 			}
 
+			plat_blit_canvas(&grd_curscreen->sc_canvas);
 			plat_present_canvas(0);
 			I_MarkEnd(MenuHires ? US_60FPS : US_70FPS);
 		}

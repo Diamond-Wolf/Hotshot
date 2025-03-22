@@ -861,6 +861,7 @@ KConfigPaint:
 			kc_drawitem(&items[citem], 1);
 			//WIN(ShowCursorW());
 		}
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		I_MarkEnd(MenuHires ? US_60FPS : US_70FPS);
 	}
@@ -975,6 +976,7 @@ void kc_change_key(kc_item* item)
 
 	while ((k != KEY_ESC) && (keycode == 255))
 	{
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
 
@@ -1037,6 +1039,7 @@ void kc_change_joybutton(kc_item* item)
 
 	while ((k != KEY_ESC) && (code == 255))
 	{
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
 #ifdef NETWORK
@@ -1119,6 +1122,7 @@ void kc_change_mousebutton(kc_item* item)
 
 	while ((k != KEY_ESC) && (code == 255))
 	{
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
 #ifdef NETWORK
@@ -1180,6 +1184,7 @@ void kc_change_joyaxis(kc_item* item)
 
 	while ((k != KEY_ESC) && (code == 255))
 	{
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
 #ifdef NETWORK
@@ -1252,6 +1257,7 @@ void kc_change_mouseaxis(kc_item * item)
 
 	while ((k != KEY_ESC) && (code == 255))
 	{
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
 #ifdef NETWORK

@@ -1058,6 +1058,7 @@ int PiggyInitD1()
 	gr_set_curfont(Gamefonts[GFONT_SMALL]);
 	gr_set_fontcolor(gr_find_closest_color_current(20, 20, 20), -1);
 	gr_printf(0x8000, y - 10, "%s...", TXT_LOADING_DATA);
+	plat_blit_canvas(&grd_curscreen->sc_canvas);
 	plat_present_canvas(0);
 
 	printf("\n   D1: %d bitmaps to read\nStarting with %d bitmaps\n", N_bitmaps, activePiggyTable->gameBitmaps.size());

@@ -591,6 +591,7 @@ int do_game_pause()
 		snprintf(msg, 1000, "PAUSE\n\nSkill level:  %s\nHostages on board:  %d\n", (*(&TXT_DIFFICULTY_1 + (Difficulty_level))), Players[Player_num].hostages_on_board);
 
 	show_boxed_message(Pause_msg = msg);		  //TXT_PAUSE);
+	plat_blit_canvas(&grd_curscreen->sc_canvas);
 	plat_present_canvas(0);
 
 	while (Game_paused)
@@ -651,6 +652,7 @@ int do_game_pause()
 			if (Cockpit_mode == CM_FULL_COCKPIT || Cockpit_mode == CM_STATUS_BAR)
 				render_gauges();
 		}
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		I_MarkEnd(1000000 / FPSLimit);
 	}

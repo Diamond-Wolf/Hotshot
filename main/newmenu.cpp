@@ -1888,6 +1888,7 @@ RePaintNewmenu4:
 		{
 			gr_palette_fade_in(gr_palette, 32, 0);
 		}
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		I_MarkEnd(MenuHires ? US_60FPS : US_70FPS);
 	}
@@ -2750,6 +2751,7 @@ ReadFileNames:
 
 
 		WIN(DDGRUNLOCK(dd_grd_curcanv));
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		I_MarkEnd(MenuHires ? US_60FPS : US_70FPS);
 	}
@@ -3293,6 +3295,7 @@ RePaintNewmenuListbox:
 			WIN(ShowCursorW());
 			MAC(show_cursor());
 		}
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		I_MarkEnd(MenuHires ? US_60FPS : US_70FPS);
 	}

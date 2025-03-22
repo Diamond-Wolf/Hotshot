@@ -1882,6 +1882,8 @@ void do_escort_menu(void)
 				, goal_str, tstr);
 
 	show_escort_menu(msg);		//TXT_PAUSE);
+
+	plat_blit_canvas(&grd_curscreen->sc_canvas);
 	plat_present_canvas(0);
 
 	while (paused) 

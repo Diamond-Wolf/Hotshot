@@ -53,6 +53,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "mission.h" //for mission number
 #include "gameseq.h" //for level number
 #include "newcheat.h"
+#include "platform/renderapi.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -667,6 +668,8 @@ extern uint8_t* Game_cockpit_copy_code;
 //render a frame for the game
 void game_render_frame_mono(void)
 {
+	HRender::BeginRenderFrame();
+
 	int win_flip = 0;
 
 	grs_canvas Screen_3d_window;

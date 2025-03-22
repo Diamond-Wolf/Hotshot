@@ -323,6 +323,7 @@ int gr_palette_fade_out(uint8_t* pal, int nsteps, int allow_keys)
 			fade_palette_raw[i] = c;
 		}
 		plat_write_palette(0, 255, &fade_palette_raw[0]);
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 	}
 	gr_palette_faded_out = 1;
@@ -369,6 +370,7 @@ int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 			fade_palette_raw[i] = c;
 		}
 		plat_write_palette(0, 255, &fade_palette_raw[0]);
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
 	}

@@ -18,7 +18,7 @@ namespace HRender {
 	void UploadPalette();
 	void UploadPalette(uint8_t* data);
 
-	void ResizeWindow(const int w, const int h);
+	void ResizeWindow();
 	void ResizeRenderTarget(const unsigned int w, const unsigned int h);
 
 	void BuildGPUPortalList();

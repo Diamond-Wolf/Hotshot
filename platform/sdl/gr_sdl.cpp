@@ -256,7 +256,7 @@ void plat_toggle_fullscreen()
 		SDL_SetWindowSize(gameWindow, WindowWidth, WindowHeight);
 		CurWindowWidth = WindowWidth; CurWindowHeight = WindowHeight;
 		SDL_SetWindowPosition(gameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-		HRender::ResizeWindow(WindowWidth, WindowHeight);
+		HRender::ResizeWindow();
 	}
 
 	I_SetScreenRect(grd_curscreen->sc_w, grd_curscreen->sc_h);
@@ -267,7 +267,7 @@ void plat_update_window()
 	SDL_SetWindowSize(gameWindow, WindowWidth, WindowHeight);
 	SDL_SetWindowPosition(gameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
-	HRender::ResizeWindow(WindowWidth, WindowHeight);
+	HRender::ResizeWindow();
 
 	plat_toggle_fullscreen();
 
@@ -341,6 +341,8 @@ int plat_set_gr_mode(int mode)
 		Error("plat_set_gr_mode: bad mode %d\n", mode);
 		return 0;
 	}
+
+	//HRender::ResizeRenderTarget(w, h);
 
 	//[ISB] this should hopefully fix all instances of the screen flashing white when changing modes
 	plat_write_palette(0, 255, gr_palette);
@@ -430,6 +432,8 @@ void plat_set_mouse_relative_mode(int state)
 	}
 }
 
+uint8_t platPalette[SDL_arraysize(gr_palette)];
+
 void plat_write_palette(int start, int end, uint8_t* data)
 {
 	/*int i;
@@ -445,13 +449,14 @@ void plat_write_palette(int start, int end, uint8_t* data)
 	if (!usingSoftware)
 		GL_SetPalette(localPal);*/
 
-	uint8_t newPal[sizeof(gr_palette)];
-	memcpy(newPal, gr_palette, sizeof(gr_palette));
-	for (int i = 0; i <= end - start; i++) {
-		newPal[start + i] = data[i];
+	int istart = start * 3;
+	int iend = end * 3 + 2;
+
+	for (int i = 0; i <= iend - istart; i++) {
+		platPalette[istart + i] = data[istart + i];
 	}
 
-	HRender::UploadPalette(newPal);
+	HRender::UploadPalette(platPalette);
 
 }
 
@@ -464,7 +469,7 @@ void plat_blank_palette()
 
 void plat_read_palette(uint8_t* dest)
 {
-	int i;
+	/*int i;
 	SDL_Color color;
 	for (i = 0; i < 256; i++)
 	{
@@ -472,7 +477,8 @@ void plat_read_palette(uint8_t* dest)
 		dest[i * 3 + 0] = (uint8_t)(color.r * 63 / 255);
 		dest[i * 3 + 1] = (uint8_t)(color.g * 63 / 255);
 		dest[i * 3 + 2] = (uint8_t)(color.b * 63 / 255);
-	}
+	}*/
+	memcpy(dest, platPalette, sizeof(platPalette));
 }
 
 void plat_wait_for_vbl()
@@ -519,9 +525,12 @@ void plat_present_canvas(int sync)
 		SDL_Delay(1000 / 70);
 	}
 
-	return;
+	//If (not in game):
+	//	plat_blit_canvas(&grd_curscreen->sc_canvas);
 
-	if (!usingSoftware)
+	HRender::EndRenderFrame();
+
+	/*if (!usingSoftware)
 	{
 		GL_DrawPhase1();
 		SDL_GL_SwapWindow(gameWindow);
@@ -530,15 +539,15 @@ void plat_present_canvas(int sync)
 	{
 		I_SoftwareBlit();
 		SDL_UpdateWindowSurface(gameWindow);
-	}
+	}*/
 }
 
 void plat_blit_canvas(grs_canvas *canv)
 {
 	//[ISB] Under the assumption that the screen buffer is always static and valid, memcpy the contents of the canvas into it
 	//if (canv->cv_bitmap.bm_type == BM_SVGA)
-	//	memcpy(gr_video_memory, canv->cv_bitmap.bm_data, canv->cv_bitmap.bm_w * canv->cv_bitmap.bm_h);
-	HRender::RenderScreenCanvas(canv);
+	memcpy(grd_curscreen->sc_canvas.cv_bitmap.bm_data, canv->cv_bitmap.bm_data, canv->cv_bitmap.bm_w * canv->cv_bitmap.bm_h);
+	HRender::RenderScreenCanvas(&grd_curscreen->sc_canvas);
 }
 
 void plat_close()

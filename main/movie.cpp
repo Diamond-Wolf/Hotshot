@@ -404,11 +404,14 @@ int RunMovie(char* filename, int hires_flag, int must_have, int dx, int dy)
 			{
 				I_MarkStart();
 				plat_do_events();
+				plat_blit_canvas(&grd_curscreen->sc_canvas);
 				plat_present_canvas(0);
 				I_MarkEnd(MovieHires ? US_60FPS : US_70FPS);
 			}
 			clear_pause_message();
+		
 		}
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		frame_num++;
 	}
