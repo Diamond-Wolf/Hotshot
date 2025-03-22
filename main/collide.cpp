@@ -2458,7 +2458,7 @@ void collide_player_and_materialization_center(object* objp)
 void collide_robot_and_materialization_center(object* objp)
 {
 	int	side;
-	vms_vector	exit_dir;
+	vms_vector	exit_dir = vmd_zero_vector;
 	segment* segp = &Segments[objp->segnum];
 
 	size_t iobjnum = objp - Objects.data();
