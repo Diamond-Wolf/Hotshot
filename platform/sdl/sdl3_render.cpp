@@ -24,7 +24,8 @@ Instead, it is released under the terms of the MIT License.
 # define ENABLE_SDL_DEBUG true
 #endif
 
-#ifdef __APPLE__
+//#ifdef __APPLE__
+#if 0
 # define SHADER_EXTENSION ".ir"
 # define SHADER_FORMAT SDL_GPU_SHADERFORMAT_MSL
 #else
