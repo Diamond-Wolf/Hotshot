@@ -94,7 +94,13 @@ int plat_create_window()
 
 	CurWindowWidth = WindowWidth;
 	CurWindowHeight = WindowHeight;
-	int flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_VULKAN;
+	int flags = SDL_WINDOW_HIDDEN;
+
+#ifdef __APPLE__
+	flags |= SDL_WINDOW_METAL;
+#else
+	flags |= SDL_WINDOW_VULKAN;
+#endif
 	
 	if (Fullscreen)
 		flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
@@ -129,7 +135,7 @@ int plat_create_window()
 	int error = HRender::InitRenderAPI();
 	if (error != 0) {
 
-		Error("Init render API error: %d", 0);
+		Error("Init render API error: %d", error);
 
 		/*SDL_DestroyWindow(gameWindow);
 		//usingSoftware = true;

@@ -24,6 +24,16 @@ Instead, it is released under the terms of the MIT License.
 # define ENABLE_SDL_DEBUG true
 #endif
 
+#ifdef __APPLE__
+# define SHADER_EXTENSION ".ir"
+# define SHADER_FORMAT SDL_GPU_SHADERFORMAT_MSL
+#else
+# define SHADER_EXTENSION ".spv"
+# define SHADER_FORMAT SDL_GPU_SHADERFORMAT_SPIRV
+#endif
+
+#define SHADER(fname) (fname SHADER_EXTENSION)
+
 extern SDL_Window* gameWindow;
 extern int CurWindowWidth, CurWindowHeight;
 
@@ -162,14 +172,14 @@ namespace HRender {
 
 #pragma endregion SDLHelpers
 
-	void BuildShader(const char* name, const SDL_GPUShaderStage stage, SDL_GPUShader** shader, const uint32_t samplers = 0, const uint32_t uniforms = 0, const uint32_t buffers = 0) {
+	bool BuildShader(const char* name, const SDL_GPUShaderStage stage, SDL_GPUShader** shader, const uint32_t samplers = 0, const uint32_t uniforms = 0, const uint32_t buffers = 0) {
 
 		mprintf((0, "Building shader %s\n", name));
 
 		CFILE* shaderCode = cfopen(name, "rb");
 		if (shaderCode == NULL) {
-			Error("Could not open shader <%s>!", name);
-			return;
+			mprintf((1, "Could not open shader <%s>!", name));
+			return false;
 		}
 		uint8_t* codeBytes = new uint8_t[shaderCode->size];
 		cfread(codeBytes, shaderCode->size, 1, shaderCode);
@@ -178,7 +188,7 @@ namespace HRender {
 			.code_size = (size_t)shaderCode->size,
 			.code = codeBytes,
 			.entrypoint = "main",
-			.format = SDL_GPU_SHADERFORMAT_SPIRV,
+			.format = SHADER_FORMAT,
 			.stage = stage,
 			.num_samplers = samplers,
 			.num_storage_textures = 0,
@@ -190,8 +200,13 @@ namespace HRender {
 		cfclose(shaderCode);
 
 		*shader = SDL_CreateGPUShader(rendererState.device, &shaderInfo);
+		if (*shader == NULL) {
+			mprintf((1, "Error creating shader from %s: %s", name, SDL_GetError()));
+		}
 
 		delete[] codeBytes;
+
+		return (*shader != NULL);
 	}
 
 	void UploadPalette(uint8_t* palette) {
@@ -381,23 +396,23 @@ namespace HRender {
 			return 3;
 		}
 
-		BuildShader("screenf.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 0, 1);
-		BuildShader("screenv.spv", SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.screenVert);
+#ifndef NDEBUG
+		auto mask = SDL_GetGPUShaderFormats(rendererState.device);
+		printf("Reverse shader format mask: ");
+		for (int i = 0; i < sizeof(mask) * 8; i++) {
+			printf("%d", mask & 1);
+			mask >>= 1;
+		} 
+		printf("\n");
+#endif
 
-		bool error = false;
-		
-		if (rendererState.screenFrag == NULL) {
-			mprintf((1, "Could not create screen fragment shader from screenf.spv\n"));
-			error = true;
-		}
+		bool good = true;
 
-		if (rendererState.screenVert == NULL) {
-			mprintf((1, "Could not create screen vertex shader from screenv.spv\n"));
-			error = true;
-		}
+		good &= BuildShader(SHADER("screenf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 0, 1);
+		good &= BuildShader(SHADER("screenv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.screenVert);
 
-		if (error) {
-			mprintf((1, "Last error: %s\n", SDL_GetError()));
+		if (!good) {
+			//mprintf((1, "Last error: %s\n", SDL_GetError()));
 			return 4;
 		}
 
