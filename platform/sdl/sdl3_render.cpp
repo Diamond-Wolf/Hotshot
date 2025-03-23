@@ -294,24 +294,25 @@ namespace HRender {
 			} }
 		);
 
-		SDL_GPUTransferBufferCreateInfo tbci {
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(float) * 4 * 4
-		};
-
-		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
-
 		std::array<float, 4 * 4> verts {
 			-1.f, 1.f, 0.5f, 0.f,
 			1.f, 1.f, 0.5f, 0.f,
 			-1.f, -1.f, 0.5f, 0.f,
 			1.f, -1.f, 0.5f, 0.f,
 		};
+
+		SDL_GPUTransferBufferCreateInfo tbci {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = sizeof(verts)
+		};
+
+		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
+
 		SDL_memcpy(tbuf.memoryMap, verts.data(), verts.size() * sizeof(float));
 		
 		SDL_GPUBufferCreateInfo bci {
 			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-			.size = sizeof(float) * 4 * 4
+			.size = sizeof(verts)
 		};
 
 		rendererState.screenVertBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
@@ -324,7 +325,7 @@ namespace HRender {
 		SDL_GPUBufferRegion br {
 			.buffer = rendererState.screenVertBuffer,
 			.offset = 0,
-			.size = sizeof(float) * 4 * 4
+			.size = sizeof(verts)
 		};
 
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, false);
@@ -332,23 +333,24 @@ namespace HRender {
 		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 
-		tbci.size = sizeof(uint16_t) * 4;
-		tbuf = CreateTransferBuffer(&tbci, false);
-
 		std::array<uint16_t, 4> inds {
 			0, 1, 2, 3
 		};
-		memcpy(tbuf.memoryMap, inds.data(), inds.size() * sizeof(uint16_t));
+
+		tbci.size = sizeof(inds);
+		tbuf = CreateTransferBuffer(&tbci, false);
+
+		memcpy(tbuf.memoryMap, inds.data(), sizeof(inds));
 		
 		bci = {
 			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
-			.size = sizeof(uint16_t) * 4
+			.size = sizeof(inds)
 		};
 		rendererState.screenIndBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
 
 		tbl.transfer_buffer = tbuf.buffer;
 		br.buffer = rendererState.screenIndBuffer;
-		br.size = sizeof(uint16_t) * 4;
+		br.size = sizeof(inds);
 
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, false);
 
@@ -356,6 +358,9 @@ namespace HRender {
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 
 		rendererState.defaultSampler = SDL_CreateGPUSampler(rendererState.device, &rendererState.defaultSamplerInfo);
+		if (rendererState.defaultSampler == NULL) {
+			Error("Error creating sampler for software-rendered canvas: %s", SDL_GetError());
+		}
 
 	}
 
@@ -376,7 +381,7 @@ namespace HRender {
 			return 3;
 		}
 
-		BuildShader("screenf.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 1, 1);
+		BuildShader("screenf.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 0, 1);
 		BuildShader("screenv.spv", SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.screenVert);
 
 		bool error = false;
@@ -405,7 +410,7 @@ namespace HRender {
 
 		SDL_GPUBufferCreateInfo bci {
 			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = SDL_arraysize(gr_palette) * sizeof(float) * 4/3
+			.size = (SDL_arraysize(gr_palette) / 3) * sizeof(float) * 4
 		};
 		
 		rendererState.paletteBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
@@ -448,13 +453,9 @@ namespace HRender {
 		};
 
 		SDL_GPUTexture* bmTex = SDL_CreateGPUTexture(rendererState.device, &tci);
-
-		/*SDL_GPUBufferCreateInfo bci {
-			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = bmSize
-		};
-
-		SDL_GPUBuffer* texbuf = SDL_CreateGPUBuffer(rendererState.device, &bci);*/
+		if (bmTex == NULL) {
+			Error("Error creating GPU texture for grs_bitmap: %s", SDL_GetError());
+		}
 
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
@@ -482,7 +483,8 @@ namespace HRender {
 		SDL_GPUTextureRegion tr {
 			.texture = bmTex,
 			.w = (uint32_t)bm->bm_w,
-			.h = (uint32_t)bm->bm_h
+			.h = (uint32_t)bm->bm_h,
+			.d = 1
 		};
 
 		SDL_UploadToGPUTexture(cpass, &tti, &tr, true);
