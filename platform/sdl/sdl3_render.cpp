@@ -38,12 +38,6 @@ Instead, it is released under the terms of the MIT License.
 extern SDL_Window* gameWindow;
 extern int CurWindowWidth, CurWindowHeight;
 
-#ifdef _WIN32
-#define ARRAY(T, x) std::array{ T x }
-#else
-# define ARRAY(T, x) (T){x}
-#endif
-
 namespace HRender {
 
 	enum PortalDirection {
@@ -129,7 +123,7 @@ namespace HRender {
 
 		SDL_GPUTextureFormat fmt = SDL_GetGPUSwapchainTextureFormat(rendererState.device, gameWindow);
 		if (fmt == SDL_GPU_TEXTUREFORMAT_INVALID)
-			fmt = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT; //Guess, I guess
+			fmt = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT; //Guess, I guess
 
 		SDL_GPUColorTargetDescription ctd[] {{ 
 			.format = fmt
@@ -158,6 +152,8 @@ namespace HRender {
 	void InitCommandBuffer() {
 		if (rendererState.mainCommandBuffer == NULL)
 			rendererState.mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		if (rendererState.mainCommandBuffer == NULL)
+			mprintf((1, "Error acquiring command buffer: %s", SDL_GetError()));
 	}
 
 	SDL_GPURenderPass* BeginDefaultRenderPass() {
@@ -169,7 +165,18 @@ namespace HRender {
 		TransferBuffer buf;
 
 		buf.buffer = SDL_CreateGPUTransferBuffer(rendererState.device, tbci);
+
+		if (buf.buffer == NULL) {
+			buf.memoryMap = NULL;
+			mprintf((1, "Error creating transfer buffer: %s", SDL_GetError()));
+			return buf;
+		}
+
 		buf.memoryMap = SDL_MapGPUTransferBuffer(rendererState.device, buf.buffer, cycle);
+		if (buf.memoryMap == NULL) {
+			mprintf((1, "Error mapping transfer buffer: %s", SDL_GetError()));
+			return buf;
+		}
 
 		return buf;
 
@@ -187,9 +194,10 @@ namespace HRender {
 
 		CFILE* shaderCode = cfopen(name, "rb");
 		if (shaderCode == NULL) {
-			mprintf((1, "Could not open shader <%s>!", name));
+			mprintf((1, "Could not open shader <%s>!\n", name));
 			return false;
 		}
+
 		uint8_t* codeBytes = new uint8_t[shaderCode->size];
 		cfread(codeBytes, shaderCode->size, 1, shaderCode);
 		
@@ -210,7 +218,7 @@ namespace HRender {
 
 		*shader = SDL_CreateGPUShader(rendererState.device, &shaderInfo);
 		if (*shader == NULL) {
-			mprintf((1, "Error creating shader from %s: %s", name, SDL_GetError()));
+			mprintf((1, "Error creating shader from %s: %s\n", name, SDL_GetError()));
 		}
 
 		delete[] codeBytes;
@@ -233,6 +241,10 @@ namespace HRender {
 		};
 
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
+		if (tbuf.memoryMap == NULL) {
+			SDL_CancelGPUCommandBuffer(upbuf);
+			return;
+		}
 
 		const float DIV_FACTOR = 63.f;
 		for (int i = 0; i < NUM_COLORS; i++) { //std430 packs nicely, but SDL thought it would be a good idea to upload std140 data anyway
@@ -297,11 +309,17 @@ namespace HRender {
 		};
 
 		rendererState.ctarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
+		if (rendererState.ctarget.texture == NULL) {
+			Error("Error creating render texture: %s", SDL_GetError());
+		}
 
 		texCreateInfo.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
 		texCreateInfo.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
 
 		rendererState.dtarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
+		if (rendererState.dtarget.texture == NULL) {
+			Error("Error creating render depth texture: %s", SDL_GetError());
+		}
 
 	}
 
@@ -335,8 +353,10 @@ namespace HRender {
 		};
 
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
+		if (tbuf.memoryMap == NULL)
+			Error("Error creating screen vertex memory map!");
 
-		SDL_memcpy(tbuf.memoryMap, verts.data(), verts.size() * sizeof(float));
+		SDL_memcpy(tbuf.memoryMap, verts.data(), sizeof(verts));
 		
 		SDL_GPUBufferCreateInfo bci {
 			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
@@ -367,6 +387,8 @@ namespace HRender {
 
 		tbci.size = sizeof(inds);
 		tbuf = CreateTransferBuffer(&tbci, false);
+		if (tbuf.memoryMap == NULL)
+			Error("Error creating screen index memory map!");
 
 		memcpy(tbuf.memoryMap, inds.data(), sizeof(inds));
 		
@@ -400,12 +422,12 @@ namespace HRender {
 
 		rendererState.device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, ENABLE_SDL_DEBUG, NULL);
 		if (rendererState.device == NULL) {
-			mprintf((1, "Could not create GPU device: %s", SDL_GetError()));
+			mprintf((1, "Could not create GPU device: %s\n", SDL_GetError()));
 			return 2;
 		}
 
 		if (!SDL_ClaimWindowForGPUDevice(rendererState.device, gameWindow)) {
-			mprintf((1, "Could not link GPU to window: %s", SDL_GetError()));
+			mprintf((1, "Could not link GPU to window: %s\n", SDL_GetError()));
 			return 3;
 		}
 
@@ -431,6 +453,9 @@ namespace HRender {
 
 		//SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
 		InitCommandBuffer();
+		if (rendererState.mainCommandBuffer == NULL) {
+			return 5;
+		}
 		
 		ResizeWindow();
 
@@ -442,11 +467,18 @@ namespace HRender {
 		};
 		
 		rendererState.paletteBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
+		if (rendererState.paletteBuffer == NULL) {
+			mprintf((1, "Could not create palette buffer: %s\n", SDL_GetError()));
+			return 6;
+		}
 
 		InitScreenRendering(cpass);
 
 		SDL_EndGPUCopyPass(cpass);
-		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
+		if (!SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer)) {
+			mprintf((1, "Error submitting setup commands: %s\n", SDL_GetError()));
+			return 7;
+		}
 		rendererState.mainCommandBuffer = NULL;
 
 		return 0;
@@ -491,6 +523,10 @@ namespace HRender {
 		};
 
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, true);
+		if (tbuf.memoryMap == NULL) {
+			Error("Could not create bitmap transfer buffer!");
+		}
+
 		float* floatMemMap = reinterpret_cast<float*>(tbuf.memoryMap);
 
 		//SDL_memcpy(tbuf.memoryMap, bm->bm_data, bmSize); //Need to expand texture
@@ -500,6 +536,10 @@ namespace HRender {
 		//mprintf((0, "%f %f\n", floatMemMap[100], floatMemMap[200]));
 		
 		SDL_GPUCommandBuffer* copycmd = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		if (copycmd == NULL) {
+			Error("Error acquiring bitmap transfer command buffer: %s", SDL_GetError());
+		}
+
 		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(copycmd);
 
 		SDL_GPUTextureTransferInfo tti {
@@ -522,6 +562,9 @@ namespace HRender {
 		SDL_EndGPUCopyPass(cpass);
 		//SDL_SubmitGPUCommandBuffer(copycmd);
 		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(copycmd);
+		if (fence == NULL) {
+			Error("Error submitting bitmap copy commands: %s", SDL_GetError());
+		}
 
 		SDL_ReleaseGPUTexture(rendererState.device, bmTex);
 
@@ -548,8 +591,12 @@ namespace HRender {
 
 		SDL_BindGPUFragmentStorageBuffers(rpass, 0, &rendererState.paletteBuffer, 1);
 
-		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
+		if (!SDL_WaitForGPUFences(rendererState.device, false, &fence, 1)){
+			Error("Error waiting for bitmap texture upload: %s", SDL_GetError());
+		}
 		SDL_ReleaseGPUFence(rendererState.device, fence);
+
+		//mprintf((0, SDL_GetError()));
 
 		SDL_DrawGPUIndexedPrimitives(rpass, 4, 1, 0, 0, 0); 
 
