@@ -38,6 +38,12 @@ Instead, it is released under the terms of the MIT License.
 extern SDL_Window* gameWindow;
 extern int CurWindowWidth, CurWindowHeight;
 
+#ifdef _WIN32
+#define ARRAY(T, x) std::array{ T x }
+#else
+# define ARRAY(T, x) (T){x}
+#endif
+
 namespace HRender {
 
 	enum PortalDirection {
@@ -125,6 +131,10 @@ namespace HRender {
 		if (fmt == SDL_GPU_TEXTUREFORMAT_INVALID)
 			fmt = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT; //Guess, I guess
 
+		SDL_GPUColorTargetDescription ctd[] {{ 
+			.format = fmt
+		}};
+
 		SDL_GPUGraphicsPipelineCreateInfo gpci {
 			.vertex_shader = vertex,
 			.fragment_shader = fragment,
@@ -136,9 +146,7 @@ namespace HRender {
 			},
 			.primitive_type = primitiveType,
 			.target_info = {
-				.color_target_descriptions = std::array { SDL_GPUColorTargetDescription {
-					.format = fmt,
-				}}.data(),
+				.color_target_descriptions = ctd,
 				.num_color_targets = 1
 			},
 		};
@@ -212,11 +220,12 @@ namespace HRender {
 
 	void UploadPalette(uint8_t* palette) {
 
-		const int PALETTE_SIZE = SDL_arraysize(gr_palette);
+		const int NUM_COLORS = SDL_arraysize(gr_palette) / 3;
 
-		InitCommandBuffer();
+		//InitCommandBuffer();
+		SDL_GPUCommandBuffer* upbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
 
-		static float expandedPalette[PALETTE_SIZE / 3 * 4];
+		static float expandedPalette[NUM_COLORS * 4];
 
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
@@ -226,7 +235,7 @@ namespace HRender {
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
 
 		const float DIV_FACTOR = 63.f;
-		for (int i = 0; i < PALETTE_SIZE / 3; i++) { //std430 packs nicely, but SDL thought it would be a good idea to upload std140 data anyway
+		for (int i = 0; i < NUM_COLORS; i++) { //std430 packs nicely, but SDL thought it would be a good idea to upload std140 data anyway
 			expandedPalette[i * 4] = palette[i * 3] / DIV_FACTOR;
 			expandedPalette[i * 4 + 1] = palette[i * 3 + 1] / DIV_FACTOR;
 			expandedPalette[i * 4 + 2] = palette[i * 3 + 2] / DIV_FACTOR;
@@ -235,7 +244,7 @@ namespace HRender {
 
 		SDL_memcpy(tbuf.memoryMap, expandedPalette, sizeof(expandedPalette));
 		
-		SDL_GPUCopyPass* pass = SDL_BeginGPUCopyPass(rendererState.mainCommandBuffer);
+		SDL_GPUCopyPass* pass = SDL_BeginGPUCopyPass(upbuf);
 
 		SDL_GPUTransferBufferLocation tbloc {
 			.transfer_buffer = tbuf.buffer,
@@ -254,6 +263,9 @@ namespace HRender {
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 
 		SDL_EndGPUCopyPass(pass);
+		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(upbuf);
+		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
+		SDL_ReleaseGPUFence(rendererState.device, fence);
 
 	}
 
@@ -508,7 +520,8 @@ namespace HRender {
 		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 		SDL_EndGPUCopyPass(cpass);
-		SDL_SubmitGPUCommandBuffer(copycmd);
+		//SDL_SubmitGPUCommandBuffer(copycmd);
+		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(copycmd);
 
 		SDL_ReleaseGPUTexture(rendererState.device, bmTex);
 
@@ -535,6 +548,9 @@ namespace HRender {
 
 		SDL_BindGPUFragmentStorageBuffers(rpass, 0, &rendererState.paletteBuffer, 1);
 
+		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
+		SDL_ReleaseGPUFence(rendererState.device, fence);
+
 		SDL_DrawGPUIndexedPrimitives(rpass, 4, 1, 0, 0, 0); 
 
 		SDL_EndGPURenderPass(rpass);
@@ -552,11 +568,10 @@ namespace HRender {
 
 	void EndRenderFrame() {
 
-		//if (rendererState.currentRenderPass != NULL)
-		//	SDL_EndGPURenderPass(rendererState.currentRenderPass);
-
-		if (rendererState.mainCommandBuffer == NULL)
+		if (rendererState.mainCommandBuffer == NULL) {
+			mprintf((1, "Tried to complete rendering that never started!"));
 			return;
+		}
 
 		//mprintf((0, "render\n"));
 
@@ -605,12 +620,8 @@ namespace HRender {
 			.cycle = false
 		};
 
-		//if (fence) {
-
-			SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
-			SDL_ReleaseGPUFence(rendererState.device, fence);
-
-		//}
+		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
+		SDL_ReleaseGPUFence(rendererState.device, fence);
 
 		SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
 
