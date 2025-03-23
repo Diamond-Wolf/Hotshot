@@ -11,15 +11,14 @@ struct paletteColor {
 	float b;
 };
 
-layout(std140, set = 2, binding = 0) readonly buffer paletteBuffer {
+layout(set = 2, binding = 0) uniform sampler2D srcfb;
+
+layout(std140, set = 2, binding = 1) readonly buffer paletteBuffer {
 	paletteColor palette[];
 };
-
-layout(set = 2, binding = 0) uniform sampler2D srcfb;
 
 void main() {
 	uint index = uint(texture(srcfb, uv).r);
 	paletteColor color = palette[index];
 	fragColor = vec4(color.r, color.g, color.b, 1);
-	//fragColor = vec4(index, index / 255.0, 1, 1);
 }
