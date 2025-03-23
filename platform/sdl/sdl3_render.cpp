@@ -298,6 +298,11 @@ namespace HRender {
 
 		// TODO - Cache rear view size
 
+		if (rendererState.ctarget.texture != NULL) {
+			SDL_ReleaseGPUTexture(rendererState.device, rendererState.ctarget.texture);
+			SDL_ReleaseGPUTexture(rendererState.device, rendererState.dtarget.texture);
+		}
+
 		SDL_GPUTextureCreateInfo texCreateInfo {
 			.type = SDL_GPU_TEXTURETYPE_2D,
 			.format = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT,
