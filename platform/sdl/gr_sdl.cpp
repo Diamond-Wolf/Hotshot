@@ -96,7 +96,8 @@ int plat_create_window()
 	CurWindowHeight = WindowHeight;
 	int flags = SDL_WINDOW_HIDDEN;
 
-#ifdef __APPLE__
+//#ifdef __APPLE__ 
+#if 0
 	flags |= SDL_WINDOW_METAL;
 #else
 	flags |= SDL_WINDOW_VULKAN;
