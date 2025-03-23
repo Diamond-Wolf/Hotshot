@@ -69,7 +69,9 @@ namespace HRender {
 		SDL_GPUBuffer* screenIndBuffer = NULL;
 		SDL_GPUSampler* defaultSampler = NULL;
 
-		SDL_GPUGraphicsPipeline* screenPipeline = NULL;;
+		SDL_GPUGraphicsPipeline* screenPipeline = NULL;
+
+		SDL_GPUTextureFormat windowFormat;
 
 		SDL_GPUColorTargetInfo ctarget {
 			.texture = NULL,
@@ -121,12 +123,12 @@ namespace HRender {
 		std::array<SDL_GPUVertexAttribute, attrN> attributes
 	) {
 
-		SDL_GPUTextureFormat fmt = SDL_GetGPUSwapchainTextureFormat(rendererState.device, gameWindow);
-		if (fmt == SDL_GPU_TEXTUREFORMAT_INVALID)
-			fmt = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT; //Guess, I guess
+		rendererState.windowFormat = SDL_GetGPUSwapchainTextureFormat(rendererState.device, gameWindow);
+		if (rendererState.windowFormat == SDL_GPU_TEXTUREFORMAT_INVALID)
+			rendererState.windowFormat = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT; //Guess, I guess
 
 		SDL_GPUColorTargetDescription ctd[] {{ 
-			.format = fmt
+			.format = rendererState.windowFormat
 		}};
 
 		SDL_GPUGraphicsPipelineCreateInfo gpci {
@@ -305,7 +307,7 @@ namespace HRender {
 
 		SDL_GPUTextureCreateInfo texCreateInfo {
 			.type = SDL_GPU_TEXTURETYPE_2D,
-			.format = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT,
+			.format = rendererState.windowFormat,
 			.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,
 			.width = w,
 			.height = h,
@@ -486,6 +488,10 @@ namespace HRender {
 		}
 		rendererState.mainCommandBuffer = NULL;
 
+		rendererState.windowFormat = SDL_GetGPUSwapchainTextureFormat(rendererState.device, gameWindow);
+		if (rendererState.windowFormat == SDL_GPU_TEXTUREFORMAT_INVALID)
+			rendererState.windowFormat = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
+
 		return 0;
 
 	}
@@ -571,8 +577,6 @@ namespace HRender {
 			Error("Error submitting bitmap copy commands: %s", SDL_GetError());
 		}
 
-		SDL_ReleaseGPUTexture(rendererState.device, bmTex);
-
 		//--End copy, begin render--
 
 		SDL_GPURenderPass* rpass = BeginDefaultRenderPass();
@@ -604,6 +608,8 @@ namespace HRender {
 		//mprintf((0, SDL_GetError()));
 
 		SDL_DrawGPUIndexedPrimitives(rpass, 4, 1, 0, 0, 0); 
+
+		SDL_ReleaseGPUTexture(rendererState.device, bmTex);
 
 		SDL_EndGPURenderPass(rpass);
 
