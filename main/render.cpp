@@ -326,7 +326,8 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 #ifndef RELEASE
 		//Int3();
 #endif
-		Segments[segnum].sides[sidenum].tmap_num = 0;
+		//Segments[segnum].sides[sidenum].tmap_num = 0;
+		tmap1 = 0;
 	}
 
 	// New code for overlapping textures...
