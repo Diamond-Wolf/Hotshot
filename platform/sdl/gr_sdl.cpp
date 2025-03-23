@@ -33,7 +33,7 @@ Instead, it is released under the terms of the MIT License.
 #include "platform/key.h"
 #include "platform/timer.h"
 
-#include "platform/sdl/gl_sdl.h"
+//#include "platform/sdl/gl_sdl.h"
 
 
 #define FITMODE_BEST 1
@@ -277,9 +277,6 @@ void plat_update_window()
 	HRender::ResizeWindow();
 
 	plat_toggle_fullscreen();
-
-	if (!NoOpenGL)
-		GL_UpdateSwapInterval();
 }
 
 int plat_set_gr_mode(int mode)

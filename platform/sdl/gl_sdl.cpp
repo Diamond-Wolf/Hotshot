@@ -4,6 +4,8 @@ and is not under the terms of the Parallax Software Source license.
 Instead, it is released under the terms of the MIT License.
 */
 
+#if 0
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -411,3 +413,5 @@ void (APIENTRY* sglTexParameteri)(GLenum target, GLenum pname, GLint param);
 void (APIENTRY* sglTexParameteriv)(GLenum target, GLenum pname, const GLint* params);
 
 void (APIENTRY* sglDrawArrays)(GLenum mode, GLint first, GLsizei count);
+
+#endif
