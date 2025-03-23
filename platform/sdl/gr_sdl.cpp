@@ -467,8 +467,8 @@ void plat_write_palette(int start, int end, uint8_t* data)
 void plat_blank_palette()
 {
 	uint8_t pal[768];
-	memset(&pal[0], 0, 768 * sizeof(uint8_t));
-	plat_write_palette(0, 255, &pal[0]);
+	memset(pal, 0, sizeof(pal));
+	plat_write_palette(0, 255, pal);
 }
 
 void plat_read_palette(uint8_t* dest)
@@ -550,8 +550,8 @@ void plat_blit_canvas(grs_canvas *canv)
 {
 	//[ISB] Under the assumption that the screen buffer is always static and valid, memcpy the contents of the canvas into it
 	//if (canv->cv_bitmap.bm_type == BM_SVGA)
-	memcpy(grd_curscreen->sc_canvas.cv_bitmap.bm_data, canv->cv_bitmap.bm_data, canv->cv_bitmap.bm_w * canv->cv_bitmap.bm_h);
-	HRender::RenderScreenCanvas(&grd_curscreen->sc_canvas);
+	//memcpy(grd_curscreen->sc_canvas.cv_bitmap.bm_data, canv->cv_bitmap.bm_data, canv->cv_bitmap.bm_w * canv->cv_bitmap.bm_h);
+	HRender::RenderScreenCanvas(canv);
 }
 
 void plat_close()
