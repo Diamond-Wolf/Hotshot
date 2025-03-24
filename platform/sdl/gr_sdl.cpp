@@ -457,7 +457,7 @@ void plat_write_palette(int start, int end, uint8_t* data)
 	int iend = end * 3 + 2;
 
 	for (int i = 0; i <= iend - istart; i++) {
-		platPalette[istart + i] = data[istart + i];
+		platPalette[istart + i] = data[i];
 	}
 
 	HRender::UploadPalette(platPalette);

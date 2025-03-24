@@ -667,17 +667,18 @@ void PaletteChecker(unsigned char* p, unsigned start, unsigned count)
 {
 	int i;
 
-	for (i = 0; i < 256; i++)
+	//for (i = 0; i < 256; i++)
+	for (i = 0; i < count; i++)
 		if (p[i] != 0)
 			break;
 
-	if (i >= 255 && (MVEPaletteCalls++) > 0)
+	if (i >= count - 1 && (MVEPaletteCalls++) > 0)
 		return;
 
 	//MVE_SetPalette(p, start, count); //[ISB] I need to figure out if I should do something here
 	//[ISB] for whatever reason, the implication of the above line is that the palette is set without actually informing the game's palette code
 	//Replicate this by using a raw palette push call. 
-	plat_write_palette(start, start + count - 1, p + (start*3));
+	plat_write_palette(start, start + count - 1, p);
 }
 
 

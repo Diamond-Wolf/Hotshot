@@ -277,9 +277,10 @@ namespace HRender {
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 
 		SDL_EndGPUCopyPass(pass);
-		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(upbuf);
+		SDL_SubmitGPUCommandBuffer(upbuf);
+		/*SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(upbuf);
 		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
-		SDL_ReleaseGPUFence(rendererState.device, fence);
+		SDL_ReleaseGPUFence(rendererState.device, fence);*/
 
 	}
 
