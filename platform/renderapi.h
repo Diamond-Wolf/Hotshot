@@ -13,7 +13,7 @@ namespace HRender {
 
 	int InitRenderAPI();
 
-	void BeginRenderFrame();
+	void PrepareMineRenderFrame();
 
 	void UploadPalette();
 	void UploadPalette(uint8_t* data);

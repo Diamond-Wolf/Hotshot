@@ -569,8 +569,6 @@ int menuHiresCache = -1;
 //mode if cannot init requested mode)
 int set_screen_mode(int sm)
 {
-	HRender::BeginRenderFrame();
-
 #ifdef EDITOR
 	if ( (sm==SCREEN_MENU) && (Screen_mode==SCREEN_EDITOR) )	
 	{

@@ -668,7 +668,8 @@ extern uint8_t* Game_cockpit_copy_code;
 //render a frame for the game
 void game_render_frame_mono(void)
 {
-	HRender::BeginRenderFrame();
+	HRender::PrepareMineRenderFrame();
+	HRender::BuildGPUPortalList();
 
 	int win_flip = 0;
 

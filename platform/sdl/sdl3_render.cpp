@@ -17,6 +17,9 @@ Instead, it is released under the terms of the MIT License.
 #include "misc/types.h"
 #include "platform/mono.h"
 #include "platform/renderapi.h"
+#include "main/game.h"
+#include "main/kconfig.h"
+#include "main/gamestat.h"
 
 #ifdef NDEBUG
 # define ENABLE_SDL_DEBUG false
@@ -36,7 +39,7 @@ Instead, it is released under the terms of the MIT License.
 #define SHADER(fname) (fname SHADER_EXTENSION)
 
 extern SDL_Window* gameWindow;
-extern int CurWindowWidth, CurWindowHeight;
+//extern int CurWindowWidth, CurWindowHeight;
 
 namespace HRender {
 
@@ -114,6 +117,8 @@ namespace HRender {
 	typedef void(*drawcall)();
 
 	std::unordered_map<TexturePage*, std::vector<drawcall>> texturedDrawCalls;
+
+	bool mineRenderingReady = false;
 
 #pragma region SDLHelpers
 
@@ -500,8 +505,7 @@ namespace HRender {
 	SDL_GPUFence* BuildGPUPortalListThread(PortalDirection dir);
 	void BuildGPUPortalList() {
 		rendererState.frontPortalListBuilt = std::async(std::launch::async, BuildGPUPortalListThread, PD_FORWARD);
-		//if (rear enabled)
-			rendererState.rearPortalListBuilt = std::async(std::launch::async, BuildGPUPortalListThread, PD_REAR);
+		rendererState.rearPortalListBuilt = std::async(std::launch::async, BuildGPUPortalListThread, PD_REAR);
 	}
 
 	void RenderScreenBitmap(grs_bitmap* bm) {
@@ -620,9 +624,29 @@ namespace HRender {
 		RenderScreenBitmap(&canvas->cv_bitmap);
 	}
 
-	void BeginRenderFrame() { // TODO: If in game, build and submit portal list. Also, determine if rear view mirrors need textures.
+	void PrepareMineRenderFrame() { // TODO: If in game, build and submit portal list. Also, determine if rear view mirrors need textures.
+		
 		texturedDrawCalls.clear();
 		InitCommandBuffer();
+
+		mineRenderingReady = true;
+
+	}
+
+	void DispatchMineDrawCalls() {
+
+		for (auto& cp : texturedDrawCalls) {
+			TexturePage* page = cp.first;
+
+			//Swap texture page, begin render pass
+
+			for (auto& Draw : cp.second)
+				Draw();
+
+			//end render pass
+
+		}
+
 	}
 
 	void EndRenderFrame() {
@@ -634,15 +658,23 @@ namespace HRender {
 
 		//mprintf((0, "render\n"));
 
-		for (auto& cp : texturedDrawCalls) {
-			TexturePage* page = cp.first;
+		if (ExtGameStatus == GAMESTAT_RUNNING && mineRenderingReady) {
+
+			SDL_GPUFence* portalFences[] = {
+				rendererState.rearPortalListBuilt.get(),
+				rendererState.frontPortalListBuilt.get() 
+			};
+
+			if (!SDL_WaitForGPUFences(rendererState.device, true, portalFences, 2)) {
+				mprintf((1, "Error waiting for portal lists!\n"));
+			}
 			
-			//Swap texture page, begin render pass
+			DispatchMineDrawCalls();
 
-			for (auto& Draw : cp.second)
-				Draw();
+			SDL_ReleaseGPUFence(rendererState.device, portalFences[0]);
+			SDL_ReleaseGPUFence(rendererState.device, portalFences[1]);
 
-			//end render pass
+			mineRenderingReady = false;
 
 		}
 
@@ -711,9 +743,13 @@ namespace HRender {
 
 	SDL_GPUFence* BuildGPUPortalListThread(PortalDirection dir) {
 
-		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		bool rearActive = (Cockpit_3d_view[0] == CV_REAR || Cockpit_3d_view[1] == CV_REAR);
 
-		mprintf((1, "Portal list building not ready!"));
+		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		if (dir == PD_REAR && !rearActive)
+			return SDL_SubmitGPUCommandBufferAndAcquireFence(cbuf);
+
+		//mprintf((1, "Portal list building not ready!"));
 
 		//SDL_GPUStorageBufferReadWriteBinding* verts = 
 
