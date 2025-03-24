@@ -94,7 +94,7 @@ int plat_create_window()
 
 	CurWindowWidth = WindowWidth;
 	CurWindowHeight = WindowHeight;
-	int flags = SDL_WINDOW_HIDDEN;
+	int flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
 
 //#ifdef __APPLE__ 
 #if 0
@@ -248,6 +248,11 @@ void I_SetScreenRect(int w, int h)
 		if (!softwareSurf)
 			Error("Error creating software surface: %s\n", SDL_GetError());
 	}
+
+	if (w < CurWindowWidth || h < CurWindowHeight) {
+		SDL_SetWindowSize(gameWindow, w, h);
+	}
+
 }
 
 void plat_toggle_fullscreen()
@@ -351,6 +356,7 @@ int plat_set_gr_mode(int mode)
 	//[ISB] this should hopefully fix all instances of the screen flashing white when changing modes
 	plat_write_palette(0, 255, gr_palette);
 	I_SetScreenRect(w, h);
+	SDL_SetWindowAspectRatio(gameWindow, (float)w / h, (float)w / h);
 
 	return 0;
 }
@@ -383,6 +389,12 @@ void plat_do_events()
 				break;
 			}
 		}*/
+		case SDL_EVENT_WINDOW_RESIZED: {
+			SDL_WindowEvent winEv = ev.window;
+			WindowWidth = CurWindowWidth = winEv.data1;
+			WindowHeight = CurWindowHeight = winEv.data2;
+			break;
+		}
 		case SDL_EVENT_WINDOW_FOCUS_GAINED: 
 			SDL_FlushEvents(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP);
 		break;
