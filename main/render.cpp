@@ -1447,6 +1447,7 @@ void start_lighting_frame(object* viewer);
 #ifdef JOHN_ZOOM
 fix Zoom_factor = F1_0;
 #endif
+
 //renders onto current canvas
 void render_frame(fix eye_offset, int window_num)
 {
@@ -2049,6 +2050,8 @@ done_rendering:
 #endif
 
 }
+
+
 #ifdef EDITOR
 
 extern int render_3d_in_big_window;

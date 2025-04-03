@@ -7,7 +7,24 @@ Instead, it is released under the terms of the MIT License.
 #ifndef PLAT_RENDER_API_H
 #define PLAT_RENDER_API_H
 
+#include "vecmat/vecmat.h"
+
+constexpr float VFOV_DEG_F = 70.f;
+constexpr float VFOV_RAD_F = VFOV_DEG_F * 3.1415926536f / 180.f;
+constexpr float VFOV_F = VFOV_DEG_F / 360.f;
+constexpr fix VFOV = fl2f(VFOV_F);
+
+constexpr fix NEAR_CLIP = fl2f(0.01f);
+constexpr fix FAR_CLIP = fl2f(1000.f);
+
 namespace HRender {
+
+	enum ViewTarget {
+		VT_MAIN,
+		VT_LEFT,
+		VT_RIGHT,
+		VT_NONE
+	};
 
 	struct TexturePage;
 
@@ -21,10 +38,22 @@ namespace HRender {
 	void ResizeWindow();
 	void ResizeRenderTarget(const unsigned int w, const unsigned int h);
 
-	void BuildGPUPortalList();
+	void UpdateProjectionMatrices(const fix mainAspect);
+	void UpdateProjectionMatrices(const float mainAspect);
+
+	void UpdateViewMatrix(const object* source, const ViewTarget target);
+
+	//If clone != target, then clone target rather than rebuilding. Set clone = target to actually build.
+	//Required to call even for inactive windows, so inactive windows can clone VT_NONE.
+	void BuildGPUPortalList(const std::vector<short>& segments, const vms_vector& pos, const vms_vector& dir, const ViewTarget target, const ViewTarget clone);
+
+	TexturePage* CreateTexturePage(grs_bitmap* bitmap);
+	void FreeTexturePage(TexturePage* page);
 
 	void RenderScreenCanvas(grs_canvas* canvas);
 	void RenderScreenBitmap(grs_bitmap* bitmap);
+
+	void RenderSide(ViewTarget target, side* side);
 
 	void EndRenderFrame();
 

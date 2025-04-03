@@ -504,7 +504,7 @@ void do_weapon_stuff(void)
 int Game_paused;
 char* Pause_msg;
 
-extern void game_render_frame();
+//extern void game_render_frame();
 
 extern fix Flash_effect;
 

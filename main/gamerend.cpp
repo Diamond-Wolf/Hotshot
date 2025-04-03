@@ -58,6 +58,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #if defined(POLY_ACC)
 #include "poly_acc.h"
 #endif
+#include <future>
 
 extern fix Cruise_speed;
 extern int LinearSVGABuffer;
@@ -664,12 +665,216 @@ int BigWindowSwitch = 0;
 extern int force_cockpit_redraw;
 extern uint8_t* Game_cockpit_copy_code;
 
+//extern int build_segment_list(int start_seg_num, int window_num);
+
+constexpr fix BONUS_RADIUS = i2f(30); // TODO: Determine from BMTable models on level load
+
+struct FrustumPlane {
+	vms_vector point;
+	vms_vector normal;
+};
+
+void BuildSegmentListSub(const short segnum, std::vector<short>& segnums, std::vector<bool>& traversed, const FrustumPlane planes[6]) {
+
+	Assert(!traversed[segnum]);
+	traversed[segnum] = true;
+
+	segment& seg = Segments[segnum];
+	vms_vector dummyVec;
+
+	for (int i = 0; i < 6; i++) {
+		
+		FrustumPlane plane = planes[i];
+		bool cull = true;
+		
+		for (int j = 0; j < MAX_VERTICES_PER_SEGMENT; j++) {
+		
+			vms_vector* vert = &Vertices[Segments[segnum].verts[j]];
+			
+			fix dot = vm_vec_dotprod(&plane.normal, vm_vec_sub(&dummyVec, vert, &plane.point));
+			if (dot > 0) {
+				cull = false;
+				break;
+			}
+
+		}
+
+		if (cull)
+			return;
+
+	}
+
+	segnums.push_back(segnum);
+
+	for (int i = 0; i < MAX_SIDES_PER_SEGMENT; i++) {
+
+		short childID = seg.children[i];
+		if (childID < 0 || childID >= Segments.size())
+			continue;
+
+		if (traversed[childID])
+			continue;
+
+		BuildSegmentListSub(childID, segnums, traversed, planes);
+
+	}
+
+}
+
+const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short start, vms_vector& position, vms_vector& direction) {
+
+	thread_local std::vector<short> segnums;
+	thread_local std::vector<bool> traversed;
+	thread_local short numSegs;
+
+	if (numSegs != Segments.size()) {
+
+		segnums.resize(Segments.size());
+		segnums.shrink_to_fit();
+
+		traversed.resize(Segments.size());
+		traversed.shrink_to_fit();
+		
+		numSegs = Segments.size();
+		
+		mprintf((0, "BuildSegmentListNew: Resized segnums"));
+
+	}
+
+	segnums.clear();
+	for (auto it = traversed.begin(); it != traversed.end(); it++)
+		*it = false;
+
+	//Traverse and frustum cull
+
+	// TODO: Adjust aspect based on the actual window in question
+	const float HFOV_RAD_F = atanf(tanf(VFOV_RAD_F) * ((float)Game_window_w / Game_window_h));
+	const float HFOV_F = HFOV_RAD_F / (3.1415926536f * 2);
+	const fix HFOV = fl2f(HFOV_F);
+
+	constexpr fixang F_90_DEG = fl2f(0.25f);
+
+	vms_matrix dummyMat;
+	vms_matrix* dm = &dummyMat;
+	vms_vector dummyVec;
+	vms_vector* dv = &dummyVec;
+	vms_angvec normalAngles[] {
+		{ HFOV - F_90_DEG, 0, 0},
+		{-HFOV + F_90_DEG, 0, 0},
+		{0,  VFOV - F_90_DEG, 0},
+		{0, -VFOV + F_90_DEG, 0},
+	};
+
+	vms_vector nearVec;
+	vms_vector farVec;
+	vms_vector backVec = direction;
+	vm_vec_negate(&backVec);
+
+	vm_vec_copy_scale(&nearVec, &direction, NEAR_CLIP);
+	vm_vec_copy_scale(&farVec, &direction, FAR_CLIP);
+
+	const FrustumPlane planes[6] {
+		{
+			.point = position,
+			.normal = *vm_vec_rotate(dv, &direction, vm_angles_2_matrix(dm, normalAngles + 0))
+		},
+		{
+			.point = position,
+			.normal = *vm_vec_rotate(dv, &direction, vm_angles_2_matrix(dm, normalAngles + 1))
+		},
+		{
+			.point = position,
+			.normal = *vm_vec_rotate(dv, &direction, vm_angles_2_matrix(dm, normalAngles + 2))
+		},
+		{
+			.point = position,
+			.normal = *vm_vec_rotate(dv, &direction, vm_angles_2_matrix(dm, normalAngles + 3))
+		},
+		{
+			.point = *vm_vec_add(dv, &position, &nearVec),
+			.normal = direction
+		},
+		{
+			.point = *vm_vec_add(dv, &position, &farVec),
+			.normal = backVec
+		},
+	};
+
+	//traversed[start] = true;
+	//segnums.push_back(start);
+	BuildSegmentListSub(start, segnums, traversed, planes);
+	
+	return segnums;
+
+}
+
+std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* object, const bool lookBackward) {
+	return std::async(std::launch::async, [window, object, lookBackward]() {
+
+		vms_vector forward = object->orient.fvec;
+		if (lookBackward)
+			vm_vec_negate(&forward);
+
+		std::vector<short> segments = BuildSegmentListNew(window, object->segnum, object->pos, forward);
+
+		HRender::BuildGPUPortalList(segments, object->pos, forward, window, window);
+
+		HRender::UpdateViewMatrix(object, window);
+
+		for (short segnum : segments) {
+			segment& seg = Segments[segnum];
+			for (int i = 0; i < MAX_SIDES_PER_SEGMENT; i++) {
+				short child = seg.children[i];
+				if (child == -2)
+					continue;
+
+				side* side = &seg.sides[i];
+				if (child >= 0 && side->wall_num >= 0 && side->wall_num < Walls.size())
+					continue;
+
+				HRender::RenderSide(window, side);
+			}
+		}
+
+	});
+}
+
+void RenderUI() {
+
+}
+
+void RenderBigGuidedMissile(object* missile) {
+	//draw crosshair
+	RenderGameWorldFromObject(HRender::VT_MAIN, missile, false);
+}
 
 //render a frame for the game
+void game_render_frame_new() {
+
+	HRender::PrepareMineRenderFrame();
+	
+	
+
+	//These need to be synced
+
+	if (Guided_missile[Player_num] && Guided_missile[Player_num]->type == OBJ_WEAPON && Guided_missile[Player_num]->id == GUIDEDMISS_ID && Guided_missile[Player_num]->signature == Guided_missile_sig[Player_num] && Guided_in_big_window) {
+		//TODO Render crosshair
+		RenderGameWorldFromObject(HRender::VT_MAIN, Guided_missile[Player_num], false);
+
+	}
+
+	RenderUI();
+	RenderGameWorldFromObject(HRender::VT_MAIN, ConsoleObject, Rear_view);
+
+}
+
 void game_render_frame_mono(void)
 {
 	HRender::PrepareMineRenderFrame();
-	HRender::BuildGPUPortalList();
+
+	HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_MAIN, HRender::VT_MAIN);
+	HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_LEFT, HRender::VT_NONE);
+	HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_RIGHT, HRender::VT_NONE);
 
 	int win_flip = 0;
 
@@ -1205,7 +1410,6 @@ void update_cockpits(int force_redraw)
 
 }
 
-
 void game_render_frame()
 {
 	set_screen_mode(SCREEN_GAME);
@@ -1215,6 +1419,7 @@ void game_render_frame()
 	play_homing_warning();
 
 	game_render_frame_mono();
+	//game_render_frame_new();
 
 	// Make sure palette is faded in
 	stop_time();
@@ -1223,6 +1428,7 @@ void game_render_frame()
 
 	FrameCount++;
 }
+
 
 extern int Color_0_31_0;
 

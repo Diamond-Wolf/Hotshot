@@ -7,6 +7,7 @@ Instead, it is released under the terms of the MIT License.
 #include <array>
 #include <future>
 #include <unordered_map>
+#include <tuple>
 
 #include <SDL_gpu.h>
 
@@ -43,9 +44,36 @@ extern SDL_Window* gameWindow;
 
 namespace HRender {
 
-	enum PortalDirection {
-		PD_FORWARD,
-		PD_REAR
+	enum ViewCloneMode {
+		VCM_NO_CLONE,
+		VCM_CLONE_LR,
+		VCM_CLONE_RL
+	};
+
+	enum MatrixID {
+		MID_ANIM = 0,
+		MID_MODEL = 1,
+		MID_VIEW = 2,
+		MID_PROJ = 3
+	};
+
+	struct TexturePage {
+		grs_bitmap bitmap;
+		//SDL_GPUTexture* texture = NULL;
+	};
+
+	struct TransferBuffer {
+		SDL_GPUTransferBuffer* buffer = NULL;
+		void* memoryMap = NULL;
+	};
+
+	typedef float (mat4f[4])[4];
+
+	constexpr mat4f M4_IDENTITY_MATRIX {
+		{1,0,0,0},
+		{0,1,0,0},
+		{0,0,1,0},
+		{0,0,0,1},
 	};
 
 	static struct SDLRenderStruct {
@@ -63,8 +91,23 @@ namespace HRender {
 
 		SDL_GPUBuffer* portalBufferFront = NULL;
 		SDL_GPUBuffer* portalBufferRear = NULL;
-		std::future<SDL_GPUFence*> frontPortalListBuilt;
-		std::future<SDL_GPUFence*> rearPortalListBuilt;
+
+		std::future<SDL_GPUFence*> mainPortalListBuilt;
+		std::future<SDL_GPUFence*> leftWindowPortalListBuilt;
+		std::future<SDL_GPUFence*> rightWindowPortalListBuilt;
+
+		TransferBuffer mainPortalBuffer;
+		TransferBuffer leftPortalBuffer;
+		TransferBuffer rightPortalBuffer;
+
+		mat4f mainViewMatrix;
+		mat4f subViewMatrixL;
+		mat4f subViewMatrixR;
+
+		mat4f mainProjectionMatrix;
+		mat4f subProjectionMatrix;
+
+		ViewCloneMode cloneMode;
 
 		SDL_GPUBuffer* paletteBuffer = NULL;
 
@@ -73,6 +116,17 @@ namespace HRender {
 		SDL_GPUSampler* defaultSampler = NULL;
 
 		SDL_GPUGraphicsPipeline* screenPipeline = NULL;
+
+		TexturePage* primaryPage = NULL;
+		TexturePage* secondaryPage = NULL;
+
+		SDL_GPUTexture* primaryTexture = NULL;
+		SDL_GPUTexture* secondaryTexture = NULL;
+
+		TransferBuffer primaryBuffer;
+		TransferBuffer secondaryBuffer;
+
+		std::vector<TexturePage> tpages;
 
 		SDL_GPUTextureFormat windowFormat;
 
@@ -105,18 +159,10 @@ namespace HRender {
 
 	} rendererState;
 
-	struct TexturePage {
-		SDL_GPUTexture* texture;
-	};
-
-	struct TransferBuffer {
-		SDL_GPUTransferBuffer* buffer;
-		void* memoryMap;
-	};
-
 	typedef void(*drawcall)();
+	typedef std::tuple<TexturePage*, TexturePage*, ViewTarget> drawkey;
 
-	std::unordered_map<TexturePage*, std::vector<drawcall>> texturedDrawCalls;
+	std::unordered_map<drawkey, std::vector<drawcall>> worldDrawCalls;
 
 	bool mineRenderingReady = false;
 
@@ -190,6 +236,7 @@ namespace HRender {
 	}
 
 	void FreeTransferBuffer(TransferBuffer buffer) {
+		SDL_UnmapGPUTransferBuffer(rendererState.device, buffer.buffer);
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, buffer.buffer);
 	}
 
@@ -304,8 +351,6 @@ namespace HRender {
 		rendererState.renderWidth = w;
 		rendererState.renderHeight = h;
 
-		// TODO - Cache rear view size
-
 		if (rendererState.ctarget.texture != NULL) {
 			SDL_ReleaseGPUTexture(rendererState.device, rendererState.ctarget.texture);
 			SDL_ReleaseGPUTexture(rendererState.device, rendererState.dtarget.texture);
@@ -333,6 +378,8 @@ namespace HRender {
 		if (rendererState.dtarget.texture == NULL) {
 			Error("Error creating render depth texture: %s", SDL_GetError());
 		}
+
+		UpdateProjectionMatrices((float)rendererState.renderWidth / rendererState.renderHeight);
 
 	}
 
@@ -431,7 +478,7 @@ namespace HRender {
 
 		mprintf((0, "\nInitializing HRender\n"));
 
-		texturedDrawCalls.reserve(16);
+		worldDrawCalls.reserve(16);
 
 		rendererState.device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, ENABLE_SDL_DEBUG, NULL);
 		if (rendererState.device == NULL) {
@@ -498,14 +545,84 @@ namespace HRender {
 		if (rendererState.windowFormat == SDL_GPU_TEXTUREFORMAT_INVALID)
 			rendererState.windowFormat = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
 
+		memset(rendererState.mainProjectionMatrix, 0, sizeof(rendererState.mainProjectionMatrix));
+
+		constexpr float depth = f2fl(FAR_CLIP - NEAR_CLIP);
+		constexpr float invDepth = 1 / depth;
+
+		rendererState.mainProjectionMatrix[1][1] = 1.f / tanf(VFOV_RAD_F / 2);
+		rendererState.mainProjectionMatrix[2][2] = f2fl(FAR_CLIP) * invDepth;
+		rendererState.mainProjectionMatrix[3][2] = -rendererState.mainProjectionMatrix[2][2] * f2fl(NEAR_CLIP);
+		rendererState.mainProjectionMatrix[2][3] = 1.f;
+		
+		memcpy(rendererState.subProjectionMatrix, rendererState.mainProjectionMatrix, sizeof(rendererState.subProjectionMatrix));
+
+		rendererState.subProjectionMatrix[0][0] = rendererState.subProjectionMatrix[1][1];
+
 		return 0;
 
 	}
 
-	SDL_GPUFence* BuildGPUPortalListThread(PortalDirection dir);
-	void BuildGPUPortalList() {
-		rendererState.frontPortalListBuilt = std::async(std::launch::async, BuildGPUPortalListThread, PD_FORWARD);
-		rendererState.rearPortalListBuilt = std::async(std::launch::async, BuildGPUPortalListThread, PD_REAR);
+	SDL_GPUFence* BuildGPUPortalListThread(const std::vector<short> segments, const vms_vector pos, const vms_vector dir, const ViewTarget target, TransferBuffer* destBuffer);
+	void BuildGPUPortalList(const std::vector<short>& segments, const vms_vector& pos, const vms_vector& dir, const ViewTarget target, const ViewTarget clone) {
+
+		std::future<SDL_GPUFence*>* future;
+		TransferBuffer* buffer;
+
+		switch (target) {
+
+			case VT_MAIN:
+				future = &rendererState.mainPortalListBuilt;
+				buffer = &rendererState.mainPortalBuffer;
+			break;
+		
+			case VT_LEFT:
+				future = &rendererState.leftWindowPortalListBuilt;
+				buffer = &rendererState.leftPortalBuffer;
+			break;
+
+			case VT_RIGHT:
+				future = &rendererState.rightWindowPortalListBuilt;
+				buffer = &rendererState.rightPortalBuffer;
+			break;
+
+			default:
+				//Error("Invalid subwindow target specified! %d", target);
+				Int3();
+
+		}
+
+		if (clone != target) {
+
+			if (target == VT_LEFT && clone == VT_RIGHT)
+				rendererState.cloneMode = VCM_CLONE_RL;
+			else if (target == VT_RIGHT && clone == VT_LEFT)
+				rendererState.cloneMode = VCM_CLONE_LR;
+			else if (clone != VT_NONE)
+				Error("Invalid subwindow clone mode! Target %d cloning %d", target, clone);
+
+			*future = std::async(std::launch::async, []() {
+				SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+				return SDL_SubmitGPUCommandBufferAndAcquireFence(cbuf);
+			});
+
+		} else {
+
+			*future = std::async(std::launch::async, BuildGPUPortalListThread, segments, pos, dir, target, buffer);
+
+		}
+	}
+
+	TexturePage* CreateTexturePage(grs_bitmap* bm) {
+		
+		TexturePage* page = new TexturePage();
+		page->bitmap = *bm;
+		return page;
+
+	}
+	
+	void FreeTexturePage(TexturePage* page) {
+		delete page;
 	}
 
 	void RenderScreenBitmap(grs_bitmap* bm) {
@@ -626,19 +743,209 @@ namespace HRender {
 
 	void PrepareMineRenderFrame() { // TODO: If in game, build and submit portal list. Also, determine if rear view mirrors need textures.
 		
-		texturedDrawCalls.clear();
+		worldDrawCalls.clear();
 		InitCommandBuffer();
+
+		rendererState.cloneMode = VCM_NO_CLONE;
 
 		mineRenderingReady = true;
 
 	}
 
+	void UpdateProjectionMatrices(const float mainAspect) {
+		
+		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1] / mainAspect;
+
+	}
+
+	void UpdateProjectionMatrices(const fix aspect) {
+		UpdateProjectionMatrices(f2fl(aspect));
+	}
+	
+	void UpdateViewMatrix(const object* source, const ViewTarget target) {
+
+		mat4f* matrix;
+		
+		switch (target) {
+		
+			case VT_MAIN:
+				matrix = &rendererState.mainViewMatrix;
+			break;
+
+			case VT_LEFT:
+				matrix = &rendererState.subViewMatrixL;
+			break;
+
+			case VT_RIGHT:
+				matrix = &rendererState.subViewMatrixR;
+			break;
+
+			default:
+				Int3();
+
+		}
+
+		//*matrix = M4_IDENTITY_MATRIX;
+		memcpy(matrix, M4_IDENTITY_MATRIX, sizeof(*matrix));
+		
+		for (int m = 0; m < 3; m++) {
+			for (int n = 0; n < 3; n++) {
+				*matrix[m][n] = f2fl(source->orient[m][n]);
+			}
+			*matrix[m][3] = -f2fl(source->pos[m]);
+		}
+
+	}
+
+	void UploadVertexMatrix(const mat4f* matrix, const MatrixID id) {
+		SDL_PushGPUVertexUniformData(rendererState.mainCommandBuffer, id, matrix, sizeof(*matrix));
+	}
+
+	void UploadTexturePage(TexturePage* page, const bool secondary = false) {
+		
+		Assert(page != NULL);
+
+		grs_bitmap& bm = page->bitmap;
+		InitCommandBuffer();
+
+		SDL_GPUTexture** ptex;
+		//TransferBuffer* ptbuf;
+		
+		if (secondary) {
+			rendererState.secondaryPage = page;
+			ptex = &rendererState.secondaryTexture;
+			//ptbuf = &rendererState.secondaryBuffer;
+		} else {
+			rendererState.primaryPage = page;
+			ptex = &rendererState.primaryTexture;
+			//ptbuf = &rendererState.primaryBuffer;
+		}
+
+		int bmSize = bm.bm_w * bm.bm_h;
+
+		SDL_GPUTextureCreateInfo tci {
+			.type = SDL_GPU_TEXTURETYPE_2D,
+			.format = SDL_GPU_TEXTUREFORMAT_R32_FLOAT,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
+			.width = (uint32_t)bm.bm_w,
+			.height = (uint32_t)bm.bm_h,
+			.layer_count_or_depth = 1,
+			.num_levels = 1,
+		};
+
+		if (*ptex)
+			SDL_ReleaseGPUTexture(rendererState.device, *ptex);
+		*ptex = SDL_CreateGPUTexture(rendererState.device, &tci);
+
+		if (*ptex == NULL) {
+			Error("Error creating GPU texture for texture page: %s", SDL_GetError());
+		}
+
+		SDL_GPUTransferBufferCreateInfo tbci {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = (uint32_t)(bmSize * sizeof(float))
+		};
+
+		TransferBuffer tbuf = CreateTransferBuffer(&tbci, true);
+		if (tbuf.memoryMap == NULL) {
+			Error("Could not create bitmap transfer buffer!");
+		}
+
+		float* floatMemMap = reinterpret_cast<float*>(tbuf.memoryMap);
+
+		//SDL_memcpy(tbuf.memoryMap, bm->bm_data, bmSize); //Need to expand texture
+		for (int i = 0; i < bmSize; i++) {
+			floatMemMap[i] = bm.bm_data[i];
+		}
+		//mprintf((0, "%f %f\n", floatMemMap[100], floatMemMap[200]));
+
+		SDL_GPUCommandBuffer* copycmd = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		if (copycmd == NULL) {
+			Error("Error acquiring bitmap transfer command buffer: %s", SDL_GetError());
+		}
+
+		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(copycmd);
+
+		SDL_GPUTextureTransferInfo tti {
+			.transfer_buffer = tbuf.buffer,
+			.offset = 0,
+			.pixels_per_row = (uint32_t)bm.bm_w
+		};
+
+		SDL_GPUTextureRegion tr {
+			.texture = *ptex,
+			.w = (uint32_t)bm.bm_w,
+			.h = (uint32_t)bm.bm_h,
+			.d = 1
+		};
+
+		SDL_UploadToGPUTexture(cpass, &tti, &tr, true);
+
+		FreeTransferBuffer(tbuf);
+		SDL_EndGPUCopyPass(cpass);
+		SDL_SubmitGPUCommandBuffer(copycmd);
+		
+	}
+
 	void DispatchMineDrawCalls() {
 
-		for (auto& cp : texturedDrawCalls) {
-			TexturePage* page = cp.first;
+		std::sort(worldDrawCalls.begin(), worldDrawCalls.end(), [](drawkey a, drawkey b) {
+			const auto [primary1, secondary1, view1] = a;
+			const auto [primary2, secondary2, view2] = b;
 
-			//Swap texture page, begin render pass
+			if (primary1 != primary2)
+				return primary1 < primary2;
+			else if (secondary1 != secondary2)
+				if (!secondary2)
+					return true;
+				else if (!secondary1)
+					return false;
+				else
+					return secondary1 < secondary2;
+			else
+				return view1 < view2;
+
+		});
+
+		ViewTarget view = VT_NONE;
+
+		for (auto& cp : worldDrawCalls) {
+			const auto [newPrimary, newSecondary, newView] = cp.first;
+			 
+			Assert(newView != VT_NONE);
+
+			bool swap = false;
+
+			if (newPrimary != rendererState.primaryPage) {
+				rendererState.primaryPage = newPrimary;
+				swap = true;
+			} 
+
+			if (newSecondary != rendererState.secondaryPage && newSecondary != NULL) {
+				rendererState.secondaryPage = newSecondary;
+				swap = true;
+			}
+
+			if (swap) {
+				UploadTexturePage(rendererState.primaryPage, false);
+				if (newSecondary)
+					UploadTexturePage(rendererState.secondaryPage, true);
+			}
+
+			if (newView != view) {
+				view = newView;
+				if (view == VT_MAIN) {
+					UploadVertexMatrix(&rendererState.mainProjectionMatrix, MID_PROJ);
+					UploadVertexMatrix(&rendererState.mainViewMatrix, MID_VIEW);
+				} else {
+					UploadVertexMatrix(&rendererState.subProjectionMatrix, MID_PROJ);
+
+					if (view == VT_LEFT)
+						UploadVertexMatrix(&rendererState.subViewMatrixL, MID_VIEW);
+					else
+						UploadVertexMatrix(&rendererState.subViewMatrixR, MID_VIEW);
+				}
+			}
 
 			for (auto& Draw : cp.second)
 				Draw();
@@ -647,6 +954,10 @@ namespace HRender {
 
 		}
 
+	}
+
+	void RenderSide(const ViewTarget target, const side* side) {
+		
 	}
 
 	void EndRenderFrame() {
@@ -661,18 +972,20 @@ namespace HRender {
 		if (ExtGameStatus == GAMESTAT_RUNNING && mineRenderingReady) {
 
 			SDL_GPUFence* portalFences[] = {
-				rendererState.rearPortalListBuilt.get(),
-				rendererState.frontPortalListBuilt.get() 
+				rendererState.leftWindowPortalListBuilt.get(),
+				rendererState.rightWindowPortalListBuilt.get(),
+				rendererState.mainPortalListBuilt.get(),
 			};
 
-			if (!SDL_WaitForGPUFences(rendererState.device, true, portalFences, 2)) {
+			if (!SDL_WaitForGPUFences(rendererState.device, true, portalFences, 3)) {
 				mprintf((1, "Error waiting for portal lists!\n"));
 			}
-			
-			DispatchMineDrawCalls();
 
 			SDL_ReleaseGPUFence(rendererState.device, portalFences[0]);
 			SDL_ReleaseGPUFence(rendererState.device, portalFences[1]);
+			SDL_ReleaseGPUFence(rendererState.device, portalFences[2]);
+			
+			DispatchMineDrawCalls();
 
 			mineRenderingReady = false;
 
@@ -707,8 +1020,8 @@ namespace HRender {
 				.w = windowWidth,
 				.h = windowHeight,
 			},
-			.load_op = SDL_GPU_LOADOP_LOAD,
-			.cycle = false
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.cycle = true
 		};
 
 		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
@@ -741,14 +1054,12 @@ namespace HRender {
 
 	}
 
-	SDL_GPUFence* BuildGPUPortalListThread(PortalDirection dir) {
+	SDL_GPUFence* BuildGPUPortalListThread(const std::vector<short> segments, const vms_vector pos, const vms_vector dir, const ViewTarget target, TransferBuffer* destBuffer) {
 
 		bool rearActive = (Cockpit_3d_view[0] == CV_REAR || Cockpit_3d_view[1] == CV_REAR);
 
 		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		if (dir == PD_REAR && !rearActive)
-			return SDL_SubmitGPUCommandBufferAndAcquireFence(cbuf);
-
+		
 		//mprintf((1, "Portal list building not ready!"));
 
 		//SDL_GPUStorageBufferReadWriteBinding* verts = 

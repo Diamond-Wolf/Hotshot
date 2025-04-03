@@ -22,6 +22,22 @@ vms_matrix vmd_identity_matrix = { f1_0,0,0,
 												0,f1_0,0,
 												0,0,f1_0 };
 
+const fix& vms_vector::operator[] (int i) const {
+	return reinterpret_cast<const fix*>(this)[i];
+}
+
+fix& vms_vector::operator[](int i) {
+	return reinterpret_cast<fix*>(this)[i];
+}
+
+const vms_vector& vms_matrix::operator[] (int i) const {
+	return reinterpret_cast<const vms_vector*>(this)[i];
+}
+
+vms_vector& vms_matrix::operator[](int i) {
+	return reinterpret_cast<vms_vector*>(this)[i];
+}
+
 //adds two vectors, fills in dest, returns ptr to dest
 //ok for dest to equal either source, but should use vm_vec_add2() if so
 vms_vector* vm_vec_add(vms_vector* dest, vms_vector* src0, vms_vector* src1)

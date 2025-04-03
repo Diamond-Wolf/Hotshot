@@ -2238,6 +2238,7 @@ void GameLoop(int RenderFlag, int ReadControlsFlag )
 				init_cockpit();
 				force_cockpit_redraw=0;
 			}
+			//game_render_frame();
 			game_render_frame();
 			//show_extra_views();		//missile view, buddy bot, etc.
 

@@ -19,6 +19,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 typedef struct vms_vector 
 {
 	fix x, y, z;
+	fix& operator[](int i);
+	const fix& operator[] (int i) const;
 } vms_vector;
 
 typedef struct vms_vector_array 
@@ -44,6 +46,8 @@ typedef struct vms_angvec
 typedef struct vms_matrix 
 {
 	vms_vector rvec, uvec, fvec;
+	vms_vector& operator[](int i);
+	const vms_vector& operator[](int i) const;
 } vms_matrix;
 
 //Macros/functions to fill in fields of structures
