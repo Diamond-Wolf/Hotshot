@@ -6,6 +6,7 @@ Instead, it is released under the terms of the MIT License.
 
 #include <array>
 #include <future>
+#include <map>
 #include <unordered_map>
 #include <tuple>
 
@@ -83,6 +84,9 @@ namespace HRender {
 		SDL_GPUShader* screenFrag = NULL;
 		SDL_GPUShader* screenVert = NULL;
 
+		SDL_GPUShader* worldFrag = NULL;
+		SDL_GPUShader* worldVert = NULL;
+
 		SDL_GPUCommandBuffer* mainCommandBuffer = NULL;
 
 		uint32_t renderWidth, renderHeight;
@@ -116,6 +120,7 @@ namespace HRender {
 		SDL_GPUSampler* defaultSampler = NULL;
 
 		SDL_GPUGraphicsPipeline* screenPipeline = NULL;
+		SDL_GPUGraphicsPipeline* worldPipeline = NULL;
 
 		TexturePage* primaryPage = NULL;
 		TexturePage* secondaryPage = NULL;
@@ -127,10 +132,29 @@ namespace HRender {
 		TransferBuffer secondaryBuffer;
 
 		std::vector<TexturePage> tpages;
+		std::unordered_map<int, std::pair<int, int>> tpageLocations; //bm index : (tpage, index in page)
 
 		SDL_GPUTextureFormat windowFormat;
 
-		SDL_GPUColorTargetInfo ctarget {
+		SDL_GPUColorTargetInfo windowCTarget {
+			.texture = NULL,
+			.mip_level = 0,
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.cycle = true
+		};
+
+		SDL_GPUDepthStencilTargetInfo windowDTarget {
+			.texture = NULL,
+			.clear_depth = 0,
+			.load_op = SDL_GPU_LOADOP_CLEAR,
+			.store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.cycle = true
+		};
+
+		SDL_GPUColorTargetInfo mainCTarget {
 			.texture = NULL,
 			.mip_level = 0,
 			.load_op = SDL_GPU_LOADOP_LOAD,
@@ -138,7 +162,43 @@ namespace HRender {
 			.cycle = false
 		};
 
-		SDL_GPUDepthStencilTargetInfo dtarget {
+		SDL_GPUDepthStencilTargetInfo mainDTarget {
+			.texture = NULL,
+			.clear_depth = 0,
+			.load_op = SDL_GPU_LOADOP_CLEAR,
+			.store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.cycle = true
+		};
+
+		SDL_GPUColorTargetInfo leftCTarget {
+			.texture = NULL,
+			.mip_level = 0,
+			.load_op = SDL_GPU_LOADOP_LOAD,
+			.store_op = SDL_GPU_STOREOP_STORE,
+			.cycle = false
+		};
+
+		SDL_GPUDepthStencilTargetInfo leftDTarget {
+			.texture = NULL,
+			.clear_depth = 0,
+			.load_op = SDL_GPU_LOADOP_CLEAR,
+			.store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.cycle = true
+		};
+
+		SDL_GPUColorTargetInfo rightCTarget {
+			.texture = NULL,
+			.mip_level = 0,
+			.load_op = SDL_GPU_LOADOP_LOAD,
+			.store_op = SDL_GPU_STOREOP_STORE,
+			.cycle = false
+		};
+
+		SDL_GPUDepthStencilTargetInfo rightDTarget {
 			.texture = NULL,
 			.clear_depth = 0,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
@@ -162,7 +222,33 @@ namespace HRender {
 	typedef void(*drawcall)();
 	typedef std::tuple<TexturePage*, TexturePage*, ViewTarget> drawkey;
 
-	std::unordered_map<drawkey, std::vector<drawcall>> worldDrawCalls;
+	struct dkeyCompare {
+
+		bool operator()(drawkey a, drawkey b) {
+			const auto& [primary1, secondary1, view1] = a;
+			const auto& [primary2, secondary2, view2] = b;
+
+			if (primary1 != primary2)
+				return primary1 < primary2;
+			else if (secondary1 != secondary2)
+				if (!secondary2)
+					return true;
+				else if (!secondary1)
+					return false;
+				else
+					return secondary1 < secondary2;
+			else
+				return view1 < view2;
+
+		}
+
+	};
+	
+	union num32 { float f; int32_t i; };
+
+	std::map<drawkey, std::vector<drawcall>, dkeyCompare> worldDrawCalls;
+	std::vector<num32> worldVertices;
+	std::vector<unsigned int> worldIndices;
 
 	bool mineRenderingReady = false;
 
@@ -210,7 +296,7 @@ namespace HRender {
 	}
 
 	SDL_GPURenderPass* BeginDefaultRenderPass() {
-		return SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.ctarget, 1, &rendererState.dtarget);
+		return SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.windowCTarget, 1, &rendererState.windowDTarget);
 	}
 
 	TransferBuffer CreateTransferBuffer(const SDL_GPUTransferBufferCreateInfo* tbci, const bool cycle) {
@@ -351,9 +437,9 @@ namespace HRender {
 		rendererState.renderWidth = w;
 		rendererState.renderHeight = h;
 
-		if (rendererState.ctarget.texture != NULL) {
-			SDL_ReleaseGPUTexture(rendererState.device, rendererState.ctarget.texture);
-			SDL_ReleaseGPUTexture(rendererState.device, rendererState.dtarget.texture);
+		if (rendererState.windowCTarget.texture != NULL) {
+			SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowCTarget.texture);
+			SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowDTarget.texture);
 		}
 
 		SDL_GPUTextureCreateInfo texCreateInfo {
@@ -366,16 +452,16 @@ namespace HRender {
 			.num_levels = 1,
 		};
 
-		rendererState.ctarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
-		if (rendererState.ctarget.texture == NULL) {
+		rendererState.windowCTarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
+		if (rendererState.windowCTarget.texture == NULL) {
 			Error("Error creating render texture: %s", SDL_GetError());
 		}
 
 		texCreateInfo.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
 		texCreateInfo.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
 
-		rendererState.dtarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
-		if (rendererState.dtarget.texture == NULL) {
+		rendererState.windowDTarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
+		if (rendererState.windowDTarget.texture == NULL) {
 			Error("Error creating render depth texture: %s", SDL_GetError());
 		}
 
@@ -400,6 +486,10 @@ namespace HRender {
 			} }
 		);
 
+		if (rendererState.screenPipeline == NULL) {
+			Error("Error creating screen pipeline: %s", SDL_GetError());
+		}
+
 		std::array<float, 4 * 4> verts {
 			-1.f, 1.f, 0.5f, 0.f,
 			1.f, 1.f, 0.5f, 0.f,
@@ -416,7 +506,7 @@ namespace HRender {
 		if (tbuf.memoryMap == NULL)
 			Error("Error creating screen vertex memory map!");
 
-		SDL_memcpy(tbuf.memoryMap, verts.data(), sizeof(verts));
+		memcpy(tbuf.memoryMap, verts.data(), sizeof(verts));
 		
 		SDL_GPUBufferCreateInfo bci {
 			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
@@ -467,9 +557,38 @@ namespace HRender {
 		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
 		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
 
-		rendererState.defaultSampler = SDL_CreateGPUSampler(rendererState.device, &rendererState.defaultSamplerInfo);
-		if (rendererState.defaultSampler == NULL) {
-			Error("Error creating sampler for software-rendered canvas: %s", SDL_GetError());
+	}
+
+	void InitWorldRendering(SDL_GPUCopyPass* cpass) {
+
+		rendererState.worldPipeline = CreateGraphicsPipeline<1, 3>(rendererState.worldVert, rendererState.worldFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+			std::array { SDL_GPUVertexBufferDescription { 
+				.slot = 0,
+				.pitch = sizeof(float) * 4,
+				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				.instance_step_rate = 0,
+			} },
+			
+			std::array { SDL_GPUVertexAttribute {
+				.location = 0,
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.offset = 0,
+			}, SDL_GPUVertexAttribute {
+				.location = 1,
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.offset = 0,
+			}, SDL_GPUVertexAttribute {
+				.location = 2,
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_INT3,
+				.offset = 0,
+			} }
+		);
+
+		if (rendererState.worldPipeline == NULL) {
+			Error("Error creating world pipeline: %s", SDL_GetError());
 		}
 
 	}
@@ -477,8 +596,6 @@ namespace HRender {
 	int InitRenderAPI() {
 
 		mprintf((0, "\nInitializing HRender\n"));
-
-		worldDrawCalls.reserve(16);
 
 		rendererState.device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, ENABLE_SDL_DEBUG, NULL);
 		if (rendererState.device == NULL) {
@@ -493,8 +610,8 @@ namespace HRender {
 
 #ifndef NDEBUG
 		auto mask = SDL_GetGPUShaderFormats(rendererState.device);
-		printf("Reverse shader format mask: ");
-		for (int i = 0; i < sizeof(mask) * 8; i++) {
+		printf("Shader format mask: ");
+		for (int i = sizeof(mask) * 8 - 1; i >= 0; i--) {
 			printf("%d", mask & 1);
 			mask >>= 1;
 		} 
@@ -506,12 +623,14 @@ namespace HRender {
 		good &= BuildShader(SHADER("screenf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 0, 1);
 		good &= BuildShader(SHADER("screenv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.screenVert);
 
+		good &= BuildShader(SHADER("worldf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.worldFrag, 1, 0, 1);
+		good &= BuildShader(SHADER("worldv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.worldVert, 0, 4, 0);
+
 		if (!good) {
 			//mprintf((1, "Last error: %s\n", SDL_GetError()));
 			return 4;
 		}
 
-		//SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
 		InitCommandBuffer();
 		if (rendererState.mainCommandBuffer == NULL) {
 			return 5;
@@ -533,6 +652,12 @@ namespace HRender {
 		}
 
 		InitScreenRendering(cpass);
+		InitWorldRendering(cpass);
+
+		rendererState.defaultSampler = SDL_CreateGPUSampler(rendererState.device, &rendererState.defaultSamplerInfo);
+		if (rendererState.defaultSampler == NULL) {
+			Error("Error creating sampler for software-rendered canvas: %s", SDL_GetError());
+		}
 
 		SDL_EndGPUCopyPass(cpass);
 		if (!SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer)) {
@@ -555,7 +680,7 @@ namespace HRender {
 		rendererState.mainProjectionMatrix[3][2] = -rendererState.mainProjectionMatrix[2][2] * f2fl(NEAR_CLIP);
 		rendererState.mainProjectionMatrix[2][3] = 1.f;
 		
-		memcpy(rendererState.subProjectionMatrix, rendererState.mainProjectionMatrix, sizeof(rendererState.subProjectionMatrix));
+		memcpy(&rendererState.subProjectionMatrix, &rendererState.mainProjectionMatrix, sizeof(rendererState.subProjectionMatrix));
 
 		rendererState.subProjectionMatrix[0][0] = rendererState.subProjectionMatrix[1][1];
 
@@ -623,6 +748,19 @@ namespace HRender {
 	
 	void FreeTexturePage(TexturePage* page) {
 		delete page;
+	}
+
+	void GenerateTexturePages() {
+	
+		rendererState.tpages.clear();
+		rendererState.tpages.reserve(activePiggyTable->gameBitmaps.size());
+
+		for (int i = 0; i < activePiggyTable->gameBitmaps.size(); i++) {
+			auto& bm = activePiggyTable->gameBitmaps[i];
+			rendererState.tpages.push_back(TexturePage { bm });
+			rendererState.tpageLocations[i] = std::pair(i, 0);
+		}
+	
 	}
 
 	void RenderScreenBitmap(grs_bitmap* bm) {
@@ -752,14 +890,34 @@ namespace HRender {
 
 	}
 
-	void UpdateProjectionMatrices(const float mainAspect) {
+	void UpdateMainView(const float aspect) {
 		
-		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1] / mainAspect;
+		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1] / aspect;
 
 	}
 
-	void UpdateProjectionMatrices(const fix aspect) {
+	/*void UpdateProjectionMatrices(const fix aspect) {
 		UpdateProjectionMatrices(f2fl(aspect));
+	}*/
+
+	void SyncCockpit() {
+		switch (Cockpit_mode) {
+
+			default:
+			case CM_FULL_SCREEN:
+			case CM_REAR_VIEW:
+				UpdateMainView(rendererState.renderWidth / rendererState.renderHeight);
+			break;
+			
+			case CM_STATUS_BAR:
+			case CM_LETTERBOX:
+				UpdateMainView(2);
+			break;
+
+			case CM_FULL_COCKPIT: //todo scale by actual screen resolution
+				UpdateMainView(2);
+			break;
+		}
 	}
 	
 	void UpdateViewMatrix(const object* source, const ViewTarget target) {
@@ -889,29 +1047,19 @@ namespace HRender {
 
 	void DispatchMineDrawCalls() {
 
-		std::sort(worldDrawCalls.begin(), worldDrawCalls.end(), [](drawkey a, drawkey b) {
-			const auto [primary1, secondary1, view1] = a;
-			const auto [primary2, secondary2, view2] = b;
-
-			if (primary1 != primary2)
-				return primary1 < primary2;
-			else if (secondary1 != secondary2)
-				if (!secondary2)
-					return true;
-				else if (!secondary1)
-					return false;
-				else
-					return secondary1 < secondary2;
-			else
-				return view1 < view2;
-
-		});
-
 		ViewTarget view = VT_NONE;
 
+		SDL_GPURenderPass* mainPass = SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.mainCTarget, 1, &rendererState.mainDTarget);
+		SDL_GPURenderPass* leftPass = SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.leftCTarget, 1, &rendererState.leftDTarget);
+		SDL_GPURenderPass* rightPass = SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.rightCTarget, 1, &rendererState.rightDTarget);
+
 		for (auto& cp : worldDrawCalls) {
-			const auto [newPrimary, newSecondary, newView] = cp.first;
-			 
+
+			const auto& [newPrimary, newSecondary, newView] = cp.first;
+
+			SDL_GPUColorTargetDescription* cdt;
+			SDL_GPUColorTargetDescription* ddt;
+ 
 			Assert(newView != VT_NONE);
 
 			bool swap = false;
@@ -934,9 +1082,12 @@ namespace HRender {
 
 			if (newView != view) {
 				view = newView;
+				swap = true;
+				
 				if (view == VT_MAIN) {
 					UploadVertexMatrix(&rendererState.mainProjectionMatrix, MID_PROJ);
 					UploadVertexMatrix(&rendererState.mainViewMatrix, MID_VIEW);
+					rpass = SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, a, 1, d);
 				} else {
 					UploadVertexMatrix(&rendererState.subProjectionMatrix, MID_PROJ);
 
@@ -947,6 +1098,8 @@ namespace HRender {
 				}
 			}
 
+			
+
 			for (auto& Draw : cp.second)
 				Draw();
 
@@ -956,8 +1109,50 @@ namespace HRender {
 
 	}
 
-	void RenderSide(const ViewTarget target, const side* side) {
+	void RenderSide(const ViewTarget target, const int segno, const int sideno) {
 		
+		const segment& segment = Segments[segno];
+		const side& side = segment.sides[sideno];
+		auto& tp1 = rendererState.tpageLocations[side.tmap_num];
+		auto& tp2 = rendererState.tpageLocations[side.tmap_num2 & 0x3FFF];
+
+		drawkey k {
+			&rendererState.tpages[tp1.first],
+			&rendererState.tpages[tp2.first],
+			target
+		};
+
+		if (worldDrawCalls.count(k) == 0) {
+			worldDrawCalls[k] = std::vector<drawcall>();
+		}
+
+		std::vector<drawcall>& calls = worldDrawCalls[k];
+		calls.emplace_back([tp1, tp2, segno, sideno]() {
+			
+			const auto& segment = Segments[segno];
+			const auto& side = segment.sides[sideno];
+			const auto& sideverts = Side_to_verts[sideno];
+
+			int vertStart = worldVertices.size() / 10;
+
+			for (int i = 0; i < MAX_VERTICES_PER_POLY; i++) {
+
+				auto& vert = Vertices[segment.verts[sideverts[i]]];
+				worldVertices.push_back({ .f = f2fl(vert.x) });
+				worldVertices.push_back({ .f = f2fl(vert.y) });
+				worldVertices.push_back({ .f = f2fl(vert.z) });
+				worldVertices.push_back({ .f = f2fl(side.uvls[i].u) });
+				worldVertices.push_back({ .f = f2fl(side.uvls[i].v) });
+				worldVertices.push_back({ .f = f2fl(side.uvls[i].l) });
+				worldVertices.push_back({ .i = segno });
+				worldVertices.push_back({ .i = tp1.second });
+				worldVertices.push_back({ .i = tp2.second });
+				worldVertices.push_back({ .i = ((side.tmap_num2 & 0xC000) >> 14) & 3 });
+
+			}
+
+		});
+
 	}
 
 	void EndRenderFrame() {
@@ -1005,7 +1200,7 @@ namespace HRender {
 
 		SDL_GPUBlitInfo bi {
 			.source = {
-				.texture = rendererState.ctarget.texture,
+				.texture = rendererState.windowCTarget.texture,
 				//.layer_or_depth_plane = 1,
 				.x = 0,
 				.y = 0,
@@ -1037,11 +1232,15 @@ namespace HRender {
 	void ShutdownRenderAPI() {
 
 		SDL_ReleaseGPUGraphicsPipeline(rendererState.device, rendererState.screenPipeline);
-		SDL_ReleaseGPUTexture(rendererState.device, rendererState.dtarget.texture);
-		SDL_ReleaseGPUTexture(rendererState.device, rendererState.ctarget.texture);
+		SDL_ReleaseGPUGraphicsPipeline(rendererState.device, rendererState.worldPipeline);
+
+		SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowDTarget.texture);
+		SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowCTarget.texture);
 
 		SDL_ReleaseGPUShader(rendererState.device, rendererState.screenVert);
 		SDL_ReleaseGPUShader(rendererState.device, rendererState.screenFrag);
+		SDL_ReleaseGPUShader(rendererState.device, rendererState.worldVert);
+		SDL_ReleaseGPUShader(rendererState.device, rendererState.worldFrag);
 
 		SDL_ReleaseGPUBuffer(rendererState.device, rendererState.paletteBuffer);
 		SDL_ReleaseGPUBuffer(rendererState.device, rendererState.portalBufferFront);

@@ -8,6 +8,8 @@ Instead, it is released under the terms of the MIT License.
 #define PLAT_RENDER_API_H
 
 #include "vecmat/vecmat.h"
+#include "main/segment.h"
+#include "main/object.h"
 
 constexpr float VFOV_DEG_F = 70.f;
 constexpr float VFOV_RAD_F = VFOV_DEG_F * 3.1415926536f / 180.f;
@@ -38,8 +40,10 @@ namespace HRender {
 	void ResizeWindow();
 	void ResizeRenderTarget(const unsigned int w, const unsigned int h);
 
-	void UpdateProjectionMatrices(const fix mainAspect);
-	void UpdateProjectionMatrices(const float mainAspect);
+	void SyncCockpit();
+
+	//void UpdateProjectionMatrices(const fix mainAspect);
+	//void UpdateProjectionMatrices(const float mainAspect);
 
 	void UpdateViewMatrix(const object* source, const ViewTarget target);
 
@@ -47,13 +51,14 @@ namespace HRender {
 	//Required to call even for inactive windows, so inactive windows can clone VT_NONE.
 	void BuildGPUPortalList(const std::vector<short>& segments, const vms_vector& pos, const vms_vector& dir, const ViewTarget target, const ViewTarget clone);
 
-	TexturePage* CreateTexturePage(grs_bitmap* bitmap);
-	void FreeTexturePage(TexturePage* page);
+	//TexturePage* CreateTexturePage(grs_bitmap* bitmap);
+	//void FreeTexturePage(TexturePage* page);
+	void GenerateTexturePages();
 
 	void RenderScreenCanvas(grs_canvas* canvas);
 	void RenderScreenBitmap(grs_bitmap* bitmap);
 
-	void RenderSide(ViewTarget target, side* side);
+	void RenderSide(const ViewTarget target, const int segno, const int sideno);
 
 	void EndRenderFrame();
 

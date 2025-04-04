@@ -822,17 +822,17 @@ std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* 
 		HRender::UpdateViewMatrix(object, window);
 
 		for (short segnum : segments) {
-			segment& seg = Segments[segnum];
+			const segment* seg = &Segments[segnum];
 			for (int i = 0; i < MAX_SIDES_PER_SEGMENT; i++) {
-				short child = seg.children[i];
+				short child = seg->children[i];
 				if (child == -2)
 					continue;
 
-				side* side = &seg.sides[i];
+				const side* side = &seg->sides[i];
 				if (child >= 0 && side->wall_num >= 0 && side->wall_num < Walls.size())
 					continue;
 
-				HRender::RenderSide(window, side);
+				HRender::RenderSide(window, segnum, i);
 			}
 		}
 
@@ -872,9 +872,9 @@ void game_render_frame_mono(void)
 {
 	HRender::PrepareMineRenderFrame();
 
-	HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_MAIN, HRender::VT_MAIN);
-	HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_LEFT, HRender::VT_NONE);
-	HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_RIGHT, HRender::VT_NONE);
+	//HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_MAIN, HRender::VT_MAIN);
+	//HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_LEFT, HRender::VT_NONE);
+	//HRender::BuildGPUPortalList(0, vmd_zero_vector, vmd_zero_vector, HRender::VT_RIGHT, HRender::VT_NONE);
 
 	int win_flip = 0;
 
