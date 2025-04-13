@@ -16,8 +16,11 @@ constexpr float VFOV_RAD_F = VFOV_DEG_F * 3.1415926536f / 180.f;
 constexpr float VFOV_F = VFOV_DEG_F / 360.f;
 constexpr fix VFOV = fl2f(VFOV_F);
 
-constexpr fix NEAR_CLIP = fl2f(0.01f);
-constexpr fix FAR_CLIP = fl2f(1000.f);
+constexpr float NEAR_CLIP_F = 0.01f;
+constexpr float FAR_CLIP_F = 1000.f;
+
+constexpr fix NEAR_CLIP = fl2f(NEAR_CLIP_F);
+constexpr fix FAR_CLIP = fl2f(FAR_CLIP_F);
 
 namespace HRender {
 
@@ -45,12 +48,12 @@ namespace HRender {
 	//void UpdateProjectionMatrices(const fix mainAspect);
 	//void UpdateProjectionMatrices(const float mainAspect);
 
-	void UpdateViewMatrix(const object* source, const ViewTarget target);
+	void UpdateViewMatrix(object* source, const ViewTarget target);
 
 	//If clone != target, then clone target rather than rebuilding. Set clone = target to actually build.
 	//Required to call even for inactive windows, so inactive windows can clone VT_NONE.
 	void BuildGPUPortalList(const std::vector<short>& segments, const vms_vector& pos, const vms_vector& dir, const ViewTarget target, const ViewTarget clone);
-
+	void SkipGPUPortalList(const ViewTarget target);
 	//TexturePage* CreateTexturePage(grs_bitmap* bitmap);
 	//void FreeTexturePage(TexturePage* page);
 	void GenerateTexturePages();

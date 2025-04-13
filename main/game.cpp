@@ -1838,7 +1838,7 @@ void game()
 				longjmp(LeaveGame,0);
 			#endif
 
-			plat_blit_canvas(&grd_curscreen->sc_canvas);
+			//plat_blit_canvas(&grd_curscreen->sc_canvas);
 			plat_present_canvas(0);
 			plat_do_events();
 			//waiting loop for polled fps mode

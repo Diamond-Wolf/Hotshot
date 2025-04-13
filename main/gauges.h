@@ -90,3 +90,21 @@ void do_cockpit_window_view(int win,object *viewer,int rear_view_flag,int user,c
 	#include "RAVE.h"
 	void calculate_sub_view_window_bounds(int inSubWindowNum, TQARect* outBoundsRect);
 #endif
+
+struct span;
+
+typedef struct gauge_box
+{
+	int left, top;
+	int right, bot;		//maximal box
+	span* spanlist;	//list of left,right spans for copy
+} gauge_box;
+
+extern gauge_box gauge_boxes[];
+
+extern int Current_display_mode;
+
+#define COCKPIT_PRIMARY_BOX		(!Current_display_mode?0:4)
+#define COCKPIT_SECONDARY_BOX		(!Current_display_mode?1:5)
+#define SB_PRIMARY_BOX				(!Current_display_mode?2:6)
+#define SB_SECONDARY_BOX			(!Current_display_mode?3:7)

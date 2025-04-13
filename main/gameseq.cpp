@@ -102,6 +102,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "controls.h"
 #include "credits.h"
 #include "newcheat.h"
+#include "platform/renderapi.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -1006,6 +1007,8 @@ void LoadLevel(int level_num, int page_in_textures)
 	clear_boxed_message();		//remove message before new palette loaded
 
 	gr_palette_load(gr_palette);		//actually load the palette
+
+	HRender::GenerateTexturePages();
 
 //	WIN(HideCursorW());
 }

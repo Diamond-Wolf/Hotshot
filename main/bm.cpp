@@ -45,6 +45,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "cntrlcen.h"
 #include "misc/byteswap.h"
 #include "laser.h"
+#include "platform/renderapi.h"
 
 //uint8_t Sounds[MAX_SOUNDS];
 //uint8_t AltSounds[MAX_SOUNDS];

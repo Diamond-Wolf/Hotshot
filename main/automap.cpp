@@ -11,6 +11,9 @@ AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
 COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
+//#define FORCE_FULL_MAP false
+#define FORCE_FULL_MAP true
+
 #ifdef WINDOWS
 #include "desw.h"
 #endif
@@ -1494,7 +1497,7 @@ void add_segment_edges(segment* seg)
 		if (color != 255) 
 		{
 			// If they have a map powerup, draw unvisited areas in dark blue.
-			if (Players[Player_num].flags & PLAYER_FLAGS_MAP_ALL && (!Automap_visited[segnum]))
+			if (((Players[Player_num].flags & PLAYER_FLAGS_MAP_ALL) || FORCE_FULL_MAP) && (!Automap_visited[segnum]))
 				color = Wall_revealed_color;
 		Here:
 
@@ -1546,7 +1549,7 @@ void automap_build_edge_list()
 
 	Automap_cheat = 0;
 
-	if (Players[Player_num].flags & PLAYER_FLAGS_MAP_ALL_CHEAT)
+	if ((Players[Player_num].flags & PLAYER_FLAGS_MAP_ALL_CHEAT) || FORCE_FULL_MAP)
 		Automap_cheat = 1;		// Damn cheaters...
 
 	// clear edge list
@@ -1558,7 +1561,7 @@ void automap_build_edge_list()
 	Num_edges = 0;
 	Highest_edge_index = -1;
 
-	if (Automap_cheat || (Players[Player_num].flags & PLAYER_FLAGS_MAP_ALL)) 
+	if (Automap_cheat || ((Players[Player_num].flags & PLAYER_FLAGS_MAP_ALL) || FORCE_FULL_MAP))
 	{
 		// Cheating, add all edges as visited
 		for (s = 0; s <= Highest_segment_index; s++)

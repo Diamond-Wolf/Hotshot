@@ -742,13 +742,6 @@ span weapon_window_right_hires[] = {		//first span 207,154
 #define SB_SECONDARY_AMMO_X		(SB_SECONDARY_W_BOX_LEFT+(Current_display_mode?(14-4):11))	//(212+9)
 #define SB_SECONDARY_AMMO_Y		(Current_display_mode?414:171)
 
-typedef struct gauge_box
-{
-	int left, top;
-	int right, bot;		//maximal box
-	span* spanlist;	//list of left,right spans for copy
-} gauge_box;
-
 gauge_box gauge_boxes[] =
 {
 	// primary left/right low res
@@ -770,10 +763,10 @@ gauge_box gauge_boxes[] =
 
 // these macros refer to arrays above
 
-#define COCKPIT_PRIMARY_BOX		(!Current_display_mode?0:4)
-#define COCKPIT_SECONDARY_BOX		(!Current_display_mode?1:5)
-#define SB_PRIMARY_BOX				(!Current_display_mode?2:6)
-#define SB_SECONDARY_BOX			(!Current_display_mode?3:7)
+//#define COCKPIT_PRIMARY_BOX		(!Current_display_mode?0:4)
+//#define COCKPIT_SECONDARY_BOX		(!Current_display_mode?1:5)
+//#define SB_PRIMARY_BOX				(!Current_display_mode?2:6)
+//#define SB_SECONDARY_BOX			(!Current_display_mode?3:7)
 
 int	Color_0_31_0 = -1;
 

@@ -25,6 +25,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fix/fix.h"
 #include "2d/palette.h"
 #include "misc/rand.h"
+#include <main/gamestat.h>
+#include <main/kconfig.h>
 
 extern int gr_installed;
 
@@ -370,7 +372,8 @@ int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 			fade_palette_raw[i] = c;
 		}
 		plat_write_palette(0, 255, &fade_palette_raw[0]);
-		plat_blit_canvas(&grd_curscreen->sc_canvas);
+		if (!ExtGameStatus == GAMESTAT_RUNNING)
+			plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
 	}

@@ -682,7 +682,7 @@ void BuildSegmentListSub(const short segnum, std::vector<short>& segnums, std::v
 	segment& seg = Segments[segnum];
 	vms_vector dummyVec;
 
-	for (int i = 0; i < 6; i++) {
+	/*for (int i = 0; i < 6; i++) {
 		
 		FrustumPlane plane = planes[i];
 		bool cull = true;
@@ -702,7 +702,7 @@ void BuildSegmentListSub(const short segnum, std::vector<short>& segnums, std::v
 		if (cull)
 			return;
 
-	}
+	}*/
 
 	segnums.push_back(segnum);
 
@@ -725,7 +725,7 @@ const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short 
 
 	thread_local std::vector<short> segnums;
 	thread_local std::vector<bool> traversed;
-	thread_local short numSegs;
+	thread_local short numSegs = 0;
 
 	if (numSegs != Segments.size()) {
 
@@ -829,7 +829,7 @@ std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* 
 					continue;
 
 				const side* side = &seg->sides[i];
-				if (child >= 0 && side->wall_num >= 0 && side->wall_num < Walls.size())
+				if (child >= 0 && (side->wall_num < 0 || side->wall_num >= Walls.size()))
 					continue;
 
 				HRender::RenderSide(window, segnum, i);
@@ -853,21 +853,26 @@ void game_render_frame_new() {
 
 	HRender::PrepareMineRenderFrame();
 	
-	
+	std::future<void> mainF;
 
 	//These need to be synced
 
 	if (Guided_missile[Player_num] && Guided_missile[Player_num]->type == OBJ_WEAPON && Guided_missile[Player_num]->id == GUIDEDMISS_ID && Guided_missile[Player_num]->signature == Guided_missile_sig[Player_num] && Guided_in_big_window) {
 		//TODO Render crosshair
-		RenderGameWorldFromObject(HRender::VT_MAIN, Guided_missile[Player_num], false);
-
+		mainF = RenderGameWorldFromObject(HRender::VT_MAIN, Guided_missile[Player_num], false);
+	} else {
+		RenderUI();
+		mainF = RenderGameWorldFromObject(HRender::VT_MAIN, ConsoleObject, Rear_view);
 	}
 
-	RenderUI();
-	RenderGameWorldFromObject(HRender::VT_MAIN, ConsoleObject, Rear_view);
+	HRender::SkipGPUPortalList(HRender::VT_LEFT);
+	HRender::SkipGPUPortalList(HRender::VT_RIGHT);
+
+	mainF.wait();
 
 }
 
+#if 0
 void game_render_frame_mono(void)
 {
 	HRender::PrepareMineRenderFrame();
@@ -1104,6 +1109,7 @@ void game_render_frame_mono(void)
 
 #endif
 }
+#endif 
 
 void toggle_cockpit()
 {
@@ -1418,8 +1424,8 @@ void game_render_frame()
 
 	play_homing_warning();
 
-	game_render_frame_mono();
-	//game_render_frame_new();
+	//game_render_frame_mono();
+	game_render_frame_new();
 
 	// Make sure palette is faded in
 	stop_time();
