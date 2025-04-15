@@ -13,8 +13,8 @@ Instead, it is released under the terms of the MIT License.
 
 constexpr float VFOV_DEG_F = 70.f;
 constexpr float VFOV_RAD_F = VFOV_DEG_F * 3.1415926536f / 180.f;
-constexpr float VFOV_F = VFOV_DEG_F / 360.f;
-constexpr fix VFOV = fl2f(VFOV_F);
+constexpr float VFOV_FGRAD_F = VFOV_DEG_F / 360.f;
+constexpr fix VFOV = fl2f(VFOV_FGRAD_F);
 
 constexpr float NEAR_CLIP_F = 0.01f;
 constexpr float FAR_CLIP_F = 1000.f;

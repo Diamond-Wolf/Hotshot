@@ -135,6 +135,11 @@ namespace HRender {
 
 	constexpr mat4f M4_IDENTITY_MATRIX M4_IDENTITY_MATRIX_MACRO;
 
+	constexpr float CLEAR_DEPTH = 0;
+
+	constexpr SDL_GPULoadOp WORLD_LOAD_OP = SDL_GPU_LOADOP_CLEAR;
+	constexpr SDL_GPUStoreOp WORLD_STORE_OP = SDL_GPU_STOREOP_DONT_CARE;
+
 	static struct SDLRenderStruct {
 
 		SDL_GPUDevice* device = NULL;
@@ -201,14 +206,15 @@ namespace HRender {
 		SDL_GPUColorTargetInfo windowCTarget {
 			.texture = NULL,
 			.mip_level = 0,
-			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			//.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_DONT_CARE,
 			.cycle = true
 		};
 
 		SDL_GPUDepthStencilTargetInfo windowDTarget {
 			.texture = NULL,
-			.clear_depth = 0,
+			.clear_depth = CLEAR_DEPTH,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_DONT_CARE,
 			.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
@@ -219,14 +225,14 @@ namespace HRender {
 		SDL_GPUColorTargetInfo mainCTarget {
 			.texture = NULL,
 			.mip_level = 0,
-			.load_op = SDL_GPU_LOADOP_LOAD,
-			.store_op = SDL_GPU_STOREOP_STORE,
+			.load_op = WORLD_LOAD_OP,
+			.store_op = WORLD_STORE_OP,
 			.cycle = false
 		};
 
 		SDL_GPUDepthStencilTargetInfo mainDTarget {
 			.texture = NULL,
-			.clear_depth = 0,
+			.clear_depth = CLEAR_DEPTH,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_DONT_CARE,
 			.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
@@ -237,14 +243,14 @@ namespace HRender {
 		SDL_GPUColorTargetInfo leftCTarget {
 			.texture = NULL,
 			.mip_level = 0,
-			.load_op = SDL_GPU_LOADOP_LOAD,
-			.store_op = SDL_GPU_STOREOP_STORE,
+			.load_op = WORLD_LOAD_OP,
+			.store_op = WORLD_STORE_OP,
 			.cycle = false
 		};
 
 		SDL_GPUDepthStencilTargetInfo leftDTarget {
 			.texture = NULL,
-			.clear_depth = 0,
+			.clear_depth = CLEAR_DEPTH,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_DONT_CARE,
 			.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
@@ -255,14 +261,14 @@ namespace HRender {
 		SDL_GPUColorTargetInfo rightCTarget {
 			.texture = NULL,
 			.mip_level = 0,
-			.load_op = SDL_GPU_LOADOP_LOAD,
-			.store_op = SDL_GPU_STOREOP_STORE,
+			.load_op = WORLD_LOAD_OP,
+			.store_op = WORLD_STORE_OP,
 			.cycle = false
 		};
 
 		SDL_GPUDepthStencilTargetInfo rightDTarget {
 			.texture = NULL,
-			.clear_depth = 0,
+			.clear_depth = CLEAR_DEPTH,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_DONT_CARE,
 			.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
@@ -323,7 +329,11 @@ namespace HRender {
 	template <int bufN, int attrN> SDL_GPUGraphicsPipeline* CreateGraphicsPipeline(
 		SDL_GPUShader* vertex, SDL_GPUShader* fragment, SDL_GPUPrimitiveType primitiveType,
 		std::array<SDL_GPUVertexBufferDescription, bufN> buffers,
-		std::array<SDL_GPUVertexAttribute, attrN> attributes
+		std::array<SDL_GPUVertexAttribute, attrN> attributes,
+		bool enableDepth,
+		bool enableStencil,
+		uint8_t stencilWriteMask = 0,
+		uint8_t stencilReadMask = UINT8_MAX
 	) {
 
 		SDL_GPUColorTargetDescription ctd {
@@ -340,6 +350,36 @@ namespace HRender {
 				.num_vertex_attributes = attrN,
 			},
 			.primitive_type = primitiveType,
+			.rasterizer_state = {
+				.fill_mode = SDL_GPU_FILLMODE_FILL,
+				.cull_mode = SDL_GPU_CULLMODE_NONE,
+				.front_face = SDL_GPU_FRONTFACE_CLOCKWISE,
+				.enable_depth_bias = false,
+				.enable_depth_clip = false
+			},
+			.multisample_state = {
+				.sample_count = SDL_GPU_SAMPLECOUNT_1
+			},
+			.depth_stencil_state = {
+				.compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
+				.back_stencil_state = {
+					.fail_op = SDL_GPU_STENCILOP_KEEP,
+					.pass_op = SDL_GPU_STENCILOP_REPLACE,
+					.depth_fail_op = SDL_GPU_STENCILOP_KEEP,
+					.compare_op = SDL_GPU_COMPAREOP_ALWAYS
+				},
+				.front_stencil_state = {
+					.fail_op = SDL_GPU_STENCILOP_KEEP,
+					.pass_op = SDL_GPU_STENCILOP_REPLACE,
+					.depth_fail_op = SDL_GPU_STENCILOP_KEEP,
+					.compare_op = SDL_GPU_COMPAREOP_ALWAYS
+				},
+				.compare_mask = stencilReadMask,
+				.write_mask = stencilWriteMask,
+				.enable_depth_test = enableDepth,
+				.enable_depth_write = enableDepth,
+				.enable_stencil_test = enableStencil,
+			},
 			.target_info = {
 				.color_target_descriptions = &ctd,
 				.num_color_targets = 1,
@@ -475,8 +515,7 @@ namespace HRender {
 
 		SDL_UploadToGPUBuffer(pass, &tbloc, &breg, false);
 
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
+		FreeTransferBuffer(tbuf);
 
 		SDL_EndGPUCopyPass(pass);
 		SDL_SubmitGPUCommandBuffer(upbuf);
@@ -614,8 +653,8 @@ namespace HRender {
 				.buffer_slot = 0,
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 				.offset = 0,
-			} }
-		);
+			} },
+		false, false);
 
 		if (rendererState.screenPipeline == NULL) {
 			Error("Error creating screen pipeline: %s", SDL_GetError());
@@ -659,8 +698,7 @@ namespace HRender {
 
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, false);
 
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
+		FreeTransferBuffer(tbuf);
 
 		std::array<uint16_t, 4> inds {
 			0, 1, 2, 3
@@ -685,8 +723,7 @@ namespace HRender {
 
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, false);
 
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
+		FreeTransferBuffer(tbuf);
 
 	}
 
@@ -715,8 +752,8 @@ namespace HRender {
 				.buffer_slot = 0,
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_INT4,
 				.offset = (uint32_t)offsetof(WorldVertex, props),
-			} }
-		);
+			} },
+		true, false);
 
 		if (rendererState.worldPipeline == NULL) {
 			Error("Error creating world pipeline: %s", SDL_GetError());
@@ -797,17 +834,22 @@ namespace HRender {
 		}
 		rendererState.mainCommandBuffer = NULL;
 
-		//memset(rendererState.mainProjectionMatrix, 0, sizeof(rendererState.mainProjectionMatrix));
-		memcpy(rendererState.mainProjectionMatrix, M4_IDENTITY_MATRIX, sizeof(rendererState.mainProjectionMatrix));
+		memset(rendererState.mainProjectionMatrix, 0, sizeof(rendererState.mainProjectionMatrix));
+		//memcpy(rendererState.mainProjectionMatrix, M4_IDENTITY_MATRIX, sizeof(rendererState.mainProjectionMatrix));
 
 		constexpr float depth = FAR_CLIP_F - NEAR_CLIP_F;
 
-		rendererState.mainProjectionMatrix[1][1] = 1/tanf(VFOV_RAD_F / 2);
+		/*rendererState.mainProjectionMatrix[1][1] = 1 / tanf(VFOV_RAD_F / 2);
 		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1];
-		rendererState.mainProjectionMatrix[2][2] = FAR_CLIP_F / depth;
-		rendererState.mainProjectionMatrix[2][3] = -(FAR_CLIP_F * NEAR_CLIP_F) / depth;
-		rendererState.mainProjectionMatrix[3][2] = 1.f;
-		rendererState.mainProjectionMatrix[3][3] = 0.f;
+		rendererState.mainProjectionMatrix[2][2] = (FAR_CLIP_F + NEAR_CLIP_F) / depth;
+		rendererState.mainProjectionMatrix[2][3] = 2 * (FAR_CLIP_F * NEAR_CLIP_F) / depth;
+		rendererState.mainProjectionMatrix[3][2] = -1.f;
+		rendererState.mainProjectionMatrix[3][3] = 0.f;*/
+
+		rendererState.mainProjectionMatrix[1][1] = 1 / tanf(VFOV_RAD_F / 2);
+		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1];
+		rendererState.mainProjectionMatrix[2][3] = NEAR_CLIP_F;
+		rendererState.mainProjectionMatrix[3][2] = -1.f;
 		
 		memcpy(rendererState.subProjectionMatrix, rendererState.mainProjectionMatrix, sizeof(rendererState.subProjectionMatrix));
 
@@ -984,8 +1026,7 @@ namespace HRender {
 
 		SDL_UploadToGPUTexture(cpass, &tti, &tr, true);
 
-		SDL_UnmapGPUTransferBuffer(rendererState.device, tbuf.buffer);
-		SDL_ReleaseGPUTransferBuffer(rendererState.device, tbuf.buffer);
+		FreeTransferBuffer(tbuf);
 		SDL_EndGPUCopyPass(cpass);
 		//SDL_SubmitGPUCommandBuffer(copycmd);
 		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(copycmd);
@@ -1276,7 +1317,6 @@ namespace HRender {
 		TransferBuffer vertTB = CreateTransferBuffer(&tbci, true);
 		tbl.transfer_buffer = vertTB.buffer;
 		memcpy(vertTB.memoryMap, worldVertices.data(), bci.size);
-		SDL_UnmapGPUTransferBuffer(rendererState.device, vertTB.buffer);
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
 
 		bci.usage = SDL_GPU_BUFFERUSAGE_INDEX;
@@ -1291,7 +1331,6 @@ namespace HRender {
 		TransferBuffer indTB = CreateTransferBuffer(&tbci, true);
 		tbl.transfer_buffer = indTB.buffer;
 		memcpy(indTB.memoryMap, worldIndices.data(), bci.size);
-		SDL_UnmapGPUTransferBuffer(rendererState.device, indTB.buffer);
 		SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
 
 		SDL_EndGPUCopyPass(cpass);
@@ -1330,8 +1369,8 @@ namespace HRender {
 
 		SDL_DrawGPUIndexedPrimitives(*currentPass, worldIndices.size(), 1, 0, 0, 0);
 
-		SDL_ReleaseGPUTransferBuffer(rendererState.device, vertTB.buffer);
-		SDL_ReleaseGPUTransferBuffer(rendererState.device, indTB.buffer);
+		FreeTransferBuffer(vertTB);
+		FreeTransferBuffer(indTB);
 
 		SDL_ReleaseGPUBuffer(rendererState.device, vertexBuffer);
 		SDL_ReleaseGPUBuffer(rendererState.device, indexBuffer);
@@ -1469,9 +1508,17 @@ namespace HRender {
 		if (rightPass)
 			SDL_EndGPURenderPass(rightPass);
 
-		SDL_SubmitGPUCommandBuffer(mainCommandBuffer);
-		SDL_SubmitGPUCommandBuffer(leftCommandBuffer);
-		SDL_SubmitGPUCommandBuffer(rightCommandBuffer);
+		SDL_GPUFence* fences[] {
+			SDL_SubmitGPUCommandBufferAndAcquireFence(mainCommandBuffer),
+			SDL_SubmitGPUCommandBufferAndAcquireFence(leftCommandBuffer),
+			SDL_SubmitGPUCommandBufferAndAcquireFence(rightCommandBuffer)
+		};
+
+		SDL_WaitForGPUFences(rendererState.device, true, fences, 3);
+
+		SDL_ReleaseGPUFence(rendererState.device, fences[0]);
+		SDL_ReleaseGPUFence(rendererState.device, fences[1]);
+		SDL_ReleaseGPUFence(rendererState.device, fences[2]);
 
 		if (d1 <= 0) {
 			mprintf((0, "\n"));
