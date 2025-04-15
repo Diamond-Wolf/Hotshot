@@ -759,10 +759,10 @@ const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short 
 	vms_vector dummyVec;
 	vms_vector* dv = &dummyVec;
 	vms_angvec normalAngles[] {
-		{ HFOV - F_90_DEG, 0, 0},
-		{-HFOV + F_90_DEG, 0, 0},
-		{0,  VFOV - F_90_DEG, 0},
-		{0, -VFOV + F_90_DEG, 0},
+		{(fixang)( HFOV - F_90_DEG), 0, 0},
+		{(fixang)(-HFOV + F_90_DEG), 0, 0},
+		{0, (fixang)( VFOV - F_90_DEG), 0},
+		{0, (fixang)(-VFOV + F_90_DEG), 0},
 	};
 
 	vms_vector nearVec;
