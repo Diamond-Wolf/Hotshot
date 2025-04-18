@@ -27,10 +27,15 @@ void main() {
 
 	// TODO Check portals
 
-	//float z = -gl_FragCoord.z / gl_FragCoord.w;
-  float z = sqrt(-gl_FragCoord.z);
+	//float z = gl_FragCoord.z / gl_FragCoord.w;
+  /*float z = gl_FragCoord.z;
 	//float z = gl_FragCoord.z * gl_FragCoord.z;
-  if (isnan(z) || isinf(z)) {
+  if (isnan(z)) {
+    fragColor = vec4(1,0.75,0,1);
+    return;
+  }
+  
+  if (isinf(z)) {
     fragColor = vec4(1,1,0,1);
     return;
   }
@@ -43,9 +48,7 @@ void main() {
 	}
 
 	fragColor = vec4(1,0,z,1);
-	return;
-
-	/*
+	return;*/
 
 	uint cindex;
 	
@@ -90,8 +93,6 @@ void main() {
 		
 	paletteColor color = palette[cindex];
 	fragColor = vec4(color.r, color.g, color.b, 1) * uvl.z;
-	
-	*/
 
 }
 

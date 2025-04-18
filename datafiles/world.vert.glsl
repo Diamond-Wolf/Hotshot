@@ -21,18 +21,23 @@ layout(set = 1, binding = 3) uniform projUBO {
 	mat4 projection;
 };
 
-const mat4 coordinateConversion = mat4(
-	1,  0, 0, 0,
-	0, -1, 0, 0,
-	0,  0, 1, 0,
-	0,  0, 0, 1
+const mat4 coordinateScale = mat4(
+	0.1, 0.0, 0.0, 0.0,
+	0.0, 0.1, 0.0, 0.0,
+	0.0, 0.0, 0.1, 0.0,
+	0.0, 0.0, 0.0, 0.1
 );
 
 void main()
 {
-	//gl_Position = vec4(position.xyz, 1.0) * animation * model * inverse(view) * coordinateConversion * projection;
-	//gl_Position = projection * coordinateConversion * inverse(view) * model * animation * vec4(position.xyz, 1.0);
-	gl_Position = projection * vec4(position.xyz, 1.0);
+	vec4 pos = view[3];
+	mat4 viewRotation = view;
+	viewRotation[3] = vec4(0,0,0,1);
+	
+	mat4 viewTranslation = mat4(1);
+	viewTranslation[3] = pos;
+	
+	gl_Position = projection * viewRotation * viewTranslation * model * animation * vec4(position, 1.0);
 	uvl = uvlIn;
 	props = propsIn;
 }
