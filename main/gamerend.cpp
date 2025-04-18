@@ -734,11 +734,14 @@ const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short 
 
 		traversed.resize(Segments.size());
 		traversed.shrink_to_fit();
-		
+
+#ifndef NDEBUG
+		if (numSegs == 0)
+			mprintf((0, "BuildSegmentListNew: Resized segnums from %hd to %ld ", numSegs, Segments.size()));
+#endif
+
 		numSegs = Segments.size();
 		
-		mprintf((0, "BuildSegmentListNew: Resized segnums"));
-
 	}
 
 	segnums.clear();
