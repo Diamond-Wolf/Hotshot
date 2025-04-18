@@ -1422,8 +1422,8 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 			//Assert( Piggy_bitmap_cache_next+zsize < Piggy_bitmap_cache_size );      
 			if (Piggy_bitmap_cache_next + zsize >= Piggy_bitmap_cache_size)
 			{
-				printf("\n Oh no! %d %d %d\n", Piggy_bitmap_cache_next, zsize, Piggy_bitmap_cache_size);
-				Int3();
+				mprintf((1, "\n Piggy cache full! (%d %d %d) Flushing...\n", Piggy_bitmap_cache_next, zsize, Piggy_bitmap_cache_size));
+				//Int3(); 
 				piggy_bitmap_page_out_all();
 				goto ReDoIt;
 			}

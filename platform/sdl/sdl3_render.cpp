@@ -11,10 +11,13 @@ Instead, it is released under the terms of the MIT License.
 #include <map>
 #include <unordered_map>
 #include <tuple>
+#include <bit>
+#include <mutex>
 
 #include <SDL_gpu.h>
 
 #include "2d/gr.h"
+#include "2d/rle.h"
 #include "cfile/cfile.h"
 #include "main/inferno.h"
 #include "misc/error.h"
@@ -25,6 +28,7 @@ Instead, it is released under the terms of the MIT License.
 #include "main/kconfig.h"
 #include "main/gamestat.h"
 #include "main/gauges.h"
+#include "main/bm.h"
 
 
 #ifndef MOCK_FUTURE
@@ -109,13 +113,16 @@ namespace HRender {
 	};
 
 	struct TexturePage {
+		
 		grs_bitmap bitmap;
-		//SDL_GPUTexture* texture = NULL;
+		float* convertedData;
+
 	};
 
 	struct TransferBuffer {
 		SDL_GPUTransferBuffer* buffer = NULL;
-		void* memoryMap = NULL;
+		uint8_t* memoryMap = NULL;
+		uint32_t size = -1;
 	};
 
 	struct WorldVertex {
@@ -137,8 +144,8 @@ namespace HRender {
 
 	constexpr float CLEAR_DEPTH = 0;
 
-	constexpr SDL_GPULoadOp WORLD_LOAD_OP = SDL_GPU_LOADOP_CLEAR;
-	constexpr SDL_GPUStoreOp WORLD_STORE_OP = SDL_GPU_STOREOP_DONT_CARE;
+	constexpr SDL_GPULoadOp WORLD_LOAD_OP = SDL_GPU_LOADOP_LOAD;
+	constexpr SDL_GPUStoreOp WORLD_STORE_OP = SDL_GPU_STOREOP_STORE;
 
 	static struct SDLRenderStruct {
 
@@ -199,7 +206,15 @@ namespace HRender {
 		std::vector<TexturePage> tpages;
 		std::unordered_map<int, std::pair<int, int>> tpageLocations; //bm index : (tpage, index in page)
 
-		//SDL_GPUTextureFormat windowFormat;
+		SDL_GPUFence* activeDrawFence = NULL;
+		
+		TransferBuffer textureTransferBuffer;
+		TransferBuffer drawTransferBuffer;
+
+		uint32_t textureTransferOffset;
+		uint32_t drawTransferOffset;
+
+		uint32_t targetTextureTransferSize;
 		
 		int drawCallObjID = -2;
 
@@ -315,14 +330,20 @@ namespace HRender {
 	
 	//union num32 { float f; int32_t i; };
 
-	std::map<drawkey, std::vector<drawcall>, dkeyCompare> worldDrawCalls;
 	std::vector<WorldVertex> worldVertices;
 	std::vector<uint32_t> worldIndices;
+
+	std::vector<SDL_GPUTexture*> textureFreeQueue;
 
 	bool mineRenderingReady = false;
 
 	const std::launch ASYNC_POLICY = std::launch::deferred;
-	const SDL_GPUTextureFormat TEXTURE_FORMAT = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+	const SDL_GPUTextureFormat TEXTURE_FORMAT = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
+
+	std::map<drawkey, std::vector<drawcall>, dkeyCompare> worldDrawCalls;
+	std::mutex drawCallMutex;
+
+	void UploadTexturePage(TexturePage* page, SDL_GPUCopyPass* cpass, const bool secondary = false);
 
 #pragma region SDLHelpers
 
@@ -352,7 +373,7 @@ namespace HRender {
 			.primitive_type = primitiveType,
 			.rasterizer_state = {
 				.fill_mode = SDL_GPU_FILLMODE_FILL,
-				.cull_mode = SDL_GPU_CULLMODE_NONE,
+				.cull_mode = SDL_GPU_CULLMODE_BACK,
 				.front_face = SDL_GPU_FRONTFACE_CLOCKWISE,
 				.enable_depth_bias = false,
 				.enable_depth_clip = false
@@ -361,7 +382,7 @@ namespace HRender {
 				.sample_count = SDL_GPU_SAMPLECOUNT_1
 			},
 			.depth_stencil_state = {
-				.compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
+				.compare_op = SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
 				.back_stencil_state = {
 					.fail_op = SDL_GPU_STENCILOP_KEEP,
 					.pass_op = SDL_GPU_STENCILOP_REPLACE,
@@ -415,12 +436,14 @@ namespace HRender {
 			return buf;
 		}
 
-		buf.memoryMap = SDL_MapGPUTransferBuffer(rendererState.device, buf.buffer, cycle);
+		buf.memoryMap = (uint8_t*)SDL_MapGPUTransferBuffer(rendererState.device, buf.buffer, cycle);
 		if (buf.memoryMap == NULL) {
+			SDL_ReleaseGPUTransferBuffer(rendererState.device, buf.buffer);
 			mprintf((1, "Error mapping transfer buffer: %s", SDL_GetError()));
 			return buf;
 		}
 
+		buf.size = tbci->size;
 		return buf;
 
 	}
@@ -519,9 +542,6 @@ namespace HRender {
 
 		SDL_EndGPUCopyPass(pass);
 		SDL_SubmitGPUCommandBuffer(upbuf);
-		/*SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(upbuf);
-		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
-		SDL_ReleaseGPUFence(rendererState.device, fence);*/
 
 	}
 
@@ -620,7 +640,7 @@ namespace HRender {
 			.layer_count_or_depth = 1,
 			.num_levels = 1,
 		};
-
+		
 		rendererState.windowCTarget.texture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
 		if (rendererState.windowCTarget.texture == NULL) {
 			Error("Error creating render texture: %s", SDL_GetError());
@@ -828,7 +848,8 @@ namespace HRender {
 		}
 
 		SDL_EndGPUCopyPass(cpass);
-		if (!SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer)) {
+		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
+		if (!fence) {
 			mprintf((1, "Error submitting setup commands: %s\n", SDL_GetError()));
 			return 7;
 		}
@@ -848,8 +869,9 @@ namespace HRender {
 
 		rendererState.mainProjectionMatrix[1][1] = 1 / tanf(VFOV_RAD_F / 2);
 		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1];
-		rendererState.mainProjectionMatrix[2][3] = NEAR_CLIP_F;
-		rendererState.mainProjectionMatrix[3][2] = -1.f;
+		//rendererState.mainProjectionMatrix[2][3] = NEAR_CLIP_F;
+		rendererState.mainProjectionMatrix[2][3] = 1.f;
+		rendererState.mainProjectionMatrix[3][2] = 1.f;
 		
 		memcpy(rendererState.subProjectionMatrix, rendererState.mainProjectionMatrix, sizeof(rendererState.subProjectionMatrix));
 
@@ -858,6 +880,9 @@ namespace HRender {
 
 		//SyncCockpit();
 
+		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
+		SDL_ReleaseGPUFence(rendererState.device, fence);
+		
 		return 0;
 
 	}
@@ -922,10 +947,7 @@ namespace HRender {
 			else if (clone != VT_NONE)
 				Error("Invalid subwindow clone mode! Target %d cloning %d", target, clone);
 
-			*future = std::async(ASYNC_POLICY, +[]() {
-				SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
-				return SDL_SubmitGPUCommandBufferAndAcquireFence(cbuf);
-			});
+			*future = std::async(ASYNC_POLICY, SkipAsync);
 
 		} else {
 
@@ -934,31 +956,58 @@ namespace HRender {
 		}
 	}
 
-	TexturePage* CreateTexturePage(grs_bitmap* bm) {
-		
-		TexturePage* page = new TexturePage();
-		page->bitmap = *bm;
-		return page;
+	void ClearTexturePages() {
 
-	}
-	
-	void FreeTexturePage(TexturePage* page) {
-		delete page;
+		for (auto& tpage : rendererState.tpages) {
+			delete[] tpage.bitmap.bm_data;
+			delete[] tpage.convertedData;
+		}
+
+		rendererState.tpages.clear();
+		rendererState.tpageLocations.clear();
+
 	}
 
 	void GenerateTexturePages() {
 	
-		rendererState.tpages.clear();
+		ClearTexturePages();
 		rendererState.tpages.reserve(activePiggyTable->gameBitmaps.size());
 
+		piggy_bitmap_page_out_all();
+
 		for (int i = 0; i < activePiggyTable->gameBitmaps.size(); i++) {
-			auto bm = activePiggyTable->gameBitmaps[i];
-			if (bm.bm_data == NULL)
-				Int3();
-			rendererState.tpages.push_back(TexturePage { bm });
+			
+			PIGGY_PAGE_IN(BITMAP_INDEX(i));
+			grs_bitmap* gbm = &activePiggyTable->gameBitmaps[i];
+			int bmSize = gbm->bm_w * gbm->bm_h;
+
+			TexturePage page;
+			page.bitmap = *gbm;
+			page.bitmap.bm_data = new uint8_t[bmSize];
+			gr_bm_ubitblt(gbm->bm_w, gbm->bm_h, 0, 0, 0, 0, gbm, &page.bitmap);
+
+			page.convertedData = new float[bmSize];
+			for (int i = 0; i < bmSize; i++) {
+				page.convertedData[i] = page.bitmap.bm_data[i];
+			}
+
+			rendererState.tpages.push_back(page);
 			rendererState.tpageLocations[i] = std::pair(i, 0);
+			
 		}
-	
+
+		//8MiB probably already overkill, don't need 32 to account for floats
+		rendererState.targetTextureTransferSize = 64 * 64 * activePiggyTable->gameBitmaps.size();
+		
+		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(cbuf);
+
+		UploadTexturePage(&rendererState.tpages[0], cpass, false);
+		UploadTexturePage(&rendererState.tpages[0], cpass, true);
+
+		SDL_EndGPUCopyPass(cpass);
+		SDL_SubmitGPUCommandBuffer(cbuf);
+
 	}
 
 	void RenderScreenBitmap(grs_bitmap* bm) {
@@ -998,11 +1047,9 @@ namespace HRender {
 
 		float* floatMemMap = reinterpret_cast<float*>(tbuf.memoryMap);
 
-		//SDL_memcpy(tbuf.memoryMap, bm->bm_data, bmSize); //Need to expand texture
 		for (int i = 0; i < bmSize; i++) {
 			floatMemMap[i] = bm->bm_data[i];
 		}
-		//mprintf((0, "%f %f\n", floatMemMap[100], floatMemMap[200]));
 		
 		SDL_GPUCommandBuffer* copycmd = SDL_AcquireGPUCommandBuffer(rendererState.device);
 		if (copycmd == NULL) {
@@ -1028,11 +1075,8 @@ namespace HRender {
 
 		FreeTransferBuffer(tbuf);
 		SDL_EndGPUCopyPass(cpass);
-		//SDL_SubmitGPUCommandBuffer(copycmd);
-		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(copycmd);
-		if (fence == NULL) {
-			Error("Error submitting bitmap copy commands: %s", SDL_GetError());
-		}
+
+		SDL_SubmitGPUCommandBuffer(copycmd);
 
 		//--End copy, begin render--
 
@@ -1057,13 +1101,6 @@ namespace HRender {
 
 		SDL_BindGPUFragmentStorageBuffers(rpass, 0, &rendererState.paletteBuffer, 1);
 
-		if (!SDL_WaitForGPUFences(rendererState.device, false, &fence, 1)){
-			Error("Error waiting for bitmap texture upload: %s", SDL_GetError());
-		}
-		SDL_ReleaseGPUFence(rendererState.device, fence);
-
-		//mprintf((0, SDL_GetError()));
-
 		SDL_DrawGPUIndexedPrimitives(rpass, 4, 1, 0, 0, 0); 
 
 		SDL_ReleaseGPUTexture(rendererState.device, bmTex);
@@ -1083,17 +1120,18 @@ namespace HRender {
 
 		rendererState.cloneMode = VCM_NO_CLONE;
 
+		if (mineRenderingReady) 
+			mprintf((1, "Double prepared mine render!"));
+		
 		mineRenderingReady = true;
+
+		rendererState.drawTransferOffset = rendererState.textureTransferOffset = 0;
 
 	}
 
 	void UpdateMainView(const float aspect) {
 		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1] / aspect;
 	}
-
-	/*void UpdateProjectionMatrices(const fix aspect) {
-		UpdateProjectionMatrices(f2fl(aspect));
-	}*/
 
 	void SyncCockpit() {
 
@@ -1175,7 +1213,9 @@ namespace HRender {
 			for (int n = 0; n < 3; n++) {
 				(*matrix)[m][n] = f2fl(source->orient[n][m]);
 			}
-			(*matrix)[m][3] = f2fl(source->pos[m]);
+
+			//Cheat and encode pre-translation in matrix. Yay SDL only allowing 4 uniforms.
+			(*matrix)[3][m] = -f2fl(source->pos[m]);
 		}
 
 	}
@@ -1184,24 +1224,30 @@ namespace HRender {
 		SDL_PushGPUVertexUniformData(cbuf, id, *matrix, sizeof(*matrix));
 	}
 
-	void UploadTexturePage(TexturePage* page, const bool secondary = false) {
+	void UploadTexturePage(TexturePage* page, SDL_GPUCopyPass* cpass, const bool secondary) {
 		
 		Assert(page != NULL);
 
 		grs_bitmap& bm = page->bitmap;
-		InitCommandBuffer();
 
 		SDL_GPUTexture** ptex;
-		//TransferBuffer* ptbuf;
 		
+		TexturePage* oldPage;
+
 		if (secondary) {
+			if (rendererState.secondaryPage == page)
+				return;
+
+			oldPage = rendererState.secondaryPage;
 			rendererState.secondaryPage = page;
 			ptex = &rendererState.secondaryTexture;
-			//ptbuf = &rendererState.secondaryBuffer;
 		} else {
+			if (rendererState.primaryPage == page)
+				return;
+
+			oldPage = rendererState.primaryPage;
 			rendererState.primaryPage = page;
 			ptex = &rendererState.primaryTexture;
-			//ptbuf = &rendererState.primaryBuffer;
 		}
 
 		int bmSize = bm.bm_w * bm.bm_h;
@@ -1215,43 +1261,53 @@ namespace HRender {
 			.layer_count_or_depth = 1,
 			.num_levels = 1,
 		};
+		 
+		if (*ptex) {
+			
+			if (!(oldPage->bitmap.bm_h == page->bitmap.bm_h && oldPage->bitmap.bm_w == page->bitmap.bm_w)) {
+				textureFreeQueue.push_back(*ptex);
+				*ptex = SDL_CreateGPUTexture(rendererState.device, &tci);
+			}
 
-		if (*ptex)
-			SDL_ReleaseGPUTexture(rendererState.device, *ptex);
-		*ptex = SDL_CreateGPUTexture(rendererState.device, &tci);
+		} else {
+			*ptex = SDL_CreateGPUTexture(rendererState.device, &tci);
+		}
 
 		if (*ptex == NULL) {
 			Error("Error creating GPU texture for texture page: %s", SDL_GetError());
 		}
 
-		SDL_GPUTransferBufferCreateInfo tbci {
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = (uint32_t)(bmSize * sizeof(float))
-		};
+		if (rendererState.textureTransferBuffer.memoryMap == NULL || rendererState.textureTransferOffset + bmSize > rendererState.textureTransferBuffer.size) {
 
-		TransferBuffer tbuf = CreateTransferBuffer(&tbci, true);
-		if (tbuf.memoryMap == NULL) {
-			Error("Could not create bitmap transfer buffer!");
+			if (rendererState.textureTransferBuffer.memoryMap)
+				FreeTransferBuffer(rendererState.textureTransferBuffer);
+
+			uint32_t msize = rendererState.targetTextureTransferSize; 
+			if (msize < bmSize * sizeof(float)) {
+				Int3(); //This shouldn't happen
+				msize = bmSize * sizeof(float);
+			}
+			msize = std::bit_ceil(msize);
+
+			SDL_GPUTransferBufferCreateInfo tbci {
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = msize
+			};
+
+			rendererState.textureTransferBuffer = CreateTransferBuffer(&tbci, true);
+			rendererState.textureTransferOffset = 0;
+
+			mprintf((0, "Reallocated texture transfer buffer"));
+
 		}
 
-		float* floatMemMap = reinterpret_cast<float*>(tbuf.memoryMap);
+		size_t bmLen = bmSize * sizeof(*page->convertedData);
 
-		//SDL_memcpy(tbuf.memoryMap, bm->bm_data, bmSize); //Need to expand texture
-		for (int i = 0; i < bmSize; i++) {
-			floatMemMap[i] = bm.bm_data[i];
-		}
-		//mprintf((0, "%f %f\n", floatMemMap[100], floatMemMap[200]));
-
-		SDL_GPUCommandBuffer* copycmd = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		if (copycmd == NULL) {
-			Error("Error acquiring bitmap transfer command buffer: %s", SDL_GetError());
-		}
-
-		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(copycmd);
+		memcpy(rendererState.textureTransferBuffer.memoryMap + rendererState.textureTransferOffset, page->convertedData, bmLen);
 
 		SDL_GPUTextureTransferInfo tti {
-			.transfer_buffer = tbuf.buffer,
-			.offset = 0,
+			.transfer_buffer = rendererState.textureTransferBuffer.buffer,
+			.offset = rendererState.textureTransferOffset,
 			.pixels_per_row = (uint32_t)bm.bm_w
 		};
 
@@ -1264,10 +1320,8 @@ namespace HRender {
 
 		SDL_UploadToGPUTexture(cpass, &tti, &tr, true);
 
-		FreeTransferBuffer(tbuf);
-		SDL_EndGPUCopyPass(cpass);
-		SDL_SubmitGPUCommandBuffer(copycmd);
-
+		rendererState.textureTransferOffset += bmLen;
+		
 		if (secondary) {
 			rendererState.numTexturesInPage.secondary[0] = 1;
 			rendererState.numTexturesInPage.secondary[1] = 1;
@@ -1275,111 +1329,96 @@ namespace HRender {
 			rendererState.numTexturesInPage.primary[0] = 1;
 			rendererState.numTexturesInPage.primary[1] = 1;
 		}
-		
+
 	}
 
-	void RenderBatch(SDL_GPURenderPass** currentPass) {
+	void RenderBatch(SDL_GPURenderPass* currentRenderPass, SDL_GPUCopyPass* currentCopyPass) {
 
-		SDL_GPUTextureCreateInfo tci {
-			.type = SDL_GPU_TEXTURETYPE_2D,
-			.format = TEXTURE_FORMAT,
-			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
-			.layer_count_or_depth = 1,
-			.num_levels = 1,
-		};
-
-		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		if (!cbuf)
-			Error("Error creating copy command buffer: %s", SDL_GetError());
-		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(cbuf);
+		uint32_t vsize = worldVertices.size() * sizeof(*worldVertices.data());
+		uint32_t isize = worldIndices.size() * sizeof(*worldIndices.data());
 
 		SDL_GPUBufferCreateInfo bci {
-			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-			.size = (uint32_t)(worldVertices.size() * sizeof(*worldVertices.data())),
+			.usage = SDL_GPU_BUFFERUSAGE_VERTEX | SDL_GPU_BUFFERUSAGE_INDEX,
+			.size = vsize + isize
 		};
-		SDL_GPUTransferBufferCreateInfo tbci {
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = bci.size
-		};
+
+		if (rendererState.drawTransferBuffer.memoryMap == NULL || rendererState.drawTransferOffset + vsize + isize > rendererState.drawTransferBuffer.size) {
+		
+			if (rendererState.drawTransferBuffer.memoryMap)
+				FreeTransferBuffer(rendererState.drawTransferBuffer);
+
+			uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 2;
+			if (msize < vsize + isize) {
+				Int3(); //Shouldn't ever happen, but just to be safe...
+				msize = vsize + isize;
+			}
+
+			msize = std::bit_ceil(msize);
+
+			SDL_GPUTransferBufferCreateInfo tbci {
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = msize
+			};
+
+			rendererState.drawTransferBuffer = CreateTransferBuffer(&tbci, true);
+			rendererState.drawTransferOffset = 0;
+
+			mprintf((0, "Reallocated vertex transfer buffer"));
+
+		}
+
+		SDL_GPUBuffer* drawBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
+
 		SDL_GPUTransferBufferLocation tbl {
-			.offset = 0
-		};
-		SDL_GPUBufferRegion br {
-			.offset = 0
+			.transfer_buffer = rendererState.drawTransferBuffer.buffer,
+			.offset = rendererState.drawTransferOffset
 		};
 
-		SDL_GPUBuffer* vertexBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
-		if (vertexBuffer == NULL)
+		memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, worldVertices.data(), vsize);
+		memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset + vsize, worldIndices.data(), isize);
+
+		if (drawBuffer == NULL)
 			Error("Error creating vertex buffer: %s", SDL_GetError());
-		br.buffer = vertexBuffer;
-		br.size = bci.size;
+		
+		SDL_GPUBufferRegion br {
+			.buffer = drawBuffer,
+			.offset = 0,
+			.size = vsize + isize
+		};
 
-		TransferBuffer vertTB = CreateTransferBuffer(&tbci, true);
-		tbl.transfer_buffer = vertTB.buffer;
-		memcpy(vertTB.memoryMap, worldVertices.data(), bci.size);
-		SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
-
-		bci.usage = SDL_GPU_BUFFERUSAGE_INDEX;
-		tbci.size = bci.size = (uint32_t)(worldIndices.size() * sizeof(*worldIndices.data()));
-
-		SDL_GPUBuffer* indexBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
-		if (indexBuffer == NULL)
-			Error("Error creating index buffer: %s", SDL_GetError());
-		br.buffer = indexBuffer;
-		br.size = bci.size;
-
-		TransferBuffer indTB = CreateTransferBuffer(&tbci, true);
-		tbl.transfer_buffer = indTB.buffer;
-		memcpy(indTB.memoryMap, worldIndices.data(), bci.size);
-		SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
-
-		SDL_EndGPUCopyPass(cpass);
-		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cbuf);
-		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
-		SDL_ReleaseGPUFence(rendererState.device, fence);
+		SDL_UploadToGPUBuffer(currentCopyPass, &tbl, &br, true);
 
 		SDL_GPUBufferBinding bb {
-			.buffer = vertexBuffer,
+			.buffer = drawBuffer,
 			.offset = 0
 		};
-		SDL_BindGPUVertexBuffers(*currentPass, 0, &bb, 1);
+		SDL_BindGPUVertexBuffers(currentRenderPass, 0, &bb, 1);
 
-		bb.buffer = indexBuffer;
-		SDL_BindGPUIndexBuffer(*currentPass, &bb, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-
-		tci.width = rendererState.primaryPage->bitmap.bm_w;
-		tci.height = rendererState.primaryPage->bitmap.bm_h;
-		SDL_GPUTexture* primaryTex = SDL_CreateGPUTexture(rendererState.device, &tci);
-
-		tci.width = rendererState.secondaryPage->bitmap.bm_w;
-		tci.height = rendererState.secondaryPage->bitmap.bm_h;
-		SDL_GPUTexture* secondaryTex = SDL_CreateGPUTexture(rendererState.device, &tci);
+		//bb.buffer = indexBuffer;
+		bb.offset = vsize;
+		SDL_BindGPUIndexBuffer(currentRenderPass, &bb, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
 		SDL_GPUTextureSamplerBinding tsb[] { {
-			.texture = secondaryTex,
+			.texture = rendererState.secondaryTexture,
 			.sampler = rendererState.defaultSampler
 		}, {
-			.texture = primaryTex,
+			.texture = rendererState.primaryTexture,
 			.sampler = rendererState.defaultSampler
 		} };
-		SDL_BindGPUFragmentSamplers(*currentPass, 0, tsb, 2);
+		SDL_BindGPUFragmentSamplers(currentRenderPass, 0, tsb, 2);
 
 		SDL_GPUBuffer* storageBuffers[] { rendererState.paletteBuffer };// , rendererState.paletteBuffer}; //TODO: need portal buffer
-		SDL_BindGPUFragmentStorageBuffers(*currentPass, 0, storageBuffers, SDL_arraysize(storageBuffers));
+		SDL_BindGPUFragmentStorageBuffers(currentRenderPass, 0, storageBuffers, SDL_arraysize(storageBuffers));
 
-		SDL_DrawGPUIndexedPrimitives(*currentPass, worldIndices.size(), 1, 0, 0, 0);
+		SDL_DrawGPUIndexedPrimitives(currentRenderPass, worldIndices.size(), 1, 0, 0, 0);
+		
+		SDL_ReleaseGPUBuffer(rendererState.device, drawBuffer);
 
-		FreeTransferBuffer(vertTB);
-		FreeTransferBuffer(indTB);
-
-		SDL_ReleaseGPUBuffer(rendererState.device, vertexBuffer);
-		SDL_ReleaseGPUBuffer(rendererState.device, indexBuffer);
-
-		SDL_ReleaseGPUTexture(rendererState.device, primaryTex);
-		SDL_ReleaseGPUTexture(rendererState.device, secondaryTex);
+		rendererState.drawTransferOffset += vsize + isize;
 
 		worldVertices.clear();
 		worldIndices.clear();
+
 	}
 
 	void DispatchMineDrawCalls() {
@@ -1392,30 +1431,42 @@ namespace HRender {
 		SDL_GPUCommandBuffer* leftCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
 		SDL_GPUCommandBuffer* rightCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
 		
-		SDL_GPURenderPass* mainPass = SDL_BeginGPURenderPass(mainCommandBuffer, &rendererState.mainCTarget, 1, &rendererState.mainDTarget);
-		SDL_GPURenderPass* leftPass = NULL;
-		SDL_GPURenderPass* rightPass = NULL;
+		SDL_GPURenderPass* mainRenderPass = SDL_BeginGPURenderPass(mainCommandBuffer, &rendererState.mainCTarget, 1, &rendererState.mainDTarget);
+		SDL_GPURenderPass* leftRenderPass = NULL;
+		SDL_GPURenderPass* rightRenderPass = NULL;
 
-		if (rendererState.cloneMode != VCM_CLONE_RL)
-			leftPass = SDL_BeginGPURenderPass(leftCommandBuffer, &rendererState.leftCTarget, 1, &rendererState.leftDTarget);
-		if (rendererState.cloneMode != VCM_CLONE_LR)
-			rightPass = SDL_BeginGPURenderPass(rightCommandBuffer, &rendererState.rightCTarget, 1, &rendererState.rightDTarget);
+		SDL_GPUCommandBuffer* mainCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		SDL_GPUCommandBuffer* leftCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		SDL_GPUCommandBuffer* rightCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+
+		SDL_GPUCopyPass* mainCopyPass = SDL_BeginGPUCopyPass(mainCopyBuffer);
+		SDL_GPUCopyPass* leftCopyPass = NULL;
+		SDL_GPUCopyPass* rightCopyPass = NULL;
+
+		if (rendererState.cloneMode != VCM_CLONE_RL) {
+			leftRenderPass = SDL_BeginGPURenderPass(leftCommandBuffer, &rendererState.leftCTarget, 1, &rendererState.leftDTarget);
+		}
+		
+		if (rendererState.cloneMode != VCM_CLONE_LR) {
+			rightRenderPass = SDL_BeginGPURenderPass(rightCommandBuffer, &rendererState.rightCTarget, 1, &rendererState.rightDTarget);
+		}
 
 		SDL_GPUCommandBuffer** currentCommandBuffer;
-		SDL_GPURenderPass** currentPass;
+		SDL_GPURenderPass** currentRenderPass;
+		SDL_GPUCopyPass** currentCopyPass = &mainCopyPass;
 		SDL_GPUColorTargetInfo* cct;
 		SDL_GPUDepthStencilTargetInfo* cdt;
 
-		SDL_GPUBuffer* currentPoratlBuffer;
+		SDL_GPUBuffer* currentPortalBuffer;
 
 		TexturePage* primaryPage;
 		TexturePage* secondaryPage;
 		
-		SDL_BindGPUGraphicsPipeline(mainPass, rendererState.worldPipeline);
-		if (leftPass)
-			SDL_BindGPUGraphicsPipeline(leftPass, rendererState.worldPipeline);
-		if (rightPass)
-			SDL_BindGPUGraphicsPipeline(rightPass, rendererState.worldPipeline);
+		SDL_BindGPUGraphicsPipeline(mainRenderPass, rendererState.worldPipeline);
+		if (leftRenderPass)
+			SDL_BindGPUGraphicsPipeline(leftRenderPass, rendererState.worldPipeline);
+		if (rightRenderPass)
+			SDL_BindGPUGraphicsPipeline(rightRenderPass, rendererState.worldPipeline);
 
 		for (auto& cp : worldDrawCalls) {
 
@@ -1430,26 +1481,26 @@ namespace HRender {
 			}
 
 			if (newPrimary != rendererState.primaryPage) {
-				rendererState.primaryPage = newPrimary;
+				//rendererState.primaryPage = newPrimary;
 				swap = true;
 			} 
 
 			if (newSecondary != rendererState.secondaryPage && newSecondary != NULL) {
-				rendererState.secondaryPage = newSecondary;
+				//rendererState.secondaryPage = newSecondary;
 				swap = true;
 			}
 
 			if (swap) {// = SDL_CreateGPUTexture(rendererState.device, &tci);
 
 				if (worldVertices.size() > 0) {
-					if (d1 == 0)
-						mprintf((0, "Drew %ld verts with %ld inds | ", worldVertices.size(), worldIndices.size()));
-					RenderBatch(currentPass);
+					/*if (d1 == 0)
+						mprintf((0, "Drew %ld verts with %ld inds | ", worldVertices.size(), worldIndices.size()));*/
+					RenderBatch(*currentRenderPass, *currentCopyPass);
 				}
 
-				UploadTexturePage(rendererState.primaryPage, false);
+				UploadTexturePage(newPrimary, *currentCopyPass, false);
 				if (newSecondary)
-					UploadTexturePage(rendererState.secondaryPage, true);
+					UploadTexturePage(newSecondary, *currentCopyPass, true);
 
 				SDL_PushGPUFragmentUniformData(mainCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
 				SDL_PushGPUFragmentUniformData(leftCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
@@ -1463,8 +1514,8 @@ namespace HRender {
 						currentCommandBuffer = &mainCommandBuffer;
 						UploadVertexMatrix(*currentCommandBuffer, &rendererState.mainProjectionMatrix, MID_PROJ);
 						UploadVertexMatrix(*currentCommandBuffer, &rendererState.mainViewMatrix, MID_VIEW);
-						currentPass = &mainPass;
-						currentPoratlBuffer = rendererState.mainPortalBuffer;
+						currentRenderPass = &mainRenderPass;
+						currentPortalBuffer = rendererState.mainPortalBuffer;
 						cct = &rendererState.mainCTarget;
 						cdt = &rendererState.mainDTarget;
 					} else {
@@ -1472,14 +1523,14 @@ namespace HRender {
 						if (view == VT_LEFT) {
 							currentCommandBuffer = &leftCommandBuffer;
 							UploadVertexMatrix(*currentCommandBuffer, &rendererState.subViewMatrixL, MID_VIEW);
-							currentPass = &leftPass;
+							currentRenderPass = &leftRenderPass;
 							cct = &rendererState.leftCTarget;
 							cdt = &rendererState.leftDTarget;
 						}
 						else {
 							currentCommandBuffer = &rightCommandBuffer;
 							UploadVertexMatrix(*currentCommandBuffer, &rendererState.subViewMatrixR, MID_VIEW);
-							currentPass = &rightPass;
+							currentRenderPass = &rightRenderPass;
 							cct = &rendererState.rightCTarget;
 							cdt = &rendererState.rightDTarget;
 						}
@@ -1497,43 +1548,47 @@ namespace HRender {
 		}
 
 		if (worldVertices.size() > 0) {
-			if (d1 == 0)
-				mprintf((0, "Drew %ld verts with %ld inds | ", worldVertices.size(), worldIndices.size()));
-			RenderBatch(currentPass);
+			/*if (d1 == 0)
+				mprintf((0, "Drew %ld verts with %ld inds | ", worldVertices.size(), worldIndices.size()));*/
+			RenderBatch(*currentRenderPass, *currentCopyPass);
 		}
 
-		SDL_EndGPURenderPass(mainPass);
-		if (leftPass)
-			SDL_EndGPURenderPass(leftPass);
-		if (rightPass)
-			SDL_EndGPURenderPass(rightPass);
+		SDL_EndGPUCopyPass(mainCopyPass);
+		SDL_SubmitGPUCommandBuffer(mainCopyBuffer);
 
-		SDL_GPUFence* fences[] {
-			SDL_SubmitGPUCommandBufferAndAcquireFence(mainCommandBuffer),
-			SDL_SubmitGPUCommandBufferAndAcquireFence(leftCommandBuffer),
-			SDL_SubmitGPUCommandBufferAndAcquireFence(rightCommandBuffer)
-		};
+		SDL_EndGPURenderPass(mainRenderPass);
+		if (leftRenderPass)
+			SDL_EndGPURenderPass(leftRenderPass);
+		if (rightRenderPass)
+			SDL_EndGPURenderPass(rightRenderPass);
 
-		SDL_WaitForGPUFences(rendererState.device, true, fences, 3);
+		SDL_SubmitGPUCommandBuffer(mainCommandBuffer);
+		SDL_SubmitGPUCommandBuffer(leftCommandBuffer);
+		SDL_SubmitGPUCommandBuffer(rightCommandBuffer);
 
-		SDL_ReleaseGPUFence(rendererState.device, fences[0]);
-		SDL_ReleaseGPUFence(rendererState.device, fences[1]);
-		SDL_ReleaseGPUFence(rendererState.device, fences[2]);
-
-		if (d1 <= 0) {
-			mprintf((0, "\n"));
-			d1 = 30;
+		for (auto& tex : textureFreeQueue) {
+			SDL_ReleaseGPUTexture(rendererState.device, tex);
 		}
-		d1--;
+
+		textureFreeQueue.clear();
 
 	}
 
 	void RenderSide(const ViewTarget target, const int segno, const int sideno) {
-		
+
 		const segment& segment = Segments[segno];
 		const side& side = segment.sides[sideno];
-		auto& tp1 = rendererState.tpageLocations[side.tmap_num];
-		auto& tp2 = rendererState.tpageLocations[side.tmap_num2 & 0x3FFF];
+
+		if (side.tmap_num >= activeBMTable->textures.size()) {
+			mprintf((1, "Invalid texture! Segment %d side %d, skipping...\n", segno, sideno));
+			return;
+		}
+
+		short texind1 = activeBMTable->textures[side.tmap_num].index;
+		short texind2 = activeBMTable->textures[side.tmap_num2 & 0x3FFF].index;
+
+		auto& tp1 = rendererState.tpageLocations[texind1];
+		auto& tp2 = rendererState.tpageLocations[texind2];
 
 		drawkey k {
 			&rendererState.tpages[tp1.first],
@@ -1541,71 +1596,75 @@ namespace HRender {
 			target
 		};
 
-		if (worldDrawCalls.count(k) == 0) {
-			worldDrawCalls[k] = std::vector<drawcall>();
+		{
+			std::lock_guard g(drawCallMutex);
+
+			if (worldDrawCalls.count(k) == 0) {
+				worldDrawCalls[k] = std::vector<drawcall>();
+			}
+
+			std::vector<drawcall>& calls = worldDrawCalls[k];
+
+			//TODO lock the vector
+			calls.emplace_back([tp1, tp2, segno, sideno](SDL_GPUCommandBuffer* combuf) {
+
+				if (rendererState.drawCallObjID != -1) {
+					UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_ANIM);
+					UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_MODEL);
+				}
+				rendererState.drawCallObjID = -1;
+
+				const auto& segment = Segments[segno];
+				const auto& side = segment.sides[sideno];
+				const auto& sideverts = Side_to_verts[sideno];
+
+				int vertStart = worldVertices.size();
+
+				for (int i = 0; i < MAX_VERTICES_PER_POLY; i++) {
+
+					auto& vert = Vertices[segment.verts[sideverts[i]]];
+
+					worldVertices.emplace_back(WorldVertex {
+						.pos = {
+							f2fl(vert.x),
+							f2fl(vert.y),
+							f2fl(vert.z),
+						},
+						.uvl = {
+							f2fl(side.uvls[i].u),
+							f2fl(side.uvls[i].v),
+							f2fl(side.uvls[i].l),
+						},
+						.props = {
+							segno,
+							tp1.second,
+							(side.tmap_num2 & 0x3ff) != 0 ? tp2.second : -1,
+							((side.tmap_num2 & 0xC000) >> 14) & 3
+						},
+						});
+
+				}
+
+				if (side.type == SIDE_IS_TRI_13) {
+					worldIndices.push_back(vertStart + 0);
+					worldIndices.push_back(vertStart + 1);
+					worldIndices.push_back(vertStart + 3);
+					worldIndices.push_back(vertStart + 1);
+					worldIndices.push_back(vertStart + 2);
+					worldIndices.push_back(vertStart + 3);
+				}
+				else {
+					worldIndices.push_back(vertStart + 0);
+					worldIndices.push_back(vertStart + 1);
+					worldIndices.push_back(vertStart + 2);
+					worldIndices.push_back(vertStart + 0);
+					worldIndices.push_back(vertStart + 2);
+					worldIndices.push_back(vertStart + 3);
+				}
+
+			});
+
 		}
-
-		std::vector<drawcall>& calls = worldDrawCalls[k];
-
-		//TODO lock the vector
-		calls.emplace_back([tp1, tp2, segno, sideno](SDL_GPUCommandBuffer* combuf) {
-			
-			//if (rendererState.drawCallObjID != -1) {
-				//constexpr static mat4f identityModelAnim[2] { M4_IDENTITY_MATRIX_MACRO, M4_IDENTITY_MATRIX_MACRO };
-				//SDL_PushGPUVertexUniformData(combuf, 0, identityModelAnim, sizeof(identityModelAnim));
-			UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_ANIM);
-			UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_MODEL);
-			//}
-			//rendererState.drawCallObjID = -1;
-
-			const auto& segment = Segments[segno];
-			const auto& side = segment.sides[sideno];
-			const auto& sideverts = Side_to_verts[sideno];
-
-			int vertStart = worldVertices.size();
-
-			for (int i = 0; i < MAX_VERTICES_PER_POLY; i++) {
-
-				auto& vert = Vertices[segment.verts[sideverts[i]]];
-				
-				worldVertices.emplace_back( WorldVertex {
-					.pos = {
-						f2fl(vert.x), 
-						f2fl(vert.y), 
-						f2fl(vert.z),
-					},
-					.uvl = {
-						f2fl(side.uvls[i].u),
-						f2fl(side.uvls[i].v),
-						f2fl(side.uvls[i].l),
-					},
-					.props = {
-						segno,
-						tp1.second,
-						tp2.second,
-						((side.tmap_num2 & 0xC000) >> 14) & 3
-					},
-				});
-
-			}
-
-			if (side.type == SIDE_IS_TRI_13) {
-				worldIndices.push_back(vertStart + 0);
-				worldIndices.push_back(vertStart + 1);
-				worldIndices.push_back(vertStart + 3);
-				worldIndices.push_back(vertStart + 1);
-				worldIndices.push_back(vertStart + 3);
-				worldIndices.push_back(vertStart + 2);
-			} else {
-				worldIndices.push_back(vertStart + 0);
-				worldIndices.push_back(vertStart + 1);
-				worldIndices.push_back(vertStart + 2);
-				worldIndices.push_back(vertStart + 0);
-				worldIndices.push_back(vertStart + 3);
-				worldIndices.push_back(vertStart + 2);
-			}
-			
-		});
 
 	}
 
@@ -1622,7 +1681,7 @@ namespace HRender {
 				.x = 0,
 				.y = 0,
 				.w = rendererState.renderWidth,
-				.h = rendererState.renderHeight
+				.h = rendererState.renderHeight,
 			},
 			.destination = {
 				.texture = rendererState.windowCTarget.texture,
@@ -1634,6 +1693,12 @@ namespace HRender {
 			.load_op = SDL_GPU_LOADOP_DONT_CARE,
 			.cycle = true
 		};
+
+		if (rendererState.activeDrawFence) {
+			SDL_WaitForGPUFences(rendererState.device, false, &rendererState.activeDrawFence, 1);
+			SDL_ReleaseGPUFence(rendererState.device, rendererState.activeDrawFence);
+			rendererState.activeDrawFence = NULL;
+		}
 
 		if (ExtGameStatus == GAMESTAT_RUNNING && mineRenderingReady) {
 
@@ -1661,11 +1726,7 @@ namespace HRender {
 
 		}
 
-		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
-		if (fence == NULL) {
-			mprintf((1, "Error submitting stage 1 command buffer and acquiring fence: %s", SDL_GetError()));
-		}
-		
+		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
 		rendererState.mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
 
 		uint32_t windowWidth, windowHeight;
@@ -1678,17 +1739,17 @@ namespace HRender {
 		bi.destination.w = windowWidth;
 		bi.destination.h = windowHeight;
 
-		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
-		SDL_ReleaseGPUFence(rendererState.device, fence);
-
 		SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
 
-		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
+		rendererState.activeDrawFence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
 		rendererState.mainCommandBuffer = NULL;
 
 	}
 
 	void ShutdownRenderAPI() {
+
+		if (rendererState.activeDrawFence)
+			SDL_ReleaseGPUFence(rendererState.device, rendererState.activeDrawFence);
 
 		SDL_ReleaseGPUGraphicsPipeline(rendererState.device, rendererState.screenPipeline);
 		SDL_ReleaseGPUGraphicsPipeline(rendererState.device, rendererState.worldPipeline);
@@ -1701,6 +1762,7 @@ namespace HRender {
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.leftDTarget.texture);
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.rightCTarget.texture);
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.rightDTarget.texture);
+
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.primaryTexture);
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.secondaryTexture);
 
@@ -1713,8 +1775,14 @@ namespace HRender {
 		SDL_ReleaseGPUBuffer(rendererState.device, rendererState.mainPortalBuffer);
 		SDL_ReleaseGPUBuffer(rendererState.device, rendererState.leftPortalBuffer);
 		SDL_ReleaseGPUBuffer(rendererState.device, rendererState.rightPortalBuffer);
+
 		SDL_ReleaseGPUBuffer(rendererState.device, rendererState.screenIndBuffer);
 		SDL_ReleaseGPUBuffer(rendererState.device, rendererState.screenVertBuffer);
+
+		SDL_ReleaseGPUSampler(rendererState.device, rendererState.defaultSampler);
+
+		FreeTransferBuffer(rendererState.drawTransferBuffer);
+		FreeTransferBuffer(rendererState.textureTransferBuffer);
 
 		SDL_ReleaseWindowFromGPUDevice(rendererState.device, gameWindow);
 		SDL_DestroyGPUDevice(rendererState.device);

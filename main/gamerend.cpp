@@ -682,7 +682,7 @@ void BuildSegmentListSub(const short segnum, std::vector<short>& segnums, std::v
 	segment& seg = Segments[segnum];
 	vms_vector dummyVec;
 
-	/*for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 5; i++) {
 		
 		FrustumPlane plane = planes[i];
 		bool cull = true;
@@ -702,7 +702,7 @@ void BuildSegmentListSub(const short segnum, std::vector<short>& segnums, std::v
 		if (cull)
 			return;
 
-	}*/
+	}
 
 	segnums.push_back(segnum);
 
@@ -773,7 +773,7 @@ const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short 
 	vm_vec_copy_scale(&nearVec, &direction, NEAR_CLIP);
 	vm_vec_copy_scale(&farVec, &direction, FAR_CLIP);
 
-	const FrustumPlane planes[6] {
+	const FrustumPlane planes[] {
 		{
 			.point = position,
 			.normal = *vm_vec_rotate(dv, &direction, vm_angles_2_matrix(dm, normalAngles + 0))
@@ -794,10 +794,10 @@ const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short 
 			.point = *vm_vec_add(dv, &position, &nearVec),
 			.normal = direction
 		},
-		{
+		/*{
 			.point = *vm_vec_add(dv, &position, &farVec),
 			.normal = backVec
-		},
+		},*/
 	};
 
 	//traversed[start] = true;
