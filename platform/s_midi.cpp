@@ -153,10 +153,12 @@ void S_ShutdownMusic()
 	{
 		synth->Shutdown();
 		delete synth;
+		synth = nullptr;
 	}
 	if (sequencer)
 	{
 		delete sequencer;
+		sequencer = nullptr;
 	}
 	CurrentDevice = 0;
 }
