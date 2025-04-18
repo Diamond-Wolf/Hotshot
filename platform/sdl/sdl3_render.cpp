@@ -223,7 +223,7 @@ namespace HRender {
 			.mip_level = 0,
 			//.load_op = SDL_GPU_LOADOP_DONT_CARE,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
-			.store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.store_op = SDL_GPU_STOREOP_STORE,
 			.cycle = true
 		};
 
