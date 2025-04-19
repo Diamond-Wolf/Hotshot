@@ -497,7 +497,6 @@ namespace HRender {
 
 		const int NUM_COLORS = SDL_arraysize(gr_palette) / 3;
 
-		//InitCommandBuffer();
 		SDL_GPUCommandBuffer* upbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
 
 		static float expandedPalette[NUM_COLORS * 4];
@@ -518,7 +517,6 @@ namespace HRender {
 			expandedPalette[i * 4] = palette[i * 3] / DIV_FACTOR;
 			expandedPalette[i * 4 + 1] = palette[i * 3 + 1] / DIV_FACTOR;
 			expandedPalette[i * 4 + 2] = palette[i * 3 + 2] / DIV_FACTOR;
-			//expandedPalette[i * 4 + 3] = 1;
 		}
 
 		SDL_memcpy(tbuf.memoryMap, expandedPalette, sizeof(expandedPalette));
@@ -550,22 +548,11 @@ namespace HRender {
 	}
 
 	void ResizeWindow() {
-		//InitCommandBuffer();
-		//if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, NULL, NULL))
-		//	Error("Error acquiring swapchain texture: %s", SDL_GetError());
 
 		uint32_t size;
 
 		switch (Cockpit_mode) {
 			
-			/*
-			
-		if (Cockpit_mode == CM_FULL_COCKPIT)
-			boxnum = (COCKPIT_PRIMARY_BOX)+win;
-		else if (Cockpit_mode == CM_STATUS_BAR)
-			boxnum = (SB_PRIMARY_BOX)+win;
-			*/
-
 			case CM_FULL_SCREEN:
 			case CM_REAR_VIEW:
 			default:
@@ -654,7 +641,6 @@ namespace HRender {
 			Error("Error creating render depth texture: %s", SDL_GetError());
 		}
 
-		//UpdateProjectionMatrices((float)rendererState.renderWidth / rendererState.renderHeight);
 		SyncCockpit();
 
 	}
@@ -814,10 +800,8 @@ namespace HRender {
 		good &= BuildShader(SHADER("worldv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.worldVert, 0, 4, 0);
 		good &= BuildShader(SHADER("worldf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.worldFrag, 2, 1, 1);
 
-		if (!good) {
-			//mprintf((1, "Last error: %s\n", SDL_GetError()));
+		if (!good)
 			return 4;
-		}
 
 		InitCommandBuffer();
 		if (rendererState.mainCommandBuffer == NULL) {
@@ -856,20 +840,11 @@ namespace HRender {
 		rendererState.mainCommandBuffer = NULL;
 
 		memset(rendererState.mainProjectionMatrix, 0, sizeof(rendererState.mainProjectionMatrix));
-		//memcpy(rendererState.mainProjectionMatrix, M4_IDENTITY_MATRIX, sizeof(rendererState.mainProjectionMatrix));
 
 		constexpr float depth = FAR_CLIP_F - NEAR_CLIP_F;
 
-		/*rendererState.mainProjectionMatrix[1][1] = 1 / tanf(VFOV_RAD_F / 2);
-		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1];
-		rendererState.mainProjectionMatrix[2][2] = (FAR_CLIP_F + NEAR_CLIP_F) / depth;
-		rendererState.mainProjectionMatrix[2][3] = 2 * (FAR_CLIP_F * NEAR_CLIP_F) / depth;
-		rendererState.mainProjectionMatrix[3][2] = -1.f;
-		rendererState.mainProjectionMatrix[3][3] = 0.f;*/
-
 		rendererState.mainProjectionMatrix[1][1] = 1 / tanf(VFOV_RAD_F / 2);
 		rendererState.mainProjectionMatrix[0][0] = rendererState.mainProjectionMatrix[1][1];
-		//rendererState.mainProjectionMatrix[2][3] = NEAR_CLIP_F;
 		rendererState.mainProjectionMatrix[2][3] = 1.f;
 		rendererState.mainProjectionMatrix[3][2] = 1.f;
 		
@@ -877,8 +852,6 @@ namespace HRender {
 
 		worldVertices.reserve(5000);
 		worldIndices.reserve(5000);
-
-		//SyncCockpit();
 
 		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
 		SDL_ReleaseGPUFence(rendererState.device, fence);
@@ -933,7 +906,6 @@ namespace HRender {
 			break;
 
 			default:
-				//Error("Invalid subwindow target specified! %d", target);
 				Int3();
 
 		}
@@ -1011,10 +983,6 @@ namespace HRender {
 	}
 
 	void RenderScreenBitmap(grs_bitmap* bm) {
-
-		//mprintf((0, "Drawing screen bitmap\n"));
-
-		//mprintf((0, "%hd %hd %hhd %hhd %hhd", bm->bm_w, bm->bm_h, bm->bm_data[100], bm->bm_data[200], bm->bm_data[200] - bm->bm_data[100]));
 
 		InitCommandBuffer();
 
@@ -1368,18 +1336,17 @@ namespace HRender {
 		}
 
 		SDL_GPUBuffer* drawBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
+		if (drawBuffer == NULL)
+			Error("Error creating vertex buffer: %s", SDL_GetError());
+
+		memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, worldVertices.data(), vsize);
+		memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset + vsize, worldIndices.data(), isize);
 
 		SDL_GPUTransferBufferLocation tbl {
 			.transfer_buffer = rendererState.drawTransferBuffer.buffer,
 			.offset = rendererState.drawTransferOffset
 		};
 
-		memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, worldVertices.data(), vsize);
-		memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset + vsize, worldIndices.data(), isize);
-
-		if (drawBuffer == NULL)
-			Error("Error creating vertex buffer: %s", SDL_GetError());
-		
 		SDL_GPUBufferRegion br {
 			.buffer = drawBuffer,
 			.offset = 0,
@@ -1428,46 +1395,22 @@ namespace HRender {
 		ViewTarget view = VT_NONE;
 
 		SDL_GPUCommandBuffer* mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		SDL_GPUCommandBuffer* leftCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		SDL_GPUCommandBuffer* rightCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		
 		SDL_GPURenderPass* mainRenderPass = SDL_BeginGPURenderPass(mainCommandBuffer, &rendererState.mainCTarget, 1, &rendererState.mainDTarget);
-		SDL_GPURenderPass* leftRenderPass = NULL;
-		SDL_GPURenderPass* rightRenderPass = NULL;
-
-		SDL_GPUCommandBuffer* mainCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		SDL_GPUCommandBuffer* leftCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		SDL_GPUCommandBuffer* rightCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-
-		SDL_GPUCopyPass* mainCopyPass = SDL_BeginGPUCopyPass(mainCopyBuffer);
-		SDL_GPUCopyPass* leftCopyPass = NULL;
-		SDL_GPUCopyPass* rightCopyPass = NULL;
-
-		if (rendererState.cloneMode != VCM_CLONE_RL) {
-			leftRenderPass = SDL_BeginGPURenderPass(leftCommandBuffer, &rendererState.leftCTarget, 1, &rendererState.leftDTarget);
-		}
 		
-		if (rendererState.cloneMode != VCM_CLONE_LR) {
-			rightRenderPass = SDL_BeginGPURenderPass(rightCommandBuffer, &rendererState.rightCTarget, 1, &rendererState.rightDTarget);
-		}
-
-		SDL_GPUCommandBuffer** currentCommandBuffer;
-		SDL_GPURenderPass** currentRenderPass;
-		SDL_GPUCopyPass** currentCopyPass = &mainCopyPass;
+		SDL_GPUCommandBuffer* mainCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		
+		SDL_GPUCopyPass* mainCopyPass = SDL_BeginGPUCopyPass(mainCopyBuffer);
+		
 		SDL_GPUColorTargetInfo* cct;
 		SDL_GPUDepthStencilTargetInfo* cdt;
 
-		SDL_GPUBuffer* currentPortalBuffer;
+		//SDL_GPUBuffer* currentPortalBuffer;
 
 		TexturePage* primaryPage;
 		TexturePage* secondaryPage;
 		
 		SDL_BindGPUGraphicsPipeline(mainRenderPass, rendererState.worldPipeline);
-		if (leftRenderPass)
-			SDL_BindGPUGraphicsPipeline(leftRenderPass, rendererState.worldPipeline);
-		if (rightRenderPass)
-			SDL_BindGPUGraphicsPipeline(rightRenderPass, rendererState.worldPipeline);
-
+		
 		for (auto& cp : worldDrawCalls) {
 
 			const auto& [newPrimary, newSecondary, newView] = cp.first;
@@ -1481,91 +1424,68 @@ namespace HRender {
 			}
 
 			if (newPrimary != rendererState.primaryPage) {
-				//rendererState.primaryPage = newPrimary;
 				swap = true;
 			} 
 
 			if (newSecondary != rendererState.secondaryPage && newSecondary != NULL) {
-				//rendererState.secondaryPage = newSecondary;
 				swap = true;
 			}
 
 			if (swap) {// = SDL_CreateGPUTexture(rendererState.device, &tci);
 
 				if (worldVertices.size() > 0) {
-					/*if (d1 == 0)
-						mprintf((0, "Drew %ld verts with %ld inds | ", worldVertices.size(), worldIndices.size()));*/
-					RenderBatch(*currentRenderPass, *currentCopyPass);
+					RenderBatch(mainRenderPass, mainCopyPass);
 				}
 
-				UploadTexturePage(newPrimary, *currentCopyPass, false);
+				UploadTexturePage(newPrimary, mainCopyPass, false);
 				if (newSecondary)
-					UploadTexturePage(newSecondary, *currentCopyPass, true);
+					UploadTexturePage(newSecondary, mainCopyPass, true);
 
 				SDL_PushGPUFragmentUniformData(mainCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
-				SDL_PushGPUFragmentUniformData(leftCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
-				SDL_PushGPUFragmentUniformData(rightCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
-
+				
 				if (view != newView) {
 
 					view = newView;
 
 					if (view == VT_MAIN) {
-						currentCommandBuffer = &mainCommandBuffer;
-						UploadVertexMatrix(*currentCommandBuffer, &rendererState.mainProjectionMatrix, MID_PROJ);
-						UploadVertexMatrix(*currentCommandBuffer, &rendererState.mainViewMatrix, MID_VIEW);
-						currentRenderPass = &mainRenderPass;
-						currentPortalBuffer = rendererState.mainPortalBuffer;
+						UploadVertexMatrix(mainCommandBuffer, &rendererState.mainProjectionMatrix, MID_PROJ);
+						UploadVertexMatrix(mainCommandBuffer, &rendererState.mainViewMatrix, MID_VIEW);
 						cct = &rendererState.mainCTarget;
 						cdt = &rendererState.mainDTarget;
 					} else {
 
 						if (view == VT_LEFT) {
-							currentCommandBuffer = &leftCommandBuffer;
-							UploadVertexMatrix(*currentCommandBuffer, &rendererState.subViewMatrixL, MID_VIEW);
-							currentRenderPass = &leftRenderPass;
+							UploadVertexMatrix(mainCommandBuffer, &rendererState.subViewMatrixL, MID_VIEW);
 							cct = &rendererState.leftCTarget;
 							cdt = &rendererState.leftDTarget;
 						}
 						else {
-							currentCommandBuffer = &rightCommandBuffer;
-							UploadVertexMatrix(*currentCommandBuffer, &rendererState.subViewMatrixR, MID_VIEW);
-							currentRenderPass = &rightRenderPass;
+							UploadVertexMatrix(mainCommandBuffer, &rendererState.subViewMatrixR, MID_VIEW);
 							cct = &rendererState.rightCTarget;
 							cdt = &rendererState.rightDTarget;
 						}
 
-						UploadVertexMatrix(*currentCommandBuffer, &rendererState.subProjectionMatrix, MID_PROJ);
-
+						UploadVertexMatrix(mainCommandBuffer, &rendererState.subProjectionMatrix, MID_PROJ);
+						
 					}
 
 				}
 			}
 
 			for (auto& Draw : cp.second)
-				Draw(*currentCommandBuffer);
-
+				Draw(mainCommandBuffer);
+				
 		}
 
 		if (worldVertices.size() > 0) {
-			/*if (d1 == 0)
-				mprintf((0, "Drew %ld verts with %ld inds | ", worldVertices.size(), worldIndices.size()));*/
-			RenderBatch(*currentRenderPass, *currentCopyPass);
+			RenderBatch(mainRenderPass, mainCopyPass);
 		}
 
 		SDL_EndGPUCopyPass(mainCopyPass);
 		SDL_SubmitGPUCommandBuffer(mainCopyBuffer);
 
-		SDL_EndGPURenderPass(mainRenderPass);
-		if (leftRenderPass)
-			SDL_EndGPURenderPass(leftRenderPass);
-		if (rightRenderPass)
-			SDL_EndGPURenderPass(rightRenderPass);
-
 		SDL_SubmitGPUCommandBuffer(mainCommandBuffer);
-		SDL_SubmitGPUCommandBuffer(leftCommandBuffer);
-		SDL_SubmitGPUCommandBuffer(rightCommandBuffer);
-
+		
 		for (auto& tex : textureFreeQueue) {
 			SDL_ReleaseGPUTexture(rendererState.device, tex);
 		}
@@ -1732,14 +1652,18 @@ namespace HRender {
 		uint32_t windowWidth, windowHeight;
 		
 		if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, &windowWidth, &windowHeight))
-			Error("Error acquiring swapchain texture: %s", SDL_GetError());
+			mprintf((1, "Error acquiring swapchain texture: %s", SDL_GetError()));
 
-		bi.source.texture = rendererState.windowCTarget.texture;
-		bi.destination.texture = rendererState.windowTexture;
-		bi.destination.w = windowWidth;
-		bi.destination.h = windowHeight;
+		if (rendererState.windowTexture) {
 
-		SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
+			bi.source.texture = rendererState.windowCTarget.texture;
+			bi.destination.texture = rendererState.windowTexture;
+			bi.destination.w = windowWidth;
+			bi.destination.h = windowHeight;
+
+			SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
+
+		}
 
 		rendererState.activeDrawFence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
 		rendererState.mainCommandBuffer = NULL;
