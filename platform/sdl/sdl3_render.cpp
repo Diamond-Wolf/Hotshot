@@ -1484,6 +1484,7 @@ namespace HRender {
 		SDL_EndGPUCopyPass(mainCopyPass);
 		SDL_SubmitGPUCommandBuffer(mainCopyBuffer);
 
+		SDL_EndGPURenderPass(mainRenderPass);
 		SDL_SubmitGPUCommandBuffer(mainCommandBuffer);
 		
 		for (auto& tex : textureFreeQueue) {
