@@ -36,7 +36,7 @@ g3s_point* get_temp_point()
 	Assert(free_point_num < MAX_POINTS_IN_POLY);
 	p = free_points[free_point_num++];
 
-	p->p3_flags = PF_TEMP_POINT;
+ 	p->p3_flags = PF_TEMP_POINT;
 
 	return p;
 }

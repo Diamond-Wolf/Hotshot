@@ -79,6 +79,8 @@ extern vms_matrix vmd_identity_matrix;
 #define ZERO_VECTOR {0,0,0}
 #define IDENTITY_MATRIX {f1_0,0,0,0,f1_0,0,0,0,f1_0}
 
+const inline vms_matrix IDENTITY_MATRIX_INST IDENTITY_MATRIX;
+
 //negate a vector
 #define vm_vec_negate(v) do {(v)->x = - (v)->x; (v)->y = - (v)->y; (v)->z = - (v)->z;} while (0);
 
@@ -94,7 +96,7 @@ vms_vector* vm_vec_sub(vms_vector* dest, vms_vector* src0, vms_vector* src1);
 
 //adds one vector to another. returns ptr to dest
 //dest can equal source
-vms_vector* vm_vec_add2(vms_vector* dest, vms_vector* src);
+vms_vector* vm_vec_add2(vms_vector* dest, const vms_vector* src);
 
 //subs one vector from another, returns ptr to dest
 //dest can equal source

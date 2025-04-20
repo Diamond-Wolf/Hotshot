@@ -66,7 +66,7 @@ enum CheatsIndex {
     CI_TEMP_INVULN,
     CI_TELEPORT,
     CI_TROLL,
-    CI_DRUNK,
+    CI_RAVE,
     CI_LAVA_WALLS,
     CI_EXPLODE_FLARES,
 

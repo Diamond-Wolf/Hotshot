@@ -51,6 +51,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <future>
 #include <main/endlevel.h>
 #include <main/ai.h>
+#include <main/newcheat.h>
 #else
 namespace std {
 
@@ -351,7 +352,7 @@ namespace HRender {
 	typedef std::function<void(SDL_GPUCommandBuffer*)> SideDrawCall;
 	typedef std::tuple<TexturePage*, TexturePage*, ViewTarget> SideDrawKey;
 
-	typedef std::function<void(SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass)> ObjDrawCall;
+	typedef std::function<void(SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass)> ObjDrawCall;
 
 	struct dkeyCompare {
 
@@ -370,7 +371,6 @@ namespace HRender {
 					return secondary1 < secondary2;
 			else
 				return view1 < view2;
-
 		}
 
 	};
@@ -387,6 +387,9 @@ namespace HRender {
 
 	std::map<SideDrawKey, std::vector<SideDrawCall>, dkeyCompare> sideDrawCalls;
 	std::mutex sideDrawCallMutex;
+
+	std::map<SideDrawKey, std::vector<ObjDrawCall>, dkeyCompare> modelDrawCalls;
+	std::mutex modelDrawCallMutex;
 
 	std::map<ViewTarget, std::vector<ObjDrawCall>> objDrawCalls;
 	std::mutex objDrawCallMutex;
@@ -1140,6 +1143,9 @@ namespace HRender {
 	void PrepareMineRenderFrame() { // TODO: If in game, build and submit portal list. Also, determine if rear view mirrors need textures.
 		
 		sideDrawCalls.clear();
+		modelDrawCalls.clear();
+		objDrawCalls.clear();
+
 		InitCommandBuffer();
 
 		rendererState.cloneMode = VCM_NO_CLONE;
@@ -1356,7 +1362,7 @@ namespace HRender {
 
 	}
 
-	void RenderBatch(SDL_GPURenderPass* currentRenderPass, SDL_GPUCopyPass* currentCopyPass) {
+	void DrawBatch(SDL_GPURenderPass* currentRenderPass, SDL_GPUCopyPass* currentCopyPass) {
 
 		uint32_t vsize = worldVertices.size() * sizeof(*worldVertices.data());
 		uint32_t isize = worldIndices.size() * sizeof(*worldIndices.data());
@@ -1371,7 +1377,7 @@ namespace HRender {
 			if (rendererState.drawTransferBuffer.memoryMap)
 				FreeTransferBuffer(rendererState.drawTransferBuffer);
 
-			uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 2;
+			uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 8;
 			if (msize < vsize + isize) {
 				Int3(); //Shouldn't ever happen, but just to be safe...
 				msize = vsize + isize;
@@ -1444,19 +1450,12 @@ namespace HRender {
 
 	}
 
-	void DispatchMineDrawCalls() {
+	void DispatchMineDrawCalls(SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
 		static int d1 = 30;
 
 		ViewTarget view = VT_NONE;
 
-		SDL_GPUCommandBuffer* mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		SDL_GPURenderPass* mainRenderPass = SDL_BeginGPURenderPass(mainCommandBuffer, &rendererState.mainCTarget, 1, &rendererState.mainDTarget);
-		
-		SDL_GPUCommandBuffer* mainCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
-		
-		SDL_GPUCopyPass* mainCopyPass = SDL_BeginGPUCopyPass(mainCopyBuffer);
-		
 		SDL_GPUColorTargetInfo* cct;
 		SDL_GPUDepthStencilTargetInfo* cdt;
 
@@ -1465,7 +1464,7 @@ namespace HRender {
 		TexturePage* primaryPage;
 		TexturePage* secondaryPage;
 		
-		SDL_BindGPUGraphicsPipeline(mainRenderPass, rendererState.worldPipeline);
+		SDL_BindGPUGraphicsPipeline(rpass, rendererState.worldPipeline);
 		
 		for (auto& cp : sideDrawCalls) {
 
@@ -1490,38 +1489,38 @@ namespace HRender {
 			if (swap) {// = SDL_CreateGPUTexture(rendererState.device, &tci);
 
 				if (worldVertices.size() > 0) {
-					RenderBatch(mainRenderPass, mainCopyPass);
+					DrawBatch(rpass, cpass);
 				}
 
-				UploadTexturePage(newPrimary, mainCopyPass, false);
+				UploadTexturePage(newPrimary, cpass, false);
 				if (newSecondary)
-					UploadTexturePage(newSecondary, mainCopyPass, true);
+					UploadTexturePage(newSecondary, cpass, true);
 
-				SDL_PushGPUFragmentUniformData(mainCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
+				SDL_PushGPUFragmentUniformData(combuf, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
 				
 				if (view != newView) {
 
 					view = newView;
 
 					if (view == VT_MAIN) {
-						UploadVertexMatrix(mainCommandBuffer, &rendererState.mainProjectionMatrix, MID_PROJ);
-						UploadVertexMatrix(mainCommandBuffer, &rendererState.mainViewMatrix, MID_VIEW);
+						UploadVertexMatrix(combuf, &rendererState.mainProjectionMatrix, MID_PROJ);
+						UploadVertexMatrix(combuf, &rendererState.mainViewMatrix, MID_VIEW);
 						cct = &rendererState.mainCTarget;
 						cdt = &rendererState.mainDTarget;
 					} else {
 
 						if (view == VT_LEFT) {
-							UploadVertexMatrix(mainCommandBuffer, &rendererState.subViewMatrixL, MID_VIEW);
+							UploadVertexMatrix(combuf, &rendererState.subViewMatrixL, MID_VIEW);
 							cct = &rendererState.leftCTarget;
 							cdt = &rendererState.leftDTarget;
 						}
 						else {
-							UploadVertexMatrix(mainCommandBuffer, &rendererState.subViewMatrixR, MID_VIEW);
+							UploadVertexMatrix(combuf, &rendererState.subViewMatrixR, MID_VIEW);
 							cct = &rendererState.rightCTarget;
 							cdt = &rendererState.rightDTarget;
 						}
 
-						UploadVertexMatrix(mainCommandBuffer, &rendererState.subProjectionMatrix, MID_PROJ);
+						UploadVertexMatrix(combuf, &rendererState.subProjectionMatrix, MID_PROJ);
 						
 					}
 
@@ -1529,25 +1528,13 @@ namespace HRender {
 			}
 
 			for (auto& Draw : cp.second)
-				Draw(mainCommandBuffer);
+				Draw(combuf);
 				
 		}
 
 		if (worldVertices.size() > 0) {
-			RenderBatch(mainRenderPass, mainCopyPass);
+			DrawBatch(rpass, cpass);
 		}
-
-		SDL_EndGPUCopyPass(mainCopyPass);
-		SDL_SubmitGPUCommandBuffer(mainCopyBuffer);
-
-		SDL_EndGPURenderPass(mainRenderPass);
-		SDL_SubmitGPUCommandBuffer(mainCommandBuffer);
-		
-		for (auto& tex : textureFreeQueue) {
-			SDL_ReleaseGPUTexture(rendererState.device, tex);
-		}
-
-		textureFreeQueue.clear();
 
 	}
 
@@ -1560,8 +1547,7 @@ namespace HRender {
 		}
 
 		std::vector<ObjDrawCall>& calls = objDrawCalls[target];
-
-		calls[target] = call;
+		calls.push_back(call);
 
 	}
 
@@ -1572,7 +1558,7 @@ namespace HRender {
 			g3_rotate_point(dest++, src++);
 	}
 
-	void RenderPolymodelSub(const void* model_ptr, const std::vector<grs_bitmap*>& model_bitmaps, const vms_angvec anim_angles[], const fix model_light, const fix glow_values[]) {
+	void RenderPolymodelSub(const ViewTarget target, const int segno, const void* model_ptr, const std::vector<grs_bitmap*>& model_bitmaps, const std::vector<short>& bitmapIDs, const vms_angvec anim_angles[], const fix model_light, const fix glow_values[], const vms_vector* parentOrigin, const vms_matrix* parentRotation) {
 	
 		uint8_t* p = (uint8_t*)model_ptr;
 		int current_poly = 0;
@@ -1591,7 +1577,8 @@ namespace HRender {
 				int n = w(p + 2);
 				if (n > Interp_point_list.size())
 					Interp_point_list.resize(n);
-				rotate_point_list(Interp_point_list.data(), vp(p + 4), n);
+				//rotate_point_list(Interp_point_list.data(), vp(p + 4), n);
+				memcpy(Interp_point_list.data(), vp(p + 4), n * sizeof(g3s_point));
 				p += n * sizeof(struct vms_vector) + 4;
 				break;
 			}
@@ -1603,7 +1590,8 @@ namespace HRender {
 
 				if (s + n > Interp_point_list.size())
 					Interp_point_list.resize(s + n);
-				rotate_point_list(Interp_point_list.data() + s, vp(p + 8), n);
+				//rotate_point_list(Interp_point_list.data() + s, vp(p + 8), n);
+				memcpy(Interp_point_list.data() + s, vp(p + 8), n * sizeof(g3s_point));
 				p += n * sizeof(struct vms_vector) + 8;
 
 				break;
@@ -1611,12 +1599,13 @@ namespace HRender {
 
 			case OP_FLATPOLY:
 			{
+
 				int light = 0;
 				InterpColor color;
 				int nv = w(p + 2); 
 
 				//Assert(nv < MAX_POINTS_PER_POLY);
-				if (nv < point_list.size())
+				if (nv > point_list.size())
 					point_list.resize(nv);
 
 				if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
@@ -1641,11 +1630,11 @@ namespace HRender {
 
 					if (light != -3)
 					{
-						gr_setcolor(drawindex);
+						//gr_setcolor(drawindex);
 
 						for (i = 0; i < nv; i++)
 							point_list[i] = Interp_point_list.data() + wp(p + 30)[i];
-						g3_draw_poly(nv, point_list.data());
+						//g3_draw_poly(nv, point_list.data());
 					}
 				}
 
@@ -1685,12 +1674,212 @@ namespace HRender {
 
 					uvl_list = (g3s_uvl*)(p + 30 + ((nv & ~1) + 1) * 2);
 
+					g3s_point* verts = new g3s_point[nv];
+
 					for (i = 0; i < nv; i++) {
 						uvl_list[i].l = light;
-						point_list[i] = Interp_point_list.data() + wp(p + 30)[i];
+						verts[i] = Interp_point_list[wp(p + 30)[i]];
 					}
 
-					g3_draw_tmap(nv, point_list.data(), uvl_list, model_bitmaps[w(p + 28)]);
+					short texind = w(p + 28);
+
+					auto& tp = rendererState.tpageLocations[texind];
+
+					SideDrawKey k {
+							&rendererState.tpages[tp.first],
+							NULL,
+							target
+					};
+
+					{
+
+						std::lock_guard lock(modelDrawCallMutex);
+
+						if (sideDrawCalls.count(k) == 0) {
+							sideDrawCalls[k] = std::vector<SideDrawCall>();
+						}
+
+						std::vector<ObjDrawCall>& calls = modelDrawCalls[k];
+
+						const vms_vector& pos = *parentOrigin;
+						const vms_matrix& rot = *parentRotation;
+
+						calls.emplace_back([tp, segno, verts, nv, light, pos, rot](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+							/*if (rendererState.drawCallObjID != -1)*/ {
+
+								mat4f matrix;
+
+								memcpy(matrix, M4_IDENTITY_MATRIX, sizeof(matrix));
+
+								/*for (int m = 0; m < 3; m++) {
+									for (int n = 0; n < 3; n++) {
+										matrix[m][n] = f2fl((*parentRotation)[m][n]);
+									}
+
+									matrix[m][3] = f2fl((*parentOrigin)[m]);
+								}*/
+
+								UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_ANIM);
+								UploadVertexMatrix(combuf, &matrix, MID_MODEL);
+
+							}
+							//rendererState.drawCallObjID = -1;
+
+							//const auto& segment = Segments[segno];
+
+							int vertStart = worldVertices.size();
+
+							WorldVertex* wverts = new WorldVertex[nv];
+							uint32_t* winds = new uint32_t[3 * (nv - 2)];
+
+							for (int i = 0; i < nv; i++) {
+
+								auto& vert = verts[i];
+
+								float lightR, lightG, lightB;
+								lightR = lightG = lightB = 1.f;// f2fl(light);
+
+								if (cheatValues[CI_RAVE]) {
+
+									SDL_srand((uint64_t)pos.x * 0xFFFF + (uint64_t)pos.y * 0x00FF + pos.z + GameTime);
+
+									lightR = sqrtf(lightR);
+									lightG = sqrtf(lightG);
+									lightB = sqrtf(lightB);
+
+									lightR *= SDL_randf() * 2.f;
+									lightG *= SDL_randf() * 2.f;
+									lightB *= SDL_randf() * 2.f;
+
+								}
+
+								/*lightR *= lightFactorR;
+								lightG *= lightFactorG;
+								lightB *= lightFactorB;*/
+								
+								wverts[i] = WorldVertex {
+									.pos = {
+										f2fl(vert.p3_vec.x),
+										f2fl(vert.p3_vec.y),
+										f2fl(vert.p3_vec.z)
+									},
+									.uv = {
+										f2fl(vert.p3_u),
+										f2fl(vert.p3_v),
+									},
+									.props = {
+										segno,
+										tp.second,
+										-1,
+										0 
+									},
+									.colormod = {
+										lightR,
+										lightG,
+										lightB,
+										1.f
+									}
+								};
+
+							}
+
+							for (int i = 0; i < nv - 2; i++) {
+								winds[i * 3 + 0] = 0;
+								winds[i * 3 + 1] = i + 1;
+								winds[i * 3 + 2] = i + 2;
+							}
+
+							uint32_t vsize = nv * sizeof(*wverts);
+							uint32_t isize = (nv - 2) * 3 * sizeof(*winds);
+
+							SDL_GPUBufferCreateInfo bci {
+								.usage = SDL_GPU_BUFFERUSAGE_VERTEX | SDL_GPU_BUFFERUSAGE_INDEX,
+								.size = vsize + isize
+							};
+
+							if (rendererState.drawTransferBuffer.memoryMap == NULL || rendererState.drawTransferOffset + vsize + isize > rendererState.drawTransferBuffer.size) {
+
+								if (rendererState.drawTransferBuffer.memoryMap)
+									FreeTransferBuffer(rendererState.drawTransferBuffer);
+
+								uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 8;
+								if (msize < vsize + isize) {
+									Int3(); //Shouldn't ever happen, but just to be safe...
+									msize = vsize + isize;
+								}
+
+								msize = std::bit_ceil(msize);
+
+								SDL_GPUTransferBufferCreateInfo tbci {
+									.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+									.size = msize
+								};
+
+								rendererState.drawTransferBuffer = CreateTransferBuffer(&tbci, true);
+								rendererState.drawTransferOffset = 0;
+
+								mprintf((0, "Reallocated vertex transfer buffer in polyobj tmap"));
+
+							}
+
+							SDL_GPUBuffer* drawBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
+							if (drawBuffer == NULL)
+								Error("Error creating vertex buffer: %s", SDL_GetError());
+
+							memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, wverts, vsize);
+							memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset + vsize, winds, isize);
+
+							SDL_GPUTransferBufferLocation tbl {
+								.transfer_buffer = rendererState.drawTransferBuffer.buffer,
+								.offset = rendererState.drawTransferOffset
+							};
+
+							SDL_GPUBufferRegion br {
+								.buffer = drawBuffer,
+								.offset = 0,
+								.size = vsize + isize
+							};
+
+							SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
+
+							SDL_GPUBufferBinding bb {
+								.buffer = drawBuffer,
+								.offset = 0
+							};
+							SDL_BindGPUVertexBuffers(rpass, 0, &bb, 1);
+
+							//bb.buffer = indexBuffer;
+							bb.offset = vsize;
+							SDL_BindGPUIndexBuffer(rpass, &bb, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+							SDL_GPUTextureSamplerBinding tsb[] { {
+								.texture = rendererState.secondaryTexture,
+								.sampler = rendererState.defaultSampler
+							}, {
+								.texture = rendererState.primaryTexture,
+								.sampler = rendererState.defaultSampler
+							} };
+							SDL_BindGPUFragmentSamplers(rpass, 0, tsb, 2);
+
+							SDL_GPUBuffer* storageBuffers[] { rendererState.paletteBuffer };// , rendererState.paletteBuffer}; //TODO: need portal buffer
+							SDL_BindGPUFragmentStorageBuffers(rpass, 0, storageBuffers, SDL_arraysize(storageBuffers));
+
+							SDL_DrawGPUIndexedPrimitives(rpass, (nv - 2) * 3, 1, 0, 0, 0);
+
+							SDL_ReleaseGPUBuffer(rendererState.device, drawBuffer);
+
+							rendererState.drawTransferOffset += vsize + isize;
+
+							delete[] verts;
+							delete[] wverts;
+							delete[] winds;
+
+						});
+
+						//g3_draw_tmap(nv, point_list.data(), uvl_list, model_bitmaps[w(p + 28)]);
+
+					}
 				}
 
 				p += 30 + ((nv & ~1) + 1) * 2 + nv * 12;
@@ -1700,29 +1889,45 @@ namespace HRender {
 
 			case OP_SORTNORM:
 
-				if (g3_check_normal_facing(vp(p + 16), vp(p + 4)) > 0) //facing
-				{
+				vms_matrix mat;
+				vms_matrix rotated;
+
+				if (anim_angles)
+					vm_angles_2_matrix(&mat, const_cast<vms_angvec*>(anim_angles) + w(p + 2));
+				else
+					mat = IDENTITY_MATRIX;
+
+				vms_vector pos = *vp(p + 4);
+				vm_vec_add2(&pos, parentOrigin);
+
+				//Hardware will handle sorting now
+
+				//if (g3_check_normal_facing(vp(p + 16), vp(p + 4)) > 0) //facing
+				//{
 					//draw back then front
-					RenderPolymodelSub(p + w(p + 30), model_bitmaps, anim_angles, model_light, glow_values);
-					RenderPolymodelSub(p + w(p + 28), model_bitmaps, anim_angles, model_light, glow_values);
-				}
+				RenderPolymodelSub(target, segno, p + w(p + 30), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
+				RenderPolymodelSub(target, segno, p + w(p + 28), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
+				/*}
 				else //not facing.  draw front then back
 				{
-					RenderPolymodelSub(p + w(p + 28), model_bitmaps, anim_angles, model_light, glow_values);
-					RenderPolymodelSub(p + w(p + 30), model_bitmaps, anim_angles, model_light, glow_values);
-				}
+					RenderPolymodelSub(target, p + w(p + 28), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, parentRotation));
+					RenderPolymodelSub(target, p + w(p + 30), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, parentRotation));
+				}*/
 
 				p += 32;
 				break;
 
 			case OP_RODBM:
 			{
+
+				break;
+
 				g3s_point rod_bot_p, rod_top_p;
 
 				g3_rotate_point(&rod_bot_p, vp(p + 20));
 				g3_rotate_point(&rod_top_p, vp(p + 4));
 
-				g3_draw_rod_tmap(model_bitmaps[w(p + 2)], &rod_bot_p, w(p + 16), &rod_top_p, w(p + 32), f1_0);
+				//g3_draw_rod_tmap(model_bitmaps[w(p + 2)], &rod_bot_p, w(p + 16), &rod_top_p, w(p + 32), f1_0);
 
 				p += 36;
 				break;
@@ -1730,18 +1935,19 @@ namespace HRender {
 
 			case OP_SUBCALL:
 			{
-				const vms_angvec* a;
+				vms_matrix mat;
+				vms_matrix rotated;
 
 				if (anim_angles)
-					a = anim_angles + w(p + 2);
+					vm_angles_2_matrix(&mat, const_cast<vms_angvec*>(anim_angles) + w(p + 2));
 				else
-					a = &zero_angles;
+					mat = IDENTITY_MATRIX;
+				
+				vms_vector pos = *vp(p + 4);
+				vm_vec_add2(&pos, parentOrigin);
 
-				vms_angvec ac = *a;
-
-				g3_start_instance_angles(vp(p + 4), &ac);
-				RenderPolymodelSub(p + w(p + 16), model_bitmaps, anim_angles, model_light, glow_values);
-				g3_done_instance();
+				RenderPolymodelSub(target, segno, p + w(p + 16), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
+				
 				p += 20;
 				break;
 			}
@@ -1760,26 +1966,34 @@ namespace HRender {
 	}
 #pragma endregion
 
-	void RenderPolymodel(const int segno, const object& object, const vms_angvec anim_angles[], const int model_num, const int flags, const fix light, const short textureOverride, float visibility) {
+	void RenderPolymodel(const ViewTarget target, const int segno, const object& object, const vms_angvec anim_angles[], const int model_num, const int flags, const fix light, const short textureOverride, float visibility) {
 	
 		const vms_vector& pos = object.pos;
 		const vms_matrix& orient = object.orient;
 
 		polymodel& model = activeBMTable->models[model_num];
 
+		thread_local std::vector<short> bitmapIDs;
 		thread_local std::vector<grs_bitmap*> bitmaps;
+		bitmapIDs.reserve(100);
+		bitmapIDs.clear();
 		bitmaps.reserve(100);
+		bitmaps.clear();
+
 
 		if (textureOverride >= 0) {
 
 			for (int i = 0; i < model.n_textures; i++) {
+				bitmapIDs.push_back(textureOverride);
 				bitmaps.push_back(&activePiggyTable->gameBitmaps[textureOverride]);
 			}
 
 		} else {
 
 			for (int i = 0; i < model.n_textures; i++) {
-				bitmaps.push_back(&activePiggyTable->gameBitmaps[activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[model.first_texture + i]].index]);
+				short bmpID = activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[model.first_texture + i]].index;
+				bitmapIDs.push_back(bmpID);
+				bitmaps.push_back(&activePiggyTable->gameBitmaps[bmpID]);
 			}
 
 		}
@@ -1815,13 +2029,13 @@ namespace HRender {
 				glow[1] = -3;			//don't draw
 		}
 
-		RenderPolymodelSub(model.model_data, bitmaps, anim_angles, light, glow);
+		RenderPolymodelSub(target, segno, model.model_data, bitmaps, bitmapIDs, anim_angles, light, glow, &object.pos, &object.orient);
 
 		bitmaps.clear();
 	
 	}
 
-	void RenderPolyObj(const object& object, const int segno, const float visibility) {
+	void RenderPolyObj(const ViewTarget target, const object& object, const int segno, const float visibility) {
 		
 		const polyobj_info& pinf = object.rtype.pobj_info; 
 
@@ -1830,7 +2044,7 @@ namespace HRender {
 			override = activeBMTable->textures[pinf.tmap_override].index;
 		}
 
-		RenderPolymodel(segno, object, pinf.anim_angles, pinf.model_num, 0, F1_0, override, visibility);
+		RenderPolymodel(target, segno, object, pinf.anim_angles, pinf.model_num, 0, F1_0, override, visibility);
 
 	}
 	
@@ -1839,7 +2053,7 @@ namespace HRender {
 		const object& object = Objects[objno];
 		uint8_t rtypeid = object.render_type;
 
-		ObjDrawCall call; 
+		ObjDrawCall call;
 
 		switch (rtypeid) {
 
@@ -1859,14 +2073,15 @@ namespace HRender {
 					
 				}
 
-				RenderPolyObj(object, segno, visibility);
+				RenderPolyObj(target, object, segno, visibility); //Will emplace its own calls
+				call = [](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {};
 				break;
 
 			}
 
 			case RT_POWERUP: {
 
-				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
 
 
@@ -1878,7 +2093,7 @@ namespace HRender {
 
 			case RT_FIREBALL: {
 
-				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
 
 
@@ -1890,7 +2105,7 @@ namespace HRender {
 
 			case RT_HOSTAGE: {
 
-				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
 
 
@@ -1902,7 +2117,7 @@ namespace HRender {
 
 			case RT_LASER: {
 
-				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
 
 
@@ -1914,7 +2129,7 @@ namespace HRender {
 
 			case RT_MORPH: {
 
-				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
 
 
@@ -1926,7 +2141,7 @@ namespace HRender {
 
 			case RT_WEAPON_VCLIP: {
 
-				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
 
 
@@ -1958,6 +2173,23 @@ namespace HRender {
 		auto& tp1 = rendererState.tpageLocations[texind1];
 		auto& tp2 = rendererState.tpageLocations[texind2];
 
+		float timeWithinSecond = f2fl(GameTime % F1_0);
+		
+		float lightFactorR = 1.f;
+		float lightFactorG = 1.f;
+		float lightFactorB = 1.f;
+
+		if (Control_center_destroyed) {
+			
+			lightFactorB = timeWithinSecond;
+			if (lightFactorB > 0.5f)
+				lightFactorB = 1 - lightFactorB;
+
+			lightFactorG = lightFactorB = sinf(lightFactorB * 3.1415926536f);
+			lightFactorR = sqrtf(lightFactorB) * 0.75f + 0.25f;
+
+		}
+
 		SideDrawKey k {
 			&rendererState.tpages[tp1.first],
 			&rendererState.tpages[tp2.first],
@@ -1974,7 +2206,7 @@ namespace HRender {
 			std::vector<SideDrawCall>& calls = sideDrawCalls[k];
 
 			//TODO lock the vector
-			calls.emplace_back([tp1, tp2, segno, sideno](SDL_GPUCommandBuffer* combuf) {
+			calls.emplace_back([tp1, tp2, segno, sideno, lightFactorR, lightFactorG, lightFactorB](SDL_GPUCommandBuffer* combuf) {
 
 				if (rendererState.drawCallObjID != -1) {
 					UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_ANIM);
@@ -1987,10 +2219,31 @@ namespace HRender {
 				const auto& sideverts = Side_to_verts[sideno];
 
 				int vertStart = worldVertices.size();
-
+				
 				for (int i = 0; i < MAX_VERTICES_PER_POLY; i++) {
 
 					auto& vert = Vertices[segment.verts[sideverts[i]]];
+
+					float lightR, lightG, lightB;
+					lightR = lightG = lightB = f2fl(side.uvls[i].l);
+
+					if (cheatValues[CI_RAVE]) {
+
+						SDL_srand((uint64_t)vert.x * 0xFFFF + (uint64_t)vert.y * 0x00FF + vert.z + GameTime);
+
+						lightR = sqrtf(lightR);
+						lightG = sqrtf(lightG);
+						lightB = sqrtf(lightB);
+
+						lightR *= SDL_randf() * 2.f;
+						lightG *= SDL_randf() * 2.f;
+						lightB *= SDL_randf() * 2.f;
+
+					} 
+					
+					lightR *= lightFactorR;
+					lightG *= lightFactorG;
+					lightB *= lightFactorB;
 
 					worldVertices.emplace_back(WorldVertex {
 						.pos = {
@@ -2009,12 +2262,12 @@ namespace HRender {
 							((side.tmap_num2 & 0xC000) >> 14) & 3
 						},
 						.colormod = {
-							f2fl(side.uvls[i].l),
-							f2fl(side.uvls[i].l),
-							f2fl(side.uvls[i].l),
+							lightR,
+							lightG,
+							lightB,
 							1.f
 						}
-						});
+					});
 
 				}
 
@@ -2067,11 +2320,11 @@ namespace HRender {
 			.cycle = true
 		};
 
-		if (rendererState.activeDrawFence) {
+		/*if (rendererState.activeDrawFence) {
 			SDL_WaitForGPUFences(rendererState.device, false, &rendererState.activeDrawFence, 1);
 			SDL_ReleaseGPUFence(rendererState.device, rendererState.activeDrawFence);
 			rendererState.activeDrawFence = NULL;
-		}
+		}*/
 
 		if (ExtGameStatus == GAMESTAT_RUNNING && mineRenderingReady) {
 
@@ -2093,7 +2346,27 @@ namespace HRender {
 			SDL_ReleaseGPUFence(rendererState.device, portalFences[1]);
 			SDL_ReleaseGPUFence(rendererState.device, portalFences[2]);
 			
-			DispatchMineDrawCalls();
+			SDL_GPUCommandBuffer* mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+			SDL_GPURenderPass* mainRenderPass = SDL_BeginGPURenderPass(mainCommandBuffer, &rendererState.mainCTarget, 1, &rendererState.mainDTarget);
+
+			SDL_GPUCommandBuffer* mainCopyBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
+			SDL_GPUCopyPass* mainCopyPass = SDL_BeginGPUCopyPass(mainCopyBuffer);
+
+			DispatchMineDrawCalls(mainCommandBuffer, mainRenderPass, mainCopyPass);
+
+			for (auto& call : modelDrawCalls) {
+				auto& [tp, _, __] = call.first;
+				UploadTexturePage(tp, mainCopyPass);
+				SDL_PushGPUFragmentUniformData(mainCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
+				for (auto& Draw : call.second)
+					Draw(mainCommandBuffer, mainRenderPass, mainCopyPass);
+			}
+
+			SDL_EndGPUCopyPass(mainCopyPass);
+			SDL_SubmitGPUCommandBuffer(mainCopyBuffer);
+
+			SDL_EndGPURenderPass(mainRenderPass);
+			SDL_SubmitGPUCommandBuffer(mainCommandBuffer);
 
 			SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
 
@@ -2118,8 +2391,15 @@ namespace HRender {
 
 		}
 
-		rendererState.activeDrawFence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
+		//rendererState.activeDrawFence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
+		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
 		rendererState.mainCommandBuffer = NULL;
+
+		for (auto& tex : textureFreeQueue) {
+			SDL_ReleaseGPUTexture(rendererState.device, tex);
+		}
+
+		textureFreeQueue.clear();
 
 	}
 

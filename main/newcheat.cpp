@@ -149,7 +149,7 @@ void InitializeCheats() {
     allCheats[i++] = NewCheat("ironskin", 8); 
     allCheats[i++] = NewCheat("stargazer", 9);
     allCheats[i++] = NewCheat("ahayweh", 7); 
-    allCheats[i++] = NewCheat("vertigo", 7); //Drunk shader
+    allCheats[i++] = NewCheat("vertigo", 7); //Rave shader
     allCheats[i++] = NewCheat("firebrand", 9); 
     allCheats[i++] = NewCheat("whosyodaddy", 11);
 
@@ -317,6 +317,12 @@ bool CheckCheats(char newKeyIn) {
         case CI_FPS:
             cheatValues[CI_FPS] = !cheatValues[CI_FPS];
 
+            return true;
+        break;
+
+        case CI_RAVE:
+            cheatValues[CI_RAVE] = !cheatValues[CI_RAVE];
+        
             return true;
         break;
 

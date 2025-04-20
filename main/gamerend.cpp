@@ -836,6 +836,14 @@ std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* 
 					continue;
 
 				HRender::RenderSide(window, segnum, i);
+
+				int objnum = seg->objects;
+				while (objnum >= 0) {
+					if (&Objects[objnum] != ConsoleObject)
+						HRender::RenderObject(window, segnum, objnum);
+					objnum = Objects[objnum].next;
+				}
+
 			}
 		}
 
