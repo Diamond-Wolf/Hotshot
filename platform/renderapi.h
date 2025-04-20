@@ -62,6 +62,7 @@ namespace HRender {
 	void RenderScreenBitmap(grs_bitmap* bitmap);
 
 	void RenderSide(const ViewTarget target, const int segno, const int sideno);
+	void RenderObject(const ViewTarget target, const int segno, const int objno);
 
 	void EndRenderFrame();
 

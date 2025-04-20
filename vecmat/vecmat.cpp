@@ -210,7 +210,7 @@ fix vm_vec_dist(vms_vector* v0, vms_vector* v1)
 
 //computes an approximation of the magnitude of the vector
 //uses dist = largest + next_largest*3/8 + smallest*3/16
-fix vm_vec_mag_quick(vms_vector* v)
+fix vm_vec_mag_quick(const vms_vector* v)
 {
 	fix a, b, c, bc;
 

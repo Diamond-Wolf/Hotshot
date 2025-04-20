@@ -1,7 +1,21 @@
 /*
-The code contained in this file is not the property of Parallax Software,
-and is not under the terms of the Parallax Software Source license.
-Instead, it is released under the terms of the MIT License.
+Except for portions of the polymodel code, the code contained in this file 
+is not the property of Parallax Software, and is not under the terms of the
+Parallax Software Source license. Instead, it is released under the terms
+of the MIT License.
+
+The polymodel code is subject to the Parallax Software Sourece license:
+
+THE COMPUTER CODE CONTAINED HEREIN IS THE SOLE PROPERTY OF PARALLAX
+SOFTWARE CORPORATION ("PARALLAX").  PARALLAX, IN DISTRIBUTING THE CODE TO
+END-USERS, AND SUBJECT TO ALL OF THE TERMS AND CONDITIONS HEREIN, GRANTS A
+ROYALTY-FREE, PERPETUAL LICENSE TO SUCH END-USERS FOR USE BY SUCH END-USERS
+IN USING, DISPLAYING,  AND CREATING DERIVATIVE WORKS THEREOF, SO LONG AS
+SUCH USE, DISPLAY OR CREATION IS FOR NON-COMMERCIAL, ROYALTY OR REVENUE
+FREE PURPOSES.  IN NO EVENT SHALL THE END-USER USE THE COMPUTER CODE
+CONTAINED HEREIN FOR REVENUE-BEARING PURPOSES.  THE END-USER UNDERSTANDS
+AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.
+COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 //#define MOCK_FUTURE
@@ -18,6 +32,7 @@ Instead, it is released under the terms of the MIT License.
 
 #include "2d/gr.h"
 #include "2d/rle.h"
+#include "main/polyobj.h"
 #include "cfile/cfile.h"
 #include "main/inferno.h"
 #include "misc/error.h"
@@ -29,10 +44,13 @@ Instead, it is released under the terms of the MIT License.
 #include "main/gamestat.h"
 #include "main/gauges.h"
 #include "main/bm.h"
-
+#include "main/player.h"
+#include "3d/globvars.h"
 
 #ifndef MOCK_FUTURE
 #include <future>
+#include <main/endlevel.h>
+#include <main/ai.h>
 #else
 namespace std {
 
@@ -76,6 +94,32 @@ namespace std {
 }
 #endif
 
+constexpr fix MAX_VELOCITY = i2f(50);
+
+#define OP_EOF				0	//eof
+#define OP_DEFPOINTS		1	//defpoints
+#define OP_FLATPOLY		2	//flat-shaded polygon
+#define OP_TMAPPOLY		3	//texture-mapped polygon
+#define OP_SORTNORM		4	//sort by normal
+#define OP_RODBM			5	//rod bitmap
+#define OP_SUBCALL		6	//call a subobject
+#define OP_DEFP_START	7	//defpoints with start
+#define OP_GLOW			8	//glow value for next poly
+
+#define w(p)  (*((short *) (p)))
+#define wp(p)  ((short *) (p))
+#define vp(p)  ((vms_vector *) (p))
+
+std::vector<g3s_point> Interp_point_list;
+std::vector<g3s_point*> point_list;
+
+struct InterpColor {
+	short pal_entry;
+	unsigned short rgb15;
+};
+std::vector<InterpColor> interp_color_table; 
+
+const vms_angvec zero_angles = { 0,0,0 };
 
 #ifdef NDEBUG
 # define ENABLE_SDL_DEBUG false
@@ -127,8 +171,9 @@ namespace HRender {
 
 	struct WorldVertex {
 		float pos[3];
-		float uvl[3];
+		float uv[2];
 		int32_t props[4];
+		float colormod[4];
 	};
 
 	typedef float (mat4f[4])[4];
@@ -303,12 +348,14 @@ namespace HRender {
 	} rendererState;
 
 	//typedef void(*drawcall)();
-	typedef std::function<void(SDL_GPUCommandBuffer*)> drawcall;
-	typedef std::tuple<TexturePage*, TexturePage*, ViewTarget> drawkey;
+	typedef std::function<void(SDL_GPUCommandBuffer*)> SideDrawCall;
+	typedef std::tuple<TexturePage*, TexturePage*, ViewTarget> SideDrawKey;
+
+	typedef std::function<void(SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass)> ObjDrawCall;
 
 	struct dkeyCompare {
 
-		bool operator()(const drawkey a, const drawkey b) const {
+		bool operator()(const SideDrawKey a, const SideDrawKey b) const {
 			const auto& [primary1, secondary1, view1] = a;
 			const auto& [primary2, secondary2, view2] = b;
 
@@ -328,8 +375,6 @@ namespace HRender {
 
 	};
 	
-	//union num32 { float f; int32_t i; };
-
 	std::vector<WorldVertex> worldVertices;
 	std::vector<uint32_t> worldIndices;
 
@@ -340,8 +385,11 @@ namespace HRender {
 	const std::launch ASYNC_POLICY = std::launch::deferred;
 	const SDL_GPUTextureFormat TEXTURE_FORMAT = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
 
-	std::map<drawkey, std::vector<drawcall>, dkeyCompare> worldDrawCalls;
-	std::mutex drawCallMutex;
+	std::map<SideDrawKey, std::vector<SideDrawCall>, dkeyCompare> sideDrawCalls;
+	std::mutex sideDrawCallMutex;
+
+	std::map<ViewTarget, std::vector<ObjDrawCall>> objDrawCalls;
+	std::mutex objDrawCallMutex;
 
 	void UploadTexturePage(TexturePage* page, SDL_GPUCopyPass* cpass, const bool secondary = false);
 
@@ -581,7 +629,7 @@ namespace HRender {
 			SDL_ReleaseGPUTexture(rendererState.device, rendererState.leftDTarget.texture);
 		}
 
-		static SDL_GPUTextureCreateInfo tciC {
+		SDL_GPUTextureCreateInfo tciC {
 			.type = SDL_GPU_TEXTURETYPE_2D,
 			.format = TEXTURE_FORMAT,
 			.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,
@@ -591,7 +639,7 @@ namespace HRender {
 			.num_levels = 1,
 		};
 
-		static SDL_GPUTextureCreateInfo tciD {
+		SDL_GPUTextureCreateInfo tciD {
 			.type = SDL_GPU_TEXTURETYPE_2D,
 			.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
 			.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
@@ -735,7 +783,7 @@ namespace HRender {
 
 	void InitWorldRendering(SDL_GPUCopyPass* cpass) {
 
-		rendererState.worldPipeline = CreateGraphicsPipeline<1, 3>(rendererState.worldVert, rendererState.worldFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+		rendererState.worldPipeline = CreateGraphicsPipeline<1, 4>(rendererState.worldVert, rendererState.worldFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 			std::array { SDL_GPUVertexBufferDescription {
 				.slot = 0,
 				.pitch = (uint32_t)sizeof(WorldVertex),
@@ -751,13 +799,18 @@ namespace HRender {
 			}, SDL_GPUVertexAttribute {
 				.location = 1,
 				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-				.offset = (uint32_t)offsetof(WorldVertex, uvl),
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+				.offset = (uint32_t)offsetof(WorldVertex, uv),
 			}, SDL_GPUVertexAttribute {
 				.location = 2,
 				.buffer_slot = 0,
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_INT4,
 				.offset = (uint32_t)offsetof(WorldVertex, props),
+			}, SDL_GPUVertexAttribute {
+				.location = 3,
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+				.offset = (uint32_t)offsetof(WorldVertex, colormod),
 			} },
 		true, false);
 
@@ -765,6 +818,9 @@ namespace HRender {
 			Error("Error creating world pipeline: %s", SDL_GetError());
 		}
 
+		Interp_point_list.resize(1000);
+		point_list.resize(25);
+		interp_color_table.resize(100);
 	}
 
 	int InitRenderAPI() {
@@ -1083,7 +1139,7 @@ namespace HRender {
 
 	void PrepareMineRenderFrame() { // TODO: If in game, build and submit portal list. Also, determine if rear view mirrors need textures.
 		
-		worldDrawCalls.clear();
+		sideDrawCalls.clear();
 		InitCommandBuffer();
 
 		rendererState.cloneMode = VCM_NO_CLONE;
@@ -1110,7 +1166,7 @@ namespace HRender {
 			default:
 			case CM_FULL_SCREEN:
 			case CM_REAR_VIEW:
-				aspect = rendererState.renderWidth / rendererState.renderHeight;
+				aspect = (float)rendererState.renderWidth / rendererState.renderHeight;
 				UpdateMainView(aspect);
 			break;
 			
@@ -1411,7 +1467,7 @@ namespace HRender {
 		
 		SDL_BindGPUGraphicsPipeline(mainRenderPass, rendererState.worldPipeline);
 		
-		for (auto& cp : worldDrawCalls) {
+		for (auto& cp : sideDrawCalls) {
 
 			const auto& [newPrimary, newSecondary, newView] = cp.first;
 
@@ -1495,6 +1551,397 @@ namespace HRender {
 
 	}
 
+	void EmplaceObjCall(const ViewTarget target, ObjDrawCall& call) {
+		
+		std::lock_guard g(objDrawCallMutex);
+
+		if (objDrawCalls.count(target) == 0) {
+			objDrawCalls[target] = std::vector<ObjDrawCall>();
+		}
+
+		std::vector<ObjDrawCall>& calls = objDrawCalls[target];
+
+		calls[target] = call;
+
+	}
+
+#pragma region Based on g3 model code
+	void rotate_point_list(g3s_point* dest, vms_vector* src, int n)
+	{
+		while (n--)
+			g3_rotate_point(dest++, src++);
+	}
+
+	void RenderPolymodelSub(const void* model_ptr, const std::vector<grs_bitmap*>& model_bitmaps, const vms_angvec anim_angles[], const fix model_light, const fix glow_values[]) {
+	
+		uint8_t* p = (uint8_t*)model_ptr;
+		int current_poly = 0;
+
+		int glow_num = -1;		//glow off by default
+
+		int loop = 0;
+
+		while (w(p) != OP_EOF)
+
+			switch (w(p))
+			{
+
+			case OP_DEFPOINTS:
+			{
+				int n = w(p + 2);
+				if (n > Interp_point_list.size())
+					Interp_point_list.resize(n);
+				rotate_point_list(Interp_point_list.data(), vp(p + 4), n);
+				p += n * sizeof(struct vms_vector) + 4;
+				break;
+			}
+
+			case OP_DEFP_START:
+			{
+				int n = w(p + 2);
+				int s = w(p + 4);
+
+				if (s + n > Interp_point_list.size())
+					Interp_point_list.resize(s + n);
+				rotate_point_list(Interp_point_list.data() + s, vp(p + 8), n);
+				p += n * sizeof(struct vms_vector) + 8;
+
+				break;
+			}
+
+			case OP_FLATPOLY:
+			{
+				int light = 0;
+				InterpColor color;
+				int nv = w(p + 2); 
+
+				//Assert(nv < MAX_POINTS_PER_POLY);
+				if (nv < point_list.size())
+					point_list.resize(nv);
+
+				if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
+				{
+					int i;
+					if (currentGame == G_DESCENT_2) {
+						color = interp_color_table[w(p + 28)];
+						if (glow_num != -1)
+						{
+							light = glow_values[glow_num];
+							glow_num = -1;
+							if (light == -2)
+								color = {
+									.pal_entry = 255,
+									.rgb15 = 0xffff
+								};
+						}
+					}
+					else {
+						color = interp_color_table[w(p + 28)];
+					}
+
+					if (light != -3)
+					{
+						gr_setcolor(drawindex);
+
+						for (i = 0; i < nv; i++)
+							point_list[i] = Interp_point_list.data() + wp(p + 30)[i];
+						g3_draw_poly(nv, point_list.data());
+					}
+				}
+
+				p += 30 + ((nv & ~1) + 1) * 2;
+				break;
+			}
+
+			case OP_TMAPPOLY:
+			{
+				int nv = w(p + 2);
+				g3s_uvl* uvl_list;
+
+				//Assert(nv < MAX_POINTS_PER_POLY);
+				if (nv < point_list.size())
+					point_list.resize(nv);
+
+				if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
+				{
+					int i;
+					fix light;
+
+					//calculate light from surface normal
+
+					if (glow_num < 0) //no glow
+					{
+						light = -vm_vec_dot(&View_matrix.fvec, vp(p + 16));
+						light = f1_0 / 4 + (light * 3) / 4;
+						light = fixmul(light, model_light);
+					}
+					else //yes glow
+					{
+						light = glow_values[glow_num];
+						glow_num = -1;
+					}
+
+					//now poke light into l values
+
+					uvl_list = (g3s_uvl*)(p + 30 + ((nv & ~1) + 1) * 2);
+
+					for (i = 0; i < nv; i++) {
+						uvl_list[i].l = light;
+						point_list[i] = Interp_point_list.data() + wp(p + 30)[i];
+					}
+
+					g3_draw_tmap(nv, point_list.data(), uvl_list, model_bitmaps[w(p + 28)]);
+				}
+
+				p += 30 + ((nv & ~1) + 1) * 2 + nv * 12;
+
+				break;
+			}
+
+			case OP_SORTNORM:
+
+				if (g3_check_normal_facing(vp(p + 16), vp(p + 4)) > 0) //facing
+				{
+					//draw back then front
+					RenderPolymodelSub(p + w(p + 30), model_bitmaps, anim_angles, model_light, glow_values);
+					RenderPolymodelSub(p + w(p + 28), model_bitmaps, anim_angles, model_light, glow_values);
+				}
+				else //not facing.  draw front then back
+				{
+					RenderPolymodelSub(p + w(p + 28), model_bitmaps, anim_angles, model_light, glow_values);
+					RenderPolymodelSub(p + w(p + 30), model_bitmaps, anim_angles, model_light, glow_values);
+				}
+
+				p += 32;
+				break;
+
+			case OP_RODBM:
+			{
+				g3s_point rod_bot_p, rod_top_p;
+
+				g3_rotate_point(&rod_bot_p, vp(p + 20));
+				g3_rotate_point(&rod_top_p, vp(p + 4));
+
+				g3_draw_rod_tmap(model_bitmaps[w(p + 2)], &rod_bot_p, w(p + 16), &rod_top_p, w(p + 32), f1_0);
+
+				p += 36;
+				break;
+			}
+
+			case OP_SUBCALL:
+			{
+				const vms_angvec* a;
+
+				if (anim_angles)
+					a = anim_angles + w(p + 2);
+				else
+					a = &zero_angles;
+
+				vms_angvec ac = *a;
+
+				g3_start_instance_angles(vp(p + 4), &ac);
+				RenderPolymodelSub(p + w(p + 16), model_bitmaps, anim_angles, model_light, glow_values);
+				g3_done_instance();
+				p += 20;
+				break;
+			}
+
+			case OP_GLOW:
+
+				if (glow_values)
+					glow_num = w(p + 2);
+				p += 4;
+				break;
+
+			default:
+				Int3();
+			}
+
+	}
+#pragma endregion
+
+	void RenderPolymodel(const int segno, const object& object, const vms_angvec anim_angles[], const int model_num, const int flags, const fix light, const short textureOverride, float visibility) {
+	
+		const vms_vector& pos = object.pos;
+		const vms_matrix& orient = object.orient;
+
+		polymodel& model = activeBMTable->models[model_num];
+
+		thread_local std::vector<grs_bitmap*> bitmaps;
+		bitmaps.reserve(100);
+
+		if (textureOverride >= 0) {
+
+			for (int i = 0; i < model.n_textures; i++) {
+				bitmaps.push_back(&activePiggyTable->gameBitmaps[textureOverride]);
+			}
+
+		} else {
+
+			for (int i = 0; i < model.n_textures; i++) {
+				bitmaps.push_back(&activePiggyTable->gameBitmaps[activeBMTable->objectBitmaps[activeBMTable->objectBitmapPointers[model.first_texture + i]].index]);
+			}
+
+		}
+
+		fix glow[2] {
+			f1_0 / 5,
+			0
+		};
+
+		if (object.movement_type == MT_PHYSICS)
+		{
+			if (object.mtype.phys_info.flags & PF_USES_THRUST && object.type == OBJ_PLAYER && object.id == Player_num)
+			{
+				fix thrust_mag = vm_vec_mag_quick(&object.mtype.phys_info.thrust);
+				glow[0] += (fixdiv(thrust_mag, Player_ship->max_thrust) * 4) / 5;
+			}
+			else
+			{
+				fix speed = vm_vec_mag_quick(&object.mtype.phys_info.velocity);
+				glow[0] += (fixdiv(speed, MAX_VELOCITY) * 3) / 5;
+			}
+		}
+
+		//set value for player headlight
+		if (object.type == OBJ_PLAYER)
+		{
+			if (Players[object.id].flags & PLAYER_FLAGS_HEADLIGHT && !Endlevel_sequence)
+				if (Players[object.id].flags & PLAYER_FLAGS_HEADLIGHT_ON)
+					glow[1] = -2;		//draw white!
+				else
+					glow[1] = -1;		//draw normal color (grey)
+			else
+				glow[1] = -3;			//don't draw
+		}
+
+		RenderPolymodelSub(model.model_data, bitmaps, anim_angles, light, glow);
+
+		bitmaps.clear();
+	
+	}
+
+	void RenderPolyObj(const object& object, const int segno, const float visibility) {
+		
+		const polyobj_info& pinf = object.rtype.pobj_info; 
+
+		short override = -1;
+		if (pinf.tmap_override >= 0) {
+			override = activeBMTable->textures[pinf.tmap_override].index;
+		}
+
+		RenderPolymodel(segno, object, pinf.anim_angles, pinf.model_num, 0, F1_0, override, visibility);
+
+	}
+	
+	void RenderObject(const ViewTarget target, const int segno, const int objno) {
+
+		const object& object = Objects[objno];
+		uint8_t rtypeid = object.render_type;
+
+		ObjDrawCall call; 
+
+		switch (rtypeid) {
+
+			case RT_POLYOBJ: {
+
+				float visibility = (object.type == OBJ_PLAYER && Players[object.id].flags & PLAYER_FLAGS_CLOAKED) ? 0.f : 1.f;
+
+				if (object.type == OBJ_ROBOT) {
+					
+					const ai_static& ais = object.ctype.ai_info;
+					const ai_local& ail = Ai_local_info[objno];
+				
+					if (ais.CLOAKED == RI_CLOAKED_ALWAYS)
+						visibility = 0.f;
+					else if (ais.CLOAKED == RI_CLOAKED_EXCEPT_FIRING)
+						visibility = 0.f; //TODO: scale by fire time
+					
+				}
+
+				RenderPolyObj(object, segno, visibility);
+				break;
+
+			}
+
+			case RT_POWERUP: {
+
+				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+
+
+				};
+
+				break;
+
+			}
+
+			case RT_FIREBALL: {
+
+				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+
+
+				};
+
+				break;
+
+			}
+
+			case RT_HOSTAGE: {
+
+				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+
+
+				};
+
+				break;
+
+			}
+
+			case RT_LASER: {
+
+				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+
+
+				};
+
+				break;
+
+			}
+
+			case RT_MORPH: {
+
+				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+
+
+				};
+
+				break;
+
+			}
+
+			case RT_WEAPON_VCLIP: {
+
+				call = [objno, rtypeid](SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+
+
+				};
+
+				break;
+
+			}
+
+		}
+
+		EmplaceObjCall(target, call);
+
+	}
+
 	void RenderSide(const ViewTarget target, const int segno, const int sideno) {
 
 		const segment& segment = Segments[segno];
@@ -1511,20 +1958,20 @@ namespace HRender {
 		auto& tp1 = rendererState.tpageLocations[texind1];
 		auto& tp2 = rendererState.tpageLocations[texind2];
 
-		drawkey k {
+		SideDrawKey k {
 			&rendererState.tpages[tp1.first],
 			&rendererState.tpages[tp2.first],
 			target
 		};
 
 		{
-			std::lock_guard g(drawCallMutex);
+			std::lock_guard g(sideDrawCallMutex);
 
-			if (worldDrawCalls.count(k) == 0) {
-				worldDrawCalls[k] = std::vector<drawcall>();
+			if (sideDrawCalls.count(k) == 0) {
+				sideDrawCalls[k] = std::vector<SideDrawCall>();
 			}
 
-			std::vector<drawcall>& calls = worldDrawCalls[k];
+			std::vector<SideDrawCall>& calls = sideDrawCalls[k];
 
 			//TODO lock the vector
 			calls.emplace_back([tp1, tp2, segno, sideno](SDL_GPUCommandBuffer* combuf) {
@@ -1551,10 +1998,9 @@ namespace HRender {
 							f2fl(vert.y),
 							f2fl(vert.z),
 						},
-						.uvl = {
+						.uv = {
 							f2fl(side.uvls[i].u),
 							f2fl(side.uvls[i].v),
-							f2fl(side.uvls[i].l),
 						},
 						.props = {
 							segno,
@@ -1562,6 +2008,12 @@ namespace HRender {
 							(side.tmap_num2 & 0x3ff) != 0 ? tp2.second : -1,
 							((side.tmap_num2 & 0xC000) >> 14) & 3
 						},
+						.colormod = {
+							f2fl(side.uvls[i].l),
+							f2fl(side.uvls[i].l),
+							f2fl(side.uvls[i].l),
+							1.f
+						}
 						});
 
 				}

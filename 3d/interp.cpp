@@ -38,7 +38,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 short	highest_texture_num;
 int	g3d_interp_outline;
 
-g3s_point* Interp_point_list = NULL;
+static g3s_point* Interp_point_list = NULL;
 
 #define MAX_INTERP_COLORS 100
 

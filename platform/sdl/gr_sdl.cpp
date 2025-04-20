@@ -210,8 +210,8 @@ void plat_toggle_fullscreen()
 
 void plat_update_window()
 {
-	//SDL_SetWindowSize(gameWindow, WindowWidth, WindowHeight);
-	//SDL_SetWindowPosition(gameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+	SDL_SetWindowSize(gameWindow, WindowWidth, WindowHeight);
+	SDL_SetWindowPosition(gameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
 	HRender::ResizeWindow();
 
@@ -285,7 +285,7 @@ int plat_set_gr_mode(int mode)
 		return 0;
 	}
 
-	HRender::ResizeRenderTarget(w, h);
+	//HRender::ResizeRenderTarget(w, h);
 
 	//[ISB] this should hopefully fix all instances of the screen flashing white when changing modes
 	plat_write_palette(0, 255, gr_palette);
