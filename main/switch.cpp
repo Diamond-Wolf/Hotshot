@@ -253,9 +253,9 @@ int do_change_walls(int8_t trigger_num)
 
 			if (type & HTT_OPEN_WALL)
 				new_wall_type = WALL_OPEN;
-			else if (new_wall_type & HTT_ILLUSORY_WALL)
+			else if (type & HTT_ILLUSORY_WALL)
 				new_wall_type = WALL_ILLUSION;
-			else if (new_wall_type & HTT_CLOSE_WALL)
+			else if (type & HTT_CLOSE_WALL)
 				new_wall_type = WALL_CLOSED;
 
 			if (Walls[segp->sides[side].wall_num].type == new_wall_type && Walls[csegp->sides[cside].wall_num].type == new_wall_type)
