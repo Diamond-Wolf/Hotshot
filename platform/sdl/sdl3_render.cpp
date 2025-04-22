@@ -111,8 +111,8 @@ constexpr fix MAX_VELOCITY = i2f(50);
 #define wp(p)  ((short *) (p))
 #define vp(p)  ((vms_vector *) (p))
 
-std::vector<g3s_point> Interp_point_list;
-std::vector<g3s_point*> point_list;
+thread_local std::vector<g3s_point> Interp_point_list;
+thread_local std::vector<g3s_point*> point_list;
 
 struct InterpColor {
 	short pal_entry;
@@ -1377,7 +1377,7 @@ namespace HRender {
 			if (rendererState.drawTransferBuffer.memoryMap)
 				FreeTransferBuffer(rendererState.drawTransferBuffer);
 
-			uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 8;
+			uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 12;
 			if (msize < vsize + isize) {
 				Int3(); //Shouldn't ever happen, but just to be safe...
 				msize = vsize + isize;
@@ -1558,7 +1558,13 @@ namespace HRender {
 			g3_rotate_point(dest++, src++);
 	}
 
-	void RenderPolymodelSub(const ViewTarget target, const int segno, const void* model_ptr, const std::vector<grs_bitmap*>& model_bitmaps, const std::vector<short>& bitmapIDs, const vms_angvec anim_angles[], const fix model_light, const fix glow_values[], const vms_vector* parentOrigin, const vms_matrix* parentRotation) {
+	/*bool CheckNormal(vms_vector* pt, vms_vector* norm) {
+		
+
+
+	}*/
+	
+	void RenderPolymodelSub(const ViewTarget target, const int segno, const void* model_ptr, const std::vector<grs_bitmap*>& model_bitmaps, const std::vector<short>& bitmapIDs, const vms_angvec anim_angles[], const fix model_light, const fix glow_values[], const vms_vector* origin, const vms_matrix* rotation) {
 	
 		uint8_t* p = (uint8_t*)model_ptr;
 		int current_poly = 0;
@@ -1577,8 +1583,16 @@ namespace HRender {
 				int n = w(p + 2);
 				if (n > Interp_point_list.size())
 					Interp_point_list.resize(n);
-				//rotate_point_list(Interp_point_list.data(), vp(p + 4), n);
-				memcpy(Interp_point_list.data(), vp(p + 4), n * sizeof(g3s_point));
+
+				vms_vector* v = vp(p + 4);
+				
+				for (int i = 0; i < n; i++) {
+					Interp_point_list[i] = {
+						.p3_vec = *v
+					};
+					v++;
+				}
+
 				p += n * sizeof(struct vms_vector) + 4;
 				break;
 			}
@@ -1590,8 +1604,16 @@ namespace HRender {
 
 				if (s + n > Interp_point_list.size())
 					Interp_point_list.resize(s + n);
-				//rotate_point_list(Interp_point_list.data() + s, vp(p + 8), n);
-				memcpy(Interp_point_list.data() + s, vp(p + 8), n * sizeof(g3s_point));
+				
+				vms_vector* v = vp(p + 8);
+
+				for (int i = 0; i < n; i++) {
+					Interp_point_list[i + s] = {
+						.p3_vec = *v
+					};
+					v++;
+				}
+
 				p += n * sizeof(struct vms_vector) + 8;
 
 				break;
@@ -1608,7 +1630,7 @@ namespace HRender {
 				if (nv > point_list.size())
 					point_list.resize(nv);
 
-				if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
+				//if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
 				{
 					int i;
 					if (currentGame == G_DESCENT_2) {
@@ -1651,7 +1673,7 @@ namespace HRender {
 				if (nv < point_list.size())
 					point_list.resize(nv);
 
-				if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
+				//if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
 				{
 					int i;
 					fix light;
@@ -1677,13 +1699,16 @@ namespace HRender {
 					g3s_point* verts = new g3s_point[nv];
 
 					for (i = 0; i < nv; i++) {
-						uvl_list[i].l = light;
 						verts[i] = Interp_point_list[wp(p + 30)[i]];
+						//uvl_list[i].l = light;
+						verts[i].p3_u = uvl_list[i].u;
+						verts[i].p3_v = uvl_list[i].v;
+						verts[i].p3_l = light;
 					}
 
 					short texind = w(p + 28);
 
-					auto& tp = rendererState.tpageLocations[texind];
+					auto& tp = rendererState.tpageLocations[bitmapIDs[texind]];
 
 					SideDrawKey k {
 							&rendererState.tpages[tp.first],
@@ -1701,8 +1726,8 @@ namespace HRender {
 
 						std::vector<ObjDrawCall>& calls = modelDrawCalls[k];
 
-						const vms_vector& pos = *parentOrigin;
-						const vms_matrix& rot = *parentRotation;
+						const vms_vector& pos = *origin;
+						const vms_matrix& rot = *rotation;
 
 						calls.emplace_back([tp, segno, verts, nv, light, pos, rot](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
@@ -1712,13 +1737,13 @@ namespace HRender {
 
 								memcpy(matrix, M4_IDENTITY_MATRIX, sizeof(matrix));
 
-								/*for (int m = 0; m < 3; m++) {
+								for (int m = 0; m < 3; m++) {
 									for (int n = 0; n < 3; n++) {
-										matrix[m][n] = f2fl((*parentRotation)[m][n]);
+										matrix[m][n] = f2fl(rot[m][n]);
 									}
 
-									matrix[m][3] = f2fl((*parentOrigin)[m]);
-								}*/
+									matrix[3][m] = f2fl(pos[m]);
+								}
 
 								UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_ANIM);
 								UploadVertexMatrix(combuf, &matrix, MID_MODEL);
@@ -1803,7 +1828,7 @@ namespace HRender {
 								if (rendererState.drawTransferBuffer.memoryMap)
 									FreeTransferBuffer(rendererState.drawTransferBuffer);
 
-								uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 8;
+								uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 16;
 								if (msize < vsize + isize) {
 									Int3(); //Shouldn't ever happen, but just to be safe...
 									msize = vsize + isize;
@@ -1889,7 +1914,7 @@ namespace HRender {
 
 			case OP_SORTNORM:
 
-				vms_matrix mat;
+				/*vms_matrix mat;
 				vms_matrix rotated;
 
 				if (anim_angles)
@@ -1898,20 +1923,20 @@ namespace HRender {
 					mat = IDENTITY_MATRIX;
 
 				vms_vector pos = *vp(p + 4);
-				vm_vec_add2(&pos, parentOrigin);
+				vm_vec_add2(&pos, parentOrigin);*/
 
 				//Hardware will handle sorting now
 
 				//if (g3_check_normal_facing(vp(p + 16), vp(p + 4)) > 0) //facing
 				//{
 					//draw back then front
-				RenderPolymodelSub(target, segno, p + w(p + 30), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
-				RenderPolymodelSub(target, segno, p + w(p + 28), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
+				RenderPolymodelSub(target, segno, p + w(p + 30), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, origin, rotation);
+				RenderPolymodelSub(target, segno, p + w(p + 28), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, origin, rotation);
 				/*}
 				else //not facing.  draw front then back
 				{
-					RenderPolymodelSub(target, p + w(p + 28), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, parentRotation));
-					RenderPolymodelSub(target, p + w(p + 30), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, parentRotation));
+					RenderPolymodelSub(target, segno, p + w(p + 28), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
+					RenderPolymodelSub(target, segno, p + w(p + 30), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
 				}*/
 
 				p += 32;
@@ -1919,8 +1944,6 @@ namespace HRender {
 
 			case OP_RODBM:
 			{
-
-				break;
 
 				g3s_point rod_bot_p, rod_top_p;
 
@@ -1936,17 +1959,20 @@ namespace HRender {
 			case OP_SUBCALL:
 			{
 				vms_matrix mat;
-				vms_matrix rotated;
+				vms_matrix rmat;
 
 				if (anim_angles)
 					vm_angles_2_matrix(&mat, const_cast<vms_angvec*>(anim_angles) + w(p + 2));
 				else
 					mat = IDENTITY_MATRIX;
 				
-				vms_vector pos = *vp(p + 4);
-				vm_vec_add2(&pos, parentOrigin);
+				vms_vector* mpos = vp(p + 4);
+				vms_vector rpos;
+				vm_copy_transpose_matrix(&rmat, const_cast<vms_matrix*>(rotation));
+				vm_vec_rotate(&rpos, mpos, &rmat);
+				vm_vec_add2(&rpos, origin);
 
-				RenderPolymodelSub(target, segno, p + w(p + 16), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &pos, vm_matrix_x_matrix(&rotated, &mat, const_cast<vms_matrix*>(parentRotation)));
+				RenderPolymodelSub(target, segno, p + w(p + 16), model_bitmaps, bitmapIDs, anim_angles, model_light, glow_values, &rpos, vm_matrix_x_matrix(&rmat, &mat, const_cast<vms_matrix*>(rotation)));
 				
 				p += 20;
 				break;
