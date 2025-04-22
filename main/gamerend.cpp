@@ -823,17 +823,23 @@ std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* 
 		for (short segnum : segments) {
 			const segment* seg = &Segments[segnum];
 			for (int i = 0; i < MAX_SIDES_PER_SEGMENT; i++) {
+
 				short child = seg->children[i];
 				if (child == -2)
 					continue;
 
 				const side* side = &seg->sides[i];
-				if (child >= 0 && (side->wall_num < 0 || side->wall_num >= Walls.size()))
-					continue;
+				
+				if (child >= 0) {
 
-				wall& wall = Walls[side->wall_num];
-				if (wall.type == WALL_OPEN || wall.type == WALL_ILLUSION_OFF || (wall.type == WALL_CLOAKED && wall.cloak_value == 0))
-					continue;
+					if (side->wall_num < 0 || side->wall_num >= Walls.size())
+						continue;
+
+					wall& wall = Walls[side->wall_num];
+					if (wall.type == WALL_OPEN || wall.type == WALL_ILLUSION_OFF || (wall.type == WALL_CLOAKED && wall.cloak_value == 0))
+						continue;
+
+				}
 
 				HRender::RenderSide(window, segnum, i);
 
