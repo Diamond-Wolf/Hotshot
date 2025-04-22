@@ -797,10 +797,6 @@ const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short 
 			.point = *vm_vec_add(dv, &position, &nearVec),
 			.normal = direction
 		},
-		/*{
-			.point = *vm_vec_add(dv, &position, &farVec),
-			.normal = backVec
-		},*/
 	};
 
 	//traversed[start] = true;
@@ -833,6 +829,10 @@ std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* 
 
 				const side* side = &seg->sides[i];
 				if (child >= 0 && (side->wall_num < 0 || side->wall_num >= Walls.size()))
+					continue;
+
+				wall& wall = Walls[side->wall_num];
+				if (wall.type == WALL_OPEN || wall.type == WALL_ILLUSION_OFF || (wall.type == WALL_CLOAKED && wall.cloak_value == 0))
 					continue;
 
 				HRender::RenderSide(window, segnum, i);
