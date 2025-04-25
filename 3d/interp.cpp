@@ -43,7 +43,7 @@ static g3s_point* Interp_point_list = NULL;
 #define MAX_INTERP_COLORS 100
 
 //this is a table of mappings from RGB15 to palette colors
-struct { short pal_entry, rgb15; } interp_color_table[MAX_INTERP_COLORS];
+static struct { short pal_entry, rgb15; } interp_color_table[MAX_INTERP_COLORS];
 
 int n_interp_colors = 0;
 int uninit_flag = 0;

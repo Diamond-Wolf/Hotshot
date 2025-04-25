@@ -1008,7 +1008,7 @@ void LoadLevel(int level_num, int page_in_textures)
 
 	gr_palette_load(gr_palette);		//actually load the palette
 
-	HRender::GenerateTexturePages();
+	HRender::GeneratePiggyStructs();
 
 //	WIN(HideCursorW());
 }

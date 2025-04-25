@@ -56,7 +56,7 @@ namespace HRender {
 	void SkipGPUPortalList(const ViewTarget target);
 	//TexturePage* CreateTexturePage(grs_bitmap* bitmap);
 	//void FreeTexturePage(TexturePage* page);
-	void GenerateTexturePages();
+	void GeneratePiggyStructs();
 
 	void RenderScreenCanvas(grs_canvas* canvas);
 	void RenderScreenBitmap(grs_bitmap* bitmap);
