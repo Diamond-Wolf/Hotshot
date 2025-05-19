@@ -30,6 +30,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "misc/rand.h"
 #include "render.h"
 #include "newcheat.h"
+#include "mem/mem.h"
 
 extern void init_buddy_for_level();
 extern int Ai_last_missile_camera;

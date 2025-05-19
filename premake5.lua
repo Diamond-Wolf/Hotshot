@@ -103,8 +103,6 @@ workspace "Hotshot"
 			"_WIN32"
 		}
 
-		architecture "x86_64" --isn't this supposed to set the architecture to x86_64? Not "default" which is just regular x86?
-
 	filter { "system:bsd or linux or macosx" }
 		files {
 			"platform/unix/**.cpp",
@@ -116,6 +114,7 @@ workspace "Hotshot"
 			"_UNIX"
 		}
 		
+	filter { "system:macosx" }
 		linkoptions {
 			"-rpath /usr/local/lib"
 		}
@@ -139,8 +138,6 @@ workspace "Hotshot"
 		"SDL3"
 	}
 	
-	filter {}
-	
 	defines {
 		"USE_SDL",
 		"USE_TSFMIDI"
@@ -149,6 +146,9 @@ workspace "Hotshot"
 project "Hotshot"
 
 	defines "BUILD_DESCENT2"
+
+	filter { "system:windows" }
+		architecture "x86_64" --isn't this supposed to set the architecture to x86_64? Not "default" which is just regular x86?
 
 	filter { "options:build-editor" }
 		files {

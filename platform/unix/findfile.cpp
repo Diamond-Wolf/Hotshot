@@ -137,4 +137,4 @@ int	FileFindNext(FILEFINDSTRUCT* ffstruct) {
 
 }
 
-int	FileFindClose(void) {}
+int	FileFindClose(void) { return 0; }
