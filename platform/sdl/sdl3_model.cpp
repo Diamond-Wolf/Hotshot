@@ -14,6 +14,7 @@ COPYRIGHT 1993 - 1999 PARALLAX SOFTWARE CORPORATION.ALL RIGHTS RESERVED.
 #include <cstdint>
 #include <vector>
 #include <bit>
+#include <cmath>
 
 #include "platform/renderapi.h"
 #include "sdl3_render.h"
@@ -42,8 +43,8 @@ typedef polymodel VanillaModel;
 #define wp(p)  ((short *) (p))
 #define vp(p)  ((vms_vector *) (p))
 
-thread_local std::vector<g3s_point> Interp_point_list;
-thread_local std::vector<g3s_point*> point_list;
+thread_local std::vector<g3s_point> interpPointList;
+thread_local std::vector<g3s_point*> pointList;
 
 extern vms_matrix View_matrix;
 
@@ -51,7 +52,7 @@ struct InterpColor {
 	short pal_entry;
 	unsigned short rgb15;
 };
-std::vector<InterpColor> interp_color_table;
+thread_local std::vector<InterpColor> interpColorTable;
 
 const vms_angvec zero_angles = { 0,0,0 };
 
@@ -73,9 +74,9 @@ namespace HRender {
 	Polymodel* AllocatePolymodel(size_t* xlatIndex);
 
 	void InitPolymodelInterpreter() {
-		Interp_point_list.resize(1000);
-		point_list.resize(25);
-		interp_color_table.resize(100);
+		interpPointList.resize(1000);
+		pointList.resize(25);
+		interpColorTable.resize(100);
 	}
 
 	void RenderPolymodelSub(const ViewTarget target, const int segno, const void* model_ptr, const std::vector<grs_bitmap*>& model_bitmaps, const std::vector<short>& bitmapIDs, const vms_angvec anim_angles[], const fix model_light, const fix glow_values[], const vms_vector* origin, const vms_matrix* rotation) {
@@ -95,13 +96,13 @@ namespace HRender {
 			case OP_DEFPOINTS:
 			{
 				int n = w(p + 2);
-				if (n > Interp_point_list.size())
-					Interp_point_list.resize(n);
+				if (n > interpPointList.size())
+					interpPointList.resize(n);
 
 				vms_vector* v = vp(p + 4);
 
 				for (int i = 0; i < n; i++) {
-					Interp_point_list[i] = {
+					interpPointList[i] = {
 						.p3_vec = *v
 					};
 					v++;
@@ -116,13 +117,13 @@ namespace HRender {
 				int n = w(p + 2);
 				int s = w(p + 4);
 
-				if (s + n > Interp_point_list.size())
-					Interp_point_list.resize(s + n);
+				if (s + n > interpPointList.size())
+					interpPointList.resize(s + n);
 
 				vms_vector* v = vp(p + 8);
 
 				for (int i = 0; i < n; i++) {
-					Interp_point_list[i + s] = {
+					interpPointList[i + s] = {
 						.p3_vec = *v
 					};
 					v++;
@@ -141,14 +142,14 @@ namespace HRender {
 				int nv = w(p + 2);
 
 				//Assert(nv < MAX_POINTS_PER_POLY);
-				if (nv > point_list.size())
-					point_list.resize(nv);
+				if (nv > pointList.size())
+					pointList.resize(nv);
 
 				//if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
 				{
 					int i;
 					if (currentGame == G_DESCENT_2) {
-						color = interp_color_table[w(p + 28)];
+						color = interpColorTable[w(p + 28)];
 						if (glow_num != -1)
 						{
 							light = glow_values[glow_num];
@@ -161,7 +162,7 @@ namespace HRender {
 						}
 					}
 					else {
-						color = interp_color_table[w(p + 28)];
+						color = interpColorTable[w(p + 28)];
 					}
 
 					if (light != -3)
@@ -169,8 +170,8 @@ namespace HRender {
 						//gr_setcolor(drawindex);
 
 						for (i = 0; i < nv; i++)
-							point_list[i] = Interp_point_list.data() + wp(p + 30)[i];
-						//g3_draw_poly(nv, point_list.data());
+							pointList[i] = interpPointList.data() + wp(p + 30)[i];
+						//g3_draw_poly(nv, pointList.data());
 					}
 				}
 
@@ -184,8 +185,8 @@ namespace HRender {
 				g3s_uvl* uvl_list;
 
 				//Assert(nv < MAX_POINTS_PER_POLY);
-				if (nv < point_list.size())
-					point_list.resize(nv);
+				if (nv < pointList.size())
+					pointList.resize(nv);
 
 				//if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
 				{
@@ -213,7 +214,7 @@ namespace HRender {
 					g3s_point* verts = new g3s_point[nv];
 
 					for (i = 0; i < nv; i++) {
-						verts[i] = Interp_point_list[wp(p + 30)[i]];
+						verts[i] = interpPointList[wp(p + 30)[i]];
 						//uvl_list[i].l = light;
 						verts[i].p3_u = uvl_list[i].u;
 						verts[i].p3_v = uvl_list[i].v;
@@ -416,7 +417,7 @@ namespace HRender {
 
 							});
 
-						//g3_draw_tmap(nv, point_list.data(), uvl_list, model_bitmaps[w(p + 28)]);
+						//g3_draw_tmap(nv, pointList.data(), uvl_list, model_bitmaps[w(p + 28)]);
 
 					}
 				}
@@ -523,13 +524,13 @@ namespace HRender {
 			case OP_DEFPOINTS:
 			{
 				int n = w(p + 2);
-				if (n > Interp_point_list.size())
-					Interp_point_list.resize(n);
+				if (n > interpPointList.size())
+					interpPointList.resize(n);
 
 				vms_vector* v = vp(p + 4);
 
 				for (int i = 0; i < n; i++) {
-					Interp_point_list[i] = {
+					interpPointList[i] = {
 						.p3_vec = *v
 					};
 					v++;
@@ -544,13 +545,13 @@ namespace HRender {
 				int n = w(p + 2);
 				int s = w(p + 4);
 
-				if (s + n > Interp_point_list.size())
-					Interp_point_list.resize(s + n);
+				if (s + n > interpPointList.size())
+					interpPointList.resize(s + n);
 
 				vms_vector* v = vp(p + 8);
 
 				for (int i = 0; i < n; i++) {
-					Interp_point_list[i + s] = {
+					interpPointList[i + s] = {
 						.p3_vec = *v
 					};
 					v++;
@@ -569,14 +570,14 @@ namespace HRender {
 				int nv = w(p + 2);
 
 				//Assert(nv < MAX_POINTS_PER_POLY);
-				if (nv > point_list.size())
-					point_list.resize(nv);
+				if (nv > pointList.size())
+					pointList.resize(nv);
 
 				//if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
 				{
 					int i;
 					if (currentGame == G_DESCENT_2) {
-						color = interp_color_table[w(p + 28)];
+						color = interpColorTable[w(p + 28)];
 						if (glow_num != -1)
 						{
 							//light = glow_values[glow_num];
@@ -590,7 +591,7 @@ namespace HRender {
 						}
 					}
 					else {
-						color = interp_color_table[w(p + 28)];
+						color = interpColorTable[w(p + 28)];
 					}
 
 					if (light != -3)
@@ -598,8 +599,8 @@ namespace HRender {
 						//gr_setcolor(drawindex);
 
 						for (i = 0; i < nv; i++)
-							point_list[i] = Interp_point_list.data() + wp(p + 30)[i];
-						//g3_draw_poly(nv, point_list.data());
+							pointList[i] = interpPointList.data() + wp(p + 30)[i];
+						//g3_draw_poly(nv, pointList.data());
 					}
 				}
 
@@ -612,8 +613,8 @@ namespace HRender {
 				int nv = w(p + 2);
 				g3s_uvl* uvl_list;
 
-				if (nv < point_list.size())
-					point_list.resize(nv);
+				if (nv < pointList.size())
+					pointList.resize(nv);
 
 				////////////////////////////////////
 
@@ -646,7 +647,7 @@ namespace HRender {
 				for (i = 0; i < nv; i++) {
 					//uvl_list[i].l = light;
 
-					auto point = Interp_point_list.data() + wp(p + 30)[i];
+					auto point = interpPointList.data() + wp(p + 30)[i];
 					batch.verts.emplace_back(WorldVertex {
 						.pos = {
 							f2fl(point->p3_vec.x),
@@ -679,7 +680,7 @@ namespace HRender {
 					batch.indices.push_back(startIndex + i + 1);
 				}
 
-				//g3_draw_tmap(nv, point_list, uvl_list, model_bitmaps[w(p + 28)]);
+				//g3_draw_tmap(nv, pointList, uvl_list, model_bitmaps[w(p + 28)]);
 
 				
 

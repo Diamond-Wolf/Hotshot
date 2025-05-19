@@ -22,6 +22,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <string.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <cmath>
 
 //#include "pa_enabl.h"                   //$$POLY_ACC
 #include "inferno.h"
