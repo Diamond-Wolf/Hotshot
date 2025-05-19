@@ -252,8 +252,7 @@ namespace HRender {
 	};
 
 	struct Polymodel {
-		bool isSubmodel;
-		std::pair<SideDrawKey, ModelFaceBatch> batches;
+		std::unordered_map<TexturePage*, ModelFaceBatch> batches;
 		std::vector<Polymodel*> submodels;
 	};
 

@@ -1306,7 +1306,56 @@ namespace HRender {
 
 	void RenderPolymodel(const ViewTarget target, const int segno, const object& object, const vms_angvec anim_angles[], const int model_num, const int flags, const fix light, const short textureOverride, float visibility) {
 	
-		
+		size_t index = modelIDXlat[model_num * MAX_SUBMODELS];
+		Assert(index >= 0 && index < models.size());
+
+		Polymodel* modelPtrs[MAX_SUBMODELS];
+		for (int i = 0; i < MAX_SUBMODELS; i++) {
+			modelPtrs[i] = NULL; 
+			size_t ind = modelIDXlat[model_num * MAX_SUBMODELS + i];
+			if (ind >= 0 && index < models.size())
+				modelPtrs[i] = &models[ind];
+		}
+
+		vms_matrix mat;
+
+		if (flags != 0) {
+
+			for (int i = 0; i < MAX_SUBMODELS; i++) {
+				if ((flags & (1 << i)) && modelPtrs[i]) {
+					for (auto& batch : modelPtrs[i]->batches) {
+
+						Polymodel model = *modelPtrs[i];
+						vms_angvec angvec = anim_angles[i];
+
+						SideDrawKey key(batch.first, NULL, target);
+
+						{
+							std::lock_guard lg(modelDrawCallMutex);
+
+							if (modelDrawCalls.count(key) == 0)
+								modelDrawCalls[key] = std::vector<ObjDrawCall>();
+
+							std::vector<ObjDrawCall>& drawCalls = modelDrawCalls[key];
+
+							
+
+							drawCalls.emplace_back([model, segno, object, angvec, light, textureOverride, visibility](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+								
+								UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_ANIM);
+								UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_MODEL);
+								
+							});
+
+						}
+
+					}
+				}
+			}
+
+			return;
+
+		}
 	
 	}
 
@@ -1480,7 +1529,6 @@ namespace HRender {
 
 			std::vector<SideDrawCall>& calls = sideDrawCalls[k];
 
-			//TODO lock the vector
 			calls.emplace_back([tp1, tp2, segno, sideno, lightFactorR, lightFactorG, lightFactorB](SDL_GPUCommandBuffer* combuf) {
 
 				if (rendererState.drawCallObjID != -1) {

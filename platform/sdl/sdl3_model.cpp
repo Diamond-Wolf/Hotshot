@@ -62,7 +62,15 @@ static void rotate_point_list(g3s_point* dest, vms_vector* src, int n) {
 
 namespace HRender {
 
-	Polymodel* AllocatePolymodel();
+	size_t xlatPosCache;
+
+	enum PolymodelAllocationMode {
+		PAM_NOT_SPECIAL,
+		PAM_NEW_SUBMODEL,
+		PAM_NEW_MODEL
+	};
+
+	Polymodel* AllocatePolymodel(size_t* xlatIndex);
 
 	void InitPolymodelInterpreter() {
 		Interp_point_list.resize(1000);
@@ -571,7 +579,8 @@ namespace HRender {
 						color = interp_color_table[w(p + 28)];
 						if (glow_num != -1)
 						{
-							light = glow_values[glow_num];
+							//light = glow_values[glow_num];
+							light = 0;
 							glow_num = -1;
 							if (light == -2)
 								color = {
@@ -606,6 +615,78 @@ namespace HRender {
 				if (nv < point_list.size())
 					point_list.resize(nv);
 
+				////////////////////////////////////
+
+				int i;
+				fix light;
+
+				//calculate light from surface normal
+
+				if (glow_num < 0) //no glow
+				{
+					light = -vm_vec_dot(&View_matrix.fvec, vp(p + 16));
+					light = f1_0 / 4 + (light * 3) / 4;
+					//light = fixmul(light, model_light);
+				}
+				else //yes glow
+				{
+					light = 1;// glow_values[glow_num];
+					glow_num = -1;
+				}
+
+				//now poke light into l values
+
+				uvl_list = (g3s_uvl*)(p + 30 + ((nv & ~1) + 1) * 2);
+
+				auto& tloc = rendererState.tpageLocations[bitmapIDs[w(p + 28)]];
+				ModelFaceBatch& batch = model->batches[&rendererState.tpages[tloc.first]];
+
+				uint32_t startIndex = batch.verts.size();
+
+				for (i = 0; i < nv; i++) {
+					//uvl_list[i].l = light;
+
+					auto point = Interp_point_list.data() + wp(p + 30)[i];
+					batch.verts.emplace_back(WorldVertex {
+						.pos = {
+							f2fl(point->p3_vec.x),
+							f2fl(point->p3_vec.y),
+							f2fl(point->p3_vec.z)
+						},
+						.uv = {
+							f2fl(uvl_list[i].u),
+							f2fl(uvl_list[i].v)
+						},
+						.props = {
+							tloc.second,
+							-1,
+							0,
+							0
+						},
+						.colormod = {
+							1,
+							1,
+							1,
+							1
+						}
+					});
+
+				}
+
+				for (int i = 1; i <= nv - 2; i++) {
+					batch.indices.push_back(startIndex);
+					batch.indices.push_back(startIndex + i);
+					batch.indices.push_back(startIndex + i + 1);
+				}
+
+				//g3_draw_tmap(nv, point_list, uvl_list, model_bitmaps[w(p + 28)]);
+
+				
+
+
+
+				////////////////////////////////////
+
 				p += 30 + ((nv & ~1) + 1) * 2 + nv * 12;
 
 				break;
@@ -613,8 +694,8 @@ namespace HRender {
 
 			case OP_SORTNORM:
 
-				BuildPolymodelSub(p + w(p + 30), bitmapIDs);
-				BuildPolymodelSub(p + w(p + 28), bitmapIDs);
+				BuildPolymodelSub(AllocatePolymodel(nullptr), p + w(p + 28), bitmapIDs);
+				BuildPolymodelSub(AllocatePolymodel(nullptr), p + w(p + 30), bitmapIDs);
 
 				p += 32;
 				break;
@@ -636,7 +717,8 @@ namespace HRender {
 			case OP_SUBCALL:
 			{
 				
-				BuildPolymodelSub(AllocatePolymodel(), p + w(p + 16), bitmapIDs);
+				xlatPosCache++;
+				BuildPolymodelSub(AllocatePolymodel(&modelIDXlat[xlatPosCache]), p + w(p + 16), bitmapIDs);
 
 				p += 20;
 				break;
@@ -644,8 +726,8 @@ namespace HRender {
 
 			case OP_GLOW:
 
-				if (glow_values)
-					glow_num = w(p + 2);
+				//if (glow_values)
+				//	glow_num = w(p + 2);
 				p += 4;
 				break;
 
@@ -656,7 +738,7 @@ namespace HRender {
 	}
 
 
-	void GenerateModel(VanillaModel& model) {
+	void GenerateModel(VanillaModel& model, int xlatPos) {
 		
 		const vms_vector& pos = vmd_zero_vector;
 		const vms_matrix& orient = IDENTITY_MATRIX_INST;
@@ -672,9 +754,10 @@ namespace HRender {
 			bitmapIDs.push_back(bmpID);
 		}
 
-		modelIDXlat.push_back(models.size());
+		//modelIDXlat[xlatPos] = models.size();
 
-		BuildPolymodelSub(AllocatePolymodel(), model.model_data, bitmapIDs);
+		xlatPosCache = xlatPos;
+		BuildPolymodelSub(AllocatePolymodel(&modelIDXlat[xlatPos]), model.model_data, bitmapIDs);
 
 	}
 
@@ -684,17 +767,29 @@ namespace HRender {
 		models.shrink_to_fit();
 		models.clear();
 
-		modelIDXlat.resize(activeBMTable->models.size());
+		modelIDXlat.resize(activeBMTable->models.size() * MAX_SUBMODELS);
 		modelIDXlat.shrink_to_fit();
+		for (auto& id : modelIDXlat)
+			id = -1;
 
-		for (VanillaModel& model : activeBMTable->models) {
+		/*for (VanillaModel& model : activeBMTable->models) {
 			GenerateModel(model);
+		}*/
+
+		for (int i = 0; i < activeBMTable->models.size(); i++) {
+
+			VanillaModel& model = activeBMTable->models[i];
+
+			GenerateModel(model, i * 10);
+
 		}
 	
 	}
 
-	Polymodel* AllocatePolymodel() {
+	Polymodel* AllocatePolymodel(size_t* index) {
 		models.push_back(Polymodel());
+		if (index)
+			*index = models.size() - 1;
 		return &models[models.size() - 1];
 	}
 
