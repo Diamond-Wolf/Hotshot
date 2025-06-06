@@ -582,7 +582,19 @@ void robotmaker_proc(FuelCenter* robotcen)
 					vm_vec_sub(&direction, &ConsoleObject->pos, &obj->pos);
 					vm_vector_2_matrix(&obj->orient, &direction, &obj->orient.uvec, NULL);
 
-					morph_start(obj);
+					obj->control_type = CT_MORPH;
+					obj->render_type = RT_MORPH;
+
+					//Originally, each submodel would animate independently, starting at root then doing each child simultaneously
+					obj->rtype.pobj_info.max_morph_time = F1_0 * 3;
+					if (activeBMTable->robots[obj->id].attack_type == 0) { //Quick-spawn melee robots since they can swing immediately anyway
+						int submodelDepth = GetSubmodelTreeDepth(obj->rtype.pobj_info.model_num);
+						obj->rtype.pobj_info.max_morph_time *= submodelDepth;
+					}
+					
+					obj->rtype.pobj_info.morph_time = obj->rtype.pobj_info.max_morph_time;
+					
+					//morph_start(obj);
 					//robotcen->last_created_obj = obj;
 					//robotcen->last_created_sig = robotcen->last_created_obj->signature;
 				}

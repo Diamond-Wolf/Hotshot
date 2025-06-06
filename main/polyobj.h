@@ -80,3 +80,5 @@ void draw_model_picture(int mn,vms_angvec* orient_angles);
 extern grs_bitmap *texture_list[MAX_POLYOBJ_TEXTURES];
 extern bitmap_index texture_list_index[MAX_POLYOBJ_TEXTURES];
 extern g3s_point robot_points[];
+
+int GetSubmodelTreeDepth(size_t modelnum);

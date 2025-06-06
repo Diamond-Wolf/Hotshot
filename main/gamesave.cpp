@@ -878,7 +878,8 @@ void read_object(object* obj, CFILE* f, int version)
 		}
 #endif
 
-		obj->rtype.pobj_info.alt_textures = 0;
+		obj->rtype.pobj_info.morph_time = 0;
+		obj->rtype.pobj_info.max_morph_time = 0;
 
 		break;
 	}

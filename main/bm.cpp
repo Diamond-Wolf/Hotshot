@@ -889,7 +889,7 @@ void bm_read_all(CFILE* fp) {
 #ifdef MACINTOSH
 		swap_polygon_model_data(activeBMTable->models[i].model_data);
 #endif
-		g3_init_polygon_model(activeBMTable->models[i].model_data);
+		//g3_init_polygon_model(activeBMTable->models[i].model_data);
 	}
 
 	//cfread( Dying_modelnums, sizeof(int), N_polygon_models, fp );
@@ -1121,7 +1121,7 @@ void bm_read_extra_robots(char *fname,int type)
 		Assert( activeBMTable->models[i].model_data != NULL );
 		cfread( activeBMTable->models[i].model_data, sizeof(uint8_t), activeBMTable->models[i].model_data_size, fp );
 		
-		g3_init_polygon_model(activeBMTable->models[i].model_data);
+		//g3_init_polygon_model(activeBMTable->models[i].model_data);
 	}
 
 	//cfread( &Dying_modelnums[N_D2_POLYGON_MODELS], sizeof(int), t, fp );
@@ -1220,7 +1220,7 @@ void load_robot_replacements(char *level_name)
 		Assert( activeBMTable->models[i].model_data != NULL );
 
 		cfread( activeBMTable->models[i].model_data, sizeof(uint8_t), activeBMTable->models[i].model_data_size, fp );
-		g3_init_polygon_model(activeBMTable->models[i].model_data);
+		//g3_init_polygon_model(activeBMTable->models[i].model_data);
 
 		activeBMTable->dyingModels[i] = cfile_read_int(fp);
 		activeBMTable->deadModels[i] = cfile_read_int(fp);

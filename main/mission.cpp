@@ -316,9 +316,10 @@ int read_mission_file(char *filename,int count,int location, uint8_t gameVersion
 	if (mfile) 
 	{
 		char *p;
-		char temp[FILENAME_LEN],*t;
+		char temp[FILENAME_LEN + 1],*t;
 
-		strcpy(temp,filename);
+		strncpy(temp, filename, FILENAME_LEN);
+		temp[FILENAME_LEN] = '\0';
 		if ((t = strchr(temp,'.')) == NULL)
 			return 0;	//missing extension
 		*t = 0;			//kill extension

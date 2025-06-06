@@ -15,6 +15,7 @@ COPYRIGHT 1993 - 1999 PARALLAX SOFTWARE CORPORATION.ALL RIGHTS RESERVED.
 #include <vector>
 #include <bit>
 #include <cmath>
+#include <algorithm>
 
 #include "platform/renderapi.h"
 #include "sdl3_render.h"
@@ -22,10 +23,10 @@ COPYRIGHT 1993 - 1999 PARALLAX SOFTWARE CORPORATION.ALL RIGHTS RESERVED.
 #include "vecmat/vecmat.h"
 #include "3d/3d.h"
 #include "main/newcheat.h"
-#include <main/game.h>
-#include <misc/error.h>
-#include <platform/mono.h>
-#include <main/bm.h>
+#include "main/game.h"
+#include "misc/error.h"
+#include "platform/mono.h"
+#include "main/bm.h"
 
 typedef polymodel VanillaModel;
 
@@ -61,6 +62,8 @@ static void rotate_point_list(g3s_point* dest, vms_vector* src, int n) {
 		g3_rotate_point(dest++, src++);
 }
 
+extern uint8_t platPalette[SDL_arraysize(gr_palette)];
+
 namespace HRender {
 
 	size_t xlatPosCache;
@@ -71,7 +74,8 @@ namespace HRender {
 		PAM_NEW_MODEL
 	};
 
-	Polymodel* AllocatePolymodel(size_t* xlatIndex);
+	//Polymodel* AllocatePolymodel(size_t* xlatIndex, int subID = -1);
+	size_t AllocatePolymodel(int subID = -1);
 
 	void InitPolymodelInterpreter() {
 		interpPointList.resize(1000);
@@ -79,6 +83,7 @@ namespace HRender {
 		interpColorTable.resize(100);
 	}
 
+#if 0
 	void RenderPolymodelSub(const ViewTarget target, const int segno, const void* model_ptr, const std::vector<grs_bitmap*>& model_bitmaps, const std::vector<short>& bitmapIDs, const vms_angvec anim_angles[], const fix model_light, const fix glow_values[], const vms_vector* origin, const vms_matrix* rotation) {
 
 		uint8_t* p = (uint8_t*)model_ptr;
@@ -505,9 +510,9 @@ namespace HRender {
 			}
 
 	}
+#endif
 
-
-	void BuildPolymodelSub(Polymodel* model, const void* model_ptr, const std::vector<short>& bitmapIDs) {
+	void BuildPolymodelSub(/*Polymodel* model*/ size_t modelIndex, const void* model_ptr, const std::vector<short>& bitmapIDs, int& subID) {
 
 		uint8_t* p = (uint8_t*)model_ptr;
 		int current_poly = 0;
@@ -516,7 +521,7 @@ namespace HRender {
 
 		int loop = 0;
 
-		while (w(p) != OP_EOF)
+		while (w(p) != OP_EOF) {
 
 			switch (w(p))
 			{
@@ -566,41 +571,88 @@ namespace HRender {
 			{
 
 				int light = 0;
-				InterpColor color;
+				//InterpColor color;
+				int color;
 				int nv = w(p + 2);
 
 				//Assert(nv < MAX_POINTS_PER_POLY);
 				if (nv > pointList.size())
 					pointList.resize(nv);
 
+				short packedColor = w(p + 28);
+
 				//if (g3_check_normal_facing(vp(p + 4), vp(p + 16)) > 0)
 				{
 					int i;
 					if (currentGame == G_DESCENT_2) {
-						color = interpColorTable[w(p + 28)];
+						//color = interpColorTable[w(p + 28)];
+						color = gr_find_closest_color(((packedColor >> 10) & 31) * 2, ((packedColor >> 5) & 31) * 2, (packedColor & 31) * 2);
 						if (glow_num != -1)
 						{
 							//light = glow_values[glow_num];
 							light = 0;
 							glow_num = -1;
 							if (light == -2)
-								color = {
+								/*color = {
 									.pal_entry = 255,
 									.rgb15 = 0xffff
-							};
+								};*/
+								color = 255;// gr_find_closest_color(63, 63, 63);
 						}
 					}
 					else {
-						color = interpColorTable[w(p + 28)];
+						color = packedColor;// gr_find_closest_color(((packedColor >> 10) & 31) * 2, ((packedColor >> 5) & 31) * 2, (packedColor & 31) * 2);
+						//color = w(p + 28); //color = interpColorTable[w(p + 28)];
 					}
 
 					if (light != -3)
 					{
 						//gr_setcolor(drawindex);
 
-						for (i = 0; i < nv; i++)
-							pointList[i] = interpPointList.data() + wp(p + 30)[i];
-						//g3_draw_poly(nv, pointList.data());
+						TexturePage* tpagep = nullptr;
+						if (models[modelIndex].batches.count(tpagep) == 0)
+							models[modelIndex].batches[tpagep] = ModelFaceBatch();
+
+						ModelFaceBatch& batch = models[modelIndex].batches[tpagep];
+
+						uint32_t startIndex = batch.verts.size();
+
+						for (i = 0; i < nv; i++) {
+							//uvl_list[i].l = light;
+
+							auto point = interpPointList.data() + wp(p + 30)[i];
+							batch.verts.emplace_back(WorldVertex{
+								.pos = {
+									f2fl(point->p3_vec.x),
+									f2fl(point->p3_vec.y),
+									f2fl(point->p3_vec.z)
+								},
+								.uv = {
+									0,
+									0
+								},
+								.props = {
+									0,
+									-1,
+									-1,
+									0
+								},
+								.colormod = {
+									platPalette[color * 3]     / PALETTE_DIV,
+									platPalette[color * 3 + 1] / PALETTE_DIV,
+									platPalette[color * 3 + 2] / PALETTE_DIV,
+									1
+								}
+							});
+
+						}
+
+						for (int i = 1; i <= nv - 2; i++) {
+							batch.indices.push_back(startIndex);
+							batch.indices.push_back(startIndex + i);
+							batch.indices.push_back(startIndex + i + 1);
+						}
+
 					}
 				}
 
@@ -640,7 +692,12 @@ namespace HRender {
 				uvl_list = (g3s_uvl*)(p + 30 + ((nv & ~1) + 1) * 2);
 
 				auto& tloc = rendererState.tpageLocations[bitmapIDs[w(p + 28)]];
-				ModelFaceBatch& batch = model->batches[&rendererState.tpages[tloc.first]];
+
+				TexturePage* tpagep = &rendererState.tpages[tloc.first];
+				if (models[modelIndex].batches.count(tpagep) == 0)
+					models[modelIndex].batches[tpagep] = ModelFaceBatch();
+
+				ModelFaceBatch& batch = models[modelIndex].batches[tpagep];
 
 				uint32_t startIndex = batch.verts.size();
 
@@ -648,7 +705,7 @@ namespace HRender {
 					//uvl_list[i].l = light;
 
 					auto point = interpPointList.data() + wp(p + 30)[i];
-					batch.verts.emplace_back(WorldVertex {
+					batch.verts.emplace_back(WorldVertex{
 						.pos = {
 							f2fl(point->p3_vec.x),
 							f2fl(point->p3_vec.y),
@@ -659,9 +716,9 @@ namespace HRender {
 							f2fl(uvl_list[i].v)
 						},
 						.props = {
+							0,
 							tloc.second,
 							-1,
-							0,
 							0
 						},
 						.colormod = {
@@ -682,7 +739,7 @@ namespace HRender {
 
 				//g3_draw_tmap(nv, pointList, uvl_list, model_bitmaps[w(p + 28)]);
 
-				
+
 
 
 
@@ -693,13 +750,31 @@ namespace HRender {
 				break;
 			}
 
-			case OP_SORTNORM:
+			case OP_SORTNORM: 
+			{
 
-				BuildPolymodelSub(AllocatePolymodel(nullptr), p + w(p + 28), bitmapIDs);
-				BuildPolymodelSub(AllocatePolymodel(nullptr), p + w(p + 30), bitmapIDs);
+				//Polymodel* sub1 = AllocatePolymodel(nullptr);
+				//Polymodel* sub2 = AllocatePolymodel(nullptr);
+
+				size_t sub1 = AllocatePolymodel();
+				size_t sub2 = AllocatePolymodel();
+
+				Polymodel& m1 = models[sub1];
+				Polymodel& m2 = models[sub2];
+				Polymodel& me = models[modelIndex];
+
+				m1.angleID = m2.angleID = me.angleID;
+				m1.offset = m2.offset = me.offset;
+				
+				me.submodelIndices.push_back(sub1);
+				me.submodelIndices.push_back(sub2);
+
+				BuildPolymodelSub(sub1, p + w(p + 28), bitmapIDs, subID);
+				BuildPolymodelSub(sub2, p + w(p + 30), bitmapIDs, subID);
 
 				p += 32;
 				break;
+			}
 
 			case OP_RODBM:
 			{
@@ -717,9 +792,20 @@ namespace HRender {
 
 			case OP_SUBCALL:
 			{
-				
+
 				xlatPosCache++;
-				BuildPolymodelSub(AllocatePolymodel(&modelIDXlat[xlatPosCache]), p + w(p + 16), bitmapIDs);
+				subID++;
+
+				size_t sub = AllocatePolymodel(subID);
+				modelIDXlat[xlatPosCache] = sub;
+
+				Polymodel& model = models[sub];
+				model.angleID = w(p + 2);
+				model.offset = *vp(p + 4);
+				
+				models[modelIndex].submodelIndices.push_back(sub);
+
+				BuildPolymodelSub(sub, p + w(p + 16), bitmapIDs, subID);
 
 				p += 20;
 				break;
@@ -735,6 +821,14 @@ namespace HRender {
 			default:
 				Int3();
 			}
+
+		}
+
+		/*std::sort(models[modelIndex].submodelIndices.begin(), models[modelIndex].submodelIndices.end(), [](int a, int b) {
+			Polymodel& m1 = models[a];
+			Polymodel& m2 = models[b];
+			return m1.submodelID < m2.submodelID;
+		});*/
 
 	}
 
@@ -758,7 +852,16 @@ namespace HRender {
 		//modelIDXlat[xlatPos] = models.size();
 
 		xlatPosCache = xlatPos;
-		BuildPolymodelSub(AllocatePolymodel(&modelIDXlat[xlatPos]), model.model_data, bitmapIDs);
+		size_t modelID = AllocatePolymodel();
+		modelIDXlat[xlatPos] = modelID;
+
+		Polymodel& root = models[modelID];
+		root.angleID = 0;
+		root.offset = vmd_zero_vector;
+
+		int subID = 0;
+
+		BuildPolymodelSub(modelID, model.model_data, bitmapIDs, subID);
 
 	}
 
@@ -770,8 +873,11 @@ namespace HRender {
 
 		modelIDXlat.resize(activeBMTable->models.size() * MAX_SUBMODELS);
 		modelIDXlat.shrink_to_fit();
-		for (auto& id : modelIDXlat)
-			id = -1;
+		//for (auto& id : modelIDXlat)
+		//	id = -1;
+		for (int i = 0; i < modelIDXlat.size(); i++) {
+			modelIDXlat[i] = -1;
+		}
 
 		/*for (VanillaModel& model : activeBMTable->models) {
 			GenerateModel(model);
@@ -787,11 +893,21 @@ namespace HRender {
 	
 	}
 
-	Polymodel* AllocatePolymodel(size_t* index) {
-		models.push_back(Polymodel());
-		if (index)
-			*index = models.size() - 1;
-		return &models[models.size() - 1];
+	//Polymodel* AllocatePolymodel(size_t* index, int subID) {
+	size_t AllocatePolymodel(int subID) {
+		
+		//Polymodel p;
+		//p.submodelID = subID;
+
+		models.emplace_back(Polymodel { 
+			.submodelID = subID 
+		});
+		
+		//if (index) 
+			//*index = models.size() - 1;
+		
+		//return &models[models.size() - 1];
+		return models.size() - 1;
 	}
 
 }

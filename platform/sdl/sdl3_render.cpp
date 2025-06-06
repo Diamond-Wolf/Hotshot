@@ -31,6 +31,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <bit>
 #include <mutex>
 #include <cmath>
+#include <bit>
 
 #include <SDL_gpu.h>
 
@@ -55,6 +56,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <main/endlevel.h>
 #include <main/ai.h>
 #include <main/newcheat.h>
+#include <misc/rand.h>
+#include <main/laser.h>
 #else
 namespace std {
 
@@ -146,6 +149,8 @@ namespace HRender {
 			return view1 < view2;
 	}
 
+	constexpr size_t VERTEX_TRANSFER_FACTOR = 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 24;
+
 #pragma region SDLHelpers
 
 	template <int bufN, int attrN> SDL_GPUGraphicsPipeline* CreateGraphicsPipeline(
@@ -160,6 +165,15 @@ namespace HRender {
 
 		SDL_GPUColorTargetDescription ctd {
 			.format = TEXTURE_FORMAT,
+			.blend_state = {
+				.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+				.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+				.color_blend_op = SDL_GPU_BLENDOP_ADD,
+				.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+				.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+				.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+				.enable_blend = true,
+			}
 		};
 
 		SDL_GPUGraphicsPipelineCreateInfo gpci {
@@ -313,11 +327,10 @@ namespace HRender {
 			return;
 		}
 
-		const float DIV_FACTOR = 63.f;
 		for (int i = 0; i < NUM_COLORS; i++) { //std430 packs nicely, but SDL thought it would be a good idea to upload std140 data anyway
-			expandedPalette[i * 4] = palette[i * 3] / DIV_FACTOR;
-			expandedPalette[i * 4 + 1] = palette[i * 3 + 1] / DIV_FACTOR;
-			expandedPalette[i * 4 + 2] = palette[i * 3 + 2] / DIV_FACTOR;
+			expandedPalette[i * 4] = palette[i * 3] / PALETTE_DIV;
+			expandedPalette[i * 4 + 1] = palette[i * 3 + 1] / PALETTE_DIV;
+			expandedPalette[i * 4 + 2] = palette[i * 3 + 2] / PALETTE_DIV;
 		}
 
 		SDL_memcpy(tbuf.memoryMap, expandedPalette, sizeof(expandedPalette));
@@ -750,6 +763,11 @@ namespace HRender {
 
 	void GenerateTexturePages() {
 	
+		rendererState.primaryTexture = NULL;
+		rendererState.primaryPage = NULL;
+		rendererState.secondaryTexture = NULL;
+		rendererState.secondaryPage = NULL;
+
 		ClearTexturePages();
 		rendererState.tpages.reserve(activePiggyTable->gameBitmaps.size());
 
@@ -776,7 +794,6 @@ namespace HRender {
 			
 		}
 
-		//8MiB probably already overkill, don't need 32 to account for floats
 		rendererState.targetTextureTransferSize = 64 * 64 * activePiggyTable->gameBitmaps.size();
 		
 		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
@@ -1081,7 +1098,7 @@ namespace HRender {
 			rendererState.textureTransferBuffer = CreateTransferBuffer(&tbci, true);
 			rendererState.textureTransferOffset = 0;
 
-			mprintf((0, "Reallocated texture transfer buffer"));
+			mprintf((0, "Reallocated texture transfer buffer\n"));
 
 		}
 
@@ -1131,7 +1148,7 @@ namespace HRender {
 			if (rendererState.drawTransferBuffer.memoryMap)
 				FreeTransferBuffer(rendererState.drawTransferBuffer);
 
-			uint32_t msize = Segments.size() * 8 * (sizeof(WorldVertex) + sizeof(uint32_t)) * 12;
+			uint32_t msize = Segments.size() * VERTEX_TRANSFER_FACTOR;
 			if (msize < vsize + isize) {
 				Int3(); //Shouldn't ever happen, but just to be safe...
 				msize = vsize + isize;
@@ -1147,7 +1164,7 @@ namespace HRender {
 			rendererState.drawTransferBuffer = CreateTransferBuffer(&tbci, true);
 			rendererState.drawTransferOffset = 0;
 
-			mprintf((0, "Reallocated vertex transfer buffer"));
+			mprintf((0, "Reallocated vertex transfer buffer\n"));
 
 		}
 
@@ -1290,6 +1307,63 @@ namespace HRender {
 			DrawBatch(rpass, cpass);
 		}
 
+		for (auto& cp : modelDrawCalls) {
+
+			const auto& [newPrimary, _, newView] = cp.first;
+
+			Assert(newView != VT_NONE);
+
+			bool swap = false;
+
+			if (newView != view) {
+				swap = true;
+			}
+
+			if (newPrimary && newPrimary != rendererState.primaryPage) {
+				swap = true;
+			} 
+
+			if (swap) {// = SDL_CreateGPUTexture(rendererState.device, &tci);
+
+				UploadTexturePage(newPrimary, cpass, false);
+
+				SDL_PushGPUFragmentUniformData(combuf, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
+				
+				if (view != newView) {
+
+					view = newView;
+
+					if (view == VT_MAIN) {
+						UploadVertexMatrix(combuf, &rendererState.mainProjectionMatrix, MID_PROJ);
+						UploadVertexMatrix(combuf, &rendererState.mainViewMatrix, MID_VIEW);
+						cct = &rendererState.mainCTarget;
+						cdt = &rendererState.mainDTarget;
+					} else {
+
+						if (view == VT_LEFT) {
+							UploadVertexMatrix(combuf, &rendererState.subViewMatrixL, MID_VIEW);
+							cct = &rendererState.leftCTarget;
+							cdt = &rendererState.leftDTarget;
+						}
+						else {
+							UploadVertexMatrix(combuf, &rendererState.subViewMatrixR, MID_VIEW);
+							cct = &rendererState.rightCTarget;
+							cdt = &rendererState.rightDTarget;
+						}
+
+						UploadVertexMatrix(combuf, &rendererState.subProjectionMatrix, MID_PROJ);
+						
+					}
+
+				}
+
+			}
+
+			for (auto& Draw : cp.second)
+				Draw(combuf, rpass, cpass);
+				
+		}
+
 	}
 
 	void EmplaceObjCall(const ViewTarget target, ObjDrawCall& call) {
@@ -1305,33 +1379,293 @@ namespace HRender {
 
 	}
 
-	void RenderPolymodel(const ViewTarget target, const int segno, const object& object, const vms_angvec anim_angles[], const int model_num, const int flags, const fix light, const short textureOverride, float visibility) {
+	static void EmplaceModelDrawCall(std::vector<ObjDrawCall>& drawCalls, const ViewTarget target, const ModelFaceBatch& batch, const int segno, const size_t objno, const vms_matrix& rotationMatrix, const vms_vector& animOffset, const float light, const short textureOverride, const float visibility) {
+
+		mat4f model = M4_IDENTITY_MATRIX_MACRO;
+		mat4f anim = M4_IDENTITY_MATRIX_MACRO;
+
+		auto& object = Objects[objno];
+
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++) {
+				anim[i][j]  = f2fl(rotationMatrix[i][j]);
+				anim[3][i]  = f2fl(animOffset[i]);
+				model[i][j] = f2fl(object.orient[i][j]);
+				model[3][i] = f2fl(object.pos[i]);
+			}
+
+		drawCalls.emplace_back([batch, segno, objno, model, anim, light, textureOverride, visibility](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+			UploadVertexMatrix(combuf, &anim, MID_ANIM);
+			if (rendererState.drawCallObjID != objno) {
+				UploadVertexMatrix(combuf, &model, MID_MODEL);
+				rendererState.drawCallObjID = objno;
+			}
+			
+			size_t nv = batch.verts.size();
+
+			WorldVertex* wverts = new WorldVertex[nv];
+			//uint32_t* winds = new uint32_t[fb.indices.size()];
+
+			for (int i = 0; i < nv; i++) {
+
+				wverts[i] = batch.verts[i];
+
+				float lightR, lightG, lightB;
+				lightR = lightG = lightB = light;
+
+				if (cheatValues[CI_RAVE]) {
+
+					const uint64_t x = std::bit_cast<uint32_t, float>(wverts[i].pos[0]);
+					const uint64_t y = std::bit_cast<uint32_t, float>(wverts[i].pos[1]);
+					const uint64_t z = std::bit_cast<uint32_t, float>(wverts[i].pos[2]);
+					SDL_srand(x * 0xFFFF + y * 0x00FF + z + GameTime);
+
+					lightR = sqrtf(lightR);
+					lightG = sqrtf(lightG);
+					lightB = sqrtf(lightB);
+
+					lightR *= SDL_randf() * 2.f;
+					lightG *= SDL_randf() * 2.f;
+					lightB *= SDL_randf() * 2.f;
+
+				}
+
+				/*lightR *= lightFactorR;
+				lightG *= lightFactorG;
+				lightB *= lightFactorB;*/
+
+				/*wverts[i] = WorldVertex{
+					.pos = {
+						f2fl(vert.p3_vec.x),
+						f2fl(vert.p3_vec.y),
+						f2fl(vert.p3_vec.z)
+					},
+					.uv = {
+						f2fl(vert.p3_u),
+						f2fl(vert.p3_v),
+					},
+					.props = {
+						segno,
+						tp.second,
+						-1,
+						0
+					},
+					.colormod = {
+						lightR,
+						lightG,
+						lightB,
+						1.f
+					}
+				};*/
+
+				wverts[i].props[0] = segno;
+
+				wverts[i].colormod[0] *= lightR;
+				wverts[i].colormod[1] *= lightG;
+				wverts[i].colormod[2] *= lightB;
+				wverts[i].colormod[3] = visibility;
+
+				const auto& obj = Objects[objno];
+				if (obj.control_type == CT_MORPH) {
+					const auto& pinf = obj.rtype.pobj_info;
+					float size = f2fl(fixdiv(pinf.max_morph_time - pinf.morph_time, pinf.max_morph_time));
+					wverts[i].pos[0] *= size;
+					wverts[i].pos[1] *= size;
+					wverts[i].pos[2] *= size;
+				}
+
+			}
+
+			uint32_t vsize = nv * sizeof(*wverts);
+			uint32_t isize = batch.indices.size() * sizeof(batch.indices[0]);
+
+			SDL_GPUBufferCreateInfo bci{
+				.usage = SDL_GPU_BUFFERUSAGE_VERTEX | SDL_GPU_BUFFERUSAGE_INDEX,
+				.size = vsize + isize
+			};
+
+			if (rendererState.drawTransferBuffer.memoryMap == NULL || rendererState.drawTransferOffset + vsize + isize > rendererState.drawTransferBuffer.size) {
+
+				if (rendererState.drawTransferBuffer.memoryMap)
+					FreeTransferBuffer(rendererState.drawTransferBuffer);
+
+				uint32_t msize = Segments.size() * VERTEX_TRANSFER_FACTOR;
+				if (msize < vsize + isize) {
+					Int3(); //Shouldn't ever happen, but just to be safe...
+					msize = vsize + isize;
+				}
+
+				msize = std::bit_ceil(msize);
+
+				SDL_GPUTransferBufferCreateInfo tbci{
+					.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+					.size = msize
+				};
+
+				rendererState.drawTransferBuffer = CreateTransferBuffer(&tbci, true);
+				rendererState.drawTransferOffset = 0;
+
+				mprintf((0, "Reallocated vertex transfer buffer in polyobj"));
+
+			}
+
+			SDL_GPUBuffer* drawBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
+			if (drawBuffer == NULL)
+				Error("Error creating vertex buffer: %s", SDL_GetError());
+
+			Assert(rendererState.drawTransferBuffer.memoryMap != NULL); //So VS would shut up
+			memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, wverts, vsize);
+			memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset + vsize, batch.indices.data(), isize);
+
+			SDL_GPUTransferBufferLocation tbl{
+				.transfer_buffer = rendererState.drawTransferBuffer.buffer,
+				.offset = rendererState.drawTransferOffset
+			};
+
+			SDL_GPUBufferRegion br{
+				.buffer = drawBuffer,
+				.offset = 0,
+				.size = vsize + isize
+			};
+
+			SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
+
+			SDL_GPUBufferBinding bb{
+				.buffer = drawBuffer,
+				.offset = 0
+			};
+			SDL_BindGPUVertexBuffers(rpass, 0, &bb, 1);
+
+			//bb.buffer = indexBuffer;
+			bb.offset = vsize;
+			SDL_BindGPUIndexBuffer(rpass, &bb, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+			SDL_GPUTextureSamplerBinding tsb[]{ {
+				.texture = rendererState.secondaryTexture,
+				.sampler = rendererState.defaultSampler
+			}, {
+				.texture = rendererState.primaryTexture,
+				.sampler = rendererState.defaultSampler
+			} };
+			SDL_BindGPUFragmentSamplers(rpass, 0, tsb, 2);
+
+			SDL_GPUBuffer* storageBuffers[]{ rendererState.paletteBuffer };// , rendererState.paletteBuffer}; //TODO: need portal buffer
+			SDL_BindGPUFragmentStorageBuffers(rpass, 0, storageBuffers, SDL_arraysize(storageBuffers));
+
+			SDL_DrawGPUIndexedPrimitives(rpass, batch.indices.size(), 1, 0, 0, 0);
+
+			SDL_ReleaseGPUBuffer(rendererState.device, drawBuffer);
+
+			rendererState.drawTransferOffset += vsize + isize;
+
+			//delete[] verts;
+			delete[] wverts;
+			//delete[] winds;
+
+		});
+	}
+
+
+	static void RenderModelInstance() {
+	
+	}
+
+	static void RenderEntirePolymodel(const ViewTarget target, const int segno, const size_t objno, const vms_angvec anim_angles[], vms_matrix& currentAngle, vms_vector& currentOffset, const int model_num, const float light, const short textureOverride, const float visibility, Polymodel* root, int& i) {
+	
+		Assert(i < MAX_SUBMODELS);
+
+		for (auto& batch : root->batches) {
+
+			vms_angvec angvec;
+			if (anim_angles)
+				angvec = anim_angles[root->angleID];
+			else
+				angvec = ZERO_VECTOR;
+
+			SideDrawKey key(batch.first, NULL, target);
+
+			{
+
+				std::lock_guard lg(modelDrawCallMutex);
+
+				if (modelDrawCalls.count(key) == 0)
+					modelDrawCalls[key] = std::vector<ObjDrawCall>();
+
+				std::vector<ObjDrawCall>& drawCalls = modelDrawCalls[key];
+
+				//Texture page already set
+				EmplaceModelDrawCall(drawCalls, target, batch.second, segno, objno, currentAngle, currentOffset, light, textureOverride, visibility);
+
+			}
+
+		}
+
+		vms_matrix modelAnimation = currentAngle;
+		vms_vector modelOffset = currentOffset;
+
+		for (auto& sub : root->submodelIndices) {
+
+			Polymodel* model = &models[sub];
+			
+			if (model->submodelID >= 0) {
+
+				i++;
+				Assert(i < MAX_SUBMODELS);
+
+				vms_matrix subAnimation;
+				vm_angles_2_matrix(&subAnimation, const_cast<vms_angvec*>(anim_angles + model->angleID));
+
+				vms_matrix inverseRotation;
+				vm_copy_transpose_matrix(&inverseRotation, &currentAngle);
+
+				vm_vec_rotate(&modelOffset, &model->offset, &inverseRotation);
+				vm_vec_add2(&modelOffset, &currentOffset);
+
+				if (Objects[objno].control_type == CT_MORPH) {
+
+					const auto& pinf = Objects[objno].rtype.pobj_info;
+					fix morphTime = pinf.morph_time;
+					fix maxMorphTime = pinf.max_morph_time;
+					fix size = fixdiv(maxMorphTime - morphTime, maxMorphTime);
+
+					vm_vec_scale2(&modelOffset, size, F1_0);
+
+				}
+
+				vm_matrix_x_matrix(&modelAnimation, &subAnimation, &currentAngle);
+			}
+
+			RenderEntirePolymodel(target, segno, objno, anim_angles, currentAngle, modelOffset, model_num, light, textureOverride, visibility, model, i);
+		}
+
+	}
+
+	void RenderPolymodel(const ViewTarget target, const int segno, const size_t objno, const vms_angvec anim_angles[], const int model_num, const int flags, const float light, const short textureOverride, const float visibility) {
 	
 		size_t index = modelIDXlat[model_num * MAX_SUBMODELS];
 		Assert(index >= 0 && index < models.size());
 
-		Polymodel* modelPtrs[MAX_SUBMODELS];
-		for (int i = 0; i < MAX_SUBMODELS; i++) {
-			modelPtrs[i] = NULL; 
-			size_t ind = modelIDXlat[model_num * MAX_SUBMODELS + i];
-			if (ind >= 0 && index < models.size())
-				modelPtrs[i] = &models[ind];
-		}
-
-		vms_matrix mat;
-
 		if (flags != 0) {
 
+			Polymodel* modelPtrs[MAX_SUBMODELS];
 			for (int i = 0; i < MAX_SUBMODELS; i++) {
-				if ((flags & (1 << i)) && modelPtrs[i]) {
+				modelPtrs[i] = NULL;
+				size_t ind = modelIDXlat[model_num * MAX_SUBMODELS + i];
+				if (ind >= 0 && ind < models.size())
+					modelPtrs[i] = &models[ind];
+			}
+
+			for (int i = 0; i < MAX_SUBMODELS; i++) {
+				if (flags == 0 || ((flags & (1 << i)) && modelPtrs[i])) {
 					for (auto& batch : modelPtrs[i]->batches) {
 
-						Polymodel model = *modelPtrs[i];
 						vms_angvec angvec = anim_angles[i];
 
 						SideDrawKey key(batch.first, NULL, target);
 
 						{
+
 							std::lock_guard lg(modelDrawCallMutex);
 
 							if (modelDrawCalls.count(key) == 0)
@@ -1339,14 +1673,8 @@ namespace HRender {
 
 							std::vector<ObjDrawCall>& drawCalls = modelDrawCalls[key];
 
-							
-
-							drawCalls.emplace_back([model, segno, object, angvec, light, textureOverride, visibility](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
-								
-								UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_ANIM);
-								UploadVertexMatrix(combuf, &M4_IDENTITY_MATRIX, MID_MODEL);
-								
-							});
+							//Texture page already set
+							EmplaceModelDrawCall(drawCalls, target, batch.second, segno, objno, IDENTITY_MATRIX_INST, vmd_zero_vector, light, textureOverride, visibility);
 
 						}
 
@@ -1354,14 +1682,26 @@ namespace HRender {
 				}
 			}
 
-			return;
+		} else {
+
+			vms_matrix activeRotation = IDENTITY_MATRIX;
+			vms_vector activeOffset = vmd_zero_vector;
+			int i = 0;
+
+			RenderEntirePolymodel(target, segno, objno, anim_angles, activeRotation, activeOffset, model_num, light, textureOverride, visibility, &models[index], i);
 
 		}
-	
+
+		return;
+
 	}
 
-	void RenderPolyObj(const ViewTarget target, const object& object, const int segno, const float visibility) {
+	constexpr float CLOAK_VISIBILITY = 0.15f;
+
+	void RenderPolyObj(const ViewTarget target, const size_t objno, const int segno, const float visibility) {
 		
+		auto& object = Objects[objno];
+
 		const polyobj_info& pinf = object.rtype.pobj_info; 
 
 		short override = -1;
@@ -1369,42 +1709,77 @@ namespace HRender {
 			override = activeBMTable->textures[pinf.tmap_override].index;
 		}
 
-		RenderPolymodel(target, segno, object, pinf.anim_angles, pinf.model_num, 0, F1_0, override, visibility);
+		float light = f2fl(currentGame == G_DESCENT_2 ? Segment2s[segno].static_light : Segments[segno].static_light);
+		//light *= light;
+		if (light > 1 || (object.type == OBJ_FIREBALL || object.type == OBJ_WEAPON || object.type == OBJ_FLARE || object.type == OBJ_MARKER))
+			light = 1;
+
+		float vmod = 1.f;
+		if (visibility == CLOAK_VISIBILITY) {
+			float vmRaw = (0.75f + (SDL_randf() / 2));
+			vmod = light * vmRaw;
+			light /= (1 + vmRaw);
+		}
+
+		bool hasInner = false;
+		if (object.control_type == CT_WEAPON) {
+			auto innerModel = activeBMTable->weapons[object.id].model_num_inner;
+			if (innerModel >= 0) {
+				RenderPolymodel(target, segno, objno, pinf.anim_angles, innerModel, pinf.subobj_flags, light, override, visibility * 10.f * vmod);
+				hasInner = true;
+			}
+		}
+
+		RenderPolymodel(target, segno, objno, pinf.anim_angles, (hasInner ? activeBMTable->weapons[object.id].model_num : pinf.model_num), pinf.subobj_flags, light, override, (hasInner ? visibility * 0.9f : visibility) * vmod);
 
 	}
 	
 	void RenderObject(const ViewTarget target, const int segno, const int objno) {
 
-		const object& object = Objects[objno];
-		uint8_t rtypeid = object.render_type;
+		const object& obj = Objects[objno];
+		uint8_t rtypeid = obj.render_type;
 
-		ObjDrawCall call;
+		ObjDrawCall call = [](SDL_GPUCommandBuffer*, SDL_GPURenderPass*, SDL_GPUCopyPass*) {};
 
 		switch (rtypeid) {
 
+			case RT_NONE:
+				return;
+
+			case RT_MORPH:
 			case RT_POLYOBJ: {
 
-				float visibility = (object.type == OBJ_PLAYER && Players[object.id].flags & PLAYER_FLAGS_CLOAKED) ? 0.f : 1.f;
+				float visibility = (obj.type == OBJ_PLAYER && Players[obj.id].flags & PLAYER_FLAGS_CLOAKED) ? CLOAK_VISIBILITY : 1.f;
 
-				if (object.type == OBJ_ROBOT) {
+				if (obj.type == OBJ_ROBOT) {
 					
-					const ai_static& ais = object.ctype.ai_info;
+					const ai_static& ais = obj.ctype.ai_info;
 					const ai_local& ail = Ai_local_info[objno];
 				
 					if (ais.CLOAKED == RI_CLOAKED_ALWAYS)
-						visibility = 0.f;
+						visibility = CLOAK_VISIBILITY;
 					else if (ais.CLOAKED == RI_CLOAKED_EXCEPT_FIRING)
-						visibility = 0.f; //TODO: scale by fire time
+						visibility = CLOAK_VISIBILITY; //TODO: scale by fire time
 					
 				}
 
-				RenderPolyObj(target, object, segno, visibility); //Will emplace its own calls
-				call = [](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {};
-				break;
+				if (obj.control_type == CT_MORPH) {
+					//constexpr fix three = F1_0 * 3;
+					const auto& pinf = obj.rtype.pobj_info;
+					const fix extMaxMorph = pinf.max_morph_time * 4 / 3; //add a little time so it starts a little visible
+					visibility *= f2fl(fixdiv(extMaxMorph - pinf.morph_time, extMaxMorph)); 
+				}
+
+				//Will emplace its own calls
+				RenderPolyObj(target, objno, segno, visibility);
+				return;
+
+				//call = [](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {};
+				//break;
 
 			}
 
-			case RT_POWERUP: {
+			/*case RT_HOSTAGE: {
 
 				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
 
@@ -1414,67 +1789,366 @@ namespace HRender {
 
 				break;
 
-			}
-
-			case RT_FIREBALL: {
-
-				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+			}*/
 
 
-
-				};
-
-				break;
-
-			}
-
-			case RT_HOSTAGE: {
-
-				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
-
-
-
-				};
-
-				break;
-
-			}
-
-			case RT_LASER: {
-
-				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
-
-
-
-				};
-
-				break;
-
-			}
-
-			case RT_MORPH: {
-
-				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
-
-
-
-				};
-
-				break;
-
-			}
-
+			case RT_HOSTAGE:
+			case RT_LASER:
+			case RT_POWERUP:
+			case RT_FIREBALL:
 			case RT_WEAPON_VCLIP: {
 
-				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+				//auto tp = rendererState.tpageLocations[0];
+				int bm;
 
+				if (rtypeid == RT_LASER) {
 
+					bm = activeBMTable->weapons[obj.id].bitmap.index;
+				
+				} else {
+
+					int vcid = obj.rtype.vclip_info.vclip_num;
+					int frame = obj.rtype.vclip_info.framenum;
+
+					if (rtypeid == RT_FIREBALL)
+						vcid = obj.id;
+					else if (rtypeid == RT_WEAPON_VCLIP)
+						vcid = activeBMTable->weapons[obj.id].weapon_vclip;
+
+					const auto& vclip = activeBMTable->vclips[vcid];
+
+					int time = obj.lifeleft;
+
+					if (rtypeid == RT_WEAPON_VCLIP || rtypeid == RT_FIREBALL) {
+
+						if (rtypeid == RT_WEAPON_VCLIP) {
+
+							fix play_time = vclip.play_time;
+
+							//	Special values for modtime were causing enormous slowdown for omega blobs.
+							if (time == IMMORTAL_TIME)
+								time = play_time;
+
+							//	Should cause Omega blobs (which live for one frame) to not always be the same.
+							if (time == ONE_FRAME_TIME)
+								time = P_Rand();
+
+							if (obj.id == PROXIMITY_ID) //make prox bombs spin out of sync
+							{
+								time += (time * (objno & 7)) / 16;	//add variance to spin rate
+
+								while (time > play_time)
+									time -= play_time;
+
+								if ((objno & 1) ^ ((objno >> 1) & 1))			//make some spin other way
+									time = play_time - time;
+
+							}
+							else
+							{
+								while (time > play_time)
+									time -= play_time;
+							}
+
+						}
+					
+						int nf = vclip.num_frames;
+						frame = (nf - f2i(fixdiv((nf - 1) * time, vclip.play_time))) - 1;
+						if (frame >= nf) {
+							frame = nf - 1;
+						}
+
+					}
+
+					bm = vclip.frames[frame].index;
+
+				}
+
+				const auto& tp = rendererState.tpageLocations[bm];
+
+				mat4f model = M4_IDENTITY_MATRIX_MACRO;
+
+				mat4f* viewMat;
+				switch (target) {
+
+					case VT_MAIN:
+						viewMat = &rendererState.mainViewMatrix;
+					break;
+
+					case VT_LEFT:
+						viewMat = &rendererState.subViewMatrixL;
+					break;
+
+					case VT_RIGHT:
+						viewMat = &rendererState.subViewMatrixR;
+					break;
+
+					default:
+						Int3();
+
+				}
+
+				if (rtypeid != RT_HOSTAGE) {
+
+					for (int i = 0; i < 3; i++) {
+						for (int j = 0; j < 3; j++) {
+							model[i][j] = (*viewMat)[j][i];
+						}
+						model[3][i] = f2fl(obj.pos[i]);
+					}
+
+				} else {
+
+					//rotate forward vector until it's in same plane as pos -> pos + up -> camera pos
+
+					// [DW] WHY IS THE FIX LIB LIKE THIS
+					object* objpNonConst = const_cast<object*>(&obj);
+
+					vms_vector direction = obj.pos;
+					vm_vec_sub2(&direction, &ConsoleObject->pos);
+
+					vms_vector normal = vmd_zero_vector;
+					
+					vm_vec_cross(&normal, &direction, &objpNonConst->orient.uvec);
+					
+					if (labs(normal.x) < FIX_EPSILON && labs(normal.y) < FIX_EPSILON && labs(normal.z) < FIX_EPSILON) //can't see it anyway
+						return;
+
+					vm_vec_normalize(&normal);
+					
+					fixang angle = vm_vec_delta_ang_norm(&objpNonConst->orient.fvec, &normal, NULL);
+					if (vm_vec_dot(&objpNonConst->orient.fvec, &direction) > 0)
+						angle = -angle;
+
+					angle += F1_0 / 4;
+
+					vms_matrix rot;
+					vms_matrix final;
+					
+					vms_angvec ra {
+						.p = 0,
+						.b = 0,
+						.h = angle,
+						//.h = 0,
+					};
+					vm_angles_2_matrix(&rot, &ra);
+					
+					vm_matrix_x_matrix(&final, &objpNonConst->orient, &rot);
+
+					//final[0].x = -final[0].x;
+					//final[1].x = -final[1].x;
+					//final[2].x = -final[2].x;
+
+					//vm_vec_negate(&final.rvec);
+					//vm_vec_negate(&final.fvec);
+
+					for (int i = 0; i < 3; i++) {
+						for (int j = 0; j < 3; j++) {
+							model[i][j] = f2fl(final[i][j]);
+						}
+						model[3][i] = f2fl(obj.pos[i]); 
+					}
+
+				}
+
+				const float size = f2fl(obj.size);
+				const float aspect = (float)activePiggyTable->gameBitmaps[bm].bm_w / activePiggyTable->gameBitmaps[bm].bm_h;
+
+				float light = 1.f;
+				if (rtypeid == RT_POWERUP) {
+					if (!(obj.id == POW_ENERGY || obj.id == POW_SHIELD_BOOST || obj.id == POW_EXTRA_LIFE || obj.id == POW_INVULNERABILITY || obj.id == POW_CLOAK)) {
+						light = f2fl(currentGame == G_DESCENT_2 ? Segment2s[segno].static_light : Segments[segno].static_light);
+					}
+				}
+
+				if (light > 1)
+					light = 1;
+
+				//float lightR, lightG, lightB;
+				//lightR = lightG = lightB = segLight;
+
+				WorldVertex wverts[4] = {
+					WorldVertex {
+						.pos = {
+							-size, -size / aspect, 0
+						},
+						.uv = {
+							0, 1
+						},
+						.props = {
+							segno,
+							tp.second,
+							-1,
+							0
+						},
+						.colormod = {
+							light,
+							light,
+							light,
+							1.f
+						}
+					},
+					WorldVertex {
+						.pos = {
+							-size, size / aspect, 0
+						},
+						.uv = {
+							0, 0
+						},
+						.props = {
+							segno,
+							tp.second,
+							-1,
+							0
+						},
+						.colormod = {
+							light,
+							light,
+							light,
+							1.f
+						}
+					},
+					WorldVertex {
+						.pos = {
+							size, size / aspect, 0
+						},
+						.uv = {
+							1, 0
+						},
+						.props = {
+							segno,
+							tp.second,
+							-1,
+							0
+						},
+						.colormod = {
+							light,
+							light,
+							light,
+							1.f
+						}
+					},
+					WorldVertex {
+						.pos = {
+							size, -size / aspect, 0
+						},
+						.uv = {
+							1, 1
+						},
+						.props = {
+							segno,
+							tp.second,
+							-1,
+							0
+						},
+						.colormod = {
+							light,
+							light,
+							light,
+							1.f
+						}
+					}
+				};
+
+				TexturePage* tpage = &rendererState.tpages[tp.first];
+
+				call = [objno, segno, wverts, model, tpage, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
+
+					UploadTexturePage(tpage, cpass);
+
+					UploadVertexMatrix(combuf, &model, MID_MODEL);
+
+					constexpr uint32_t winds[6] = { 0, 1, 2, 0, 2, 3 };
+
+					constexpr size_t vsize = 4 * sizeof(WorldVertex);
+					constexpr size_t isize = 6 * sizeof(uint32_t);
+
+					SDL_GPUBufferCreateInfo bci {
+						.usage = SDL_GPU_BUFFERUSAGE_VERTEX | SDL_GPU_BUFFERUSAGE_INDEX,
+						.size = vsize + isize
+					};
+
+					if (rendererState.drawTransferBuffer.memoryMap == NULL || rendererState.drawTransferOffset + vsize + isize > rendererState.drawTransferBuffer.size) {
+
+						if (rendererState.drawTransferBuffer.memoryMap)
+							FreeTransferBuffer(rendererState.drawTransferBuffer);
+
+						uint32_t msize = Segments.size() * VERTEX_TRANSFER_FACTOR;
+						if (msize < vsize + isize) {
+							Int3(); //Shouldn't ever happen, but just to be safe...
+							msize = vsize + isize;
+						}
+
+						msize = std::bit_ceil(msize);
+
+						SDL_GPUTransferBufferCreateInfo tbci{
+							.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+							.size = msize
+						};
+
+						rendererState.drawTransferBuffer = CreateTransferBuffer(&tbci, true);
+						rendererState.drawTransferOffset = 0;
+
+						mprintf((0, "Reallocated vertex transfer buffer\n"));
+
+					}
+
+					SDL_GPUBuffer* drawBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
+					if (drawBuffer == NULL)
+						Error("Error creating vertex buffer: %s", SDL_GetError());
+
+					memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, wverts, vsize);
+					memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset + vsize, winds, isize);
+
+					SDL_GPUTransferBufferLocation tbl{
+						.transfer_buffer = rendererState.drawTransferBuffer.buffer,
+						.offset = rendererState.drawTransferOffset
+					};
+
+					SDL_GPUBufferRegion br{
+						.buffer = drawBuffer,
+						.offset = 0,
+						.size = vsize + isize
+					};
+
+					SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
+
+					SDL_GPUBufferBinding bb{
+						.buffer = drawBuffer,
+						.offset = 0
+					};
+					SDL_BindGPUVertexBuffers(rpass, 0, &bb, 1);
+
+					//bb.buffer = indexBuffer;
+					bb.offset = vsize;
+					SDL_BindGPUIndexBuffer(rpass, &bb, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+					SDL_GPUTextureSamplerBinding tsb[]{ {
+						.texture = rendererState.secondaryTexture,
+						.sampler = rendererState.defaultSampler
+					}, {
+						.texture = rendererState.primaryTexture,
+						.sampler = rendererState.defaultSampler
+					} };
+					SDL_BindGPUFragmentSamplers(rpass, 0, tsb, 2);
+
+					SDL_GPUBuffer* storageBuffers[]{ rendererState.paletteBuffer };// , rendererState.paletteBuffer}; //TODO: need portal buffer
+					SDL_BindGPUFragmentStorageBuffers(rpass, 0, storageBuffers, SDL_arraysize(storageBuffers));
+
+					SDL_DrawGPUIndexedPrimitives(rpass, 6, 1, 0, 0, 0);
+
+					SDL_ReleaseGPUBuffer(rendererState.device, drawBuffer);
+
+					rendererState.drawTransferOffset += vsize + isize;
 
 				};
 
 				break;
 
 			}
+
+			default:
+				mprintf((1, "\nUnrecognized render type! %d\n", rtypeid));
 
 		}
 
@@ -1678,12 +2352,12 @@ namespace HRender {
 
 			DispatchMineDrawCalls(mainCommandBuffer, mainRenderPass, mainCopyPass);
 
-			for (auto& call : modelDrawCalls) {
-				auto& [tp, _, __] = call.first;
-				UploadTexturePage(tp, mainCopyPass);
-				SDL_PushGPUFragmentUniformData(mainCommandBuffer, 0, &rendererState.numTexturesInPage, sizeof(rendererState.numTexturesInPage));
-				for (auto& Draw : call.second)
-					Draw(mainCommandBuffer, mainRenderPass, mainCopyPass);
+			UploadVertexMatrix(mainCommandBuffer, &M4_IDENTITY_MATRIX, MID_ANIM);
+
+			if (objDrawCalls.count(VT_MAIN) > 0) {
+				for (auto& call : objDrawCalls[VT_MAIN]) {
+					call(mainCommandBuffer, mainRenderPass, mainCopyPass);
+				}
 			}
 
 			SDL_EndGPUCopyPass(mainCopyPass);

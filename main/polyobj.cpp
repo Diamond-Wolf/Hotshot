@@ -758,3 +758,33 @@ void draw_model_picture(int mn, vms_angvec* orient_angles)
 	gr_free_canvas(temp_canv);
 }
 
+int GetSubmodelTreeDepth(size_t modelnum) {
+
+	int submodelDepth = 1;
+	int8_t children[MAX_SUBMODELS];
+	memset(children, 0xFF, MAX_SUBMODELS * sizeof(int8_t));
+
+	const auto& model = activeBMTable->models[modelnum];
+	for (int i = 0; i < model.n_models; i++) {
+		if (model.submodel_parents[i] >= 0 && model.submodel_parents[i] < model.n_models)
+			children[model.submodel_parents[i]] = i;
+	}
+
+	for (int i = 0; i < MAX_SUBMODELS; i++) {
+
+		int cid = children[i];
+		int chainLength = 0;
+
+		while (cid >= 0) {
+			chainLength++;
+			cid = children[cid];
+		}
+
+		if (chainLength > submodelDepth)
+			submodelDepth = chainLength;
+
+	}
+
+	return submodelDepth;
+
+}

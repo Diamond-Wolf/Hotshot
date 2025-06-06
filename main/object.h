@@ -212,7 +212,9 @@ typedef struct polyobj_info
 	vms_angvec	anim_angles[MAX_SUBMODELS];	//angles for each subobject
 	int			subobj_flags;					//specify which subobjs to draw
 	int			tmap_override;					//if this is not -1, map all face to this
-	int			alt_textures;					//if not -1, use these textures instead
+	//int			alt_textures;					//if not -1, use these textures instead
+	fix			morph_time;					
+	fix			max_morph_time;
 } polyobj_info;
 
 typedef struct object

@@ -278,7 +278,8 @@ void netmisc_encode_object(char* ptr, int* offset, object* objp)
 			netmisc_encode_angvec(ptr, offset, &objp->rtype.pobj_info.anim_angles[i]);
 		netmisc_encode_int32(ptr, offset, objp->rtype.pobj_info.subobj_flags);
 		netmisc_encode_int32(ptr, offset, objp->rtype.pobj_info.tmap_override);
-		netmisc_encode_int32(ptr, offset, objp->rtype.pobj_info.alt_textures);
+		netmisc_encode_int32(ptr, offset, objp->rtype.pobj_info.morph_time);
+		netmisc_encode_int32(ptr, offset, objp->rtype.pobj_info.max_morph_time);
 		extra = 0;
 		break;
 	case RT_WEAPON_VCLIP:
@@ -404,7 +405,8 @@ void netmisc_decode_object(char* ptr, int* offset, object* objp)
 			netmisc_decode_angvec(ptr, offset, &objp->rtype.pobj_info.anim_angles[i]);
 		netmisc_decode_int32(ptr, offset, &objp->rtype.pobj_info.subobj_flags);
 		netmisc_decode_int32(ptr, offset, &objp->rtype.pobj_info.tmap_override);
-		netmisc_decode_int32(ptr, offset, &objp->rtype.pobj_info.alt_textures);
+		netmisc_decode_int32(ptr, offset, &objp->rtype.pobj_info.morph_time);
+		netmisc_decode_int32(ptr, offset, &objp->rtype.pobj_info.max_morph_time);
 		extra = 0;
 		break;
 	case RT_WEAPON_VCLIP:

@@ -466,8 +466,19 @@ int create_gated_robot( int segnum, int object_id, vms_vector* pos)
 	init_ai_object(objp-Objects.data(), default_behavior, -1 );		//	Note, -1 = segment this robot goes to to hide, should probably be something useful
 
 	object_create_explosion(segnum, object_pos, i2f(10), VCLIP_MORPHING_ROBOT );
-	digi_link_sound_to_pos( activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, segnum, 0, object_pos, 0 , F1_0);
-	morph_start(&Objects[objnum]);
+	digi_link_sound_to_pos(activeBMTable->vclips[VCLIP_MORPHING_ROBOT].sound_num, segnum, 0, object_pos, 0 , F1_0);
+	//morph_start(&Objects[objnum]);
+	objp->control_type = CT_MORPH;
+	objp->render_type = RT_MORPH;
+
+	//Originally, each submodel would animate independently, starting at root then doing each child simultaneously
+	objp->rtype.pobj_info.max_morph_time = F1_0 * 2;
+	if (activeBMTable->robots[objp->id].attack_type == 0) { //Quick-spawn melee robots since they can swing immediately anyway
+		int submodelDepth = GetSubmodelTreeDepth(objp->rtype.pobj_info.model_num);
+		objp->rtype.pobj_info.max_morph_time * -submodelDepth;
+	}
+
+	objp->rtype.pobj_info.morph_time = objp->rtype.pobj_info.max_morph_time;
 
 	Last_gate_time = GameTime;
 

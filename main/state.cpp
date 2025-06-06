@@ -73,8 +73,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "poly_acc.h"
 #endif
 
-#define STATE_VERSION 23
-#define STATE_COMPATIBLE_VERSION 23
+#define STATE_VERSION 24
+#define STATE_COMPATIBLE_VERSION 24
 // 0 - Put DGSS (Descent Game State Save) id at tof.
 // 1 - Added Difficulty level save
 // 2 - Added Cheats_enabled flag
@@ -96,6 +96,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 // 20- First_secret_visit
 // 22- Omega_charge
 // 23- Hotshot single-save file
+// 24- Simplify morphing robots storage
 
 #define NUM_SAVES 9
 #define THUMBNAIL_W 100
@@ -1543,7 +1544,7 @@ int state_restore_all_sub(char* filename, int multi, int secret_restore)
 		for (i = 0; i <= Highest_object_index; i++)
 		{
 			obj = &Objects[i];
-			obj->rtype.pobj_info.alt_textures = -1;
+			//obj->rtype.pobj_info.morph_time = -1;
 			segnum = obj->segnum;
 			obj->next = obj->prev = obj->segnum = -1;
 			if (obj->type != OBJ_NONE)

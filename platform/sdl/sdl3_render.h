@@ -225,6 +225,7 @@ namespace HRender {
 	//typedef void(*drawcall)();
 	typedef std::function<void(SDL_GPUCommandBuffer*)> SideDrawCall;
 	typedef std::tuple<TexturePage*, TexturePage*, ViewTarget> SideDrawKey;
+	typedef std::tuple<TexturePage*, ViewTarget, size_t> ModelDrawKey; //last is model ID
 
 	typedef std::function<void(SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass)> ObjDrawCall;
 
@@ -253,11 +254,18 @@ namespace HRender {
 
 	struct Polymodel {
 		std::unordered_map<TexturePage*, ModelFaceBatch> batches;
-		std::vector<Polymodel*> submodels;
+		//std::vector<Polymodel*> submodels;
+		std::vector<size_t> submodelIndices;
+		int submodelID;
+
+		int angleID;
+		vms_vector offset;
 	};
 
 	inline std::vector<Polymodel> models;
 	inline std::vector<size_t> modelIDXlat;
+
+	constexpr float PALETTE_DIV = 63.f;
 
 	void InitPolymodelInterpreter();
 	void GenerateModels();

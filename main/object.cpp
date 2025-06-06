@@ -1392,8 +1392,11 @@ int obj_create(uint8_t type, uint8_t id, int segnum, vms_vector pos,
 		obj->mtype.phys_info.flags = 0;
 	}
 
-	if (obj->render_type == RT_POLYOBJ)
+	if (obj->render_type == RT_POLYOBJ) {
 		obj->rtype.pobj_info.tmap_override = -1;
+		obj->rtype.pobj_info.morph_time = 0;
+		obj->rtype.pobj_info.max_morph_time = 0;
+	}
 
 	obj->shields = 20 * F1_0;
 
@@ -2013,7 +2016,18 @@ void object_move_one(int objnum)
 	case CT_REPAIRCEN: Int3();	// -- hey! these are no longer supported!! -- do_repair_sequence(obj); break;
 	case CT_POWERUP: do_powerup_frame(obj); break;
 	case CT_MORPH:			//morph implies AI
-		do_morph_frame(obj);
+		//do_morph_frame(obj);
+		obj->rtype.pobj_info.morph_time -= FrameTime;
+		if (obj->rtype.pobj_info.morph_time <= 0) {
+
+			obj->rtype.pobj_info.morph_time = 0;
+			
+			obj->control_type = CT_AI;
+			obj->movement_type = MT_PHYSICS;
+			obj->render_type = RT_POLYOBJ;
+
+			//obj->mtype.phys_info = //md->morph_save_phys_info;
+		}
 		//NOTE: FALLS INTO AI HERE!!!!
 	case CT_AI:
 		//NOTE LINK TO CT_MORPH ABOVE!!!
@@ -2814,7 +2828,8 @@ void read_obj_instance(object* obj, FILE* f)
 			read_angvec(&obj->rtype.pobj_info.anim_angles[i], f);
 		obj->rtype.pobj_info.subobj_flags = file_read_int(f);
 		obj->rtype.pobj_info.tmap_override = file_read_int(f);
-		obj->rtype.pobj_info.alt_textures = file_read_int(f);
+		obj->rtype.pobj_info.morph_time = file_read_int(f);
+		obj->rtype.pobj_info.max_morph_time = file_read_int(f);
 		bytesLeft = 0;
 		break;
 	}
@@ -2976,7 +2991,7 @@ void write_obj_instance(object* obj, FILE* f)
 			write_angvec(&obj->rtype.pobj_info.anim_angles[i], f);
 		file_write_int(f, obj->rtype.pobj_info.subobj_flags);
 		file_write_int(f, obj->rtype.pobj_info.tmap_override);
-		file_write_int(f, obj->rtype.pobj_info.alt_textures);
+		file_write_int(f, obj->rtype.pobj_info.morph_time);
 		bytesLeft = 0;
 		break;
 	}
