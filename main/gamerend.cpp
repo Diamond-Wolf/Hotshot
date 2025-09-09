@@ -815,7 +815,7 @@ std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* 
 		if (lookBackward)
 			vm_vec_negate(&forward);
 
-		std::vector<short> segments = BuildSegmentListNew(window, object->segnum, object->pos, forward);
+		const std::vector<short>& segments = BuildSegmentListNew(window, object->segnum, object->pos, forward);
 
 		HRender::BuildGPUPortalList(segments, object->pos, forward, window, window);
 
