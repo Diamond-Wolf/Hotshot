@@ -63,8 +63,8 @@ SoundLoader* RequestSoundLoader(const std::string filename) {
 		return new MIDILoader(filename);
 	}
 
-	if (strlen(extc) == 4 && !_strnicmp(extc, ".hmp", 4)
-	|| strlen(extc) == 4 && !_strnicmp(extc, ".hmq", 4)) {
+	if (strlen(extc) == 4 && (!_strnicmp(extc, ".hmp", 4)
+	/*|| strlen(extc) == 4*/ || !_strnicmp(extc, ".hmq", 4))) {
 		return new HMPLoader(filename);
 	}
 
