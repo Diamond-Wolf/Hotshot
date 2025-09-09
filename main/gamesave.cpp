@@ -2092,8 +2092,10 @@ int load_game_data(CFILE* LoadFile) {
 		return LoadGameDataD1(LoadFile);
 	else if (currentGame == G_DESCENT_2)
 		return LoadGameDataD2(LoadFile);
-	else
+	else {
 		Int3();
+		return -1;
+	}
 }
 
 int check_segment_connections(void);

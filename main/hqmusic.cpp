@@ -85,7 +85,7 @@ bool PlayHQSong(const char* filename, bool loop) {
 		}
 
 		auto size = cfile->size;
-		auto data = new char[size];
+		auto data = malloc(size * sizeof(char));
 		auto read = cfread(data, 1, cfile->size, cfile);
 		cfclose(cfile);
 
@@ -96,7 +96,7 @@ bool PlayHQSong(const char* filename, bool loop) {
 			mprintf((1, "Error reading %s", filename));
 			delete loader;
 			loader = nullptr;
-			delete[] data;
+			free(data);
 			return false;
 		}
 

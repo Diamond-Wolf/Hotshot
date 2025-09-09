@@ -1127,6 +1127,8 @@ int load_mine_data_compiled(CFILE *LoadFile) {
 		return LoadMineD1(LoadFile);
 	else if (currentGame == G_DESCENT_2)
 		return LoadMineD2(LoadFile);
-	else
+	else {
 		Int3();
+		return -1;
+	}
 }

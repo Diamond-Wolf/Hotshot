@@ -29,7 +29,7 @@ bool HMPLoader::Open() {
 	}
 
 	auto size = file.tellg();
-	auto buffer = new char[size];
+	auto buffer = (char*)malloc(size * sizeof(char));
 
 	file.seekg(0, ios::beg);
 	file.read(buffer, size);

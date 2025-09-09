@@ -2207,8 +2207,10 @@ int ai_save_state(FILE* fp) {
 		return ai_save_state_d1(fp);
 	else if (currentGame == G_DESCENT_2)
 		return ai_save_state_d2(fp);
-	else
+	else {
 		Int3();
+		return -1;
+	}
 }
 
 extern int ai_restore_state_d1(FILE* fp);
@@ -2219,8 +2221,10 @@ int ai_restore_state(FILE* fp, int version) {
 		return ai_restore_state_d1(fp);
 	else if (currentGame == G_DESCENT_2)
 		return ai_restore_state_d2(fp, version);
-	else
+	else {
 		Int3();
+		return -1;
+	}
 }
 
 #ifndef NDEBUG
