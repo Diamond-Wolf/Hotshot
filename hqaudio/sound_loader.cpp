@@ -67,7 +67,6 @@ SoundLoader* RequestSoundLoader(const std::string filename) {
 	/*|| strlen(extc) == 4*/ || !_strnicmp(extc, ".hmq", 4))) {
 		return new HMPLoader(filename);
 	}
-
 #endif
 	
 	return nullptr;

@@ -6,7 +6,7 @@ Instead, it is released under the terms of the MIT License.
 
 #include "hmp.h"
 
-#if MIDI_SUPPORTED
+#if HMP_SUPPORTED
 
 #include <fstream>
 
