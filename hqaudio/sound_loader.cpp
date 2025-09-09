@@ -62,13 +62,13 @@ SoundLoader* RequestSoundLoader(const std::string filename) {
 	|| strlen(extc) == 5 && !_strnicmp(extc, ".midi", 5)) {
 		return new MIDILoader(filename);
 	}
-#endif
 
-	// [DW] if HMP isn't supported, something is horribly wrong
 	if (strlen(extc) == 4 && !_strnicmp(extc, ".hmp", 4)
 	|| strlen(extc) == 4 && !_strnicmp(extc, ".hmq", 4)) {
 		return new HMPLoader(filename);
 	}
+
+#endif
 	
 	return nullptr;
 
@@ -85,7 +85,7 @@ SoundLoader::SoundLoader(const std::string& filename) : filename(filename) {};
 
 SoundLoader::~SoundLoader() {
 	if (memory && autoFree) {
-		delete[] memory;
+		free(memory);
 		memory = nullptr;
 		memoryLen = 0;
 	}
