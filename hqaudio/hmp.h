@@ -44,8 +44,8 @@ struct HMPLoader : SoundLoader {
 
 };
 
-#endif
-
 #else
 # define MIDI_SUPPORTED 0
+#endif
+
 #endif

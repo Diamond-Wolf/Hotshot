@@ -6,6 +6,8 @@ Instead, it is released under the terms of the MIT License.
 
 #include "hmp.h"
 
+#if MIDI_SUPPORTED
+
 #include <fstream>
 
 #include "platform/mono.h"
@@ -290,3 +292,5 @@ void HMPLoader::Close() {
 	}
 	
 }
+
+#endif
