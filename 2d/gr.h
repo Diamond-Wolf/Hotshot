@@ -83,7 +83,7 @@ typedef struct _grs_bitmap {
 								//   SVGA = *parent+(rowsize*y+x)
 	unsigned short bm_selector;
 	uint8_t			avg_color;	//	Average color of all pixels in texture map.
-	int8_t			unused;		//	to 4-byte align.
+	bool			overridden;	//	From POG
 } grs_bitmap;
 
 //shortcuts

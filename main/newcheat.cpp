@@ -152,6 +152,7 @@ void InitializeCheats() {
     allCheats[i++] = NewCheat("vertigo", 7); //Rave shader
     allCheats[i++] = NewCheat("firebrand", 9); 
     allCheats[i++] = NewCheat("whosyodaddy", 11);
+    allCheats[i++] = NewCheat("peekaboo", 8);
 
     Assert(i == CI_TOTAL);
 
@@ -595,7 +596,7 @@ bool CheckCheats(char newKeyIn) {
             return true;
         break;
 
-        case Ci_DESTROY_REACTOR:
+        case CI_DESTROY_REACTOR:
             do_cheat_penalty();
             do_controlcen_destroyed_stuff(nullptr);
 
@@ -804,6 +805,14 @@ bool CheckCheats(char newKeyIn) {
 
             return true;
         break;
+
+        case CI_FULLBRIGHT:
+            do_cheat_penalty();
+            cheatValues[CI_FULLBRIGHT] = !cheatValues[CI_FULLBRIGHT];
+
+            return true;
+        break;
+
     }
 
     return false;

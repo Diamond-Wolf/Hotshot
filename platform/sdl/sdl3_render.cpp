@@ -771,7 +771,7 @@ namespace HRender {
 		ClearTexturePages();
 		rendererState.tpages.reserve(activePiggyTable->gameBitmaps.size());
 
-		piggy_bitmap_page_out_all();
+		//piggy_bitmap_page_out_all();
 
 		for (int i = 0; i < activePiggyTable->gameBitmaps.size(); i++) {
 			
@@ -1412,7 +1412,10 @@ namespace HRender {
 				wverts[i] = batch.verts[i];
 
 				float lightR, lightG, lightB;
-				lightR = lightG = lightB = light;
+				if (cheatValues[CI_FULLBRIGHT])
+					lightR = lightG = lightB = 1.f;
+				else
+					lightR = lightG = lightB = light;
 
 				if (cheatValues[CI_RAVE]) {
 
@@ -1779,19 +1782,6 @@ namespace HRender {
 
 			}
 
-			/*case RT_HOSTAGE: {
-
-				call = [objno, rtypeid](SDL_GPUCommandBuffer* combuf, SDL_GPURenderPass* rpass, SDL_GPUCopyPass* cpass) {
-
-
-
-				};
-
-				break;
-
-			}*/
-
-
 			case RT_HOSTAGE:
 			case RT_LASER:
 			case RT_POWERUP:
@@ -1955,14 +1945,19 @@ namespace HRender {
 				const float aspect = (float)activePiggyTable->gameBitmaps[bm].bm_w / activePiggyTable->gameBitmaps[bm].bm_h;
 
 				float light = 1.f;
-				if (rtypeid == RT_POWERUP) {
-					if (!(obj.id == POW_ENERGY || obj.id == POW_SHIELD_BOOST || obj.id == POW_EXTRA_LIFE || obj.id == POW_INVULNERABILITY || obj.id == POW_CLOAK)) {
-						light = f2fl(currentGame == G_DESCENT_2 ? Segment2s[segno].static_light : Segments[segno].static_light);
-					}
-				}
 
-				if (light > 1)
-					light = 1;
+				if (!cheatValues[CI_FULLBRIGHT]) {
+
+					if (rtypeid == RT_POWERUP) {
+						if (!(obj.id == POW_ENERGY || obj.id == POW_SHIELD_BOOST || obj.id == POW_EXTRA_LIFE || obj.id == POW_INVULNERABILITY || obj.id == POW_CLOAK)) {
+							light = f2fl(currentGame == G_DESCENT_2 ? Segment2s[segno].static_light : Segments[segno].static_light);
+						}
+					}
+
+					if (light > 1)
+						light = 1;
+				
+				}
 
 				//float lightR, lightG, lightB;
 				//lightR = lightG = lightB = segLight;
@@ -2223,7 +2218,11 @@ namespace HRender {
 					auto& vert = Vertices[segment.verts[sideverts[i]]];
 
 					float lightR, lightG, lightB;
-					lightR = lightG = lightB = f2fl(side.uvls[i].l);
+					if (cheatValues[CI_FULLBRIGHT])
+						lightR = lightG = lightB = 1.f;
+					else
+						lightR = lightG = lightB = f2fl(side.uvls[i].l);
+
 
 					if (cheatValues[CI_RAVE]) {
 

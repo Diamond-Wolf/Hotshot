@@ -58,7 +58,7 @@ enum CheatsIndex {
     CI_SHAREWARE_WEAPONS,
     CI_MEGAWOW,
     CI_NO_FIRING_D1,
-    Ci_DESTROY_REACTOR,
+    CI_DESTROY_REACTOR,
 
     CI_HELIUM,
     CI_200_SHIELDS,
@@ -69,6 +69,7 @@ enum CheatsIndex {
     CI_RAVE,
     CI_LAVA_WALLS,
     CI_EXPLODE_FLARES,
+    CI_FULLBRIGHT,
 
     CI_TOTAL
 };

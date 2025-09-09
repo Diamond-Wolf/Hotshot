@@ -916,6 +916,8 @@ void load_bitmap_replacements(char* level_name)
 			if (bmh.flags & BM_FLAG_RLE) temp_bitmap.bm_flags |= BM_FLAG_RLE;
 			if (bmh.flags & BM_FLAG_RLE_BIG) temp_bitmap.bm_flags |= BM_FLAG_RLE_BIG;
 
+			temp_bitmap.overridden = true;
+
 			activePiggyTable->gameBitmaps[indices[i]] = temp_bitmap;
 		}
 

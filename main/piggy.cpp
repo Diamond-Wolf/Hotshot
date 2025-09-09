@@ -450,7 +450,10 @@ void piggy_init_pigfile(const char* filename)
 			if (bmh.flags & BM_FLAG_RLE_BIG) flag |= BM_FLAG_RLE_BIG;
 
 			int offset = bmh.offset + data_start;
-			//Assert((i + 1) == Num_bitmap_files); 
+			//Assert((i + 1) == Num_bitmap_files);
+			
+			temp_bitmap.overridden = false;
+
 			piggy_register_bitmap(&temp_bitmap, temp_name, 1, flag, offset);
 		}
 	}
@@ -993,6 +996,9 @@ int PiggyInitD1()
 			bogus_data[i * 64 + i] = c;
 			bogus_data[i * 64 + (63 - i)] = c;
 		}
+
+		bogus_bitmap.overridden = true;
+
 		piggy_register_bitmap(&bogus_bitmap, "bogus", 1, BM_FLAG_PAGED_OUT, 0);
 		bogus_sound.length = 64 * 64;
 		bogus_sound.data = bogus_data;
@@ -1088,6 +1094,8 @@ int PiggyInitD1()
 		temp_bitmap.avg_color = bmh.avg_color;
 		temp_bitmap.bm_data = Piggy_bitmap_cache_data;
 
+		temp_bitmap.overridden = false;
+
 		//activePiggyTable->gameBitmapFlags[i + 1] = 0;
 		uint8_t flags = 0;
 		if (bmh.flags & BM_FLAG_TRANSPARENT) flags |= BM_FLAG_TRANSPARENT;
@@ -1175,6 +1183,9 @@ int PiggyInitD2()
 			bogus_data[i * 64 + i] = c;
 			bogus_data[i * 64 + (63 - i)] = c;
 		}
+
+		bogus_bitmap.overridden = true;
+
 		piggy_register_bitmap(&bogus_bitmap, "bogus", 1, 0, 0);
 		bogus_sound.length = 64 * 64;
 		bogus_sound.data = bogus_data;
@@ -1443,8 +1454,8 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 			// GET JOHN NOW IF YOU GET THIS ASSERT!!!
 			//Assert(Piggy_bitmap_cache_next + (bmp->bm_h * bmp->bm_w) < Piggy_bitmap_cache_size);
 			if (Piggy_bitmap_cache_next + (bmp->bm_h * bmp->bm_w) >= Piggy_bitmap_cache_size) {
-				printf("\n Oh no! %d %d %d\n", Piggy_bitmap_cache_next, (bmp->bm_h * bmp->bm_w), Piggy_bitmap_cache_size);
-				Int3();
+				mprintf((1, "\n Piggy cache full! %d %d %d\n", Piggy_bitmap_cache_next, (bmp->bm_h * bmp->bm_w), Piggy_bitmap_cache_size));
+				//Int3();
 				piggy_bitmap_page_out_all();
 				goto ReDoIt;
 			}
@@ -1495,8 +1506,10 @@ void piggy_bitmap_page_out_all()
 
 	for (i = 0; i < activePiggyTable->bitmapFiles.size(); i++) {
 		if (activePiggyTable->gameBitmapOffsets[i] > 0) {       // Don't page out bitmaps read from disk!!!
-			activePiggyTable->gameBitmaps[i].bm_flags = BM_FLAG_PAGED_OUT;
-			activePiggyTable->gameBitmaps[i].bm_data = Piggy_bitmap_cache_data;
+			if (!activePiggyTable->gameBitmaps[i].overridden) {
+				activePiggyTable->gameBitmaps[i].bm_flags = BM_FLAG_PAGED_OUT;
+				activePiggyTable->gameBitmaps[i].bm_data = Piggy_bitmap_cache_data;
+			}
 		}
 	}
 
