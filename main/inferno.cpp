@@ -525,7 +525,7 @@ int D_DescentMain(int argc, const char** argv)
 		if (threadarg < Num_args) {
 			char* end;
 			long val = strtol(Args[threadarg], &end, 10);
-			if (end != '\0')
+			if (*end != '\0')
 				Error("-threads argument must be a number");
 			else
 				numThreads = val;

@@ -9,7 +9,7 @@ void InitJobPool(long numThreads) {
     
     if (numThreads == 0) {
 
-        numThreads = (int)std::thread::hardware_concurrency - 4; //Leave space for non-pooled threads
+        numThreads = (long)std::thread::hardware_concurrency - 4; //Leave space for non-pooled threads
         if (numThreads < 1)
             numThreads = 1;
 
