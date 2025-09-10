@@ -79,6 +79,7 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include "compbit.h"
 #include "misc/types.h"
 #include "newcheat.h"
+#include "jobs.h"
 
 #define SANTA
 
@@ -515,6 +516,25 @@ int D_DescentMain(int argc, const char** argv)
 	setbuf(stdout, NULL);	// unbuffered output via printf
 
 	InitArgs(argc, argv);
+
+	long numThreads = 0;
+
+	int threadarg = FindArg("-threads");
+	if (threadarg) {
+		threadarg++;
+		if (threadarg < Num_args) {
+			char* end;
+			long val = strtol(Args[threadarg], &end, 10);
+			if (end != '\0')
+				Error("-threads argument must be a number");
+			else
+				numThreads = val;
+		} else {
+			Error("-threads argument must specify a number of threads");
+		}
+	}
+
+	InitJobPool(numThreads);
 
 	int initStatus = plat_init();
 	if (initStatus)
@@ -1089,6 +1109,8 @@ Here:
 			Error("Invalid function mode %d", Function_mode);
 		}
 	}
+
+	ShutdownJobPool();
 
 	WriteConfigFile();
 	plat_save_chocolate_cfg();
