@@ -1,7 +1,8 @@
 #version 450 core
 
-layout(location = 0) in vec3 uvl;
+layout(location = 0) in vec2 uv;
 layout(location = 1) in flat ivec4 props; //segnum, texnum1, texnum2, overlay rotation
+layout(location = 2) in vec4 colormod;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -27,41 +28,18 @@ void main() {
 
 	// TODO Check portals
 
-	//float z = gl_FragCoord.z / gl_FragCoord.w;
-  /*float z = gl_FragCoord.z;
-	//float z = gl_FragCoord.z * gl_FragCoord.z;
-  if (isnan(z)) {
-    fragColor = vec4(1,0.75,0,1);
-    return;
-  }
-  
-  if (isinf(z)) {
-    fragColor = vec4(1,1,0,1);
-    return;
-  }
-    
-
-	if (z <= 0 || z >= 1) {
-		fragColor = vec4(0, z, 1-z, 1);
-		//fragColor = vec4(0, gl_FragCoord.z, 0, 1);
-		return;
-	}
-
-	fragColor = vec4(1,0,z,1);
-	return;*/
-
 	uint cindex;
 	
 	vec2 textureSize;
 	vec2 tindex;
 	vec2 uvInTex;
-	vec2 uv;
+	vec2 finalUV;
 	
 	if (props.z >= 0) {
 	
 		textureSize = 1 / numTextures.zw;
 		tindex = vec2(mod(props.z, numTextures.z), floor(props.z / numTextures.z));
-		uvInTex = vec2(tindex.x + fract(uvl.x), tindex.y + fract(uvl.y));
+		uvInTex = vec2(tindex.x + fract(uv.x), tindex.y + fract(uv.y));
 		
 		switch (props.w) {
 			case 0: break;
@@ -70,37 +48,34 @@ void main() {
 			case 3: uvInTex = vec2(uvInTex.y, -uvInTex.x); break;
 		}
 		
-		uv = textureSize * uvInTex + tindex;
-		cindex = uint(texture(topTexpage, uv).r);
+		finalUV = textureSize * uvInTex + tindex;
+		cindex = uint(texture(topTexpage, finalUV).r);
 		if (cindex == 254)
 			discard;
 		else if (cindex < 254) {
 			paletteColor color = palette[cindex];
-			fragColor = vec4(color.r, color.g, color.b, 1) * uvl.z;
+			fragColor = vec4(color.r * colormod.r, color.g * colormod.g, color.b * colormod.b, colormod.a);
 			return;
 		}
 		
 	}
 	
-	textureSize = 1 / numTextures.xy;
-	tindex = vec2(mod(props.y, numTextures.x), floor(props.y / numTextures.x));
-	uvInTex = vec2(tindex.x + fract(uvl.x), tindex.y + fract(uvl.y));
-	uv = textureSize * uvInTex + tindex;
+	if (props.y >= 0) {
+	
+		textureSize = 1 / numTextures.xy;
+		tindex = vec2(mod(props.y, numTextures.x), floor(props.y / numTextures.x));
+		uvInTex = vec2(tindex.x + fract(uv.x), tindex.y + fract(uv.y));
+		finalUV = textureSize * uvInTex + tindex;
 
-	cindex = uint(texture(botTexpage, uv).r);
-	if (cindex >= 254)
-		discard;
+		cindex = uint(texture(botTexpage, finalUV).r);
+		if (cindex >= 254)
+			discard;
 		
-	paletteColor color = palette[cindex];
-	fragColor = vec4(color.r, color.g, color.b, 1) * uvl.z;
-
+		paletteColor color = palette[cindex];
+		fragColor = vec4(color.r * colormod.r, color.g * colormod.g, color.b * colormod.b, colormod.a);
+	
+	} else {
+		fragColor = colormod;
+	}
+		
 }
-
-
-
-
-
-	/*if ((props.w & 1) != 0)
-		uvTop = vec2(-uvTop.y, uvTop.x);
-	if ((props.w & 2) != 0)
-		uvTop = -uvTop;*/
