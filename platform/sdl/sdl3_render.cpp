@@ -701,6 +701,8 @@ namespace HRender {
 				rendererState.rightWindowPortalListBuilt = StartJob(SkipAsync);
 			break;
 
+			default: break;
+
 		}
 	}
 
