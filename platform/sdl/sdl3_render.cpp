@@ -37,72 +37,29 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "2d/gr.h"
 #include "2d/rle.h"
-#include "main/polyobj.h"
+
+#include "3d/globvars.h"
+
 #include "cfile/cfile.h"
-#include "main/inferno.h"
-#include "misc/error.h"
-#include "misc/types.h"
-#include "platform/mono.h"
+
+#include "main/ai.h"
+#include "main/bm.h"
 #include "main/game.h"
-#include "main/kconfig.h"
 #include "main/gamestat.h"
 #include "main/gauges.h"
-#include "main/bm.h"
-#include "main/player.h"
-#include "3d/globvars.h"
+#include "main/inferno.h"
 #include "main/jobs.h"
+#include "main/kconfig.h"
+#include "main/laser.h"
+#include "main/newcheat.h"
+#include "main/player.h"
+#include "main/polyobj.h"
 
-#ifndef MOCK_FUTURE
-#include <future>
-#include <main/endlevel.h>
-#include <main/ai.h>
-#include <main/newcheat.h>
-#include <misc/rand.h>
-#include <main/laser.h>
-#else
-namespace std {
+#include "misc/error.h"
+#include "misc/rand.h"
+#include "misc/types.h"
 
-	enum class launch {
-		async,
-		deferred
-	};
-
-	template<class T> struct future {
-		T val;
-		bool valid = false;
-		T get() {
-			valid = false;
-			return val;
-		};
-	};
-
-	template<class T, class... TArgs> future<T> async(launch l, function<T(TArgs...)> f, TArgs... args) {
-		future<T> fut;
-		fut.val = f(args...);
-		fut.valid = true;
-		return fut;
-	}
-
-	template<class T, class... TArgs> future<T> async(launch l, T(*f)(TArgs...), TArgs... args) {
-		return async<T, TArgs...>(l, function<T(TArgs...)>(f), args...);
-	}
-
-	template<class T> future<T> async(launch l, function<T(void)> f) {
-		future<T> fut;
-		fut.val = f();
-		fut.valid = true;
-		return fut;
-	}
-
-	template<class T> future<T> async(launch l, T(*f)(void)) {
-		return async<T>(l, function(f));
-	}
-
-
-}
-#endif
-
-
+#include "platform/mono.h"
 
 #ifdef NDEBUG
 # define ENABLE_SDL_DEBUG false
@@ -425,6 +382,8 @@ namespace HRender {
 
 	void ResizeRenderTarget(const unsigned int w, const unsigned int h) {
 
+		mprintf((0, "Resize render target: %d %d", w, h));
+
 		rendererState.renderWidth = w;
 		rendererState.renderHeight = h;
 
@@ -456,7 +415,8 @@ namespace HRender {
 			Error("Error creating render depth texture: %s", SDL_GetError());
 		}
 
-		// HACK!!!!!!! SDL doesn't let you clear a screen normally, so fake it. Only needed on platforms where the screen canvas defaults to irreplacable garbage.
+		// HACK!!!!!!! SDL doesn't let you clear a screen normally, so fake it.
+		// Only needed on platforms where the screen canvas defaults to destructive garbage.
 #ifdef __APPLE__
 		uint8_t zero = 0;
 

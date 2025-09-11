@@ -13,6 +13,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include "3d.h"
+
 #define MAX_POINTS_IN_POLY 100
 
 extern int Canvas_width, Canvas_height;	//the actual width & height
