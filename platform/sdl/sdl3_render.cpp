@@ -50,6 +50,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main/bm.h"
 #include "main/player.h"
 #include "3d/globvars.h"
+#include "main/jobs.h"
 
 #ifndef MOCK_FUTURE
 #include <future>
@@ -689,15 +690,15 @@ namespace HRender {
 		switch (target) {
 
 			case VT_MAIN:
-				rendererState.mainPortalListBuilt = std::async(ASYNC_POLICY, SkipAsync);
+				rendererState.mainPortalListBuilt = StartJob(SkipAsync);
 			break;
 
 			case VT_LEFT:
-				rendererState.leftWindowPortalListBuilt = std::async(ASYNC_POLICY, SkipAsync);
+				rendererState.leftWindowPortalListBuilt = StartJob(SkipAsync);
 			break;
 
 			case VT_RIGHT:
-				rendererState.rightWindowPortalListBuilt = std::async(ASYNC_POLICY, SkipAsync);
+				rendererState.rightWindowPortalListBuilt = StartJob(SkipAsync);
 			break;
 
 		}
@@ -740,11 +741,11 @@ namespace HRender {
 			else if (clone != VT_NONE)
 				Error("Invalid subwindow clone mode! Target %d cloning %d", target, clone);
 
-			*future = std::async(ASYNC_POLICY, SkipAsync);
+			*future = StartJob(SkipAsync);
 
 		} else {
 
-			*future = std::async(ASYNC_POLICY, BuildGPUPortalListThread, segments, pos, dir, target, buffer);
+			*future = StartJob(BuildGPUPortalListThread, segments, pos, dir, target, buffer);
 
 		}
 	}

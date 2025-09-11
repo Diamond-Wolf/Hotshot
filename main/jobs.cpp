@@ -9,7 +9,7 @@ void InitJobPool(long numThreads) {
     
     if (numThreads == 0) {
 
-        numThreads = (long)std::thread::hardware_concurrency - 4; //Leave space for non-pooled threads
+        numThreads = (long)std::thread::hardware_concurrency() - 4; //Leave space for non-pooled threads
         if (numThreads < 1)
             numThreads = 1;
 
@@ -22,15 +22,22 @@ void InitJobPool(long numThreads) {
 
             while (!quit) {
 
-                std::unique_lock l(jobQueueMutex);
+                std::unique_lock l(jobSyncMutex);
 
-                if (jobs.size() == 0) {
+                while (jobs.empty() && !quit) {
                     threadNotifier.wait(l);
+                }
+
+                if (quit) {
+                    l.unlock();
+                    l.release();
+                    return;
                 }
                 
                 auto job = jobs.front();
                 jobs.pop();
-
+                
+                l.unlock();
                 l.release();
 
                 job();
@@ -46,9 +53,16 @@ void ShutdownJobPool() {
 
     quit = true;
 
-    std::lock_guard g(jobQueueMutex);
+    {
+        std::lock_guard g(jobSyncMutex);
 
-    while (jobs.size() > 0)
-        jobs.pop();
+        while (!jobs.empty())
+            jobs.pop();
+
+        threadNotifier.notify_all();
+    }
+
+    for (auto& thread : threads)
+        thread.join();
 
 }

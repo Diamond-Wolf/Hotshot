@@ -55,6 +55,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "gameseq.h" //for level number
 #include "newcheat.h"
 #include "platform/renderapi.h"
+#include "jobs.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -809,7 +810,8 @@ const std::vector<short>& BuildSegmentListNew(HRender::ViewTarget window, short 
 }
 
 std::future<void> RenderGameWorldFromObject(HRender::ViewTarget window, object* object, const bool lookBackward) {
-	return std::async(std::launch::async, [window, object, lookBackward]() {
+	//C++ forgot how to do basic implicit conversion from lambda to function
+	return StartJob([window, object, lookBackward]() {
 
 		vms_vector forward = object->orient.fvec;
 		if (lookBackward)
