@@ -456,6 +456,20 @@ namespace HRender {
 			Error("Error creating render depth texture: %s", SDL_GetError());
 		}
 
+		// HACK!!!!!!! SDL doesn't let you clear a screen normally, so fake it. Only needed on platforms where the screen canvas defaults to irreplacable garbage.
+#ifdef __APPLE__
+		uint8_t zero = 0;
+
+		grs_bitmap bm {
+			.bm_w = 1,
+			.bm_h = 1,
+			.bm_data = &zero,
+		};
+
+		RenderScreenBitmap(&bm);
+#endif
+		//End hack
+
 		SyncCockpit();
 
 	}
@@ -585,6 +599,31 @@ namespace HRender {
 			Error("Error creating world pipeline: %s", SDL_GetError());
 		}
 
+		rendererState.pastePipeline = CreateGraphicsPipeline<1, 2>(rendererState.pasteVert, rendererState.pasteFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+			std::array { SDL_GPUVertexBufferDescription {
+				.slot = 0,
+				.pitch = (uint32_t)sizeof(float) * 4,
+				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				.instance_step_rate = 0,
+			} },
+			
+			std::array { SDL_GPUVertexAttribute {
+				.location = 0,
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+				.offset = 0,
+			}, SDL_GPUVertexAttribute {
+				.location = 1,
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+				.offset = 2 * sizeof(float),
+			} },
+		true, false);
+
+		if (rendererState.pastePipeline == NULL) {
+			Error("Error creating world pipeline: %s", SDL_GetError());
+		}
+
 		InitPolymodelInterpreter();
 		
 	}
@@ -622,6 +661,9 @@ namespace HRender {
 		good &= BuildShader(SHADER("worldv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.worldVert, 0, 4, 0);
 		good &= BuildShader(SHADER("worldf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.worldFrag, 2, 1, 1);
 
+		good &= BuildShader(SHADER("pastev"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.pasteVert, 0, 0, 0);
+		good &= BuildShader(SHADER("pastef"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.pasteFrag, 1, 0, 0);
+
 		if (!good)
 			return 4;
 
@@ -629,7 +671,7 @@ namespace HRender {
 		if (rendererState.mainCommandBuffer == NULL) {
 			return 5;
 		}
-		
+
 		ResizeWindow();
 
 		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(rendererState.mainCommandBuffer);
@@ -644,6 +686,8 @@ namespace HRender {
 			mprintf((1, "Could not create palette buffer: %s\n", SDL_GetError()));
 			return 6;
 		}
+
+		mprintf((0, "HRender: Initializing render modes\n"));
 
 		InitScreenRendering(cpass);
 		InitWorldRendering(cpass);
@@ -815,6 +859,82 @@ namespace HRender {
 		GenerateModels();
 	}
 
+	void PasteTextureToWorldCanvas(SDL_GPUTexture* source, float x1, float y1, float x2, float y2) {
+
+		//InitCommandBuffer();
+		auto cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		
+		auto cpass = SDL_BeginGPUCopyPass(rendererState.mainCommandBuffer);
+
+		std::array<float, 4 * 4> verts {
+			x1, y2, 0.f, 0.f,
+			x2, y2, 1.f, 0.f,
+			x1, y1, 0.f, 1.f,
+			x2, y1, 1.f, 1.f,
+		};
+
+		SDL_GPUTransferBufferCreateInfo tbci {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = sizeof(verts)
+		};
+
+		TransferBuffer tbuf = CreateTransferBuffer(&tbci, false);
+		if (tbuf.memoryMap == NULL)
+			Error("Error creating paste vertex memory map!");
+
+		memcpy(tbuf.memoryMap, verts.data(), sizeof(verts));
+		
+		SDL_GPUBufferCreateInfo bci {
+			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+			.size = sizeof(verts)
+		};
+
+		auto vertBuffer = SDL_CreateGPUBuffer(rendererState.device, &bci);
+
+		SDL_GPUTransferBufferLocation tbl {
+			.transfer_buffer = tbuf.buffer,
+			.offset = 0
+		};
+
+		SDL_GPUBufferRegion br {
+			.buffer = vertBuffer,
+			.offset = 0,
+			.size = sizeof(verts)
+		};
+
+		SDL_UploadToGPUBuffer(cpass, &tbl, &br, true);
+
+		SDL_EndGPUCopyPass(cpass);
+
+		FreeTransferBuffer(tbuf);
+
+		SDL_GPURenderPass* rpass = BeginDefaultRenderPass();
+
+		SDL_BindGPUGraphicsPipeline(rpass, rendererState.pastePipeline);
+
+		SDL_GPUBufferBinding bb {
+			.buffer = vertBuffer,
+			.offset = 0
+		};
+		SDL_BindGPUVertexBuffers(rpass, 0, &bb, 1);
+
+		bb.buffer = rendererState.screenIndBuffer;
+		SDL_BindGPUIndexBuffer(rpass, &bb, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+		SDL_GPUTextureSamplerBinding tsb {
+			.texture = source,
+			.sampler = rendererState.defaultSampler
+		};
+		SDL_BindGPUFragmentSamplers(rpass, 0, &tsb, 1);
+
+		SDL_DrawGPUIndexedPrimitives(rpass, 4, 1, 0, 0, 0); 
+
+		SDL_EndGPURenderPass(rpass);
+
+		SDL_SubmitGPUCommandBuffer(cbuf);
+
+	}
+
 	void RenderScreenBitmap(grs_bitmap* bm) {
 
 		InitCommandBuffer();
@@ -914,6 +1034,34 @@ namespace HRender {
 		RenderScreenBitmap(&canvas->cv_bitmap);
 	}
 
+	void ResetWorldColorTargets() {
+		
+		mprintf((0, "Resetting color targets"));
+
+		rendererState.mainCTarget.load_op = SDL_GPU_LOADOP_CLEAR;
+		rendererState.rightCTarget.load_op = SDL_GPU_LOADOP_CLEAR;
+		rendererState.leftCTarget.load_op = SDL_GPU_LOADOP_CLEAR;
+		
+		auto clearcom = SDL_AcquireGPUCommandBuffer(rendererState.device);
+
+		//render pass auto clears
+		auto rpass = SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.mainCTarget, 1, &rendererState.mainDTarget);
+		SDL_EndGPURenderPass(rpass);
+
+		rpass = SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.rightCTarget, 1, &rendererState.rightDTarget);
+		SDL_EndGPURenderPass(rpass);
+
+		rpass = SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.leftCTarget, 1, &rendererState.leftDTarget);
+		SDL_EndGPURenderPass(rpass);
+
+		SDL_SubmitGPUCommandBuffer(clearcom);
+		
+		rendererState.mainCTarget.load_op = WORLD_LOAD_OP;
+		rendererState.rightCTarget.load_op = WORLD_LOAD_OP;
+		rendererState.leftCTarget.load_op = WORLD_LOAD_OP;
+
+	}
+
 	void PrepareMineRenderFrame() { // TODO: If in game, build and submit portal list. Also, determine if rear view mirrors need textures.
 		
 		sideDrawCalls.clear();
@@ -978,6 +1126,7 @@ namespace HRender {
 		};
 
 		rendererState.mainCTarget.texture = SDL_CreateGPUTexture(rendererState.device, &tci);	
+		//ResetWorldColorTargets();
 		
 		tci.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
 		tci.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
@@ -2303,21 +2452,21 @@ namespace HRender {
 
 		SDL_GPUBlitInfo bi {
 			.source = {
-				.texture = rendererState.mainCTarget.texture,
-				.x = 0,
-				.y = 0,
-				.w = rendererState.renderWidth,
-				.h = rendererState.renderHeight,
-			},
-			.destination = {
 				.texture = rendererState.windowCTarget.texture,
 				.x = 0,
 				.y = 0,
 				.w = rendererState.renderWidth,
 				.h = rendererState.renderHeight,
 			},
+			.destination = {
+				.texture = NULL,
+				.x = 0,
+				.y = 0,
+				.w = rendererState.renderWidth,
+				.h = rendererState.renderHeight,
+			},
 			.load_op = SDL_GPU_LOADOP_DONT_CARE,
-			.cycle = true
+			.cycle = true,
 		};
 
 		/*if (rendererState.activeDrawFence) {
@@ -2368,7 +2517,8 @@ namespace HRender {
 			SDL_EndGPURenderPass(mainRenderPass);
 			SDL_SubmitGPUCommandBuffer(mainCommandBuffer);
 
-			SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
+			//SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
+			PasteTextureToWorldCanvas(rendererState.mainCTarget.texture, -1, -1, 1, 1);
 
 		}
 
@@ -2410,6 +2560,7 @@ namespace HRender {
 
 		SDL_ReleaseGPUGraphicsPipeline(rendererState.device, rendererState.screenPipeline);
 		SDL_ReleaseGPUGraphicsPipeline(rendererState.device, rendererState.worldPipeline);
+		SDL_ReleaseGPUGraphicsPipeline(rendererState.device, rendererState.pastePipeline);
 
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowDTarget.texture);
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowCTarget.texture);

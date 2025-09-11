@@ -71,12 +71,6 @@ namespace HRender {
 
 		SDL_GPUDevice* device = NULL;
 
-		SDL_GPUShader* screenFrag = NULL;
-		SDL_GPUShader* screenVert = NULL;
-
-		SDL_GPUShader* worldFrag = NULL;
-		SDL_GPUShader* worldVert = NULL;
-
 		SDL_GPUCommandBuffer* mainCommandBuffer = NULL;
 
 		uint32_t renderWidth, renderHeight;
@@ -106,8 +100,18 @@ namespace HRender {
 		SDL_GPUBuffer* screenIndBuffer = NULL;
 		SDL_GPUSampler* defaultSampler = NULL;
 
+		SDL_GPUShader* screenFrag = NULL;
+		SDL_GPUShader* screenVert = NULL;
+
+		SDL_GPUShader* worldFrag = NULL;
+		SDL_GPUShader* worldVert = NULL;
+
+		SDL_GPUShader* pasteFrag = NULL;
+		SDL_GPUShader* pasteVert = NULL;
+
 		SDL_GPUGraphicsPipeline* screenPipeline = NULL;
 		SDL_GPUGraphicsPipeline* worldPipeline = NULL;
+		SDL_GPUGraphicsPipeline* pastePipeline = NULL;
 
 		TexturePage* primaryPage = NULL;
 		TexturePage* secondaryPage = NULL;
@@ -138,13 +142,15 @@ namespace HRender {
 
 		int drawCallObjID = -2;
 
+		bool windowWasResized = false;
+
 		SDL_GPUColorTargetInfo windowCTarget {
 			.texture = NULL,
 			.mip_level = 0,
 			//.load_op = SDL_GPU_LOADOP_DONT_CARE,
-			.load_op = SDL_GPU_LOADOP_CLEAR,
+			.load_op = SDL_GPU_LOADOP_LOAD,
 			.store_op = SDL_GPU_STOREOP_STORE,
-			.cycle = true
+			.cycle = false
 		};
 
 		SDL_GPUDepthStencilTargetInfo windowDTarget {
@@ -153,16 +159,17 @@ namespace HRender {
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_DONT_CARE,
 			.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
-			.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
+			.stencil_store_op = SDL_GPU_STOREOP_STORE,
 			.cycle = true
 		};
 
 		SDL_GPUColorTargetInfo mainCTarget {
 			.texture = NULL,
 			.mip_level = 0,
-			.load_op = WORLD_LOAD_OP,
-			.store_op = WORLD_STORE_OP,
-			.cycle = false
+			.clear_color = {0,0,0,0},
+			.load_op = SDL_GPU_LOADOP_CLEAR,
+			.store_op = SDL_GPU_STOREOP_STORE,
+			.cycle = true
 		};
 
 		SDL_GPUDepthStencilTargetInfo mainDTarget {
