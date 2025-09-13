@@ -142,7 +142,7 @@ namespace HRender {
 
 		int drawCallObjID = -2;
 
-		bool windowWasResized = false;
+		uint8_t* activePalette;
 
 		SDL_GPUColorTargetInfo windowCTarget {
 			.texture = NULL,

@@ -266,9 +266,11 @@ namespace HRender {
 		return (*shader != NULL);
 	}
 
-	void UploadPalette(uint8_t* palette) {
+	void SetMainPalette(uint8_t* palette) {
 
-		const int NUM_COLORS = SDL_arraysize(gr_palette) / 3;
+		rendererState.activePalette = palette;
+
+		/*const int NUM_COLORS = SDL_arraysize(gr_palette) / 3;
 
 		SDL_GPUCommandBuffer* upbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
 
@@ -311,12 +313,12 @@ namespace HRender {
 		FreeTransferBuffer(tbuf);
 
 		SDL_EndGPUCopyPass(pass);
-		SDL_SubmitGPUCommandBuffer(upbuf);
+		SDL_SubmitGPUCommandBuffer(upbuf);*/
 
 	}
 
 	void UploadPalette() {
-		UploadPalette(gr_palette);
+		SetMainPalette(gr_palette);
 	}
 
 	void ResizeWindow() {
@@ -616,7 +618,7 @@ namespace HRender {
 		bool good = true;
 
 		good &= BuildShader(SHADER("screenv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.screenVert, 0, 0, 0);
-		good &= BuildShader(SHADER("screenf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 0, 1);
+		good &= BuildShader(SHADER("screenf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.screenFrag, 1, 0, 0);
 
 		good &= BuildShader(SHADER("worldv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.worldVert, 0, 4, 0);
 		good &= BuildShader(SHADER("worldf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.worldFrag, 2, 1, 1);
@@ -791,9 +793,22 @@ namespace HRender {
 			page.bitmap.bm_data = new uint8_t[bmSize];
 			gr_bm_ubitblt(gbm->bm_w, gbm->bm_h, 0, 0, 0, 0, gbm, &page.bitmap);
 
-			page.convertedData = new float[bmSize];
+			page.convertedData = new float[bmSize * 4];
 			for (int i = 0; i < bmSize; i++) {
-				page.convertedData[i] = page.bitmap.bm_data[i];
+				
+				auto pindex = page.bitmap.bm_data[i];
+				
+				page.convertedData[i * 4 + 0] = rendererState.activePalette[pindex * 3 + 0] / 63.f;
+				page.convertedData[i * 4 + 1] = rendererState.activePalette[pindex * 3 + 1] / 63.f;
+				page.convertedData[i * 4 + 2] = rendererState.activePalette[pindex * 3 + 2] / 63.f;
+
+				if (pindex == 255)
+					page.convertedData[i * 4 + 3] = 0;
+				else if (pindex == 254)
+					page.convertedData[i * 4 + 3] = 2;
+				else
+					page.convertedData[i * 4 + 3] = 1;
+
 			}
 
 			rendererState.tpages.push_back(page);
@@ -801,7 +816,7 @@ namespace HRender {
 			
 		}
 
-		rendererState.targetTextureTransferSize = 64 * 64 * activePiggyTable->gameBitmaps.size();
+		rendererState.targetTextureTransferSize = 64 * 64 * 4 * activePiggyTable->gameBitmaps.size();
 		
 		SDL_GPUCommandBuffer* cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
 		SDL_GPUCopyPass* cpass = SDL_BeginGPUCopyPass(cbuf);
@@ -903,7 +918,7 @@ namespace HRender {
 
 		SDL_GPUTextureCreateInfo tci {
 			.type = SDL_GPU_TEXTURETYPE_2D,
-			.format = SDL_GPU_TEXTUREFORMAT_R32_FLOAT,
+			.format = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT,
 			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
 			.width = (uint32_t)bm->bm_w,
 			.height = (uint32_t)bm->bm_h,
@@ -918,7 +933,7 @@ namespace HRender {
 
 		SDL_GPUTransferBufferCreateInfo tbci {
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = (uint32_t)(bmSize * sizeof(float))
+			.size = (uint32_t)(bmSize * sizeof(float) * 4)
 		};
 
 		TransferBuffer tbuf = CreateTransferBuffer(&tbci, true);
@@ -929,7 +944,10 @@ namespace HRender {
 		float* floatMemMap = reinterpret_cast<float*>(tbuf.memoryMap);
 
 		for (int i = 0; i < bmSize; i++) {
-			floatMemMap[i] = bm->bm_data[i];
+			auto pindex = bm->bm_data[i];
+			floatMemMap[i * 4] = rendererState.activePalette[pindex * 3] / 63.f;
+			floatMemMap[i * 4 + 1] = rendererState.activePalette[pindex * 3 + 1] / 63.f;
+			floatMemMap[i * 4 + 2] = rendererState.activePalette[pindex * 3 + 2] / 63.f;
 		}
 		
 		SDL_GPUCommandBuffer* copycmd = SDL_AcquireGPUCommandBuffer(rendererState.device);
@@ -1167,7 +1185,7 @@ namespace HRender {
 
 		SDL_GPUTextureCreateInfo tci {
 			.type = SDL_GPU_TEXTURETYPE_2D,
-			.format = SDL_GPU_TEXTUREFORMAT_R32_FLOAT,
+			.format = SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT,
 			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
 			.width = (uint32_t)bm.bm_w,
 			.height = (uint32_t)bm.bm_h,
@@ -1196,9 +1214,9 @@ namespace HRender {
 				FreeTransferBuffer(rendererState.textureTransferBuffer);
 
 			uint32_t msize = rendererState.targetTextureTransferSize; 
-			if (msize < bmSize * sizeof(float)) {
+			if (msize < bmSize * sizeof(float) * 4) {
 				Int3(); //This shouldn't happen
-				msize = bmSize * sizeof(float);
+				msize = bmSize * sizeof(float) * 4;
 			}
 			msize = std::bit_ceil(msize);
 
@@ -1214,7 +1232,7 @@ namespace HRender {
 
 		}
 
-		size_t bmLen = bmSize * sizeof(*page->convertedData);
+		size_t bmLen = bmSize * sizeof(*page->convertedData) * 4;
 
 		memcpy(rendererState.textureTransferBuffer.memoryMap + rendererState.textureTransferOffset, page->convertedData, bmLen);
 

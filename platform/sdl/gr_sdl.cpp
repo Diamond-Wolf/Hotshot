@@ -367,7 +367,7 @@ void plat_write_palette(int start, int end, uint8_t* data)
 		platPalette[istart + i] = data[i];
 	}
 
-	HRender::UploadPalette(platPalette);
+	HRender::SetMainPalette(platPalette);
 
 }
 

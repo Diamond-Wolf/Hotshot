@@ -38,7 +38,7 @@ namespace HRender {
 	void PrepareMineRenderFrame();
 
 	void UploadPalette();
-	void UploadPalette(uint8_t* data);
+	void SetMainPalette(uint8_t* data);
 
 	void ResizeWindow();
 	void ResizeRenderTarget(const unsigned int w, const unsigned int h);

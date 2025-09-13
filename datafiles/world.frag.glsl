@@ -6,19 +6,13 @@ layout(location = 2) in vec4 colormod;
 
 layout(location = 0) out vec4 fragColor;
 
-struct paletteColor {
-	float r;
-	float g;
-	float b;
-};
-
 layout(set = 2, binding = 0) uniform sampler2D topTexpage;
 layout(set = 2, binding = 1) uniform sampler2D botTexpage;
 
-layout(std140, set = 2, binding = 2) readonly buffer paletteBuffer {
-	paletteColor palette[];
+// TODO Need non-dummy portal list
+layout(std140, set = 2, binding = 2) readonly buffer portalBuffer {
+	vec3 dummyPortals[];
 };
-// TODO Need portal list
 
 layout(set = 3, binding = 0) uniform textureUBO {
 	vec4 numTextures; //xy = bottom, zw = top
@@ -28,7 +22,8 @@ void main() {
 
 	// TODO Check portals
 
-	uint cindex;
+	//uint cindex;
+	vec4 color = vec4(0);
 	
 	vec2 textureSize;
 	vec2 tindex;
@@ -49,12 +44,11 @@ void main() {
 		}
 		
 		finalUV = textureSize * uvInTex + tindex;
-		cindex = uint(texture(topTexpage, finalUV).r);
-		if (cindex == 254)
+		color = texture(topTexpage, finalUV);
+		if (color.a == 2)
 			discard;
-		else if (cindex < 254) {
-			paletteColor color = palette[cindex];
-			fragColor = vec4(color.r * colormod.r, color.g * colormod.g, color.b * colormod.b, colormod.a);
+		else if (color.a == 1) {
+			fragColor = color * colormod;
 			return;
 		}
 		
@@ -67,13 +61,16 @@ void main() {
 		uvInTex = vec2(tindex.x + fract(uv.x), tindex.y + fract(uv.y));
 		finalUV = textureSize * uvInTex + tindex;
 
-		cindex = uint(texture(botTexpage, finalUV).r);
-		if (cindex >= 254)
+		vec4 baseColor = texture(botTexpage, finalUV);
+
+		if (color.a == 0 && (baseColor.a == 0 || baseColor.a == 2))
 			discard;
-		
-		paletteColor color = palette[cindex];
-		fragColor = vec4(color.r * colormod.r, color.g * colormod.g, color.b * colormod.b, colormod.a);
 	
+		baseColor *= (1 - color.a);
+		color *= color.a;
+
+		fragColor = (color + baseColor) * colormod;
+
 	} else {
 		fragColor = colormod;
 	}
