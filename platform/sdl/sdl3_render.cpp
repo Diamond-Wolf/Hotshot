@@ -1071,6 +1071,8 @@ namespace HRender {
 
 	void SaveScreen() {
 
+		EndRenderFrame(true);
+
 		auto cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
 
 		SDL_GPUBlitInfo bi {
@@ -1091,6 +1093,11 @@ namespace HRender {
 			.load_op = SDL_GPU_LOADOP_DONT_CARE,
 			.cycle = true,
 		};
+
+		/*if (rendererState.activeDrawFence) {
+			SDL_WaitForGPUFences(rendererState.device, false, &rendererState.activeDrawFence, 1);
+			rendererState.activeDrawFence = NULL;
+		}*/
 
 		SDL_BlitGPUTexture(cbuf, &bi);
 
@@ -1100,7 +1107,8 @@ namespace HRender {
 
 	void RenderSavedScreenFaded(uint8_t fadeAmount) {
 	
-		auto cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		//auto cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+		InitCommandBuffer();
 
 		SDL_GPUBlitInfo bi {
 			.source = {
@@ -1121,7 +1129,7 @@ namespace HRender {
 			.cycle = true,
 		};
 
-		SDL_BlitGPUTexture(cbuf, &bi);
+		SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
 
 		uint8_t zero = 0;
 
@@ -1134,7 +1142,24 @@ namespace HRender {
 
 		RenderScreenBitmap(&bm);
 
-		SDL_SubmitGPUCommandBuffer(cbuf);
+		uint32_t windowWidth, windowHeight;
+		
+		if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, &windowWidth, &windowHeight))
+			mprintf((1, "Error acquiring swapchain texture: %s", SDL_GetError()));
+
+		if (rendererState.windowTexture) {
+
+			bi.source.texture = rendererState.windowCTarget.texture;
+			bi.destination.texture = rendererState.windowTexture;
+			bi.destination.w = windowWidth;
+			bi.destination.h = windowHeight;
+
+			SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
+
+		}
+
+		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
+		rendererState.mainCommandBuffer = NULL;
 
 	}
 
@@ -2549,7 +2574,7 @@ namespace HRender {
 
 	}
 
-	void EndRenderFrame() {
+	void EndRenderFrame(const bool skipScreenDraw) {
 
 		if (rendererState.mainCommandBuffer == NULL) {
 			mprintf((1, "Tried to complete rendering that never started!"));
@@ -2628,27 +2653,36 @@ namespace HRender {
 
 		}
 
+		//Acquire fence, in case it's needed, for main canvas draw. Don't need to wait on fence for window draw.
+		//if (rendererState.activeDrawFence)
+		//	SDL_ReleaseGPUFence(rendererState.device, rendererState.activeDrawFence);
+		//rendererState.activeDrawFence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
 		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
-		rendererState.mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
 
-		uint32_t windowWidth, windowHeight;
-		
-		if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, &windowWidth, &windowHeight))
-			mprintf((1, "Error acquiring swapchain texture: %s", SDL_GetError()));
+		if (!skipScreenDraw) {
 
-		if (rendererState.windowTexture) {
+			rendererState.mainCommandBuffer = SDL_AcquireGPUCommandBuffer(rendererState.device);
 
-			bi.source.texture = rendererState.windowCTarget.texture;
-			bi.destination.texture = rendererState.windowTexture;
-			bi.destination.w = windowWidth;
-			bi.destination.h = windowHeight;
+			uint32_t windowWidth, windowHeight;
+			
+			if (!SDL_WaitAndAcquireGPUSwapchainTexture(rendererState.mainCommandBuffer, gameWindow, &rendererState.windowTexture, &windowWidth, &windowHeight))
+				mprintf((1, "Error acquiring swapchain texture: %s", SDL_GetError()));
 
-			SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
+			if (rendererState.windowTexture) {
+
+				bi.source.texture = rendererState.windowCTarget.texture;
+				bi.destination.texture = rendererState.windowTexture;
+				bi.destination.w = windowWidth;
+				bi.destination.h = windowHeight;
+
+				SDL_BlitGPUTexture(rendererState.mainCommandBuffer, &bi);
+
+			}
+
+			SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
 
 		}
 
-		//rendererState.activeDrawFence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
-		SDL_SubmitGPUCommandBuffer(rendererState.mainCommandBuffer);
 		rendererState.mainCommandBuffer = NULL;
 
 		for (auto& tex : textureFreeQueue) {

@@ -424,7 +424,7 @@ void plat_present_canvas(int sync)
 		SDL_Delay(1000 / 70);
 	}
 
-	HRender::EndRenderFrame();
+	HRender::EndRenderFrame(false);
 
 }
 

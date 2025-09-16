@@ -331,7 +331,7 @@ int gr_palette_fade_out(uint8_t* pal, int nsteps, int allow_keys)
 	}*/
 
 	plat_blit_canvas(&grd_curscreen->sc_canvas);
-	plat_present_canvas(0);
+	//plat_present_canvas(0);
 	HRender::SaveScreen();
 
 	for (int i = 0; i < nsteps; i++) {
@@ -339,7 +339,7 @@ int gr_palette_fade_out(uint8_t* pal, int nsteps, int allow_keys)
 		gr_sync_display();
 		plat_do_events();
 
-		float fade = 255.f * (1.f - ((float)i / nsteps));
+		float fade = 255.f * i / nsteps;
 		HRender::RenderSavedScreenFaded((uint8_t)fade);
 
 	}
@@ -354,9 +354,9 @@ int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 	uint8_t c;
 	fix fade_palette[768];
 	fix fade_palette_delta[768];
-	uint8_t fade_palette_raw[768];*/
+	uint8_t fade_palette_raw[768];
 
-//	allow_keys = allow_keys;
+	allow_keys = allow_keys;*/
 
 	if (!gr_palette_faded_out) return 0;
 
@@ -367,18 +367,30 @@ int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 		return 0;
 	}
 #endif
+	
+	//memset(gr_video_alpha, 0, SOFTWARE_VIDEO_BUFFER_SIZE);
+	plat_write_palette(0, 255, pal);
 
+	if (ExtGameStatus != GAMESTAT_RUNNING) {
+		plat_blit_canvas(&grd_curscreen->sc_canvas);
+		//plat_present_canvas(0);
+	}
+
+	HRender::SaveScreen();
+
+	//Apparently this is actually important when fading in
 	/*for (i = 0; i < 768; i++)
 	{
 		gr_current_pal[i] = pal[i];
 		fade_palette[i] = 0;
 		fade_palette_delta[i] = i2f(pal[i] + gr_palette_gamma) / nsteps;
-	}
+	}*/
 
-	for (j = 0; j < nsteps; j++) 
+	for (int i = 0; i < nsteps; i++) 
 	{
 		gr_sync_display();
-		for (i = 0; i < 768; i++) 
+		mprintf((0, "%d %d\n", i, nsteps));
+		/*for (i = 0; i < 768; i++) 
 		{
 			fade_palette[i] += fade_palette_delta[i];
 			if (fade_palette[i] > i2f(pal[i] + gr_palette_gamma))
@@ -387,26 +399,11 @@ int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 			if (c > 63) c = 63;
 			fade_palette_raw[i] = c;
 		}
-		plat_write_palette(0, 255, &fade_palette_raw[0]);
-		if (!ExtGameStatus == GAMESTAT_RUNNING)
-			plat_blit_canvas(&grd_curscreen->sc_canvas);
-		plat_present_canvas(0);
-		plat_do_events();
-	}*/
+		plat_write_palette(0, 255, &fade_palette_raw[0]);*/
 
-	plat_blit_canvas(&grd_curscreen->sc_canvas);
-	plat_present_canvas(0);
-	HRender::SaveScreen();
-
-	for (int i = 0; i < nsteps; i++) {
-	
-		gr_sync_display();
-
-		if (ExtGameStatus != GAMESTAT_RUNNING) {
-			float fade = 255.f * i / nsteps;
-			HRender::RenderSavedScreenFaded((uint8_t)fade);
-		}
-
+		float fade = 255.f * (1.f - ((float)i / nsteps));
+		HRender::RenderSavedScreenFaded((uint8_t)fade);
+		
 		plat_do_events();
 
 	}

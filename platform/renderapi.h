@@ -67,7 +67,7 @@ namespace HRender {
 	void RenderSide(const ViewTarget target, const int segno, const int sideno);
 	void RenderObject(const ViewTarget target, const int segno, const int objno);
 
-	void EndRenderFrame();
+	void EndRenderFrame(const bool skipScreenDraw);
 
 	void ShutdownRenderAPI();
 
