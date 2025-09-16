@@ -81,6 +81,7 @@ typedef struct _grs_bitmap {
 								//   Linear = *parent+(rowsize*y+x)
 								//   ModeX = *parent+(rowsize*y+x/4)
 								//   SVGA = *parent+(rowsize*y+x)
+	unsigned char* bm_alpha;		// NEW Pointer to alpha data
 	unsigned short bm_selector;
 	uint8_t			avg_color;	//	Average color of all pixels in texture map.
 	bool			overridden;	//	From POG
@@ -200,7 +201,7 @@ grs_canvas* gr_create_sub_canvas(grs_canvas* canv, int x, int y, int w, int h);
 // Initialize the specified canvas. the raw pixel data buffer is passed as
 // a parameter. no memory allocation is performed.
 
-void gr_init_canvas(grs_canvas* canv, unsigned char* pixdata, int pixtype, int w, int h);
+void gr_init_canvas(grs_canvas* canv, unsigned char* pixdata, unsigned char* alpha, int pixtype, int w, int h);
 
 // Initialize the specified sub canvas. no memory allocation is performed.
 
@@ -225,7 +226,7 @@ void gr_clear_canvas(int color);
 grs_bitmap* gr_create_bitmap(int w, int h);
 
 // Allocated a bitmap and makes its data be raw_data that is already somewhere.
-grs_bitmap* gr_create_bitmap_raw(int w, int h, unsigned char* raw_data);
+grs_bitmap* gr_create_bitmap_raw(int w, int h, unsigned char* raw_data, unsigned char* raw_alpha);
 
 // Creates a bitmap which is part of another bitmap
 grs_bitmap* gr_create_sub_bitmap(grs_bitmap* bm, int x, int y, int w, int h);

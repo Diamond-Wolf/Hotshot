@@ -445,6 +445,7 @@ int gr_internal_string2(int x, int y, char* s)
 						for (i = 0; i < width; i++)
 						{
 							gr_video_memory[VideoOffset++] = FG_COLOR;
+							gr_video_alpha[VideoOffset - 1] = (gr_video_memory[VideoOffset - 1] >= 254) ? gr_video_alpha[VideoOffset - 1] : 255;
 
 							if (VideoOffset > 0xFFFF)
 							{
@@ -456,8 +457,10 @@ int gr_internal_string2(int x, int y, char* s)
 					}
 					else
 					{
-						for (i = 0; i < width; i++)
+						for (i = 0; i < width; i++) {
 							gr_video_memory[VideoOffset++] = FG_COLOR;
+							gr_video_alpha[VideoOffset - 1] = (gr_video_memory[VideoOffset - 1] >= 254) ? gr_video_alpha[VideoOffset - 1] : 255;
+						}
 					}
 				}
 				else
@@ -483,6 +486,8 @@ int gr_internal_string2(int x, int y, char* s)
 								gr_video_memory[VideoOffset++] = FG_COLOR;
 							else
 								gr_video_memory[VideoOffset++] = BG_COLOR;
+
+							gr_video_alpha[VideoOffset - 1] = (gr_video_memory[VideoOffset - 1] >= 254) ? gr_video_alpha[VideoOffset - 1] : 255;
 
 							BitMask >>= 1;
 
@@ -525,6 +530,10 @@ int gr_internal_string2(int x, int y, char* s)
 							if (bits & 0x01) gr_video_memory[VideoOffset + 7] = FG_COLOR;
 							else gr_video_memory[VideoOffset + 7] = BG_COLOR;
 
+							for (int i = VideoOffset; i < VideoOffset + 8; i++) {
+								gr_video_alpha[i] = (gr_video_memory[i] >= 254) ? gr_video_alpha[i] : 255;
+							}
+
 							VideoOffset += 8;
 						}
 						else {
@@ -539,6 +548,9 @@ int gr_internal_string2(int x, int y, char* s)
 									gr_video_memory[VideoOffset++] = FG_COLOR;
 								else
 									gr_video_memory[VideoOffset++] = BG_COLOR;
+
+								gr_video_alpha[VideoOffset - 1] = (gr_video_memory[VideoOffset - 1] >= 254) ? gr_video_alpha[VideoOffset - 1] : 255;
+
 								BitMask >>= 1;
 
 
@@ -553,6 +565,9 @@ int gr_internal_string2(int x, int y, char* s)
 									gr_video_memory[VideoOffset++] = FG_COLOR;
 								else
 									gr_video_memory[VideoOffset++] = BG_COLOR;
+
+								gr_video_alpha[VideoOffset - 1] = (gr_video_memory[VideoOffset - 1] >= 254) ? gr_video_alpha[VideoOffset - 1] : 255;
+
 								BitMask >>= 1;
 							}
 						}
@@ -816,12 +831,16 @@ int gr_internal_string5m(int x, int y, char* s)
 
 //a bitmap for the character
 grs_bitmap char_bm = {
-				0,0,0,0,						//x,y,w,h
-				BM_LINEAR,					//type
-				BM_FLAG_TRANSPARENT,		//flags
-				0,								//rowsize
-				NULL,							//data
-				0								//selector
+				.bm_x = 0,
+				.bm_y = 0,
+				.bm_w = 0,
+				.bm_h = 0,						//x,y,w,h
+				.bm_type = BM_LINEAR,					//type
+				.bm_flags = BM_FLAG_TRANSPARENT,		//flags
+				.bm_rowsize = 0,								//rowsize
+				.bm_data = NULL,							//data
+				.bm_alpha = NULL,						//alpha
+				.bm_selector = 0,								//selector
 };
 
 int gr_internal_color_string(int x, int y, const char* s)

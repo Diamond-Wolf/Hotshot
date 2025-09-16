@@ -20,6 +20,9 @@ extern unsigned int gr_var_bwidth;
 extern unsigned char* gr_var_bitmap;
 extern unsigned int Table8to32[256];
 extern uint8_t* gr_video_memory;
+extern uint8_t* gr_video_alpha;
+
+constexpr size_t SOFTWARE_VIDEO_BUFFER_SIZE = 1280 * 1024 * 2;
 
 #define WIDTH   grd_curcanv->cv_bitmap.bm_w
 #define HEIGHT  grd_curcanv->cv_bitmap.bm_h
@@ -29,6 +32,7 @@ extern uint8_t* gr_video_memory;
 #define MAXY    (HEIGHT-1)
 #define TYPE    grd_curcanv->cv_bitmap.bm_type
 #define DATA    grd_curcanv->cv_bitmap.bm_data
+#define ALPHA   grd_curcanv->cv_bitmap.bm_alpha
 #define XOFFSET grd_curcanv->cv_bitmap.bm_x
 #define YOFFSET grd_curcanv->cv_bitmap.bm_y
 #define ROWSIZE grd_curcanv->cv_bitmap.bm_rowsize

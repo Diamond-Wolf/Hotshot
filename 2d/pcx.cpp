@@ -67,6 +67,8 @@ int pcx_read_bitmap(const char* filename, grs_bitmap* bmp, int bitmap_type, uint
 	xsize = header.Xmax - header.Xmin + 1;
 	ysize = header.Ymax - header.Ymin + 1;
 
+	bmp->bm_alpha = NULL;
+
 	if (bitmap_type == BM_LINEAR) 
 	{
 		if (bmp->bm_data == NULL) 

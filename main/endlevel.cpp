@@ -248,6 +248,12 @@ void free_endlevel_data()
 
 	if (satellite_bm_instance.bm_data)
 		mem_free(satellite_bm_instance.bm_data);
+
+	if (terrain_bm_instance.bm_alpha)
+		mem_free(terrain_bm_instance.bm_alpha);
+
+	if (satellite_bm_instance.bm_alpha)
+		mem_free(satellite_bm_instance.bm_alpha);
 }
 
 void generate_starfield();
@@ -278,6 +284,7 @@ void init_endlevel()
 	atexit(free_endlevel_data);
 
 	terrain_bm_instance.bm_data = satellite_bm_instance.bm_data = NULL;
+	terrain_bm_instance.bm_alpha = satellite_bm_instance.bm_alpha = NULL;
 }
 
 object external_explosion;
@@ -1564,6 +1571,9 @@ try_again:
 				if (terrain_bm_instance.bm_data)
 					mem_free(terrain_bm_instance.bm_data);
 
+				if (terrain_bm_instance.bm_alpha)
+					mem_free(terrain_bm_instance.bm_alpha);
+
 				Assert(terrain_bm_instance.bm_data == NULL);
 				
 				iff_error = iff_read_bitmap(p,&terrain_bm_instance,BM_LINEAR,pal);
@@ -1601,6 +1611,9 @@ try_again:
 
 				if (satellite_bm_instance.bm_data)
 					mem_free(satellite_bm_instance.bm_data);
+
+				if (satellite_bm_instance.bm_alpha)
+					mem_free(satellite_bm_instance.bm_alpha);
 
 				iff_error = iff_read_bitmap(p,&satellite_bm_instance,BM_LINEAR,pal);
 				if (iff_error != IFF_NO_ERROR) 

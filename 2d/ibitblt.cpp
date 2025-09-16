@@ -12,6 +12,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 */
 
 #include <stdlib.h>
+#include <cstring>
 
 #include "misc/types.h"
 #include "2d/gr.h"
@@ -34,6 +35,7 @@ void gr_ibitblt(grs_bitmap* src_bmp, grs_bitmap* dest_bmp, uint8_t *mask)
 {
 	int x, y, sw, sh, srowsize, drowsize, dstart, sy;// , dy;
 	uint8_t* src, * dest;
+	uint8_t* srcA, * destA;
 
 	// variable setup
 
@@ -41,8 +43,12 @@ void gr_ibitblt(grs_bitmap* src_bmp, grs_bitmap* dest_bmp, uint8_t *mask)
 	sh = src_bmp->bm_h;
 	srowsize = src_bmp->bm_rowsize;
 	drowsize = dest_bmp->bm_rowsize;
+
 	src = src_bmp->bm_data;
 	dest = dest_bmp->bm_data;
+
+	srcA = src_bmp->bm_alpha;
+	destA = dest_bmp->bm_alpha;
 
 	sy = 0;
 	while (start_points[sy][0] == -1)
@@ -62,9 +68,20 @@ void gr_ibitblt(grs_bitmap* src_bmp, grs_bitmap* dest_bmp, uint8_t *mask)
 					break;
 				dstart = start_points[y][x];
 				gr_linear_movsd(&(src[dstart]), &(dest[dstart]), hole_length[y][x]);
+				if (destA)
+					if (srcA)
+						gr_linear_movsd(&(srcA[dstart]), &(destA[dstart]), hole_length[y][x]);
+					else
+						memset(destA + dstart, 255, hole_length[y][x]);
+
 			}
 			dest += drowsize;
 			src += srowsize;
+			if (destA) {
+				if (srcA)
+					srcA += srowsize;
+				destA += drowsize;
+			}
 		}
 	}
 }

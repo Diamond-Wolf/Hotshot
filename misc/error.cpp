@@ -101,7 +101,7 @@ void print_exit_message(void)
 }
 
 //terminates with error code 1, printing message
-void Error(const char* fmt, ...) 
+void Error [[noreturn]] (const char* fmt, ...)
 {
 	va_list arglist;
 
@@ -118,6 +118,7 @@ void Error(const char* fmt, ...)
 
 	#ifndef NDEBUG
 	Int3();
+	exit(1);
 	#else
 	exit(1);
 	#endif

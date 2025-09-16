@@ -353,7 +353,7 @@ static int display_video_handler(unsigned char major, unsigned char minor, unsig
 	{
 		grs_bitmap* bitmap;
 
-		bitmap = gr_create_bitmap_raw(g_width, g_height, (uint8_t*)g_vBackBuf1);
+		bitmap = gr_create_bitmap_raw(g_width, g_height, (uint8_t*)g_vBackBuf1, NULL);
 
 		if (g_destX == -1) // center it
 			g_destX = (g_screenWidth - g_width) >> 1;

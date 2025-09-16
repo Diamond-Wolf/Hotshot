@@ -642,9 +642,11 @@ int convert_rgb15(grs_bitmap* bm, iff_bitmap_header* bmheader)
 
 	palptr = bmheader->palette;
 
+	const auto memsize = bm->bm_w * bm->bm_h * 2;
+
 	//        if ((new_data = malloc(bm->bm_w * bm->bm_h * 2)) == NULL)
 	//            {ret=IFF_NO_MEM; goto done;}
-	MALLOC(new_data, uint16_t, bm->bm_w * bm->bm_h * 2);
+	MALLOC(new_data, uint16_t, memsize);
 	if (new_data == NULL)
 		return IFF_NO_MEM;
 
@@ -657,6 +659,12 @@ int convert_rgb15(grs_bitmap* bm, iff_bitmap_header* bmheader)
 
 	mem_free(bm->bm_data);				//get rid of old-style data
 	bm->bm_data = (uint8_t*)new_data;			//..and point to new data
+
+	if (bm->bm_alpha) {
+		mem_free(bm->bm_alpha);
+		MALLOC(bm->bm_alpha, uint8_t, memsize);
+		memset(bm->bm_alpha, 255, memsize);
+	}
 
 	bm->bm_rowsize *= 2;				//two bytes per row
 
@@ -709,6 +717,7 @@ void copy_iff_to_grs(grs_bitmap* bm, iff_bitmap_header* bmheader)
 	bm->bm_type = (int8_t)bmheader->type;
 	bm->bm_rowsize = bmheader->w;
 	bm->bm_data = bmheader->raw_data;
+	bm->bm_alpha = NULL;
 
 	bm->bm_flags = 0;
 	bm->bm_selector = 0;
@@ -798,6 +807,7 @@ int iff_read_bitmap(char* ifilename, grs_bitmap* bm, int bitmap_type, uint8_t* p
 	if (ret != IFF_NO_ERROR) goto done;
 
 	bm->bm_data = NULL;
+	bm->bm_alpha = NULL;
 
 	ret = iff_parse_bitmap(&ifile, bm, bitmap_type, (int8_t*)palette, NULL);
 
@@ -1200,6 +1210,7 @@ int iff_read_animbrush(char* ifilename, grs_bitmap** bm_list, int max_bitmaps, i
 
 			MALLOC(bm_list[*n_bitmaps] , grs_bitmap, 1 );
 			bm_list[*n_bitmaps]->bm_data = NULL;
+			bm_list[*n_bitmaps]->bm_alpha = NULL;
 
 			ret = iff_parse_bitmap(&ifile, bm_list[*n_bitmaps], form_type, (int8_t*)(*n_bitmaps > 0 ? NULL : palette), prev_bm);
 

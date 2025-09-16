@@ -909,6 +909,7 @@ void load_bitmap_replacements(char* level_name)
 			temp_bitmap.bm_h = bmh.height + ((short)(bmh.wh_extra & 0xf0) << 4);
 			temp_bitmap.avg_color = bmh.avg_color;
 			temp_bitmap.bm_data = Bitmap_replacement_data + bmh.offset;
+			temp_bitmap.bm_alpha = NULL;
 
 			if (bmh.flags & BM_FLAG_TRANSPARENT) temp_bitmap.bm_flags |= BM_FLAG_TRANSPARENT;
 			if (bmh.flags & BM_FLAG_SUPER_TRANSPARENT) temp_bitmap.bm_flags |= BM_FLAG_SUPER_TRANSPARENT;
@@ -993,6 +994,8 @@ void LoadLevel(int level_num, int page_in_textures)
 		Robot_replacements_loaded = 0;
 	}
 	load_robot_replacements(level_name);
+
+	//piggy_bitmap_page_out_all();
 
 #ifdef NETWORK
 	my_segments_checksum = netmisc_calc_checksum(Segments.data(), sizeof(segment) * (Highest_segment_index + 1));

@@ -22,6 +22,7 @@ Instead, it is released under the terms of the MIT License.
 #include "SDL_render.h"
 
 #include "2d/gr.h"
+#include "2d/grdef.h"
 #include "misc/error.h"
 #include "misc/types.h"
 
@@ -389,7 +390,6 @@ void plat_wait_for_vbl()
 	I_MarkStart();
 }
 
-extern uint8_t* gr_video_memory;
 void I_SoftwareBlit()
 {
 	int x, y;

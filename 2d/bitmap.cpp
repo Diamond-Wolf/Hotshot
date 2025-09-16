@@ -18,6 +18,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #endif
 
 #include <stdio.h>
+#include <cstring>
+
 
 #include "mem/mem.h"
 #include "misc/error.h"
@@ -29,6 +31,8 @@ grs_bitmap* gr_create_bitmap(int w, int h)
 {
 	grs_bitmap* newbm;
 
+	const auto memsize = sizeof(uint8_t) * w * h;
+
 	newbm = (grs_bitmap*)mem_malloc(sizeof(grs_bitmap));
 	newbm->bm_x = 0;
 	newbm->bm_y = 0;
@@ -39,12 +43,15 @@ grs_bitmap* gr_create_bitmap(int w, int h)
 	newbm->bm_rowsize = w;
 	newbm->bm_selector = 0;
 
-	newbm->bm_data = (unsigned char*)mem_malloc(w * h * sizeof(unsigned char));
+	newbm->bm_data = (unsigned char*)mem_malloc(memsize);
+	newbm->bm_alpha = (unsigned char*)mem_malloc(memsize);
+
+	memset(newbm->bm_alpha, 255, memsize);
 
 	return newbm;
 }
 
-grs_bitmap* gr_create_bitmap_raw(int w, int h, unsigned char* raw_data)
+grs_bitmap* gr_create_bitmap_raw(int w, int h, unsigned char* raw_data, unsigned char* raw_alpha)
 {
 	grs_bitmap* newbm;
 
@@ -57,12 +64,13 @@ grs_bitmap* gr_create_bitmap_raw(int w, int h, unsigned char* raw_data)
 	newbm->bm_type = 0;
 	newbm->bm_rowsize = w;
 	newbm->bm_data = raw_data;
+	newbm->bm_alpha = raw_alpha;
 	newbm->bm_selector = 0;
 
 	return newbm;
 }
 
-void gr_init_bitmap(grs_bitmap* bm, int mode, int x, int y, int w, int h, int bytesperline, unsigned char* data)
+void gr_init_bitmap(grs_bitmap* bm, int mode, int x, int y, int w, int h, int bytesperline, unsigned char* data, unsigned char* alpha)
 {
 	bm->bm_x = x;
 	bm->bm_y = y;
@@ -72,6 +80,7 @@ void gr_init_bitmap(grs_bitmap* bm, int mode, int x, int y, int w, int h, int by
 	bm->bm_type = mode;
 	bm->bm_rowsize = bytesperline;
 	bm->bm_data = data;
+	bm->bm_alpha = alpha;
 	bm->bm_selector = 0;
 }
 
@@ -89,6 +98,9 @@ grs_bitmap* gr_create_sub_bitmap(grs_bitmap* bm, int x, int y, int w, int h)
 	newbm->bm_type = bm->bm_type;
 	newbm->bm_rowsize = bm->bm_rowsize;
 	newbm->bm_data = bm->bm_data + (unsigned int)((y * bm->bm_rowsize) + x);
+	newbm->bm_alpha = bm->bm_alpha;
+	if (newbm->bm_alpha)
+		newbm->bm_alpha += (unsigned int)((y * bm->bm_rowsize) + x);
 	newbm->bm_selector = 0;
 
 	return newbm;
@@ -99,7 +111,10 @@ void gr_free_bitmap(grs_bitmap* bm)
 {
 	if (bm->bm_data != NULL)
 		mem_free(bm->bm_data);
+	if (bm->bm_alpha != NULL)
+		mem_free(bm->bm_alpha);
 	bm->bm_data = NULL;
+	bm->bm_alpha = NULL;
 	if (bm != NULL)
 		mem_free(bm);
 }

@@ -21,8 +21,8 @@ int gr_rle_encode(int org_size, uint8_t* src, uint8_t* dest);
 int gr_rle_getsize(int org_size, uint8_t* src);
 uint8_t* gr_rle_find_xth_pixel(uint8_t* src, int x, int* count, uint8_t color);
 int gr_bitmap_rle_compress(grs_bitmap* bmp);
-void gr_rle_expand_scanline_masked(uint8_t* dest, uint8_t* src, int x1, int x2);
-void gr_rle_expand_scanline(uint8_t* dest, uint8_t* src, int x1, int x2);
+void gr_rle_expand_scanline_masked(uint8_t* dest, uint8_t* src, uint8_t* destA, int x1, int x2);
+void gr_rle_expand_scanline(uint8_t* dest, uint8_t* src, uint8_t* destA, int x1, int x2);
 
 grs_bitmap* rle_expand_texture(grs_bitmap* bmp);
 

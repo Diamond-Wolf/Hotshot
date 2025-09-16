@@ -1930,6 +1930,9 @@ void close_game()
 	if (background_bitmap.bm_data)
 		mem_free(background_bitmap.bm_data);
 
+	if (background_bitmap.bm_alpha)
+		mem_free(background_bitmap.bm_alpha);
+
 	clear_warn_func(game_show_warning);     //don't use this func anymore
 }
 

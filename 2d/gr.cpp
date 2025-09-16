@@ -31,6 +31,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/renderapi.h"
 
 uint8_t* gr_video_memory = (unsigned char*)NULL;
+uint8_t* gr_video_alpha = (unsigned char*)NULL;
 
 char gr_pal_default[768];
 
@@ -157,6 +158,9 @@ int gr_set_mode(int mode)
 
 	plat_set_gr_mode(mode);
 
+	// [DW] Hack to make sure there isn't an unnecessary fade sequence coming out of full screen menus
+	//gr_palette_faded_out = 0;
+
 	memset(grd_curscreen, 0, sizeof(grs_screen));
 	grd_curscreen->sc_mode = mode;
 	grd_curscreen->sc_w = w;
@@ -172,6 +176,8 @@ int gr_set_mode(int mode)
 	//[ISB] Point the bitmap data at the big video memory buffer. This formerly reallocated on mode change, but this caused too many problems. 
 	grd_curscreen->sc_canvas.cv_bitmap.bm_data = gr_video_memory;
 	memset(grd_curscreen->sc_canvas.cv_bitmap.bm_data, 0, r * h * NUMSCREENS * sizeof(unsigned char));
+	grd_curscreen->sc_canvas.cv_bitmap.bm_alpha = gr_video_alpha;
+	memset(grd_curscreen->sc_canvas.cv_bitmap.bm_alpha, 255, r * h * NUMSCREENS * sizeof(unsigned char));
 
 	gr_set_current_canvas(&grd_curscreen->sc_canvas);
 
@@ -197,7 +203,10 @@ int gr_init(int mode)
 
 	//[ISB] THIS IS A GODDAMNED HACK
 	//[ISB] okay so many problems with offset screens actually are pretty rational: The offscreen buffers point into video memory. Video memory keeps on jittering and being reallocated. So uh, lets just allocate once
-	MALLOC(gr_video_memory, uint8_t, 1280 * 1024 * 2);
+	MALLOC(gr_video_memory, uint8_t, SOFTWARE_VIDEO_BUFFER_SIZE);
+	MALLOC(gr_video_alpha, uint8_t, SOFTWARE_VIDEO_BUFFER_SIZE);
+
+	memset(gr_video_alpha, 255, SOFTWARE_VIDEO_BUFFER_SIZE);
 
 	// Save the current palette, and fade it out to black.
 	/*gr_palette_read((uint8_t*)gr_pal_default);

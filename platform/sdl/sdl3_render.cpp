@@ -36,6 +36,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <SDL_gpu.h>
 
 #include "2d/gr.h"
+#include "2d/grdef.h"
 #include "2d/rle.h"
 
 #include "3d/globvars.h"
@@ -392,6 +393,7 @@ namespace HRender {
 		if (rendererState.windowCTarget.texture != NULL) {
 			SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowCTarget.texture);
 			SDL_ReleaseGPUTexture(rendererState.device, rendererState.windowDTarget.texture);
+			SDL_ReleaseGPUTexture(rendererState.device, rendererState.fadeScreenTexture);
 		}
 
 		SDL_GPUTextureCreateInfo texCreateInfo {
@@ -409,6 +411,11 @@ namespace HRender {
 			Error("Error creating render texture: %s", SDL_GetError());
 		}
 
+		rendererState.fadeScreenTexture = SDL_CreateGPUTexture(rendererState.device, &texCreateInfo);
+		if (rendererState.fadeScreenTexture == NULL) {
+			Error("Error creating render texture: %s", SDL_GetError());
+		}
+
 		texCreateInfo.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
 		texCreateInfo.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
 
@@ -421,11 +428,13 @@ namespace HRender {
 		// Only needed on platforms where the screen canvas defaults to destructive garbage.
 #ifdef __APPLE__
 		uint8_t zero = 0;
+		uint8_t maxb = 255;
 
 		grs_bitmap bm {
 			.bm_w = 1,
 			.bm_h = 1,
 			.bm_data = &zero,
+			.bm_alpha = &maxb,
 		};
 
 		RenderScreenBitmap(&bm);
@@ -762,6 +771,8 @@ namespace HRender {
 
 		for (auto& tpage : rendererState.tpages) {
 			delete[] tpage.bitmap.bm_data;
+			if (tpage.bitmap.bm_alpha)
+				delete[] tpage.bitmap.bm_alpha;
 			delete[] tpage.convertedData;
 		}
 
@@ -948,6 +959,7 @@ namespace HRender {
 			floatMemMap[i * 4] = rendererState.activePalette[pindex * 3] / 63.f;
 			floatMemMap[i * 4 + 1] = rendererState.activePalette[pindex * 3 + 1] / 63.f;
 			floatMemMap[i * 4 + 2] = rendererState.activePalette[pindex * 3 + 2] / 63.f;
+			floatMemMap[i * 4 + 3] = bm->bm_alpha ? bm->bm_alpha[i] / 255.f : 1.f;
 		}
 		
 		SDL_GPUCommandBuffer* copycmd = SDL_AcquireGPUCommandBuffer(rendererState.device);
@@ -1012,6 +1024,75 @@ namespace HRender {
 		RenderScreenBitmap(&canvas->cv_bitmap);
 	}
 
+	void SaveScreen() {
+
+		auto cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+
+		SDL_GPUBlitInfo bi {
+			.source = {
+				.texture = rendererState.windowCTarget.texture,
+				.x = 0,
+				.y = 0,
+				.w = rendererState.renderWidth,
+				.h = rendererState.renderHeight,
+			},
+			.destination = {
+				.texture = rendererState.fadeScreenTexture,
+				.x = 0,
+				.y = 0,
+				.w = rendererState.renderWidth,
+				.h = rendererState.renderHeight,
+			},
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.cycle = true,
+		};
+
+		SDL_BlitGPUTexture(cbuf, &bi);
+
+		SDL_SubmitGPUCommandBuffer(cbuf);
+
+	}
+
+	void RenderSavedScreenFaded(uint8_t fadeAmount) {
+	
+		auto cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+
+		SDL_GPUBlitInfo bi {
+			.source = {
+				.texture = rendererState.fadeScreenTexture,
+				.x = 0,
+				.y = 0,
+				.w = rendererState.renderWidth,
+				.h = rendererState.renderHeight,
+			},
+			.destination = {
+				.texture = rendererState.windowCTarget.texture,
+				.x = 0,
+				.y = 0,
+				.w = rendererState.renderWidth,
+				.h = rendererState.renderHeight,
+			},
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.cycle = true,
+		};
+
+		SDL_BlitGPUTexture(cbuf, &bi);
+
+		uint8_t zero = 0;
+
+		grs_bitmap bm {
+			.bm_w = 1,
+			.bm_h = 1,
+			.bm_data = &zero,
+			.bm_alpha = &fadeAmount,
+		};
+
+		RenderScreenBitmap(&bm);
+
+		SDL_SubmitGPUCommandBuffer(cbuf);
+
+	}
+
 	void ResetWorldColorTargets() {
 		
 		mprintf((0, "Resetting color targets"));
@@ -1053,9 +1134,11 @@ namespace HRender {
 		if (mineRenderingReady) 
 			mprintf((1, "Double prepared mine render!"));
 		
-		mineRenderingReady = true;
+		memset(gr_video_alpha, 0, SOFTWARE_VIDEO_BUFFER_SIZE);
 
 		rendererState.drawTransferOffset = rendererState.textureTransferOffset = 0;
+
+		mineRenderingReady = true;
 
 	}
 
@@ -2551,6 +2634,8 @@ namespace HRender {
 
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.primaryTexture);
 		SDL_ReleaseGPUTexture(rendererState.device, rendererState.secondaryTexture);
+
+		SDL_ReleaseGPUTexture(rendererState.device, rendererState.fadeScreenTexture);
 
 		SDL_ReleaseGPUShader(rendererState.device, rendererState.screenVert);
 		SDL_ReleaseGPUShader(rendererState.device, rendererState.screenFrag);

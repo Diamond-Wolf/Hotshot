@@ -18,21 +18,29 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 void gr_upixel(int x, int y)
 {
 	DATA[ROWSIZE * y + x] = (unsigned char)COLOR;
+	if (ALPHA)
+		ALPHA[ROWSIZE * y + x] = 255;
 }
 
 void gr_pixel(int x, int y)
 {
 	if ((x < 0) || (y < 0) || (x >= WIDTH) || (y >= HEIGHT)) return;
 	DATA[ROWSIZE * y + x] = (unsigned char)COLOR;
+	if (ALPHA)
+		ALPHA[ROWSIZE * y + x] = 255;
 }
 
 void gr_bm_upixel(grs_bitmap* bm, int x, int y, unsigned char color)
 {
 	bm->bm_data[bm->bm_rowsize * y + x] = color;
+	if (bm->bm_alpha)
+		bm->bm_alpha[bm->bm_rowsize * y + x] = 255;
 }
 
 void gr_bm_pixel(grs_bitmap* bm, int x, int y, unsigned char color)
 {
 	if ((x < 0) || (y < 0) || (x >= bm->bm_w) || (y >= bm->bm_h)) return;
 	bm->bm_data[bm->bm_rowsize * y + x] = color;
+	if (bm->bm_alpha)
+		bm->bm_alpha[bm->bm_rowsize * y + x] = 255;
 }

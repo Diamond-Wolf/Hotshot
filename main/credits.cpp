@@ -180,6 +180,7 @@ CreditsPaint:
 	title_font = gr_init_font( MenuHires?"font2-3h.fnt":"font2-3.fnt" );
 	names_font = gr_init_font( MenuHires?"font2-2h.fnt":"font2-2.fnt" );
 	backdrop.bm_data=NULL;
+	backdrop.bm_alpha=NULL;
 
 	//MWA  Made backdrop bitmap linear since it should always be.  the current canvas may not
 	//MWA  be linear, so we can't rely on grd_curcanv->cv_bitmap->bm_type.
@@ -427,6 +428,8 @@ get_line:;
 					gr_palette_fade_out( gr_palette, 32, 0 );
 					gr_use_palette_table( DEFAULT_PALETTE );
 					mem_free(backdrop.bm_data);
+					if (backdrop.bm_alpha)
+						mem_free(backdrop.bm_alpha);
 					cfclose(file);
 				WINDOS(
 					dd_gr_set_current_canvas(save_canv),

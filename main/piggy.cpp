@@ -440,6 +440,7 @@ void piggy_init_pigfile(const char* filename)
 			temp_bitmap.bm_flags = BM_FLAG_PAGED_OUT;
 			temp_bitmap.avg_color = bmh.avg_color;
 			temp_bitmap.bm_data = Piggy_bitmap_cache_data;
+			temp_bitmap.bm_alpha = NULL;
 
 			uint8_t flag = 0;
 			//GameBitmapFlags[i + 1] = 0;
@@ -595,6 +596,7 @@ void piggy_new_pigfile(const char* pigname)
 			temp_bitmap.bm_flags = BM_FLAG_PAGED_OUT;
 			temp_bitmap.avg_color = bmh.avg_color;
 			temp_bitmap.bm_data = Piggy_bitmap_cache_data;
+			temp_bitmap.bm_alpha = NULL;
 
 			activePiggyTable->gameBitmapFlags[i] = 0;
 
@@ -987,6 +989,7 @@ int PiggyInitD1()
 		memset(&bogus_bitmap, 0, sizeof(grs_bitmap));
 		bogus_bitmap.bm_w = bogus_bitmap.bm_h = bogus_bitmap.bm_rowsize = 64;
 		bogus_bitmap.bm_data = bogus_data;
+		bogus_bitmap.bm_alpha = NULL;
 		c = gr_find_closest_color(0, 0, 63);
 		for (i = 0; i < 4096; i++) bogus_data[i] = c;
 		c = gr_find_closest_color(63, 0, 0);
@@ -1067,7 +1070,7 @@ int PiggyInitD1()
 	plat_blit_canvas(&grd_curscreen->sc_canvas);
 	plat_present_canvas(0);
 
-	printf("\n   D1: %d bitmaps to read\nStarting with %d bitmaps\n", N_bitmaps, activePiggyTable->gameBitmaps.size());
+	printf("\n   D1: %d bitmaps to read\nStarting with %ld bitmaps\n", N_bitmaps, activePiggyTable->gameBitmaps.size());
 
 	for (i = 0; i < N_bitmaps; i++) 
 	{
@@ -1093,6 +1096,7 @@ int PiggyInitD1()
 		temp_bitmap.bm_flags = BM_FLAG_PAGED_OUT;
 		temp_bitmap.avg_color = bmh.avg_color;
 		temp_bitmap.bm_data = Piggy_bitmap_cache_data;
+		temp_bitmap.bm_alpha = NULL;
 
 		temp_bitmap.overridden = false;
 
@@ -1108,7 +1112,7 @@ int PiggyInitD1()
 		piggy_register_bitmap(&temp_bitmap, temp_name, 1, flags, offset);
 	}
 
-	printf("Finished with %d bitmaps\n", activePiggyTable->gameBitmaps.size());
+	printf("Finished with %ld bitmaps\n", activePiggyTable->gameBitmaps.size());
 
 	for (i = 0; i < N_sounds; i++) 
 	{
@@ -1174,6 +1178,7 @@ int PiggyInitD2()
 		memset(&bogus_bitmap, 0, sizeof(grs_bitmap));
 		bogus_bitmap.bm_w = bogus_bitmap.bm_h = bogus_bitmap.bm_rowsize = 64;
 		bogus_bitmap.bm_data = bogus_data;
+		bogus_bitmap.bm_alpha = NULL;
 		c = gr_find_closest_color(0, 0, 63);
 		for (i = 0; i < 4096; i++) bogus_data[i] = c;
 		c = gr_find_closest_color(63, 0, 0);
@@ -1412,6 +1417,7 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 		}
 
 		bmp->bm_data = &Piggy_bitmap_cache_data[Piggy_bitmap_cache_next];
+		bmp->bm_alpha = NULL;
 		bmp->bm_flags = activePiggyTable->gameBitmapFlags[i];
 
 		//printf("\n SC %d %d %d", activePiggyTable->gameBitmaps.size(), activePiggyTable->gameBitmapFlags.size(), activePiggyTable->gameBitmapOffsets.size());
@@ -1509,6 +1515,7 @@ void piggy_bitmap_page_out_all()
 			if (!activePiggyTable->gameBitmaps[i].overridden) {
 				activePiggyTable->gameBitmaps[i].bm_flags = BM_FLAG_PAGED_OUT;
 				activePiggyTable->gameBitmaps[i].bm_data = Piggy_bitmap_cache_data;
+				activePiggyTable->gameBitmaps[i].bm_alpha = NULL;
 			}
 		}
 	}

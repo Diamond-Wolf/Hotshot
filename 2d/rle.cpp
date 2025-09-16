@@ -63,7 +63,7 @@ void rle_stosb(uint8_t* dest, int len, int color)
 
 // Given pointer to start of one scanline of rle data, uncompress it to
 // dest, from source pixels x1 to x2.
-void gr_rle_expand_scanline_masked(uint8_t* dest, uint8_t* src, int x1, int x2)
+void gr_rle_expand_scanline_masked(uint8_t* dest, uint8_t* src, uint8_t* destA, int x1, int x2)
 {
 	int i = 0;
 	uint8_t count;
@@ -91,12 +91,22 @@ void gr_rle_expand_scanline_masked(uint8_t* dest, uint8_t* src, int x1, int x2)
 
 	if (x1 + count > x2) {
 		count = x2 - x1 + 1;
-		if (color != 255)	rle_stosb(dest, count, color);
+		if (color != 255) {
+			rle_stosb(dest, count, color);
+			if (destA)
+				memset(destA, 255, count);
+		}
 		return;
 	}
 
-	if (color != 255)	rle_stosb(dest, count, color);
+	if (color != 255) {
+		rle_stosb(dest, count, color);
+		if (destA)
+			memset(destA, 255, count);
+	}
 	dest += count;
+	if (destA)
+		destA += count;
 	i += count;
 
 	while (i <= x2) {
@@ -112,21 +122,33 @@ void gr_rle_expand_scanline_masked(uint8_t* dest, uint8_t* src, int x1, int x2)
 		}
 		// we know have '*count' pixels of 'color'.
 		if (i + count <= x2) {
-			if (color != 255)rle_stosb(dest, count, color);
+			if (color != 255) {
+				rle_stosb(dest, count, color);
+				if (destA)
+					memset(destA, 255, count);
+			}
 			i += count;
 			dest += count;
+			if (destA)
+				destA += count;
 		}
 		else {
 			count = x2 - i + 1;
-			if (color != 255)rle_stosb(dest, count, color);
+			if (color != 255) {
+				rle_stosb(dest, count, color);
+				if (destA)
+					memset(destA, 255, count);
+			}
 			i += count;
 			dest += count;
+			if (destA)
+				destA += count;
 		}
 
 	}
 }
 
-void gr_rle_expand_scanline(uint8_t* dest, uint8_t* src, int x1, int x2)
+void gr_rle_expand_scanline(uint8_t* dest, uint8_t* src, uint8_t* destA, int x1, int x2)
 {
 	int i = 0;
 	uint8_t count;
@@ -155,11 +177,19 @@ void gr_rle_expand_scanline(uint8_t* dest, uint8_t* src, int x1, int x2)
 	if (x1 + count > x2) {
 		count = x2 - x1 + 1;
 		rle_stosb(dest, count, color);
+		if (destA)
+			memset(destA, 255, count);
 		return;
 	}
 
 	rle_stosb(dest, count, color);
+	if (destA)
+		memset(destA, 255, count);
+	
 	dest += count;
+	if (destA)
+		destA += count;
+
 	i += count;
 
 	while (i <= x2) {
@@ -176,14 +206,22 @@ void gr_rle_expand_scanline(uint8_t* dest, uint8_t* src, int x1, int x2)
 		// we know have '*count' pixels of 'color'.
 		if (i + count <= x2) {
 			rle_stosb(dest, count, color);
+			if (destA)
+				memset(destA, 255, count);
 			i += count;
 			dest += count;
+			if (destA)
+				destA += count;
 		}
 		else {
 			count = x2 - i + 1;
 			rle_stosb(dest, count, color);
+			if (destA)
+				memset(destA, 255, count);
 			i += count;
 			dest += count;
+			if (destA)
+				destA += count;
 		}
 	}
 }

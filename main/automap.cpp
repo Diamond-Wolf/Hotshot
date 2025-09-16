@@ -764,6 +764,7 @@ void do_automap(int key_code)
 		gr_init_sub_canvas(&DrawingPages[1], &Pages[1], 16, 69, WINDOW_WIDTH, 272);
 
 		Automap_background.bm_data = NULL;
+		Automap_background.bm_alpha = NULL;
 		pcx_error = pcx_read_bitmap(MAP_BACKGROUND_FILENAME, &Automap_background, BM_LINEAR, pal);
 		if (pcx_error != PCX_ERROR_NONE)
 			Error("File %s - PCX error: %s", MAP_BACKGROUND_FILENAME, pcx_errormsg(pcx_error));
@@ -780,7 +781,10 @@ void do_automap(int key_code)
 		}
 		if (Automap_background.bm_data)
 			mem_free(Automap_background.bm_data);
+		if (Automap_background.bm_alpha)
+			mem_free(Automap_background.bm_alpha);
 		Automap_background.bm_data = NULL;
+		Automap_background.bm_alpha = NULL;
 
 		gr_set_current_canvas(&DrawingPages[current_page]);
 	}
@@ -793,8 +797,11 @@ void do_automap(int key_code)
 		else 
 		{
 			void* raw_data;
+			void* raw_alpha;
 			MALLOC(raw_data, uint8_t, 640 * 480);
-			gr_init_canvas(&Page, (unsigned char*)raw_data, BM_LINEAR, 640, 480);
+			MALLOC(raw_alpha, uint8_t, 640 * 480);
+			memset(raw_alpha, 255, 640 * 480);
+			gr_init_canvas(&Page, (unsigned char*)raw_data, (unsigned char*)raw_alpha, BM_LINEAR, 640, 480);
 			must_free_canvas = 1;
 		}
 
@@ -1074,6 +1081,8 @@ void do_automap(int key_code)
 	if (must_free_canvas)
 	{
 		mem_free(Page.cv_bitmap.bm_data);
+		if (Page.cv_bitmap.bm_alpha)
+			mem_free(Page.cv_bitmap.bm_alpha);
 	}
 
 	mprintf((0, "Automap memory freed\n"));

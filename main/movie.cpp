@@ -207,6 +207,7 @@ void MovieShowFrame(uint8_t* buf, uint32_t bufw, uint32_t bufh, uint32_t sx, uin
 	source_bm.bm_type = BM_LINEAR;
 	source_bm.bm_flags = 0;
 	source_bm.bm_data = buf;
+	source_bm.bm_alpha = NULL;
 
 	gr_palette_load(gr_palette);
 	gr_bm_ubitblt(bufw, bufh, dstx, dsty, sx, sy, &source_bm, &grd_curcanv->cv_bitmap);
@@ -506,10 +507,12 @@ int MyShowFrame(void)
 		memcpy(RoboBuffer[RobBufCount++], SecondVid, rw * rh);
 #endif
 		source_bm.bm_data = (unsigned char*)SecondVid;
+		source_bm.bm_alpha = NULL;
 	}
 	else
 	{
 		source_bm.bm_data = (unsigned char*)FirstVid;
+		source_bm.bm_alpha = NULL;
 #ifdef BUFFER_MOVIE
 		memcpy(RoboBuffer[RobBufCount++], FirstVid, rw * rh);
 #endif

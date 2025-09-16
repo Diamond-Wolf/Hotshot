@@ -206,6 +206,8 @@ int show_title_screen(const char* filename, int allow_keys, int from_hog_only)
 		return 1;
 	gr_copy_palette(gr_palette, palette_save, sizeof(palette_save));
 	mem_free(title_bm.bm_data);
+	if (title_bm.bm_alpha)
+		mem_free(title_bm.bm_alpha);
 	return 0;
 }
 
@@ -841,11 +843,14 @@ int showBriefingMessageD1(int screen_num, char* message)
 				get_message_name(&message, bitmap_name);
 				strcat(bitmap_name, ".bbm");
 				guy_bitmap.bm_data = NULL;
+				guy_bitmap.bm_alpha = NULL;
 				iff_error = iff_read_bitmap(bitmap_name, &guy_bitmap, BM_LINEAR, temp_palette);
 				Assert(iff_error == IFF_NO_ERROR);
 
 				show_briefing_bitmap(&guy_bitmap);
 				mem_free(guy_bitmap.bm_data);
+				if (guy_bitmap.bm_alpha)
+					mem_free(guy_bitmap.bm_alpha);
 				prev_ch = 10;
 				//			} else if (ch == 'B') {
 				//				if (Robot_canv != NULL)
@@ -1217,12 +1222,15 @@ int show_briefing_message(int screen_num, char* message)
 				get_message_name(&message, bitmap_name);
 				strcat(bitmap_name, ".bbm");
 				guy_bitmap.bm_data = NULL;
+				guy_bitmap.bm_alpha = NULL;
 				iff_error = iff_read_bitmap(bitmap_name, &guy_bitmap, BM_LINEAR, temp_palette);
 				Assert(iff_error == IFF_NO_ERROR);
 				gr_remap_bitmap_good(&guy_bitmap, temp_palette, -1, -1);
 
 				show_briefing_bitmap(&guy_bitmap);
 				mem_free(guy_bitmap.bm_data);
+				if (guy_bitmap.bm_alpha)
+					mem_free(guy_bitmap.bm_alpha);
 				prev_ch = 10;
 			}
 			else if (ch == 'S') 
@@ -1606,6 +1614,7 @@ int showBriefingScreenD1(int screen_num, int allow_keys)
 	}
 
 	briefing_bm.bm_data = NULL;
+	briefing_bm.bm_alpha = NULL;
 	if ((pcx_error = pcx_read_bitmap(&d1BriefingScreens[screen_num].bs_name[0], &briefing_bm, BM_LINEAR, New_pal)) != PCX_ERROR_NONE) {
 		printf("PCX load error: %s.  File '%s'\n\n", pcx_errormsg(pcx_error), d1BriefingScreens[screen_num].bs_name);
 		mprintf((0, "File '%s', PCX load error: %s (%i at %i)\n  (It's a briefing screen.  Does this cause you pain?)\n", d1BriefingScreens[screen_num].bs_name, pcx_errormsg(pcx_error), pcx_error, screen_num));
@@ -1625,6 +1634,8 @@ int showBriefingScreenD1(int screen_num, int allow_keys)
 		return 1;
 
 	mem_free(briefing_bm.bm_data);
+	if (briefing_bm.bm_alpha)
+		mem_free(briefing_bm.bm_alpha);
 
 	return rval;
 }

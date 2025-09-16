@@ -18,6 +18,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #endif
 
 #include <stdio.h>
+#include <cstring>
+
 #include "mem/mem.h"
 #include "misc/error.h"
 #include "2d/gr.h"
@@ -33,11 +35,12 @@ unsigned char* gr_var_bitmap;
 
 grs_canvas* gr_create_canvas(int w, int h)
 {
-	unsigned char* data;
+
 	grs_canvas* newvar;
 
+	const auto memsize = sizeof(unsigned char) * w * h;
+
 	newvar = (grs_canvas*)mem_malloc(sizeof(grs_canvas));
-	data = (unsigned char*)mem_malloc(w * h * sizeof(unsigned char));
 
 	newvar->cv_bitmap.bm_x = 0;
 	newvar->cv_bitmap.bm_y = 0;
@@ -46,7 +49,10 @@ grs_canvas* gr_create_canvas(int w, int h)
 	newvar->cv_bitmap.bm_flags = 0;
 	newvar->cv_bitmap.bm_type = BM_LINEAR;
 	newvar->cv_bitmap.bm_rowsize = w;
-	newvar->cv_bitmap.bm_data = data;
+	newvar->cv_bitmap.bm_data = (unsigned char*)mem_malloc(memsize);
+	newvar->cv_bitmap.bm_alpha = (unsigned char*)mem_malloc(memsize);
+
+	memset(newvar->cv_bitmap.bm_alpha, 255, memsize);
 
 	newvar->cv_color = 0;
 	newvar->cv_drawmode = 0;
@@ -74,6 +80,13 @@ grs_canvas* gr_create_sub_canvas(grs_canvas* canv, int x, int y, int w, int h)
 	newvar->cv_bitmap.bm_data += y * canv->cv_bitmap.bm_rowsize;
 	newvar->cv_bitmap.bm_data += x;
 
+	newvar->cv_bitmap.bm_alpha = canv->cv_bitmap.bm_alpha;
+
+	if (newvar->cv_bitmap.bm_alpha) {
+		newvar->cv_bitmap.bm_alpha += y * canv->cv_bitmap.bm_rowsize;
+		newvar->cv_bitmap.bm_alpha += x;
+	}
+
 	newvar->cv_color = canv->cv_color;
 	newvar->cv_drawmode = canv->cv_drawmode;
 	newvar->cv_font = canv->cv_font;
@@ -82,7 +95,7 @@ grs_canvas* gr_create_sub_canvas(grs_canvas* canv, int x, int y, int w, int h)
 	return newvar;
 }
 
-void gr_init_canvas(grs_canvas* canv, unsigned char* pixdata, int pixtype, int w, int h)
+void gr_init_canvas(grs_canvas* canv, unsigned char* pixdata, unsigned char* pixalpha, int pixtype, int w, int h)
 {
 	canv->cv_color = 0;
 	canv->cv_drawmode = 0;
@@ -101,6 +114,7 @@ void gr_init_canvas(grs_canvas* canv, unsigned char* pixdata, int pixtype, int w
 	canv->cv_bitmap.bm_flags = 0;
 	canv->cv_bitmap.bm_type = pixtype;
 	canv->cv_bitmap.bm_data = pixdata;
+	canv->cv_bitmap.bm_alpha = pixalpha;
 
 }
 
@@ -120,15 +134,24 @@ void gr_init_sub_canvas(grs_canvas* newc, grs_canvas* src, int x, int y, int w, 
 	newc->cv_bitmap.bm_type = src->cv_bitmap.bm_type;
 	newc->cv_bitmap.bm_rowsize = src->cv_bitmap.bm_rowsize;
 
-
 	newc->cv_bitmap.bm_data = src->cv_bitmap.bm_data;
 	newc->cv_bitmap.bm_data += y * src->cv_bitmap.bm_rowsize;
 	newc->cv_bitmap.bm_data += x;
+
+	newc->cv_bitmap.bm_data = src->cv_bitmap.bm_data;
+
+	if (newc->cv_bitmap.bm_alpha) {
+		newc->cv_bitmap.bm_alpha += y * src->cv_bitmap.bm_rowsize;
+		newc->cv_bitmap.bm_alpha += x;
+	}
+	
 }
 
 void gr_free_canvas(grs_canvas* canv)
 {
 	mem_free(canv->cv_bitmap.bm_data);
+	if (canv->cv_bitmap.bm_alpha)
+		mem_free(canv->cv_bitmap.bm_alpha);
 	mem_free(canv);
 }
 

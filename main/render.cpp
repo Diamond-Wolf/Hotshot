@@ -161,6 +161,8 @@ void free_reticle_canvas()
 {
 	if (reticle_canvas) {
 		mem_free(reticle_canvas->cv_bitmap.bm_data);
+		if (reticle_canvas->cv_bitmap.bm_alpha)
+			mem_free(reticle_canvas->cv_bitmap.bm_alpha);
 		mem_free(reticle_canvas);
 		reticle_canvas = NULL;
 	}

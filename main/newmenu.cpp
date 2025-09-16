@@ -117,6 +117,13 @@ void newmenu_close()
 
 	if (nm_background_save.bm_data)
 		mem_free(nm_background_save.bm_data);
+
+	if (nm_background.bm_alpha)
+		mem_free(nm_background.bm_alpha);
+
+	if (nm_background_save.bm_alpha)
+		mem_free(nm_background_save.bm_alpha);
+
 	Newmenu_first_time = 1;
 }
 
@@ -131,6 +138,8 @@ void nm_remap_background()
 			nm_background.bm_data = (unsigned char*)mem_malloc(nm_background.bm_w * nm_background.bm_h);
 
 		memcpy(nm_background.bm_data, nm_background_save.bm_data, nm_background.bm_w * nm_background.bm_h);
+		if (nm_background.bm_alpha && nm_background_save.bm_alpha)
+			memcpy(nm_background.bm_alpha, nm_background_save.bm_alpha, nm_background.bm_w * nm_background.bm_h);
 
 		gr_remap_bitmap_good(&nm_background, background_palette, -1, -1);
 	}
@@ -206,6 +215,7 @@ void nm_draw_background(int x1, int y1, int x2, int y2)
 			atexit(newmenu_close);
 			Newmenu_first_time = 0;
 			nm_background_save.bm_data = NULL;
+			nm_background_save.bm_alpha = NULL;
 		}
 		else
 		{
@@ -213,6 +223,10 @@ void nm_draw_background(int x1, int y1, int x2, int y2)
 				mem_free(nm_background_save.bm_data);
 			if (nm_background.bm_data)
 				mem_free(nm_background.bm_data);
+			if (nm_background_save.bm_alpha)
+				mem_free(nm_background_save.bm_alpha);
+			if (nm_background.bm_alpha)
+				mem_free(nm_background.bm_alpha);
 		}
 
 		pcx_error = pcx_read_bitmap(MENU_BACKGROUND_BITMAP, &nm_background_save, BM_LINEAR, background_palette);
@@ -220,6 +234,7 @@ void nm_draw_background(int x1, int y1, int x2, int y2)
 
 		nm_background = nm_background_save;
 		nm_background.bm_data = NULL;
+		nm_background.bm_alpha = NULL;
 		nm_remap_background();
 
 		Background_hires = MenuHires;
@@ -443,6 +458,7 @@ void nm_rstring(bkg* b, int w1, int x, int y, const char* s)
 }
 
 #include "platform/timer.h"
+#include <2d/grdef.h>
 
 //for text items, constantly redraw cursor (to achieve flash)
 void update_cursor(newmenu_item* item)
@@ -755,6 +771,8 @@ int newmenu_do4(const char* title, const char* subtitle, int nitems, newmenu_ite
 	//PA_DFX(pa_set_frontbuffer_current());
 	//PA_DFX(pa_set_front_to_read());
 
+	memset(gr_video_alpha, 0, SOFTWARE_VIDEO_BUFFER_SIZE);
+
 	WIN(if (!_AppActive) return -1);		// Don't draw message if minimized!
 	WIN(HideCursorW());
 	MAC(hide_cursor();)
@@ -791,8 +809,20 @@ int newmenu_do4(const char* title, const char* subtitle, int nitems, newmenu_ite
 RePaintNewmenu4:
 	WINDOS(save_canvas = dd_grd_curcanv, save_canvas = grd_curcanv);
 
-	WINDOS(dd_gr_set_current_canvas(NULL), gr_set_current_canvas(NULL));
+	/*bool copiedVideoMemory = false;
 
+	if (save_canvas->cv_bitmap.bm_data == gr_video_memory) {
+		auto& bm = save_canvas->cv_bitmap;
+
+		bm.bm_data = (uint8_t*)malloc(bm.bm_w * bm.bm_h);
+		bm.bm_rowsize = bm.bm_w;
+		gr_bm_bitblt(bm.bm_w, bm.bm_h, 0, 0, 0, 0, &grd_curcanv->cv_bitmap, &bm);
+		
+		copiedVideoMemory = true;
+	}*/
+
+	WINDOS(dd_gr_set_current_canvas(NULL), gr_set_current_canvas(NULL));
+	//
 	save_font = grd_curcanv->cv_font;
 
 	tw = th = 0;
@@ -1944,6 +1974,10 @@ RePaintNewmenu4:
 		digi_resume_digi_sounds();
 
 	WIN(mouse_set_mode(1));				//re-enable centering mode
+
+	/*if (copiedVideoMemory) {
+		free(save_canvas->cv_bitmap.bm_data);
+	}*/
 
 	return choice;
 }
