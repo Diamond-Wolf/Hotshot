@@ -25,8 +25,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "fix/fix.h"
 #include "2d/palette.h"
 #include "misc/rand.h"
-#include <main/gamestat.h>
-#include <main/kconfig.h>
+#include "main/gamestat.h"
+#include "main/kconfig.h"
+#include "platform/renderapi.h"
 
 extern int gr_installed;
 
@@ -287,11 +288,11 @@ void gr_palette_load(uint8_t* pal)
 
 int gr_palette_fade_out(uint8_t* pal, int nsteps, int allow_keys)
 {
-	uint8_t c;
+	/*uint8_t c;
 	int i, j;
 	fix fade_palette[768];
 	fix fade_palette_delta[768];
-	uint8_t fade_palette_raw[768];
+	uint8_t fade_palette_raw[768];*/
 
 //	allow_keys = allow_keys;
 
@@ -305,7 +306,7 @@ int gr_palette_fade_out(uint8_t* pal, int nsteps, int allow_keys)
 	}
 #endif
 
-	for (i = 0; i < 768; i++) 
+	/*for (i = 0; i < 768; i++)
 	{
 		fade_palette[i] = i2f(pal[i] + gr_palette_gamma);
 		fade_palette_delta[i] = fade_palette[i] / nsteps;
@@ -327,18 +328,33 @@ int gr_palette_fade_out(uint8_t* pal, int nsteps, int allow_keys)
 		plat_write_palette(0, 255, &fade_palette_raw[0]);
 		plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
+	}*/
+
+	plat_blit_canvas(&grd_curscreen->sc_canvas);
+	plat_present_canvas(0);
+	HRender::SaveScreen();
+
+	for (int i = 0; i < nsteps; i++) {
+
+		gr_sync_display();
+		plat_do_events();
+
+		float fade = 255.f * (1.f - ((float)i / nsteps));
+		HRender::RenderSavedScreenFaded((uint8_t)fade);
+
 	}
+
 	gr_palette_faded_out = 1;
 	return 0;
 }
 
 int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 {
-	int i, j;
+	/*int i;
 	uint8_t c;
 	fix fade_palette[768];
 	fix fade_palette_delta[768];
-	uint8_t fade_palette_raw[768];
+	uint8_t fade_palette_raw[768];*/
 
 //	allow_keys = allow_keys;
 
@@ -352,7 +368,7 @@ int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 	}
 #endif
 
-	for (i = 0; i < 768; i++) 
+	/*for (i = 0; i < 768; i++)
 	{
 		gr_current_pal[i] = pal[i];
 		fade_palette[i] = 0;
@@ -376,7 +392,25 @@ int gr_palette_fade_in(uint8_t* pal, int nsteps, int allow_keys)
 			plat_blit_canvas(&grd_curscreen->sc_canvas);
 		plat_present_canvas(0);
 		plat_do_events();
+	}*/
+
+	plat_blit_canvas(&grd_curscreen->sc_canvas);
+	plat_present_canvas(0);
+	HRender::SaveScreen();
+
+	for (int i = 0; i < nsteps; i++) {
+	
+		gr_sync_display();
+
+		if (ExtGameStatus != GAMESTAT_RUNNING) {
+			float fade = 255.f * i / nsteps;
+			HRender::RenderSavedScreenFaded((uint8_t)fade);
+		}
+
+		plat_do_events();
+
 	}
+
 	gr_palette_faded_out = 0;
 	return 0;
 }

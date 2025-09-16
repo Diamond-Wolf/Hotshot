@@ -61,6 +61,9 @@ namespace HRender {
 	void RenderScreenCanvas(grs_canvas* canvas);
 	void RenderScreenBitmap(grs_bitmap* bitmap);
 
+	void SaveScreen();
+	void RenderSavedScreenFaded(uint8_t fadeAmount);
+
 	void RenderSide(const ViewTarget target, const int segno, const int sideno);
 	void RenderObject(const ViewTarget target, const int segno, const int objno);
 

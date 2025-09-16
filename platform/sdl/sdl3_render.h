@@ -144,6 +144,8 @@ namespace HRender {
 
 		uint8_t* activePalette;
 
+		SDL_GPUTexture* fadeScreenTexture;
+
 		SDL_GPUColorTargetInfo windowCTarget {
 			.texture = NULL,
 			.mip_level = 0,
