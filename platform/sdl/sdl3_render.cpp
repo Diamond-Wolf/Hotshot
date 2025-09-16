@@ -195,6 +195,7 @@ namespace HRender {
 	}
 
 	SDL_GPURenderPass* BeginDefaultRenderPass() {
+		//mprintf((0, "%p %p %p\n", rendererState.mainCommandBuffer, rendererState.windowCTarget.texture, rendererState.windowDTarget.texture));
 		return SDL_BeginGPURenderPass(rendererState.mainCommandBuffer, &rendererState.windowCTarget, 1, &rendererState.windowDTarget);
 	}
 
@@ -322,6 +323,38 @@ namespace HRender {
 		SetMainPalette(gr_palette);
 	}
 
+	// Small hack. SDL doesn't let you clear a screen normally, so fake it.
+	void ClearScreen() {
+
+		auto cbuf = SDL_AcquireGPUCommandBuffer(rendererState.device);
+
+		SDL_GPURenderPass* rpass = SDL_BeginGPURenderPass(cbuf, &rendererState.windowCTarget, 1, &rendererState.windowDTarget);
+
+		SDL_BindGPUGraphicsPipeline(rpass, rendererState.clearPipeline);
+
+		SDL_GPUBufferBinding bb {
+			.buffer = rendererState.screenVertBuffer,
+			.offset = 0
+		};
+		SDL_BindGPUVertexBuffers(rpass, 0, &bb, 1);
+
+		bb.buffer = rendererState.screenIndBuffer;
+		SDL_BindGPUIndexBuffer(rpass, &bb, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+		SDL_DrawGPUIndexedPrimitives(rpass, 4, 1, 0, 0, 0); 
+
+		SDL_EndGPURenderPass(rpass);
+
+		SDL_SubmitGPUCommandBuffer(cbuf);
+
+	}
+
+#ifdef __APPLE__
+	#define MaybeFlushScreenGarbage() ClearScreen()
+#else
+	#define MaybeFlushScreenGarbage()
+#endif
+
 	void ResizeWindow() {
 
 		uint32_t size;
@@ -424,22 +457,7 @@ namespace HRender {
 			Error("Error creating render depth texture: %s", SDL_GetError());
 		}
 
-		// HACK!!!!!!! SDL doesn't let you clear a screen normally, so fake it.
-		// Only needed on platforms where the screen canvas defaults to destructive garbage.
-#ifdef __APPLE__
-		uint8_t zero = 0;
-		uint8_t maxb = 255;
-
-		grs_bitmap bm {
-			.bm_w = 1,
-			.bm_h = 1,
-			.bm_data = &zero,
-			.bm_alpha = &maxb,
-		};
-
-		RenderScreenBitmap(&bm);
-#endif
-		//End hack
+		MaybeFlushScreenGarbage();
 
 		SyncCockpit();
 
@@ -464,6 +482,26 @@ namespace HRender {
 
 		if (rendererState.screenPipeline == NULL) {
 			Error("Error creating screen pipeline: %s", SDL_GetError());
+		}
+
+		//All because SDL3 doesn't know how to render over unitialized data with user-specified alpha (even 1.0) on some platforms and doesn't want to provide any straightforward means to initialize said uninitialized data
+		rendererState.clearPipeline = CreateGraphicsPipeline<1,1>(rendererState.clearVert, rendererState.clearFrag, SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+			std::array { SDL_GPUVertexBufferDescription { //Because the official examples give an error that the array needs to be an expression in VS
+				.slot = 0,
+				.pitch = sizeof(float) * 4,
+				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				.instance_step_rate = 0,
+			} },
+			std::array { SDL_GPUVertexAttribute {
+				.location = 0,
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+				.offset = 0,
+			} }, 
+		false, false);
+
+		if (rendererState.clearPipeline == NULL) {
+			Error("Error creating clear pipeline: %s", SDL_GetError());
 		}
 
 		std::array<float, 4 * 4> verts {
@@ -635,6 +673,9 @@ namespace HRender {
 		good &= BuildShader(SHADER("pastev"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.pasteVert, 0, 0, 0);
 		good &= BuildShader(SHADER("pastef"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.pasteFrag, 1, 0, 0);
 
+		good &= BuildShader(SHADER("clearv"), SDL_GPU_SHADERSTAGE_VERTEX, &rendererState.clearVert, 0, 0, 0);
+		good &= BuildShader(SHADER("clearf"), SDL_GPU_SHADERSTAGE_FRAGMENT, &rendererState.clearFrag, 0, 0, 0);
+
 		if (!good)
 			return 4;
 
@@ -669,6 +710,7 @@ namespace HRender {
 		}
 
 		SDL_EndGPUCopyPass(cpass);
+
 		SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(rendererState.mainCommandBuffer);
 		if (!fence) {
 			mprintf((1, "Error submitting setup commands: %s\n", SDL_GetError()));
@@ -692,6 +734,9 @@ namespace HRender {
 
 		SDL_WaitForGPUFences(rendererState.device, false, &fence, 1);
 		SDL_ReleaseGPUFence(rendererState.device, fence);
+
+		memset(gr_palette, 0, 768);
+		SetMainPalette(gr_palette);
 		
 		return 0;
 

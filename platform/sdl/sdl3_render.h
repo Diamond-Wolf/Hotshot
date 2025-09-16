@@ -109,9 +109,13 @@ namespace HRender {
 		SDL_GPUShader* pasteFrag = NULL;
 		SDL_GPUShader* pasteVert = NULL;
 
+		SDL_GPUShader* clearFrag = NULL;
+		SDL_GPUShader* clearVert = NULL;
+
 		SDL_GPUGraphicsPipeline* screenPipeline = NULL;
 		SDL_GPUGraphicsPipeline* worldPipeline = NULL;
 		SDL_GPUGraphicsPipeline* pastePipeline = NULL;
+		SDL_GPUGraphicsPipeline* clearPipeline = NULL;
 
 		TexturePage* primaryPage = NULL;
 		TexturePage* secondaryPage = NULL;

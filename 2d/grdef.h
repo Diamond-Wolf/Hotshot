@@ -13,6 +13,8 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include <cstddef>
+
 void gr_linear_movsd(void* source, void* dest, unsigned short nbytes);
 
 extern unsigned int gr_var_color;
