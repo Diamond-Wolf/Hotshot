@@ -52,6 +52,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "main/jobs.h"
 #include "main/kconfig.h"
 #include "main/laser.h"
+#include "main/lighting.h"
 #include "main/newcheat.h"
 #include "main/player.h"
 #include "main/polyobj.h"
@@ -2503,9 +2504,14 @@ namespace HRender {
 					float lightR, lightG, lightB;
 					if (cheatValues[CI_FULLBRIGHT])
 						lightR = lightG = lightB = 1.f;
-					else
-						lightR = lightG = lightB = f2fl(side.uvls[i].l);
+					else {
 
+						lightR = lightG = lightB = f2fl(side.uvls[i].l);
+						lightR += Dynamic_light[segno].vertexLights[sideverts[i]];
+						lightG += Dynamic_light[segno].vertexLights[sideverts[i]];
+						lightB += Dynamic_light[segno].vertexLights[sideverts[i]];
+
+					}
 
 					if (cheatValues[CI_RAVE]) {
 

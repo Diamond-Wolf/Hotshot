@@ -56,6 +56,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "newcheat.h"
 #include "platform/renderapi.h"
 #include "jobs.h"
+#include "lighting.h"
 
 #if defined(POLY_ACC)
 #include "poly_acc.h"
@@ -872,13 +873,14 @@ void RenderBigGuidedMissile(object* missile) {
 //render a frame for the game
 void game_render_frame_new() {
 
+	auto lightF = StartJob(BuildDynamicLightNew);
+
 	HRender::PrepareMineRenderFrame();
 	
 	std::future<void> mainF;
-
+	
 	//These need to be synced
-
-	if (Guided_missile[Player_num] && Guided_missile[Player_num]->type == OBJ_WEAPON && Guided_missile[Player_num]->id == GUIDEDMISS_ID && Guided_missile[Player_num]->signature == Guided_missile_sig[Player_num] && Guided_in_big_window) {
+	if (Guided_in_big_window && Guided_missile[Player_num] && Guided_missile[Player_num]->type == OBJ_WEAPON && Guided_missile[Player_num]->id == GUIDEDMISS_ID && Guided_missile[Player_num]->signature == Guided_missile_sig[Player_num]) {
 		//TODO Render crosshair
 		mainF = RenderGameWorldFromObject(HRender::VT_MAIN, Guided_missile[Player_num], false);
 	} else {
@@ -889,6 +891,7 @@ void game_render_frame_new() {
 	HRender::SkipGPUPortalList(HRender::VT_LEFT);
 	HRender::SkipGPUPortalList(HRender::VT_RIGHT);
 
+	lightF.wait();
 	mainF.wait();
 
 }

@@ -35,6 +35,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "bm.h"
 #include "fvi.h"
 #include "misc/byteswap.h"
+#include "lighting.h"
 
 // How far a point can be from a plane, and still be "in" the plane
 #define PLANE_DIST_TOLERANCE	250
@@ -61,6 +62,7 @@ void ResizeSegmentVectors(size_t newSize) {
 	Segment2s.resize(newSize);
 	visited.resize(newSize);
 	render_pos.resize(newSize); 
+	Dynamic_light.resize(newSize);
 
 	#ifndef NDEBUG
 	extern std::vector<char> visited2;
@@ -71,12 +73,12 @@ void ResizeSegmentVectors(size_t newSize) {
 void ResizeVertexVectors(size_t newSize) {
 	extern std::vector<short> Rotated_last;
 	extern std::vector<g3s_point> Segment_points;
-	extern std::vector<fix> Dynamic_light;
+	//extern std::vector<fix> Dynamic_light;
 
 	Vertices.resize(newSize);
 	Segment_points.resize(newSize);
 	Rotated_last.resize(newSize);
-	Dynamic_light.resize(newSize);
+	//Dynamic_light.resize(newSize);
 }
 
 void compute_center_point_on_side(vms_vector* vp,segment *sp,int side)

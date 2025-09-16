@@ -35,11 +35,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "robot.h"
 #include "multi.h"
 #include "bm.h"
+#include "newcheat.h"
 
 int	Do_dynamic_light = 1;
 //int	Use_fvi_lighting = 0;
 
-std::vector<fix> Dynamic_light(MAX_VERTICES);
+std::vector<DynamicSegmentLight> Dynamic_light(MAX_SEGMENTS);
 
 #define	LIGHTING_CACHE_SIZE	4096	//	Must be power of 2!
 #define	LIGHTING_FRAME_DELTA	256	//	Recompute cache value every 8 frames.
@@ -126,7 +127,7 @@ int lighting_cache_visible(int vertnum, int segnum, int objnum, vms_vector obj_p
 // ----------------------------------------------------------------------------------------------
 void apply_light(fix obj_intensity, int obj_seg, vms_vector obj_pos, int n_render_vertices, short* render_vertices, int objnum)
 {
-	int	vv;
+	/*int	vv;
 
 	uint8_t objtype = -1;
 	if (objnum >= 0 && objnum < Objects.size())
@@ -278,6 +279,7 @@ void apply_light(fix obj_intensity, int obj_seg, vms_vector obj_pos, int n_rende
 			}
 		}
 	}
+		*/
 }
 
 #define	FLASH_LEN_FIXED_SECONDS		(F1_0/3)
@@ -433,6 +435,71 @@ fix compute_light_intensity(int objnum)
 }
 
 // ----------------------------------------------------------------------------------------------
+void BuildDynamicLightNew() {
+
+	if (!Do_dynamic_light || cheatValues[CI_FULLBRIGHT])
+		return;
+
+	memset(Dynamic_light.data(), 0, Dynamic_light.size() * sizeof(Dynamic_light[0]));
+
+	for (size_t segno = 0; segno < Segments.size(); segno++) {
+		auto& seg = Segments[segno];
+		for (size_t vertno = 0; vertno < MAX_VERTICES_PER_SEGMENT; vertno++) {
+			auto& vert = Vertices[seg.verts[vertno]];
+
+			for (size_t objno = 0; objno < Objects.size(); objno++) {
+				auto& obj = Objects[objno];
+
+				if (obj.type == OBJ_NONE)
+					continue;
+				
+				auto light = f2fl(compute_light_intensity(objno));
+				if (light == 0)
+					continue;
+
+				vms_vector dummy;
+
+				float dist = f2fl(vm_vec_mag_quick(vm_vec_sub(&dummy, &vert, &obj.pos)));
+				if (dist > MAX_DIST_F)
+					continue;
+
+				fvi_query query {
+					.p0 = &obj.pos,
+					.p1 = &vert,
+					.startseg = obj.segnum,
+					.rad = 0,
+					.flags = FQ_TRANSWALL,
+				};
+				fvi_info hit;
+
+				auto res = find_vector_intersection(&query, &hit);
+				if (res == HIT_WALL) {
+
+					float check = f2fl(vm_vec_mag_quick(vm_vec_sub(&dummy, &vert, &hit.hit_pnt)));
+					
+					if (check > 0.001)
+						continue;
+
+				} else if (res != HIT_NONE) {
+					continue;
+				}
+
+				Dynamic_light[segno].vertexLights[vertno] += light / dist;
+
+			}
+
+		}
+	}
+
+	for (auto& light : Dynamic_light) {
+		float seglight = 0;
+		for (auto& vl : light.vertexLights)
+			seglight += vl;
+		light.segmentLight = seglight / 8;
+	}
+
+}
+
 void set_dynamic_light(void)
 {
 	if (!Do_dynamic_light)
@@ -487,7 +554,7 @@ void set_dynamic_light(void)
 			vertnum = render_vertices[vv];
 			Assert(vertnum >= 0 && vertnum <= Highest_vertex_index);
 			if ((vertnum ^ FrameCount) & 1)
-				Dynamic_light[vertnum] = 0;
+				Dynamic_light[vertnum].segmentLight = 0;
 		}
 	}
 	else
@@ -495,7 +562,7 @@ void set_dynamic_light(void)
 		for (vv = FrameCount & 1; vv < n_render_vertices; vv += 2) 
 		{
 			Assert(render_vertices[vv] >= 0 && render_vertices[vv] <= Highest_vertex_index);
-			Dynamic_light[render_vertices[vv]] = 0;
+			Dynamic_light[render_vertices[vv]].segmentLight = 0;
 		}
 	}
 
@@ -625,27 +692,17 @@ fix compute_headlight_light_on_object(object * objp)
 }
 
 //compute the average dynamic light in a segment.  Takes the segment number
-fix compute_seg_dynamic_light(int segnum)
-{
-	fix sum;
-	segment* seg;
-	short* verts;
+float compute_seg_dynamic_light(int segnum) {
+	
+	float sum = 0;
+	auto& light = Dynamic_light[segnum];
 
-	seg = &Segments[segnum];
+	for (int i = 0; i < 8; i++) {
+		sum += light.vertexLights[i];
+	}
 
-	verts = seg->verts;
-	sum = 0;
+	return sum / 8;
 
-	sum += Dynamic_light[*verts++];
-	sum += Dynamic_light[*verts++];
-	sum += Dynamic_light[*verts++];
-	sum += Dynamic_light[*verts++];
-	sum += Dynamic_light[*verts++];
-	sum += Dynamic_light[*verts++];
-	sum += Dynamic_light[*verts++];
-	sum += Dynamic_light[*verts];
-
-	return sum >> 3;
 }
 
 std::vector<fix> object_light(MAX_OBJECTS);

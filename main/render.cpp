@@ -287,6 +287,7 @@ void flash_frame()
 //	tmap1, tmap2 are texture map ids.  tmap2 is the pasty one.
 void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap2, uvl* uvlp, int wid_flags, vms_vector norm)
 {
+	/*
 	fix			face_light;
 	grs_bitmap* bm;
 	fix			reflect;
@@ -392,6 +393,8 @@ void render_face(int segnum, int sidenum, int nv, short* vp, int tmap1, int tmap
 #ifndef NDEBUG
 	if (Outline_mode) draw_outline(nv, pointlist);
 #endif
+
+	*/
 }
 
 #ifdef EDITOR
