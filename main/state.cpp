@@ -72,6 +72,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #if defined(POLY_ACC)
 #include "poly_acc.h"
 #endif
+#include "platform/platform.h"
 
 #define STATE_VERSION 24
 #define STATE_COMPATIBLE_VERSION 24
@@ -142,6 +143,7 @@ extern int Entered_from_level;
 extern uint8_t Hack_DblClick_MenuMode;
 #endif
 
+extern void game_render_frame_new();
 
 //-------------------------------------------------------------------
 void state_callback(int nitems, newmenu_item* items, int* last_key, int citem)
@@ -795,9 +797,8 @@ int state_save_all_sub(char* filename, char* desc, int between_levels)
 		gr_set_current_canvas(cnv);
 #endif
 
-		//PA_DFX (pa_set_backbuffer_current());
-		render_frame(0, 0);
-		//PA_DFX (pa_alpha_always());  
+		// TODO: Switch to SaveScreen()-based screenshot
+		game_render_frame_new();
 
 #if defined(POLY_ACC)
 #ifndef MACINTOSH
