@@ -505,9 +505,14 @@ void BuildDynamicLightNew() {
 						auto& vci = obj.rtype.vclip_info;
 						auto& vclip = activeBMTable->vclips[vci.vclip_num];
 						auto& frame = vclip.frames[vci.framenum];
+
+						PIGGY_PAGE_IN(frame);
+
 						auto& bitmap = activePiggyTable->gameBitmaps[frame.index];
-						//auto& pindex = bitmap.avg_color;
 						auto& lcolor = bitmap.light_color_rgb;
+
+						if (lcolor.r == 0 && lcolor.g == 0 && lcolor.b == 0)
+							lcolor = CalculateBitmapLightColor(bitmap);
 
 //#ifndef NDEBUG
 //						for (int i = 0; i < 3; i++) {

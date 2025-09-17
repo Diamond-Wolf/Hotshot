@@ -85,7 +85,7 @@ typedef struct _grs_bitmap {
 	unsigned char* bm_alpha;		// NEW Pointer to alpha data
 	unsigned short bm_selector;
 	uint8_t			avg_color;	//	Average color of all pixels in texture map.
-	LightColor		light_color_rgb;
+	LightColor		light_color_rgb = LIGHT_COLOR_ZERO;
 	bool			overridden;	//	From POG
 } grs_bitmap;
 

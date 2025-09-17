@@ -1470,135 +1470,6 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 			Piggy_bitmap_cache_next += bmp->bm_h * bmp->bm_w;
 		}
 
-		float rc = 0;
-		float gc = 0;
-		float bc = 0;
-
-		float hasin = 0;
-		float hacos = 0;
-		float sa = 0;
-
-		const int len = bmp->bm_h * bmp->bm_w;
-
-		int numPixels = 0;
-
-		//unit to radians
-		constexpr float U2R = 2 * 3.1415926535f;
-
-		for (int i = 0; i < len; i++) {
-
-			auto pindex = bmp->bm_data[i];
-			if (pindex == TRANSPARENCY_COLOR)
-				continue;
-
-			const float r = gr_palette[pindex * 3 + 0] / 63.f;
-			const float g = gr_palette[pindex * 3 + 1] / 63.f;
-			const float b = gr_palette[pindex * 3 + 2] / 63.f;
-
-			rc += r * r;
-			gc += g * g;
-			bc *= b * b;
-
-			//Time for HSV shenanigans
-			//Goal: Find average color if V were set to max
-
-			const float cmax = fmax(fmax(r, g), b);
-			const float cmin = fmin(fmin(r, g), b);
-			const float d = cmax - cmin;
-
-			float s = 0;
-			if (cmax != 0)
-				s = d / (cmax * cmax); //bias toward more saturation of brighter colors
-
-			sa += s;
-			//sa += 1;
-
-			float h;
-			if (cmax == r)
-				h = b - g;
-			else if (cmax == g)
-				h = r - b + 2;
-			else if (cmax == b)
-				h = g - r + 4;
-			else
-				Int3();
-
-			h *= U2R / 6;
-
-			hasin += sinf(h);
-			hacos += cosf(h);
-
-			numPixels++;
-
-		}
-
-		const float h = atan2f(hasin / numPixels, hacos / numPixels);
-		const float s = sa / numPixels;
-
-		rc /= numPixels;
-		gc /= numPixels;
-		bc /= numPixels;
-
-		//mprintf((0, "CALC %f %f %f %f %f", hasin, hacos, sa, h, s));
-
-		const float hp = fmod(h / (U2R / 6), 6) + (h < 0 ? 6 : 0);
-		const float x = s * (1 - fabs(fmod(hp, 2) - 1)); //chroma = s since v = 1
-		const float m = 1 - s;
-
-		float r, g, b;
-		r = g = b = 0;
-
-		if (hp >= 0 && hp < 1) {
-			r = s;
-			g = x;
-		} else if (hp >= 1 && hp < 2) {
-			r = x;
-			g = s;
-		} else if (hp >= 2 && hp < 3) {
-			g = s;
-			b = x;
-		} else if (hp >= 3 && hp < 4) {
-			g = x;
-			b = s;
-		} else if (hp >= 4 && hp < 5) {
-			r = x;
-			b = s;
-		} else if (hp >= 5 && hp < 6) {
-			r = s;
-			b = x;
-		}
-
-		mprintf((0, "%hd %f %f %f %f\n", bitmap.index, r, g, b, m));
-
-		bmp->light_color_rgb.r = r + m;
-		bmp->light_color_rgb.g = g + m;
-		bmp->light_color_rgb.b = b + m;
-
-		const float r2 = sqrtf(rc);
-		const float g2 = sqrtf(gc);
-		const float b2 = sqrtf(bc);
-
-		Assert(r2 >= 0 && g2 >= 0 && b2 >= 0);
-		Assert(r2 <= 1 && g2 <= 1 && b2 <= 1);
-
-		const float max = fmax(fmax(r2, g2), b2);
-
-		if (max == 0) {
-
-			bmp->light_color_rgb.r = 0;
-			bmp->light_color_rgb.g = 0;
-			bmp->light_color_rgb.b = 0;
-
-		} else {
-
-			const float factor = 1 / max;
-
-			bmp->light_color_rgb.r = r2 * factor;
-			bmp->light_color_rgb.g = g2 * factor;
-			bmp->light_color_rgb.b = b2 * factor;
-
-		}
-
 		//@@if ( bmp->bm_selector ) {
 		//@@#if !defined(WINDOWS) && !defined(MACINTOSH)
 		//@@	if (!dpmi_modify_selector_base( bmp->bm_selector, bmp->bm_data ))
@@ -1613,6 +1484,8 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 		if (org_i != i)
 			activePiggyTable->gameBitmaps[org_i] = activePiggyTable->gameBitmaps[i];
 	}
+
+	//CalculateAverageBitmapColor(bitmap);
 
 	//@@Removed from John's code:
 	//@@#ifndef WINDOWS
@@ -2042,3 +1915,237 @@ void piggy_bitmap_page_out_all_w()
 #endif
 
 
+LightColor CalculateBitmapLightColor(grs_bitmap& bitmap) {
+
+	const int len = bitmap.bm_h * bitmap.bm_w;
+
+	grs_bitmap scratchpad = bitmap; //copy
+	bool neededScratch = false;
+	
+	if (bitmap.bm_flags & (BM_FLAG_RLE | BM_FLAG_RLE_BIG)) {
+		scratchpad.bm_data = new uint8_t[len];
+		gr_bm_ubitblt(scratchpad.bm_w, scratchpad.bm_h, 0, 0, 0, 0, &bitmap, &scratchpad);
+		neededScratch = true;
+	}
+
+	float ra = 0;
+	float ga = 0;
+	float ba = 0;
+
+	int numPixels = 0;
+
+	for (int i = 0; i < len; i++) {
+
+		auto pindex = scratchpad.bm_data[i];
+		if (pindex >= 254)
+			continue;
+
+		const float rp = gr_palette[pindex * 3 + 0] / 63.f;
+		const float gp = gr_palette[pindex * 3 + 1] / 63.f;
+		const float bp = gr_palette[pindex * 3 + 2] / 63.f;
+
+		ra += rp * rp;
+		ga += gp * gp;
+		ba += bp * bp;
+
+		numPixels++;
+
+	}
+
+	if (neededScratch)
+		delete[] scratchpad.bm_data;
+
+	if (numPixels == 0) {
+		return LIGHT_COLOR_ZERO;
+	} 
+	
+	ra /= numPixels;
+	ga /= numPixels;
+	ba /= numPixels;
+
+	const float r = sqrtf(ra);
+	const float g = sqrtf(ga);
+	const float b = sqrtf(ba);
+
+	const float max = fmax(fmax(r, g), b);
+
+	if (max == r)
+		mprintf((0,"r"));
+	if (max == g)
+		mprintf((0,"g"));
+	if (max == b)
+		mprintf((0,"b"));
+	mprintf((0," %f %f %f\n", r, g, b));
+
+	if (max == 0)
+		return LIGHT_COLOR_ZERO;
+
+	return LightColor {
+		.r = r / max,
+		.g = g / max,
+		.b = b / max,
+	};
+
+}
+
+#if 0
+LightColor CalculateBitmapLightColor(bitmap_index index) {
+
+	auto& bmp = activePiggyTable->gameBitmaps[index.index];
+
+	const int len = bmp.bm_h * bmp.bm_w;
+
+	grs_bitmap scratchpad = bmp; //copy
+	scratchpad.bm_data = new uint8_t[len];
+	gr_bm_bitblt(scratchpad.bm_w, scratchpad.bm_h, 0, 0, 0, 0, &bmp, &scratchpad);
+
+	float rc = 0;
+	float gc = 0;
+	float bc = 0;
+
+	/*float hasin = 0;
+	float hacos = 0;
+	float sa = 0;*/
+
+	int numPixels = 0;
+
+	//unit to radians
+	constexpr float U2R = 2 * 3.1415926535f;
+
+	for (int i = 0; i < len; i++) {
+
+		auto pindex = scratchpad.bm_data[i];
+		if (pindex >= 254)
+			continue;
+
+		const float r = gr_palette[pindex * 3 + 0] / 63.f;
+		const float g = gr_palette[pindex * 3 + 1] / 63.f;
+		const float b = gr_palette[pindex * 3 + 2] / 63.f;
+
+		if (r < 0 || g < 0 || b < 0 || isnan(r) || isnan(g) || isnan(b)) {
+			mprintf((1, "BAD PALETTE!!! %hhd %f %f %f / %hd %hd %d \n", pindex, r, g, b, scratchpad.bm_w, scratchpad.bm_h, i));
+		}
+
+		auto rco = rc;
+		auto gco = gc;
+		auto bco = bc;
+
+		rc += r * r;
+		gc += g * g;
+		bc += b * b;
+
+		if (isnan(rc) || isnan(gc) || isnan(bc)) {
+			mprintf((1, "WHAT %f %f %f %f %f %f", rc, gc, bc, rco, gco, bco));
+		}
+
+		//Time for HSV shenanigans
+		//Goal: Find average color if V were set to max
+
+		/*const float cmax = fmax(fmax(r, g), b);
+		const float cmin = fmin(fmin(r, g), b);
+		const float d = cmax - cmin;
+
+		float s = 0;
+		if (cmax != 0)
+			s = d / (cmax * cmax); //bias toward more saturation of brighter colors
+
+		sa += s;
+		//sa += 1;
+
+		float h;
+		if (cmax == r)
+			h = b - g;
+		else if (cmax == g)
+			h = r - b + 2;
+		else if (cmax == b)
+			h = g - r + 4;
+		else
+			Int3();
+
+		h *= U2R / 6;
+
+		hasin += sinf(h);
+		hacos += cosf(h);*/
+
+		numPixels++;
+
+	}
+
+	delete[] scratchpad.bm_data;
+
+	//const float h = atan2f(hasin / numPixels, hacos / numPixels);
+	//const float s = sa / numPixels;
+
+	if (numPixels > 0) {
+		rc /= numPixels;
+		gc /= numPixels;
+		bc /= numPixels;
+	}
+
+	//mprintf((0, "CALC %f %f %f %f %f", hasin, hacos, sa, h, s));
+
+	/*const float hp = fmod(h / (U2R / 6), 6) + (h < 0 ? 6 : 0);
+	const float x = s * (1 - fabs(fmod(hp, 2) - 1)); //chroma = s since v = 1
+	const float m = 1 - s;
+
+	float r, g, b;
+	r = g = b = 0;
+
+	if (hp >= 0 && hp < 1) {
+		r = s;
+		g = x;
+	} else if (hp >= 1 && hp < 2) {
+		r = x;
+		g = s;
+	} else if (hp >= 2 && hp < 3) {
+		g = s;
+		b = x;
+	} else if (hp >= 3 && hp < 4) {
+		g = x;
+		b = s;
+	} else if (hp >= 4 && hp < 5) {
+		r = x;
+		b = s;
+	} else if (hp >= 5 && hp < 6) {
+		r = s;
+		b = x;
+	}
+
+	//mprintf((0, "%hd %f %f %f %f\n", bitmap.index, r, g, b, m));
+
+	bmp->light_color_rgb.r = r + m;
+	bmp->light_color_rgb.g = g + m;
+	bmp->light_color_rgb.b = b + m;*/
+
+	const float r2 = sqrtf(rc);
+	const float g2 = sqrtf(gc);
+	const float b2 = sqrtf(bc);
+
+	mprintf((0, "%hd %f %f %f | %f %f %f | %d\n", index.index, r2, g2, b2, rc, gc, bc, numPixels));
+
+	if (!(r2 >= 0 && g2 >= 0 && b2 >= 0))
+		mprintf((1, "[??? %f %f %f]\n", r2, g2, b2));
+	Assert(r2 <= 1 && g2 <= 1 && b2 <= 1);
+
+	const float max = fmax(fmax(r2, g2), b2);
+
+	if (max == 0) {
+
+		bmp.light_color_rgb.r = 0;
+		bmp.light_color_rgb.g = 0;
+		bmp.light_color_rgb.b = 0;
+
+	} else {
+
+		const float factor = 1 / max;
+
+		bmp.light_color_rgb.r = r2 * factor;
+		bmp.light_color_rgb.g = g2 * factor;
+		bmp.light_color_rgb.b = b2 * factor;
+
+	}
+
+	return bmp.light_color_rgb;
+
+}
+#endif

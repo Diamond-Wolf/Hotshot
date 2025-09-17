@@ -66,6 +66,8 @@ void piggy_read_sound_data(digi_sound	*snd);
 
 void piggy_load_level_data();
 
+LightColor CalculateBitmapLightColor(grs_bitmap& bitmap);
+
 #define MAX_BITMAP_FILES_D1 1800
 #define MAX_BITMAP_FILES_D2 2620
 
