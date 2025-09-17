@@ -15,6 +15,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #include "misc/types.h"
 #include "fix/fix.h"
+#include "main/lighting.h"
 
 #define SWAP_0_255			0			// swap black and white
 #define TRANSPARENCY_COLOR	255			// palette entry of transparency color -- 255 on the PC
@@ -84,6 +85,7 @@ typedef struct _grs_bitmap {
 	unsigned char* bm_alpha;		// NEW Pointer to alpha data
 	unsigned short bm_selector;
 	uint8_t			avg_color;	//	Average color of all pixels in texture map.
+	LightColor		light_color_rgb;
 	bool			overridden;	//	From POG
 } grs_bitmap;
 

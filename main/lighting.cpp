@@ -484,7 +484,48 @@ void BuildDynamicLightNew() {
 					continue;
 				}
 
-				Dynamic_light[segno].vertexLights[vertno] += light / dist;
+				light /= dist;
+				if (light > 1)
+					light = sqrtf(light);
+				//else
+				//	light *= light;
+
+				LightColor c = {
+					.r = light,
+					.g = light,
+					.b = light,
+				};
+
+				switch (obj.render_type) {
+
+					case RT_FIREBALL:
+					case RT_POWERUP:
+					case RT_WEAPON_VCLIP: {
+
+						auto& vci = obj.rtype.vclip_info;
+						auto& vclip = activeBMTable->vclips[vci.vclip_num];
+						auto& frame = vclip.frames[vci.framenum];
+						auto& bitmap = activePiggyTable->gameBitmaps[frame.index];
+						//auto& pindex = bitmap.avg_color;
+						auto& lcolor = bitmap.light_color_rgb;
+
+//#ifndef NDEBUG
+//						for (int i = 0; i < 3; i++) {
+//							if (gr_palette[pindex * 3 + i] / 63.f > 1.f)
+//								mprintf((1, "Bad palette value (%d %d %f)\n", pindex, i, gr_palette[pindex * 3 + i] / 63.f));
+//						}
+//#endif
+
+						c.r *= lcolor.r;
+						c.g *= lcolor.g;
+						c.b *= lcolor.b;
+
+						//mprintf((0, "[%f %f %f]", c.r, c.g, c.b));
+
+					};
+				}
+
+				Dynamic_light[segno].vertexLights[vertno] += c;
 
 			}
 
@@ -492,10 +533,14 @@ void BuildDynamicLightNew() {
 	}
 
 	for (auto& light : Dynamic_light) {
-		float seglight = 0;
+		LightColor seglight = LIGHT_COLOR_ZERO;
 		for (auto& vl : light.vertexLights)
 			seglight += vl;
-		light.segmentLight = seglight / 8;
+		light.segmentLight = {
+			.r = seglight.r / 8,
+			.g = seglight.g / 8,
+			.b = seglight.b / 8,
+		};
 	}
 
 }
@@ -554,7 +599,7 @@ void set_dynamic_light(void)
 			vertnum = render_vertices[vv];
 			Assert(vertnum >= 0 && vertnum <= Highest_vertex_index);
 			if ((vertnum ^ FrameCount) & 1)
-				Dynamic_light[vertnum].segmentLight = 0;
+				Dynamic_light[vertnum].segmentLight = LIGHT_COLOR_ZERO;
 		}
 	}
 	else
@@ -562,7 +607,7 @@ void set_dynamic_light(void)
 		for (vv = FrameCount & 1; vv < n_render_vertices; vv += 2) 
 		{
 			Assert(render_vertices[vv] >= 0 && render_vertices[vv] <= Highest_vertex_index);
-			Dynamic_light[render_vertices[vv]].segmentLight = 0;
+			Dynamic_light[render_vertices[vv]].segmentLight = LIGHT_COLOR_ZERO;
 		}
 	}
 
@@ -692,16 +737,20 @@ fix compute_headlight_light_on_object(object * objp)
 }
 
 //compute the average dynamic light in a segment.  Takes the segment number
-float compute_seg_dynamic_light(int segnum) {
+LightColor compute_seg_dynamic_light(int segnum) {
 	
-	float sum = 0;
+	LightColor sum = LIGHT_COLOR_ZERO;
 	auto& light = Dynamic_light[segnum];
 
 	for (int i = 0; i < 8; i++) {
 		sum += light.vertexLights[i];
 	}
 
-	return sum / 8;
+	sum.r /= 8;
+	sum.g /= 8;
+	sum.b /= 8;
+
+	return sum;
 
 }
 
@@ -768,7 +817,7 @@ fix compute_object_light(object* obj, vms_vector* rotated_pnt)
 
 	//Finally, add in dynamic light for this segment
 
-	light += compute_seg_dynamic_light(obj->segnum);
+	light += compute_seg_dynamic_light(obj->segnum).r;
 
 	return light;
 }
@@ -839,4 +888,19 @@ fix compute_headlight_light(vms_vector point, fix face_light)
 	}
 
 	return light;
+}
+
+LightColor LightColor::operator+(const LightColor& other) {
+	return LightColor {
+		.r = r + other.r,
+		.g = g + other.g,
+		.b = b + other.b,
+	};
+}
+
+LightColor& LightColor::operator+=(const LightColor& other) {
+	r += other.r;
+	g += other.g;
+	b += other.b;
+	return *this;
 }

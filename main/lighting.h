@@ -13,9 +13,12 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #pragma once
 
+#include <vector>
+
 #include "fix/fix.h"
 #include "vecmat/vecmat.h"
-#include "object.h"
+//#include "object.h"
+struct object;
 
 inline constexpr int MAX_DIST_LOG = 6;				// log(MAX_DIST-expressed-as-integer)
 //#define MAX_DIST		0x400000		//no light beyond this dist
@@ -29,9 +32,32 @@ inline constexpr float MAX_DIST_F = (f2fl(MAX_DIST));
 
 #define BEAM_CUTOFF	0xa000		//what is out of beam?
 
+struct LightColor {
+
+    float r;
+    float g;
+    float b;
+
+    LightColor operator+(const LightColor& other);
+    LightColor& operator+=(const LightColor& other);
+
+};
+
+inline constexpr LightColor LIGHT_COLOR_ZERO = {
+    .r = 0.f,
+    .g = 0.f,
+    .b = 0.f,
+};
+
+inline constexpr LightColor LIGHT_COLOR_ONE = {
+    .r = 1.f,
+    .g = 1.f,
+    .b = 1.f,
+};
+
 struct DynamicSegmentLight {
-    float vertexLights[8];
-    float segmentLight;
+    LightColor vertexLights[8];
+    LightColor segmentLight;
 };
 
 extern fix	Beam_brightness;
@@ -49,7 +75,7 @@ void BuildDynamicLightNew();
 fix compute_headlight_light(vms_vector point, fix face_light);
 
 //compute the average dynamic light in a segment.  Takes the segment number
-float compute_seg_dynamic_light(int segnum);
+LightColor compute_seg_dynamic_light(int segnum);
 
 //compute the lighting for an object.  Takes a pointer to the object,
 //and possibly a rotated 3d point.  If the point isn't specified, the

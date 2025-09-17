@@ -23,6 +23,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <cmath>
 
 #include "platform/platform_filesys.h"
 #include "platform/posixstub.h"
@@ -54,6 +55,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "platform/findfile.h"
 #include "bm.h"
 #include "platform/platform.h"
+
 
 //#include "unarj.h" //[ISB] goddamnit
 
@@ -1424,21 +1426,18 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 
 		//printf("\n BMP: %hd %hd %hd %hd %hhu %hhu %hd / %hu %hhu", bmp->bm_x, bmp->bm_y, bmp->bm_w, bmp->bm_h, bmp->bm_type, bmp->bm_flags, bmp->bm_rowsize, bmp->bm_selector, bmp->avg_color);
 
-		if (bmp->bm_flags & BM_FLAG_RLE)
-		{
+		if (bmp->bm_flags & BM_FLAG_RLE) {
 			int zsize = 0;
 			descent_critical_error = 0;
 			zsize = cfile_read_int(activePiggyTable->file);
-			if (descent_critical_error)
-			{
+			if (descent_critical_error) {
 				piggy_critical_error();
 				goto ReDoIt;
 			}
 
 			// GET JOHN NOW IF YOU GET THIS ASSERT!!!
 			//Assert( Piggy_bitmap_cache_next+zsize < Piggy_bitmap_cache_size );      
-			if (Piggy_bitmap_cache_next + zsize >= Piggy_bitmap_cache_size)
-			{
+			if (Piggy_bitmap_cache_next + zsize >= Piggy_bitmap_cache_size) {
 				mprintf((1, "\n Piggy cache full! (%d %d %d) Flushing...\n", Piggy_bitmap_cache_next, zsize, Piggy_bitmap_cache_size));
 				//Int3(); 
 				piggy_bitmap_page_out_all();
@@ -1448,15 +1447,12 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 			Piggy_bitmap_cache_next += sizeof(int);
 			descent_critical_error = 0;
 			temp = cfread(&Piggy_bitmap_cache_data[Piggy_bitmap_cache_next], 1, zsize - 4, activePiggyTable->file);
-			if (descent_critical_error)
-			{
+			if (descent_critical_error) {
 				piggy_critical_error();
 				goto ReDoIt;
 			}
 			Piggy_bitmap_cache_next += zsize - 4;
-		}
-		else
-		{
+		} else {
 			// GET JOHN NOW IF YOU GET THIS ASSERT!!!
 			//Assert(Piggy_bitmap_cache_next + (bmp->bm_h * bmp->bm_w) < Piggy_bitmap_cache_size);
 			if (Piggy_bitmap_cache_next + (bmp->bm_h * bmp->bm_w) >= Piggy_bitmap_cache_size) {
@@ -1472,6 +1468,135 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 				goto ReDoIt;
 			}
 			Piggy_bitmap_cache_next += bmp->bm_h * bmp->bm_w;
+		}
+
+		float rc = 0;
+		float gc = 0;
+		float bc = 0;
+
+		float hasin = 0;
+		float hacos = 0;
+		float sa = 0;
+
+		const int len = bmp->bm_h * bmp->bm_w;
+
+		int numPixels = 0;
+
+		//unit to radians
+		constexpr float U2R = 2 * 3.1415926535f;
+
+		for (int i = 0; i < len; i++) {
+
+			auto pindex = bmp->bm_data[i];
+			if (pindex == TRANSPARENCY_COLOR)
+				continue;
+
+			const float r = gr_palette[pindex * 3 + 0] / 63.f;
+			const float g = gr_palette[pindex * 3 + 1] / 63.f;
+			const float b = gr_palette[pindex * 3 + 2] / 63.f;
+
+			rc += r * r;
+			gc += g * g;
+			bc *= b * b;
+
+			//Time for HSV shenanigans
+			//Goal: Find average color if V were set to max
+
+			const float cmax = fmax(fmax(r, g), b);
+			const float cmin = fmin(fmin(r, g), b);
+			const float d = cmax - cmin;
+
+			float s = 0;
+			if (cmax != 0)
+				s = d / (cmax * cmax); //bias toward more saturation of brighter colors
+
+			sa += s;
+			//sa += 1;
+
+			float h;
+			if (cmax == r)
+				h = b - g;
+			else if (cmax == g)
+				h = r - b + 2;
+			else if (cmax == b)
+				h = g - r + 4;
+			else
+				Int3();
+
+			h *= U2R / 6;
+
+			hasin += sinf(h);
+			hacos += cosf(h);
+
+			numPixels++;
+
+		}
+
+		const float h = atan2f(hasin / numPixels, hacos / numPixels);
+		const float s = sa / numPixels;
+
+		rc /= numPixels;
+		gc /= numPixels;
+		bc /= numPixels;
+
+		//mprintf((0, "CALC %f %f %f %f %f", hasin, hacos, sa, h, s));
+
+		const float hp = fmod(h / (U2R / 6), 6) + (h < 0 ? 6 : 0);
+		const float x = s * (1 - fabs(fmod(hp, 2) - 1)); //chroma = s since v = 1
+		const float m = 1 - s;
+
+		float r, g, b;
+		r = g = b = 0;
+
+		if (hp >= 0 && hp < 1) {
+			r = s;
+			g = x;
+		} else if (hp >= 1 && hp < 2) {
+			r = x;
+			g = s;
+		} else if (hp >= 2 && hp < 3) {
+			g = s;
+			b = x;
+		} else if (hp >= 3 && hp < 4) {
+			g = x;
+			b = s;
+		} else if (hp >= 4 && hp < 5) {
+			r = x;
+			b = s;
+		} else if (hp >= 5 && hp < 6) {
+			r = s;
+			b = x;
+		}
+
+		mprintf((0, "%hd %f %f %f %f\n", bitmap.index, r, g, b, m));
+
+		bmp->light_color_rgb.r = r + m;
+		bmp->light_color_rgb.g = g + m;
+		bmp->light_color_rgb.b = b + m;
+
+		const float r2 = sqrtf(rc);
+		const float g2 = sqrtf(gc);
+		const float b2 = sqrtf(bc);
+
+		Assert(r2 >= 0 && g2 >= 0 && b2 >= 0);
+		Assert(r2 <= 1 && g2 <= 1 && b2 <= 1);
+
+		const float max = fmax(fmax(r2, g2), b2);
+
+		if (max == 0) {
+
+			bmp->light_color_rgb.r = 0;
+			bmp->light_color_rgb.g = 0;
+			bmp->light_color_rgb.b = 0;
+
+		} else {
+
+			const float factor = 1 / max;
+
+			bmp->light_color_rgb.r = r2 * factor;
+			bmp->light_color_rgb.g = g2 * factor;
+			bmp->light_color_rgb.b = b2 * factor;
+
 		}
 
 		//@@if ( bmp->bm_selector ) {

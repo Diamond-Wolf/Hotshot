@@ -2507,9 +2507,10 @@ namespace HRender {
 					else {
 
 						lightR = lightG = lightB = f2fl(side.uvls[i].l);
-						lightR += Dynamic_light[segno].vertexLights[sideverts[i]];
-						lightG += Dynamic_light[segno].vertexLights[sideverts[i]];
-						lightB += Dynamic_light[segno].vertexLights[sideverts[i]];
+						auto& dynLight = Dynamic_light[segno].vertexLights[sideverts[i]];
+						lightR += dynLight.r;
+						lightG += dynLight.g;
+						lightB += dynLight.b;
 
 					}
 
