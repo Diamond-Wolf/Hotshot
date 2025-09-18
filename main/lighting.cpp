@@ -568,7 +568,7 @@ void BuildDynamicLightNew() {
 						auto& bitmap = activePiggyTable->gameBitmaps[index.index];
 						auto& lcolor = bitmap.light_color_rgb;
 
-						//if (lcolor.r == 0 && lcolor.g == 0 && lcolor.b == 0)
+						if (lcolor.r == 0 && lcolor.g == 0 && lcolor.b == 0)
 							lcolor = CalculateBitmapLightColor(bitmap);
 
 //#ifndef NDEBUG
