@@ -485,10 +485,6 @@ void BuildDynamicLightNew() {
 				}
 
 				light /= dist;
-				if (light > 1)
-					light = sqrtf(light);
-				//else
-				//	light *= light;
 
 				LightColor c = {
 					.r = light,
@@ -496,22 +492,83 @@ void BuildDynamicLightNew() {
 					.b = light,
 				};
 
+				bitmap_index index;
+				
 				switch (obj.render_type) {
 
 					case RT_FIREBALL:
 					case RT_POWERUP:
+					case RT_LASER:
 					case RT_WEAPON_VCLIP: {
 
 						auto& vci = obj.rtype.vclip_info;
-						auto& vclip = activeBMTable->vclips[vci.vclip_num];
-						auto& frame = vclip.frames[vci.framenum];
+						int8_t frame = vci.framenum;
 
-						PIGGY_PAGE_IN(frame);
+						if (obj.render_type == RT_LASER) {
+							index = activeBMTable->weapons[obj.id].bitmap;
+						} else {
 
-						auto& bitmap = activePiggyTable->gameBitmaps[frame.index];
+							int vcn = 0;
+							if (obj.render_type == RT_POWERUP)
+								vcn = vci.vclip_num;
+							else if (obj.render_type == RT_FIREBALL)
+								vcn = obj.id;
+							else if (obj.render_type == RT_WEAPON_VCLIP)
+								vcn = activeBMTable->weapons[obj.id].weapon_vclip;
+
+							auto& vclip = activeBMTable->vclips[vcn];
+
+							auto time = obj.lifeleft;
+
+							if (obj.render_type == RT_FIREBALL || obj.render_type == RT_WEAPON_VCLIP) {
+							
+								if (obj.render_type == RT_WEAPON_VCLIP) {
+
+									fix play_time = vclip.play_time;
+
+									//	Special values for modtime were causing enormous slowdown for omega blobs.
+									if (time == IMMORTAL_TIME)
+										time = play_time;
+
+									//	Should cause Omega blobs (which live for one frame) to not always be the same.
+									if (time == ONE_FRAME_TIME)
+										time = P_Rand();
+
+									if (obj.id == PROXIMITY_ID) //make prox bombs spin out of sync
+									{
+										time += (time * (objno & 7)) / 16;	//add variance to spin rate
+
+										while (time > play_time)
+											time -= play_time;
+
+										if ((objno & 1) ^ ((objno >> 1) & 1))			//make some spin other way
+											time = play_time - time;
+
+									} else {
+										while (time > play_time)
+											time -= play_time;
+									}
+
+								}
+
+								int nf = vclip.num_frames;
+								frame = (nf - f2i(fixdiv((nf - 1) * time, vclip.play_time))) - 1;
+								if (frame >= nf) {
+									frame = nf - 1;
+								}
+
+							}
+
+							index = vclip.frames[frame];
+
+						}
+
+						PIGGY_PAGE_IN(index);
+
+						auto& bitmap = activePiggyTable->gameBitmaps[index.index];
 						auto& lcolor = bitmap.light_color_rgb;
 
-						if (lcolor.r == 0 && lcolor.g == 0 && lcolor.b == 0)
+						//if (lcolor.r == 0 && lcolor.g == 0 && lcolor.b == 0)
 							lcolor = CalculateBitmapLightColor(bitmap);
 
 //#ifndef NDEBUG

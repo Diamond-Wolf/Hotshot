@@ -984,9 +984,6 @@ void LoadLevel(int level_num, int page_in_textures)
 	if (CurrentDataVersion == DataVer::DEMO || currentGame == G_DESCENT_1)
 		load_endlevel_data(level_num);
 
-	if (page_in_textures)
-		piggy_load_level_data();
-
 	load_bitmap_replacements(level_name);
 
 	if (Robot_replacements_loaded) {
@@ -1014,6 +1011,9 @@ void LoadLevel(int level_num, int page_in_textures)
 	gr_palette_load(gr_palette);		//actually load the palette
 
 	HRender::GeneratePiggyStructs();
+
+	if (page_in_textures)
+		piggy_load_level_data();
 
 //	WIN(HideCursorW());
 }

@@ -1421,7 +1421,7 @@ void piggy_bitmap_page_in(bitmap_index bitmap)
 		bmp->bm_data = &Piggy_bitmap_cache_data[Piggy_bitmap_cache_next];
 		bmp->bm_alpha = NULL;
 		bmp->bm_flags = activePiggyTable->gameBitmapFlags[i];
-
+		//bmp->light_color_rgb = LIGHT_COLOR_ZERO;
 		//printf("\n SC %d %d %d", activePiggyTable->gameBitmaps.size(), activePiggyTable->gameBitmapFlags.size(), activePiggyTable->gameBitmapOffsets.size());
 
 		//printf("\n BMP: %hd %hd %hd %hd %hhu %hhu %hd / %hu %hhu", bmp->bm_x, bmp->bm_y, bmp->bm_w, bmp->bm_h, bmp->bm_type, bmp->bm_flags, bmp->bm_rowsize, bmp->bm_selector, bmp->avg_color);
@@ -1919,14 +1919,16 @@ LightColor CalculateBitmapLightColor(grs_bitmap& bitmap) {
 
 	const int len = bitmap.bm_h * bitmap.bm_w;
 
-	grs_bitmap scratchpad = bitmap; //copy
-	bool neededScratch = false;
+	grs_bitmap expanded = bitmap; //copy
+	bool neededExpanded = false;
 	
 	if (bitmap.bm_flags & (BM_FLAG_RLE | BM_FLAG_RLE_BIG)) {
-		scratchpad.bm_data = new uint8_t[len];
-		gr_bm_ubitblt(scratchpad.bm_w, scratchpad.bm_h, 0, 0, 0, 0, &bitmap, &scratchpad);
-		neededScratch = true;
+		expanded.bm_data = new uint8_t[len];
+		gr_bm_ubitblt(expanded.bm_w, expanded.bm_h, 0, 0, 0, 0, &bitmap, &expanded);
+		neededExpanded = true;
 	}
+
+	//mprintf((0, "[[%hd %hd %hd %hd]]", bitmap.bm_w, bitmap.bm_h, expanded.bm_w, expanded.bm_h));
 
 	float ra = 0;
 	float ga = 0;
@@ -1936,7 +1938,7 @@ LightColor CalculateBitmapLightColor(grs_bitmap& bitmap) {
 
 	for (int i = 0; i < len; i++) {
 
-		auto pindex = scratchpad.bm_data[i];
+		auto pindex = expanded.bm_data[i];
 		if (pindex >= 254)
 			continue;
 
@@ -1952,8 +1954,8 @@ LightColor CalculateBitmapLightColor(grs_bitmap& bitmap) {
 
 	}
 
-	if (neededScratch)
-		delete[] scratchpad.bm_data;
+	if (neededExpanded)
+		delete[] expanded.bm_data;
 
 	if (numPixels == 0) {
 		return LIGHT_COLOR_ZERO;
@@ -1969,13 +1971,13 @@ LightColor CalculateBitmapLightColor(grs_bitmap& bitmap) {
 
 	const float max = fmax(fmax(r, g), b);
 
-	if (max == r)
+	/*if (max == r)
 		mprintf((0,"r"));
 	if (max == g)
 		mprintf((0,"g"));
 	if (max == b)
 		mprintf((0,"b"));
-	mprintf((0," %f %f %f\n", r, g, b));
+	mprintf((0," %f %f %f\n", r, g, b));*/
 
 	if (max == 0)
 		return LIGHT_COLOR_ZERO;
