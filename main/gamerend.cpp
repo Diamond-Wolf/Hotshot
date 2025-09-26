@@ -874,6 +874,8 @@ void RenderBigGuidedMissile(object* missile) {
 void game_render_frame_new() {
 
 	auto lightF = StartJob(BuildDynamicLightNew);
+	//auto lightF = StartJob([]() {});
+	//BuildDynamicLightNew();
 
 	HRender::PrepareMineRenderFrame();
 	

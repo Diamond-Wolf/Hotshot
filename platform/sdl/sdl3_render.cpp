@@ -2229,18 +2229,19 @@ namespace HRender {
 				const float aspect = (float)activePiggyTable->gameBitmaps[bm].bm_w / activePiggyTable->gameBitmaps[bm].bm_h;
 
 				float light = 1.f;
-
 				if (!cheatValues[CI_FULLBRIGHT]) {
 
-					if (rtypeid == RT_POWERUP) {
-						if (!(obj.id == POW_ENERGY || obj.id == POW_SHIELD_BOOST || obj.id == POW_EXTRA_LIFE || obj.id == POW_INVULNERABILITY || obj.id == POW_CLOAK)) {
-							light = f2fl(currentGame == G_DESCENT_2 ? Segment2s[segno].static_light : Segments[segno].static_light);
+					light = f2fl(currentGame == G_DESCENT_2 ? Segment2s[segno].static_light : Segments[segno].static_light);
+
+					/*if (rtypeid == RT_POWERUP) {
+						if (obj.id == POW_ENERGY || obj.id == POW_SHIELD_BOOST || obj.id == POW_EXTRA_LIFE || obj.id == POW_INVULNERABILITY || obj.id == POW_CLOAK) {
+							light = 1.f;
 						}
-					}
+					}*/
 
 					if (light > 1)
 						light = 1;
-				
+
 				}
 
 				//float lightR, lightG, lightB;
@@ -2376,7 +2377,21 @@ namespace HRender {
 					if (drawBuffer == NULL)
 						Error("Error creating vertex buffer: %s", SDL_GetError());
 
-					memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, wverts, vsize);
+					WorldVertex wvertmod[4];
+					memcpy(wvertmod, wverts, sizeof(wvertmod));
+
+					if (!cheatValues[CI_FULLBRIGHT]) {
+
+						const LightColor& dynamic = Dynamic_light[segno].segmentLight;
+						for (int i = 0; i < 4; i++) {
+							wvertmod[i].colormod[0] += dynamic.r;
+							wvertmod[i].colormod[1] += dynamic.g;
+							wvertmod[i].colormod[2] += dynamic.b;
+						}
+
+					}
+
+					memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset, wvertmod, vsize);
 					memcpy(rendererState.drawTransferBuffer.memoryMap + rendererState.drawTransferOffset + vsize, winds, isize);
 
 					SDL_GPUTransferBufferLocation tbl{

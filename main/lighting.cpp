@@ -435,6 +435,9 @@ fix compute_light_intensity(int objnum)
 }
 
 // ----------------------------------------------------------------------------------------------
+
+extern int Doing_lighting_hack_flag;
+
 void BuildDynamicLightNew() {
 
 	if (!Do_dynamic_light || cheatValues[CI_FULLBRIGHT])
@@ -442,10 +445,19 @@ void BuildDynamicLightNew() {
 
 	memset(Dynamic_light.data(), 0, Dynamic_light.size() * sizeof(Dynamic_light[0]));
 
+	Doing_lighting_hack_flag = 1;
+
 	for (size_t segno = 0; segno < Segments.size(); segno++) {
 		auto& seg = Segments[segno];
 		for (size_t vertno = 0; vertno < MAX_VERTICES_PER_SEGMENT; vertno++) {
-			auto& vert = Vertices[seg.verts[vertno]];
+			const short vertID = seg.verts[vertno];
+			//if (vertID & FrameCount & 1)
+			//	continue;
+
+			auto& vert = Vertices[vertID];
+
+			auto& dynLight = Dynamic_light[segno];
+			//memset(&dynLight, 0, sizeof(Dynamic_light[0]));
 
 			for (size_t objno = 0; objno < Objects.size(); objno++) {
 				auto& obj = Objects[objno];
@@ -571,37 +583,38 @@ void BuildDynamicLightNew() {
 						if (lcolor.r == 0 && lcolor.g == 0 && lcolor.b == 0)
 							lcolor = CalculateBitmapLightColor(bitmap);
 
-//#ifndef NDEBUG
-//						for (int i = 0; i < 3; i++) {
-//							if (gr_palette[pindex * 3 + i] / 63.f > 1.f)
-//								mprintf((1, "Bad palette value (%d %d %f)\n", pindex, i, gr_palette[pindex * 3 + i] / 63.f));
-//						}
-//#endif
-
 						c.r *= lcolor.r;
 						c.g *= lcolor.g;
 						c.b *= lcolor.b;
 
-						//mprintf((0, "[%f %f %f]", c.r, c.g, c.b));
-
 					};
 				}
 
-				Dynamic_light[segno].vertexLights[vertno] += c;
+				dynLight.vertexLights[vertno] += c;
 
 			}
 
 		}
 	}
 
-	for (auto& light : Dynamic_light) {
-		LightColor seglight = LIGHT_COLOR_ZERO;
-		for (auto& vl : light.vertexLights)
-			seglight += vl;
-		light.segmentLight = {
-			.r = seglight.r / 8,
-			.g = seglight.g / 8,
-			.b = seglight.b / 8,
+	Doing_lighting_hack_flag = 0;
+
+	for (auto& seglight : Dynamic_light) {
+
+		float r = 0;
+		float g = 0;
+		float b = 0;
+
+		for (auto& vl : seglight.vertexLights) {
+			r += vl.r;
+			g += vl.g;
+			b += vl.b;
+		}
+
+		seglight.segmentLight = {
+			.r = r / 8,
+			.g = g / 8,
+			.b = b / 8,
 		};
 	}
 

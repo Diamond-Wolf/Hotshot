@@ -1012,9 +1012,11 @@ void LoadLevel(int level_num, int page_in_textures)
 
 	HRender::GeneratePiggyStructs();
 
-	if (page_in_textures)
+	if (page_in_textures) {
+		piggy_bitmap_page_out_all();
 		piggy_load_level_data();
-
+	}
+	
 //	WIN(HideCursorW());
 }
 
